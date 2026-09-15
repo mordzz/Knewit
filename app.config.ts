@@ -22,6 +22,7 @@ const config: ExpoConfig = {
   web: {
     favicon: './assets/favicon.png',
   },
+  plugins: ['expo-font'],
 };
 
 export default config;

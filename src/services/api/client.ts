@@ -1,8 +1,12 @@
 import { env } from '@/app/config/env';
+import { getSessionToken } from '@/hooks/useAuth';
 import type { ApiError } from '@/types/api';
 
 export class ApiRequestError extends Error {
-  constructor(public status: number, public body: ApiError) {
+  constructor(
+    public status: number,
+    public body: ApiError
+  ) {
     super(body.message);
   }
 }
@@ -13,14 +17,23 @@ export class ApiRequestError extends Error {
  * credentials directly — see docs/ARCHITECTURE.md.
  */
 export async function apiRequest<T>(path: string, init?: RequestInit): Promise<T> {
+  const token = getSessionToken();
+
   const response = await fetch(`${env.apiBaseUrl}${path}`, {
-    headers: { 'Content-Type': 'application/json' },
     ...init,
+    headers: {
+      'Content-Type': 'application/json',
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      ...init?.headers,
+    },
   });
 
   if (!response.ok) {
     const body = (await response.json().catch(() => null)) as ApiError | null;
-    throw new ApiRequestError(response.status, body ?? { code: 'unknown', message: response.statusText });
+    throw new ApiRequestError(
+      response.status,
+      body ?? { code: 'unknown', message: response.statusText }
+    );
   }
 
   return response.json() as Promise<T>;

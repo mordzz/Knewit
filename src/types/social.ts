@@ -1,4 +1,4 @@
-import type { ID, ISODateString } from '@/types/common';
+import type { Category, ID, ISODateString } from '@/types/common';
 import type { Outcome } from '@/types/market';
 
 /**
@@ -42,5 +42,46 @@ export interface Comment {
   postId: ID;
   authorId: ID;
   body: string;
+  createdAt: ISODateString;
+}
+
+/**
+ * The denormalized shape the feed API returns for rendering — a market
+ * summary rather than just a `marketId`, so a card never needs a second
+ * lookup. `Market` (types/market.ts) remains the full, normalized entity.
+ *
+ * `trending`/`resolved`/`imageUrl` support `MarketAttachment`'s richer
+ * states (trending indicator, closed/resolved treatment, market image
+ * with a category-icon fallback) — see docs/DESIGN.md. All optional/
+ * nullable since not every market has them and the card must render
+ * correctly either way.
+ */
+export interface MarketSummary {
+  id: ID;
+  question: string;
+  category: Category;
+  yesPrice: number; // cents
+  noPrice: number; // cents
+  volume: number | null;
+  endDate: ISODateString | null;
+  trending?: boolean;
+  resolved?: boolean;
+  imageUrl?: string | null;
+}
+
+/**
+ * The feed/API rendering shape of a Post — `author`/`market` are expanded
+ * objects (not just ids) since that's what a feed response realistically
+ * returns. `Post` (above) stays the normalized DB-shaped entity — see
+ * docs/DATABASE.md and docs/API.md.
+ */
+export interface FeedItem {
+  id: ID;
+  author: User;
+  body: string;
+  market: MarketSummary | null;
+  positionSnapshot: PositionSnapshot | null;
+  likeCount: number;
+  commentCount: number;
   createdAt: ISODateString;
 }

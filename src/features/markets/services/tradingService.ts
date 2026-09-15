@@ -7,7 +7,7 @@ export interface PlaceOrderInput {
 }
 
 /**
- * Not implemented in Sprint 0. Real order placement requires the backend
+ * Not implemented yet. Real order placement requires the backend
  * order-construction flow and Privy signing — see docs/WALLET.md and
  * docs/API.md before implementing.
  */
