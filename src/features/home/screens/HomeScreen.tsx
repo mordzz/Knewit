@@ -131,14 +131,17 @@ export function HomeScreen() {
 /**
  * Single row: balance on the left, Deposit + notifications on the
  * right — matches the FOMO/pump.fun-style header this product is
- * modeled on. Balance uses the `jumbo` variant (48px/800) rather than a
- * raw `className="text-5xl font-bold"` override — this file's wrapped
- * `Text` always injects its own named typography classes (size +
- * Inter-weight family) alongside whatever `className` is passed, and
- * neither is in a group `tailwind-merge` can resolve a conflict
- * against, so a second competing size/weight className here would be
- * undefined behavior, not just redundant — see docs/DECISIONS.md.
- * `jumbo` already renders at the same 48px this was reaching for.
+ * modeled on. Balance intentionally uses a raw
+ * `className="text-5xl font-bold"` override rather than the `jumbo`
+ * typography variant, by explicit request — kept as-is even though it
+ * carries the known caveats documented in docs/DECISIONS.md: `Text`'s
+ * own default (`body`) classes are still applied underneath and aren't
+ * guaranteed
+ * to lose a size/weight conflict to a later raw className the way two
+ * recognized Tailwind utilities would, and stacking a numeric
+ * `fontWeight` (`font-bold`) on top of a specific static Inter file can
+ * make Android quietly fall back to the system font instead of erroring
+ * — a real but purely cosmetic risk, not a crash.
  *
  * Balance is a placeholder ("$0.00") until a real wallet balance
  * endpoint exists, same honesty rule as Portfolio's placeholder cards —
@@ -152,10 +155,10 @@ function Header() {
     <View className="flex-row items-center justify-between px-4 pb-8 pl-6 pt-4">
       <Text className="text-5xl font-bold">{formatUsd(0)}</Text>
       <Button
-          label="Deposit"
-          onPress={() => navigation.navigate('Auth')}
-          className="h-12 min-h-0 rounded-full px-12 py-0 text-lg font-semibold"
-        />
+        label="Deposit"
+        onPress={() => navigation.navigate('Auth')}
+        className="h-12 min-h-0 rounded-full px-12 py-0 text-lg font-semibold"
+      />
     </View>
   );
 }

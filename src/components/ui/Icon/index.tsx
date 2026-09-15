@@ -38,7 +38,8 @@ export type IconName =
   | 'stats-chart-outline'
   | 'hardware-chip-outline'
   | 'earth-outline'
-  | 'apps-outline';
+  | 'apps-outline'
+  | 'layers-outline';
 
 export interface IconProps {
   name: IconName;
