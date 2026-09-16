@@ -27,13 +27,31 @@ export type MainTabParamList = {
 export type AppParamList = {
   Main: NavigatorScreenParams<MainTabParamList> | undefined;
   Auth: undefined;
-  CreateCall: undefined;
+  /** `intent` only changes the composer's default emphasis (Post vs
+   * Call) — see docs/DECISIONS.md; the underlying content model is
+   * unified either way (docs/SOCIAL-FEATURE.md). */
+  CreateCall: { intent?: 'post' | 'call' } | undefined;
   HomeFeed: undefined;
   Markets: undefined;
-  Profile: undefined;
+  Search: undefined;
+  Leaderboard: undefined;
+  /**
+   * One route/screen for both the viewer's own profile and anyone
+   * else's (Sprint 11) — `userId` omitted means "my own profile,"
+   * resolved server-side from the session (see docs/DECISIONS.md, "One
+   * Profile Route/Screen for Self and Other Users"). Replaces the
+   * earlier separate `Profile`/`UserProfile` routes.
+   */
+  Profile: { userId?: string } | undefined;
+  EditProfile: undefined;
+  Followers: { userId: string };
+  Following: { userId: string };
+  Wallet: undefined;
   Portfolio: undefined;
   MarketDetail: { marketId: string };
-  UserProfile: { userId: string };
+  /** Serves both a normal Post and a position-backed Call — same
+   * screen either way (docs/SOCIAL-FEATURE.md). */
+  PostDetail: { postId: string };
 };
 
 declare global {

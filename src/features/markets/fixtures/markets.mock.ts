@@ -164,6 +164,27 @@ const BASE_GROUPS: MockGroupTemplate[] = [
   },
 ];
 
+function hashString(value: string): number {
+  let hash = 0;
+  for (let i = 0; i < value.length; i += 1) {
+    hash = (hash * 31 + value.charCodeAt(i)) | 0;
+  }
+  return Math.abs(hash);
+}
+
+/**
+ * Deterministically picks one of the base market templates based on the
+ * given id/seed, rather than always the first one — so opening
+ * different mock market ids (from a Markets/Search list) shows
+ * different mock detail content, including the closed/resolved/
+ * non-binary templates, instead of the same active market every time.
+ * Used by `marketService.getMarketById`'s dev-only fallback — see
+ * docs/DECISIONS.md (Sprint 5).
+ */
+export function pickMockMarketTemplate(seed: string): Omit<MarketSummary, 'id'> {
+  return BASE_MARKETS[hashString(seed) % BASE_MARKETS.length];
+}
+
 /** Deterministic, id-unique list built by cycling the templates above. */
 export function buildMockMarkets(size: number, category?: string): MarketSummary[] {
   const source =
@@ -234,4 +255,90 @@ export function buildMockMarketList(size: number, category?: string): MarketList
   }
 
   return items;
+}
+
+/**
+ * Dev-mock fallback for `marketService.ts::getTrendingMarkets` (Home's
+ * "Trending Markets" discovery strip). Filters to the base templates
+ * already flagged `trending: true` (the same flag `MarketCard`/
+ * `MarketAttachment` render a "Trending" badge from — not a separate,
+ * invented signal), sorted by volume descending — real fields, not a
+ * fabricated score. Cycles to fill `limit` if fewer trending templates
+ * exist than requested, same pattern as `buildMockMarkets`.
+ */
+export function buildMockTrendingMarkets(limit: number): MarketSummary[] {
+  const trending = BASE_MARKETS.filter((m) => m.trending).sort(
+    (a, b) => (b.volume ?? 0) - (a.volume ?? 0)
+  );
+  if (trending.length === 0) return [];
+
+  return Array.from({ length: Math.min(limit, trending.length * 3) }, (_, index) => ({
+    ...trending[index % trending.length],
+    id: `mock-market-trending-${index}`,
+  })).slice(0, limit);
+}
+
+const CLOSING_SOON_OFFSETS_MS = [2 * 3_600_000, 6 * 3_600_000, 20 * 3_600_000, 40 * 3_600_000];
+
+/**
+ * Dev-mock fallback for `marketService.ts::getClosingSoonMarkets`.
+ * Real market fixtures have fixed authored `endDate`s that would drift
+ * into the past as real wall-clock time passes this file's own authored
+ * "today," making them useless as an always-demonstrable "closing soon"
+ * fixture — so this one deliberately computes `endDate` relative to
+ * `Date.now()` instead, the same way `feed.mock.ts`'s `createdAt`
+ * fields are computed relative to now rather than hardcoded. Only ever
+ * used as a dev fallback; the real endpoint returns real market
+ * end-dates — see docs/DECISIONS.md.
+ */
+export function buildMockClosingSoon(limit: number): MarketSummary[] {
+  const eligible = BASE_MARKETS.filter((m) => !m.closed && !m.resolved);
+  if (eligible.length === 0) return [];
+
+  return Array.from({ length: Math.min(limit, CLOSING_SOON_OFFSETS_MS.length) }, (_, index) => {
+    const base = eligible[index % eligible.length];
+    return {
+      ...base,
+      id: `mock-market-closing-soon-${index}`,
+      endDate: new Date(Date.now() + CLOSING_SOON_OFFSETS_MS[index]).toISOString(),
+    };
+  });
+}
+
+/**
+ * Search's mock fallback for the markets half of `/search` — filters
+ * the same base templates `buildMockMarkets`/`buildMockGroups` cycle
+ * through, by a simple case-insensitive substring match against the
+ * question/title, rather than maintaining a separate search-specific
+ * fixture set. Deterministic ranking (source order), never a fabricated
+ * relevance score — see docs/DECISIONS.md (Sprint 4).
+ */
+export function searchMockMarketList(query: string): MarketListItem[] {
+  const needle = query.trim().toLowerCase();
+  if (!needle) return [];
+
+  const matchedMarkets = BASE_MARKETS.filter((m) => m.question.toLowerCase().includes(needle));
+  const matchedGroups = BASE_GROUPS.filter((g) => g.title.toLowerCase().includes(needle));
+
+  const marketItems: MarketListItem[] = matchedMarkets.map((market, index) => ({
+    kind: 'market',
+    market: { ...market, id: `search-market-${index}` },
+  }));
+
+  const groupItems: MarketListItem[] = matchedGroups.map((group, index) => {
+    const groupId = `search-group-${index}`;
+    return {
+      kind: 'group',
+      group: {
+        ...group,
+        id: groupId,
+        outcomes: group.outcomes.map((outcome, outcomeIndex) => ({
+          ...outcome,
+          id: `${groupId}-outcome-${outcomeIndex}`,
+        })),
+      },
+    };
+  });
+
+  return [...marketItems, ...groupItems];
 }

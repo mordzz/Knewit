@@ -1,7 +1,7 @@
 import { apiRequest } from '@/services/api/client';
 import { endpoints } from '@/services/api/endpoints';
 import { env } from '@/app/config/env';
-import { buildMockFeed } from '@/features/home/fixtures/feed.mock';
+import { buildMockFeed, buildMockTrendingCalls } from '@/features/home/fixtures/feed.mock';
 import type { Paginated } from '@/types/common';
 import type { FeedItem } from '@/types/social';
 
@@ -39,6 +39,58 @@ export async function getFeed(cursor?: string): Promise<Paginated<FeedItem>> {
         error
       );
       return getMockFeedPage(cursor);
+    }
+    throw error;
+  }
+}
+
+/**
+ * The "Following" tab — Posts/Calls from accounts the caller follows
+ * (Sprint 9's real Follow relationships), backend-filtered and
+ * backend-ranked like `/feed` itself. **No dev-mock fallback that
+ * fabricates content** — unlike `getFeed`'s generic mock feed (harmless
+ * placeholder social content), a fake "following feed" would misrepresent
+ * a real social relationship the user hasn't actually established in
+ * mock mode; returns an honestly empty page instead, same principle as
+ * Sprint 10's leaderboard mock fallback — see docs/DECISIONS.md.
+ */
+export async function getFollowingFeed(cursor?: string): Promise<Paginated<FeedItem>> {
+  const query = cursor ? `?cursor=${encodeURIComponent(cursor)}` : '';
+
+  try {
+    return await apiRequest<Paginated<FeedItem>>(`${endpoints.feedFollowing}${query}`);
+  } catch (error) {
+    if (env.isDev) {
+      console.warn(
+        '[feedService] backend unreachable — returning no following-feed content (never fabricated) for development only.',
+        error
+      );
+      return { items: [], nextCursor: null };
+    }
+    throw error;
+  }
+}
+
+const TRENDING_CALLS_LIMIT = 6;
+
+/**
+ * A small, non-paginated set of currently-trending Posts/Calls for
+ * Home's horizontal "Trending Calls" strip — ranking is a backend
+ * responsibility (see docs/DECISIONS.md, "Feed Ranking Is a Backend
+ * Responsibility"); this call never reorders what it receives. Dev-mock
+ * fallback uses a documented, deterministic local sort — see
+ * `feed.mock.ts::buildMockTrendingCalls`.
+ */
+export async function getTrendingCalls(): Promise<FeedItem[]> {
+  try {
+    return await apiRequest<FeedItem[]>(`${endpoints.feedTrending}?limit=${TRENDING_CALLS_LIMIT}`);
+  } catch (error) {
+    if (env.isDev) {
+      console.warn(
+        '[feedService] backend unreachable — using a local mock trending sort for development only.',
+        error
+      );
+      return buildMockTrendingCalls(TRENDING_CALLS_LIMIT);
     }
     throw error;
   }

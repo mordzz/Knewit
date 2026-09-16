@@ -17,7 +17,7 @@ export class ApiRequestError extends Error {
  * credentials directly — see docs/ARCHITECTURE.md.
  */
 export async function apiRequest<T>(path: string, init?: RequestInit): Promise<T> {
-  const token = getSessionToken();
+  const token = await getSessionToken();
 
   const response = await fetch(`${env.apiBaseUrl}${path}`, {
     ...init,

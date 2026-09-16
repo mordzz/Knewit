@@ -13,6 +13,29 @@ export interface PositionSnapshot {
   capturedAt: ISODateString;
 }
 
+/**
+ * The API/rendering shape of a user's position — includes the market's
+ * question so a position card never needs a second market lookup,
+ * mirroring `FeedItem`/`MarketSummary`'s own "expanded shape for
+ * rendering, normalized shape for storage" split (`Position` in
+ * `types/market.ts` remains the normalized entity). `currentPrice` is
+ * nullable: it reflects whatever price the backend/Polymarket returned
+ * at fetch time, but a screen already showing the same market's live
+ * price (Market Detail) should prefer that over this field rather than
+ * risk two slightly-differently-timed numbers disagreeing on screen —
+ * see docs/DECISIONS.md.
+ */
+export interface UserPosition {
+  id: ID;
+  marketId: ID;
+  marketQuestion: string;
+  outcome: Outcome;
+  entryPrice: number; // cents
+  currentPrice: number | null; // cents
+  size: number; // shares
+  openedAt: ISODateString;
+}
+
 export interface User {
   id: ID;
   handle: string;
@@ -37,12 +60,122 @@ export interface Post {
   createdAt: ISODateString;
 }
 
+/**
+ * What the mobile app sends to create a Post or a position-backed Call
+ * — the same request shape either way, since they're the same entity
+ * (see docs/SOCIAL-FEATURE.md). `positionId` is the *only* position
+ * information the client ever sends: never `entryPrice`, `size`, or a
+ * `verified` flag. The backend resolves ownership, fetches the
+ * authoritative position, and builds the immutable snapshot itself — a
+ * client-supplied snapshot would defeat the entire point of "verified"
+ * (see docs/DECISIONS.md, "Client Is Never the Snapshot Source of
+ * Truth"). Omitting `positionId` (or leaving it undefined) creates a
+ * normal Post.
+ */
+export interface CreatePostInput {
+  body: string;
+  positionId?: string;
+}
+
 export interface Comment {
   id: ID;
   postId: ID;
   authorId: ID;
   body: string;
   createdAt: ISODateString;
+}
+
+/**
+ * The API/rendering shape of a comment — `author` expanded (same
+ * "normalized entity vs. expanded read shape" split as `Post`/`FeedItem`).
+ * `canDelete` is server-computed — whether the *authenticated viewer*
+ * (not necessarily anyone reading these docs) authored this comment.
+ * The client never derives ownership itself by comparing ids: it has no
+ * reliable local copy of "my own user id" (`authStore.user` stays
+ * `null` until a real backend exists — see docs/WALLET.md), and even if
+ * it did, deriving an authorization decision client-side would just be
+ * a UI convenience, never the actual security boundary (the backend
+ * must independently reject an unauthorized delete regardless of what
+ * the client shows) — see docs/DECISIONS.md.
+ */
+export interface CommentItem {
+  id: ID;
+  postId: ID;
+  author: User;
+  body: string;
+  createdAt: ISODateString;
+  canDelete: boolean;
+}
+
+/** `postId` travels in the URL path (`endpoints.comments`), not the body. */
+export interface CreateCommentInput {
+  body: string;
+}
+
+export interface LikeResult {
+  liked: boolean;
+  likeCount: number;
+}
+
+export interface FollowResult {
+  following: boolean;
+  followerCount: number;
+}
+
+/**
+ * The expanded profile shape `GET /users/:id` returns — `User`'s public
+ * fields plus social counts and the viewer-relative `isFollowing`. Never
+ * includes anything private (wallet balance, email, auth identifiers)
+ * — see docs/DECISIONS.md.
+ */
+export interface UserProfile extends User {
+  bio: string | null;
+  followerCount: number;
+  followingCount: number;
+  /** Server-computed, never counted from a locally-loaded page — see
+   * docs/DECISIONS.md ("Social Counters Are Server Fields"). */
+  postCount: number;
+  callCount: number;
+  isFollowing: boolean;
+  /** Server-computed: true when this profile belongs to the
+   * authenticated viewer themselves — same reasoning as `isFollowing`/
+   * `CommentItem.canDelete`: the client has no reliable local copy of
+   * "my own user id" to compare against (see docs/DECISIONS.md), so
+   * "is this me?" is answered server-side, not derived client-side. */
+  isSelf: boolean;
+  /** Trading Volume — the exact same metric/definition as Sprint 10's
+   * Leaderboard (`LeaderboardMetric`, `name: 'volume'`), never a
+   * separately-defined "profit" or "PnL" figure — see
+   * docs/DECISIONS.md ("Profile Trading Metric Matches Leaderboard's
+   * Definition Exactly"). `null` when unavailable — never estimated. */
+  tradingVolume: number | null;
+  /** This user's Sprint 10 leaderboard rank, or `null` if unranked.
+   * Never computed client-side from a partial leaderboard page. */
+  leaderboardRank: number | null;
+}
+
+/** Sprint 11: only `displayName`/`bio` are editable. Username (`handle`)
+ * has no established rename flow anywhere in this codebase and no
+ * backend to validate format/uniqueness against, and avatar upload has
+ * no storage mechanism installed — both are left unimplemented rather
+ * than half-built, per this project's standing "don't invent
+ * infrastructure a sprint doesn't need" principle — see
+ * docs/DECISIONS.md. */
+export interface UpdateProfileInput {
+  displayName: string;
+  bio: string;
+}
+
+/**
+ * One row of a Followers/Following list — a smaller shape than
+ * `UserProfile` (no bio/counts), since a list of dozens of rows only
+ * ever needs enough to render a compact row + Follow button. Same
+ * viewer-relative-fields-are-server-computed rule as everywhere else.
+ */
+export interface FollowListItem {
+  user: Pick<User, 'id' | 'handle' | 'displayName' | 'avatarUrl'>;
+  isFollowing: boolean;
+  isSelf: boolean;
 }
 
 /**
@@ -140,6 +273,11 @@ export type MarketListItem =
  * objects (not just ids) since that's what a feed response realistically
  * returns. `Post` (above) stays the normalized DB-shaped entity — see
  * docs/DATABASE.md and docs/API.md.
+ *
+ * `liked` is server-computed and viewer-relative (Sprint 9) — whether
+ * *the authenticated requester* has liked this post, not a fact about
+ * the post itself, which is exactly why it lives here and not on `Post`.
+ * Same reasoning as `CommentItem.canDelete` — see docs/DECISIONS.md.
  */
 export interface FeedItem {
   id: ID;
@@ -149,5 +287,41 @@ export interface FeedItem {
   positionSnapshot: PositionSnapshot | null;
   likeCount: number;
   commentCount: number;
+  liked: boolean;
   createdAt: ISODateString;
+}
+
+/**
+ * Market Detail's richer shape — every field `MarketSummary` has, plus
+ * ones only a full detail page needs (`rules`, `openedAt`). A superset
+ * rather than a sibling type, so anything that only needs summary
+ * fields (`MarketAttachment`, `MarketCard`) still works unchanged when
+ * handed a `MarketDetail` — see docs/DECISIONS.md (Market Detail
+ * rebuild).
+ */
+export interface MarketDetail extends MarketSummary {
+  rules: string | null;
+  openedAt: ISODateString | null;
+  /** Only meaningful once `resolved` is true — the settled outcome,
+   * shown in the "Resolution" section. `null` while unresolved, or if a
+   * resolved market's outcome genuinely isn't known yet — see
+   * docs/DECISIONS.md (Sprint 5). */
+  resolvedOutcome: Outcome | null;
+}
+
+/**
+ * One row in a market's Top Holders list — a user's current binary
+ * position size in this specific market, for display only. Distinct
+ * from `Position` (`types/market.ts`), which is a full trading record;
+ * this is the read-only, other-people's-holdings view Market Detail
+ * shows, closer to Polymarket's own public "Positions" list than to our
+ * own position-tracking model.
+ */
+export interface MarketHolder {
+  id: ID;
+  displayName: string;
+  handle: string;
+  avatarUrl: string | null;
+  outcome: Outcome;
+  shares: number;
 }

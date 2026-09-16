@@ -1,3 +1,10 @@
+// Polyfills the Privy Expo SDK needs (APIs it assumes exist that React
+// Native doesn't provide) — must load before anything that might import
+// `@privy-io/expo` transitively, so first in the file, before even
+// `global.css` — see docs/WALLET.md.
+import 'fast-text-encoding';
+import 'react-native-get-random-values';
+import '@ethersproject/shims';
 import './global.css';
 import '@/app/config/nativewindInterop';
 import { StatusBar } from 'expo-status-bar';

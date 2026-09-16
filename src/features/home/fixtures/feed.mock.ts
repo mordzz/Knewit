@@ -82,6 +82,7 @@ const BASE_ITEMS: Omit<FeedItem, 'id' | 'createdAt'>[] = [
     },
     likeCount: 24,
     commentCount: 8,
+    liked: false,
   },
   {
     author: AUTHORS.maya,
@@ -90,6 +91,7 @@ const BASE_ITEMS: Omit<FeedItem, 'id' | 'createdAt'>[] = [
     positionSnapshot: null,
     likeCount: 3,
     commentCount: 1,
+    liked: false,
   },
   {
     author: AUTHORS.theo,
@@ -104,6 +106,7 @@ const BASE_ITEMS: Omit<FeedItem, 'id' | 'createdAt'>[] = [
     },
     likeCount: 56,
     commentCount: 19,
+    liked: false,
   },
   {
     author: AUTHORS.aria,
@@ -112,6 +115,7 @@ const BASE_ITEMS: Omit<FeedItem, 'id' | 'createdAt'>[] = [
     positionSnapshot: null,
     likeCount: 11,
     commentCount: 4,
+    liked: false,
   },
   {
     author: AUTHORS.jordan,
@@ -126,6 +130,7 @@ const BASE_ITEMS: Omit<FeedItem, 'id' | 'createdAt'>[] = [
     },
     likeCount: 18,
     commentCount: 6,
+    liked: false,
   },
   {
     author: AUTHORS.maya,
@@ -134,8 +139,17 @@ const BASE_ITEMS: Omit<FeedItem, 'id' | 'createdAt'>[] = [
     positionSnapshot: null,
     likeCount: 41,
     commentCount: 12,
+    liked: false,
   },
 ];
+
+function hashString(value: string): number {
+  let hash = 0;
+  for (let i = 0; i < value.length; i += 1) {
+    hash = (hash * 31 + value.charCodeAt(i)) | 0;
+  }
+  return Math.abs(hash);
+}
 
 /** Deterministic, id-unique feed built by cycling the templates above. */
 export function buildMockFeed(size: number): FeedItem[] {
@@ -147,4 +161,80 @@ export function buildMockFeed(size: number): FeedItem[] {
       createdAt: new Date(Date.now() - index * 45 * 60_000).toISOString(),
     };
   });
+}
+
+/** Single-item lookup for `getPostById`'s dev fallback (Post/Call
+ * Detail) — picks a deterministic template by id/seed, same pattern as
+ * `markets.mock.ts::pickMockMarketTemplate`, so opening different mock
+ * post ids shows different template content instead of always the
+ * first one. */
+export function pickMockFeedItem(id: string): FeedItem {
+  const base = BASE_ITEMS[hashString(id) % BASE_ITEMS.length];
+  return { ...base, id, createdAt: new Date(Date.now() - 3 * 60 * 60_000).toISOString() };
+}
+
+/**
+ * Dev-mock fallback for `feedService.ts::getTrendingCalls`. Sorts the
+ * same mock items by `likeCount + commentCount * 2` — a simple,
+ * deterministic stand-in **for this local fixture only**, not a claim
+ * about the real ranking algorithm, which is a backend responsibility
+ * (`GET /feed/trending`) — see docs/DECISIONS.md ("Feed Ranking Is a
+ * Backend Responsibility; Client Never Reorders Real Data").
+ */
+export function buildMockTrendingCalls(limit: number): FeedItem[] {
+  return buildMockFeed(BASE_ITEMS.length)
+    .slice()
+    .sort((a, b) => b.likeCount + b.commentCount * 2 - (a.likeCount + a.commentCount * 2))
+    .slice(0, limit);
+}
+
+const MOCK_USER_CONTENT_PAGE_SIZE = 3;
+
+/**
+ * Dev-mock fallback for Profile's Posts/Calls tabs
+ * (`postService.ts::getUserPosts`/`getUserCalls`). Filters the same
+ * `BASE_ITEMS` templates by `positionSnapshot` presence (a Post has
+ * none, a Call does — see docs/SOCIAL-FEATURE.md) and reassigns
+ * `author` to a profile matching `userId`, so the mock content visibly
+ * belongs to whichever profile is being viewed rather than one of the
+ * feed's own fixed sample authors.
+ */
+export function buildMockUserContent(
+  userId: string,
+  kind: 'posts' | 'calls',
+  cursor?: string
+): FeedItem[] {
+  const filtered = BASE_ITEMS.filter((item) =>
+    kind === 'calls' ? item.positionSnapshot !== null : item.positionSnapshot === null
+  );
+  if (filtered.length === 0) return [];
+
+  const start = cursor ? Number(cursor) : 0;
+  const author = {
+    id: userId,
+    handle: userId === 'me' ? 'you' : userId,
+    displayName: userId === 'me' ? 'You' : `User ${userId}`,
+    avatarUrl: null,
+    walletAddress: null,
+  };
+
+  return Array.from(
+    { length: Math.min(MOCK_USER_CONTENT_PAGE_SIZE, filtered.length - start) },
+    (_, index) => {
+      const globalIndex = start + index;
+      const base = filtered[globalIndex % filtered.length];
+      return {
+        ...base,
+        author,
+        id: `mock-${kind}-${userId}-${globalIndex}`,
+        createdAt: new Date(Date.now() - (globalIndex + 1) * 6 * 3_600_000).toISOString(),
+      };
+    }
+  );
+}
+
+export function mockUserContentTotal(kind: 'posts' | 'calls'): number {
+  return BASE_ITEMS.filter((item) =>
+    kind === 'calls' ? item.positionSnapshot !== null : item.positionSnapshot === null
+  ).length;
 }

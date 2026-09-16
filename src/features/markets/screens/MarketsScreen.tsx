@@ -4,14 +4,20 @@ import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { Screen } from '@/components/layout/Screen';
 import { EmptyState } from '@/components/feedback/EmptyState';
 import { ErrorState } from '@/components/feedback/ErrorState';
-import { CategoryTabs } from '@/features/markets/components/CategoryTabs';
+import { TabRow, TabRowOption } from '@/components/ui/TabRow';
 import { MarketCard, MarketCardSkeleton } from '@/features/markets/components/MarketCard';
 import { useMarkets } from '@/features/markets/hooks/useMarkets';
 import { colors } from '@/theme';
+import { KNOWN_CATEGORIES } from '@/types/common';
 import type { MainTabParamList } from '@/types/navigation';
 import type { MarketListItem } from '@/types/social';
 
 const SKELETON_ROWS = [0, 1, 2, 3];
+
+/** Trending first (the default), then Polymarket's own taxonomy. */
+const CATEGORY_OPTIONS: TabRowOption<string>[] = ['Trending', ...KNOWN_CATEGORIES].map(
+  (category) => ({ key: category, label: category })
+);
 
 function itemKey(item: MarketListItem): string {
   return item.kind === 'market' ? item.market.id : item.group.id;
@@ -42,7 +48,9 @@ export function MarketsScreen() {
     [openMarket]
   );
 
-  const header = <CategoryTabs value={category} onChange={setCategory} />;
+  const header = (
+    <TabRow options={CATEGORY_OPTIONS} value={category} onChange={setCategory} scroll />
+  );
 
   if (markets.status === 'pending') {
     return (

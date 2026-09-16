@@ -2,17 +2,16 @@ import { memo } from 'react';
 import { Pressable, View } from 'react-native';
 import { Text } from '@/components/ui/Text';
 import { Avatar } from '@/components/ui/Avatar';
-import { Icon } from '@/components/ui/Icon';
-import { LikeButton } from '@/features/home/components/LikeButton';
 import { MarketAttachment } from '@/features/home/components/MarketAttachment';
+import { SocialActionBar } from '@/features/home/components/SocialActionBar';
 import { formatRelativeTime } from '@/utils/formatRelativeTime';
-import { formatCompactNumber } from '@/utils/formatNumber';
 import type { FeedItem } from '@/types/social';
 
 export interface CallCardProps {
   item: FeedItem;
   onOpenMarket: (marketId: string) => void;
   onOpenAuthor: (userId: string) => void;
+  onOpenPost: (postId: string) => void;
 }
 
 /**
@@ -23,10 +22,21 @@ export interface CallCardProps {
  * a position-backed Call — with the MarketAttachment's Verified badge —
  * when it isn't. There is deliberately no separate PostCard component;
  * see docs/DECISIONS.md.
+ *
+ * The whole row opens Post/Call Detail (Sprint 9) — the avatar/author
+ * name and the Market Attachment are their own nested `Pressable`s with
+ * their own destinations (author profile, Market Detail), which React
+ * Native resolves correctly (only the innermost pressable under the
+ * touch fires), so they don't fight this outer one.
  */
-function CallCardComponent({ item, onOpenMarket, onOpenAuthor }: CallCardProps) {
+function CallCardComponent({ item, onOpenMarket, onOpenAuthor, onOpenPost }: CallCardProps) {
   return (
-    <View className="flex-row gap-3 border-b border-border px-4 py-3">
+    <Pressable
+      onPress={() => onOpenPost(item.id)}
+      className="flex-row gap-3 border-b border-border px-4 py-3 active:bg-surface"
+      accessibilityRole="button"
+      accessibilityLabel={`Open post by ${item.author.displayName}`}
+    >
       <Pressable
         onPress={() => onOpenAuthor(item.author.id)}
         accessibilityRole="button"
@@ -65,19 +75,15 @@ function CallCardComponent({ item, onOpenMarket, onOpenAuthor }: CallCardProps) 
           />
         ) : null}
 
-        <View className="mt-3 flex-row items-center gap-6">
-          <LikeButton count={item.likeCount} />
-          <View className="min-h-8 flex-row items-center gap-1.5">
-            <Icon name="chatbubble-outline" size={18} color="textTertiary" />
-            {item.commentCount > 0 ? (
-              <Text variant="caption" color="textTertiary">
-                {formatCompactNumber(item.commentCount)}
-              </Text>
-            ) : null}
-          </View>
-        </View>
+        <SocialActionBar
+          postId={item.id}
+          liked={item.liked}
+          likeCount={item.likeCount}
+          commentCount={item.commentCount}
+          onPressComment={() => onOpenPost(item.id)}
+        />
       </View>
-    </View>
+    </Pressable>
   );
 }
 

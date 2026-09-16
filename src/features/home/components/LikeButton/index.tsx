@@ -1,30 +1,30 @@
-import { useState } from 'react';
 import { Pressable } from 'react-native';
 import { Icon } from '@/components/ui/Icon';
 import { Text } from '@/components/ui/Text';
 import { formatCompactNumber } from '@/utils/formatNumber';
 
 export interface LikeButtonProps {
-  initialLiked?: boolean;
+  liked: boolean;
   count: number;
+  onPress: () => void;
+  disabled?: boolean;
 }
 
 /**
- * Local optimistic toggle only — no backend exists yet to persist a like
- * (see docs/API.md `POST /calls/:id/like`). Wiring a real mutation is a
- * later-sprint follow-up; this establishes the interaction foundation.
+ * Purely presentational — real like/unlike state and the mutation live
+ * in `useToggleLike` (Sprint 9), owned by whichever screen renders this
+ * (`SocialActionBar`). `disabled` covers the brief window a mutation is
+ * in flight, so a rapid double-tap can't fire two requests.
  */
-export function LikeButton({ initialLiked = false, count }: LikeButtonProps) {
-  const [liked, setLiked] = useState(initialLiked);
-  const displayCount = liked && !initialLiked ? count + 1 : count;
-
+export function LikeButton({ liked, count, onPress, disabled }: LikeButtonProps) {
   return (
     <Pressable
-      onPress={() => setLiked((prev) => !prev)}
+      onPress={onPress}
+      disabled={disabled}
       className="min-h-8 flex-row items-center gap-1.5 py-1 pr-3"
       accessibilityRole="button"
       accessibilityLabel={liked ? 'Unlike' : 'Like'}
-      accessibilityState={{ selected: liked }}
+      accessibilityState={{ selected: liked, disabled }}
       hitSlop={8}
     >
       <Icon
@@ -32,9 +32,9 @@ export function LikeButton({ initialLiked = false, count }: LikeButtonProps) {
         size={18}
         color={liked ? 'no' : 'textTertiary'}
       />
-      {displayCount > 0 ? (
+      {count > 0 ? (
         <Text variant="caption" color={liked ? 'no' : 'textTertiary'}>
-          {formatCompactNumber(displayCount)}
+          {formatCompactNumber(count)}
         </Text>
       ) : null}
     </Pressable>

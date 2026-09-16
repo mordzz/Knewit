@@ -39,7 +39,9 @@ export type IconName =
   | 'hardware-chip-outline'
   | 'earth-outline'
   | 'apps-outline'
-  | 'layers-outline';
+  | 'layers-outline'
+  | 'time-outline'
+  | 'ellipsis-horizontal';
 
 export interface IconProps {
   name: IconName;

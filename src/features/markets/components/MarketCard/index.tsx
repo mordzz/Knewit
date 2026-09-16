@@ -39,8 +39,9 @@ export interface MarketCardProps {
  *
  * Deliberately doesn't display category at all, not even indirectly
  * via icon — `MarketVisual`'s `fallbackIcon` is fixed here rather than
- * left to its default category-derived glyph, since `CategoryTabs`
- * (above the list) is already this screen's category signal; repeating
+ * left to its default category-derived glyph, since the category tab
+ * row (`TabPills`, above the list) is already this screen's category
+ * signal; repeating
  * it per-card would be redundant. `MarketAttachment` keeps the default
  * category icon — see that component's own docs for why the two
  * differ — see docs/DECISIONS.md.

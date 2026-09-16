@@ -2,6 +2,7 @@ import { PropsWithChildren, useEffect, useState } from 'react';
 import { AppState, AppStateStatus, Platform } from 'react-native';
 import NetInfo from '@react-native-community/netinfo';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { PrivyProvider } from '@privy-io/expo';
 import {
   QueryCache,
   QueryClient,
@@ -9,6 +10,8 @@ import {
   focusManager,
   onlineManager,
 } from '@tanstack/react-query';
+import { env } from '@/app/config/env';
+import { PrivySessionBridge } from '@/app/providers/PrivySessionBridge';
 
 // Wire TanStack Query's connectivity/focus signals to React Native's own
 // APIs — by default it assumes a browser (navigator.onLine, window focus
@@ -27,8 +30,10 @@ function onAppStateChange(status: AppStateStatus) {
 }
 
 /**
- * Central place to register app-wide providers. A PrivyProvider will be
- * added here once wallet integration is implemented — see docs/WALLET.md.
+ * Central place to register app-wide providers. `PrivyProvider` is always
+ * mounted (even with an empty `appId` in local dev without credentials) so
+ * every screen can unconditionally call Privy's hooks — `isPrivyConfigured`
+ * gates actual usage instead. See docs/WALLET.md.
  */
 export function AppProviders({ children }: PropsWithChildren) {
   const [queryClient] = useState(
@@ -61,7 +66,12 @@ export function AppProviders({ children }: PropsWithChildren) {
 
   return (
     <SafeAreaProvider>
-      <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+      <QueryClientProvider client={queryClient}>
+        <PrivyProvider appId={env.privyAppId} clientId={env.privyClientId || undefined}>
+          <PrivySessionBridge />
+          {children}
+        </PrivyProvider>
+      </QueryClientProvider>
     </SafeAreaProvider>
   );
 }

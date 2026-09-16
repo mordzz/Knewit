@@ -7,60 +7,190 @@ import { Button } from '@/components/ui/Button';
 import { LoadingState } from '@/components/feedback/LoadingState';
 import { EmptyState } from '@/components/feedback/EmptyState';
 import { ErrorState } from '@/components/feedback/ErrorState';
+import { TabRow, TabRowOption } from '@/components/ui/TabRow';
 import { CallCard } from '@/features/home/components/CallCard';
-import { FeedTabs, FeedTabKey } from '@/features/home/components/FeedTabs';
+import { TrendingCallsSection } from '@/features/home/components/TrendingCallsSection';
+import { TrendingMarketsSection } from '@/features/home/components/TrendingMarketsSection';
+import { ClosingSoonSection } from '@/features/home/components/ClosingSoonSection';
+import { CategoryDiscoverySection } from '@/features/home/components/CategoryDiscoverySection';
 import { useHomeFeed } from '@/features/home/hooks/useHomeFeed';
+import { useFollowingFeed } from '@/features/home/hooks/useFollowingFeed';
+import { useAuth } from '@/hooks/useAuth';
 import { colors } from '@/theme';
 import { formatUsd } from '@/utils/formatCurrency';
 import type { FeedItem } from '@/types/social';
 
+type FeedTabKey = 'forYou' | 'following';
+
+const FEED_TAB_OPTIONS: TabRowOption<FeedTabKey>[] = [
+  { key: 'forYou', label: 'For You' },
+  { key: 'following', label: 'Following' },
+];
+
 /**
- * The primary social feed — see docs/PRODUCT-FLOW.md. Rows are full-width
- * and borderless with a hairline divider (X-style), not gapped cards —
- * `CallCard` owns its own padding/divider, so this screen adds no
- * horizontal padding of its own.
+ * The primary social feed and discovery surface — see
+ * docs/PRODUCT-FLOW.md and docs/DECISIONS.md ("Home Feed Becomes a
+ * Discovery Surface"). "For You" is rule-based discovery (trending
+ * Calls/markets, category browsing, closing-soon markets, then the
+ * backend-ranked `/feed` itself) — explicitly **not** an AI/ML
+ * recommendation system, see docs/DECISIONS.md. "Following" shows only
+ * real content from accounts the viewer follows (Sprint 9's Follow
+ * relationships) with no dev-mock fallback, since fabricating it would
+ * misrepresent a real social relationship — see docs/DECISIONS.md.
  */
 export function HomeScreen() {
   const navigation = useNavigation();
+  const { isAuthenticated } = useAuth();
+  const [activeTab, setActiveTab] = useState<FeedTabKey>('forYou');
   const feed = useHomeFeed();
-  const [activeTab, setActiveTab] = useState<FeedTabKey>('trending');
+  const followingFeed = useFollowingFeed();
 
   const openMarket = useCallback(
     (marketId: string) => navigation.navigate('MarketDetail', { marketId }),
     [navigation]
   );
   const openAuthor = useCallback(
-    (userId: string) => navigation.navigate('UserProfile', { userId }),
+    (userId: string) => navigation.navigate('Profile', { userId }),
+    [navigation]
+  );
+  const openPost = useCallback(
+    (postId: string) => navigation.navigate('PostDetail', { postId }),
+    [navigation]
+  );
+  const openCategory = useCallback(
+    (category: string) =>
+      navigation.navigate('Main', { screen: 'MarketsTab', params: { category } }),
+    [navigation]
+  );
+  const openSearch = useCallback(
+    () => navigation.navigate('Main', { screen: 'SearchTab' }),
     [navigation]
   );
 
   const renderItem = useCallback(
     ({ item }: { item: FeedItem }) => (
-      <CallCard item={item} onOpenMarket={openMarket} onOpenAuthor={openAuthor} />
+      <CallCard
+        item={item}
+        onOpenMarket={openMarket}
+        onOpenAuthor={openAuthor}
+        onOpenPost={openPost}
+      />
     ),
-    [openMarket, openAuthor]
+    [openMarket, openAuthor, openPost]
   );
 
+  const tabs = <TabRow options={FEED_TAB_OPTIONS} value={activeTab} onChange={setActiveTab} />;
+
   if (activeTab === 'following') {
+    if (!isAuthenticated) {
+      return (
+        <Screen className="px-0" edges={['top']}>
+          <Header />
+          {tabs}
+          <EmptyState
+            icon="person-outline"
+            title="Sign in to see your Following feed"
+            message="Calls from accounts you follow will show up here once you're signed in."
+            actionLabel="Connect Wallet"
+            onAction={() => navigation.navigate('Auth')}
+          />
+        </Screen>
+      );
+    }
+
+    if (followingFeed.status === 'pending') {
+      return (
+        <Screen className="px-0 pb-4" edges={['top']}>
+          <Header />
+          {tabs}
+          <View className="px-4 pt-4">
+            <LoadingState rows={4} />
+          </View>
+        </Screen>
+      );
+    }
+
+    if (followingFeed.status === 'error') {
+      return (
+        <Screen className="px-0" edges={['top']}>
+          <Header />
+          {tabs}
+          <ErrorState
+            message="Couldn't load your Following feed."
+            onRetry={() => followingFeed.refetch()}
+          />
+        </Screen>
+      );
+    }
+
+    const followingItems = followingFeed.data.pages.flatMap((page) => page.items);
+
     return (
-      <Screen className="px-0" edges={['top']}>
-        <Header />
-        <FeedTabs value={activeTab} onChange={setActiveTab} />
-        <EmptyState
-          icon="search"
-          title="Follow people to see them here"
-          message="Calls from accounts you follow will show up in this tab."
+      <Screen edges={['top']} className="px-0">
+        <FlatList
+          className="flex-1"
+          data={followingItems}
+          keyExtractor={(item) => item.id}
+          renderItem={renderItem}
+          ListHeaderComponent={
+            <>
+              <Header />
+              {tabs}
+            </>
+          }
+          refreshControl={
+            <RefreshControl
+              refreshing={followingFeed.isRefetching && !followingFeed.isFetchingNextPage}
+              onRefresh={() => followingFeed.refetch()}
+              tintColor={colors.textSecondary}
+            />
+          }
+          onEndReachedThreshold={0.4}
+          onEndReached={() => {
+            if (followingFeed.hasNextPage && !followingFeed.isFetchingNextPage) {
+              followingFeed.fetchNextPage();
+            }
+          }}
+          ListEmptyComponent={
+            <EmptyState
+              icon="person-outline"
+              title="Your feed is quiet"
+              message="Follow traders and creators to see their Calls here."
+              actionLabel="Find people to follow"
+              onAction={openSearch}
+            />
+          }
+          ListFooterComponent={
+            followingFeed.isFetchingNextPage ? (
+              <View className="py-4">
+                <ActivityIndicator color={colors.textSecondary} />
+              </View>
+            ) : null
+          }
         />
       </Screen>
     );
   }
 
+  const discoverySections = (
+    <>
+      <TrendingCallsSection onOpenPost={openPost} />
+      <TrendingMarketsSection onOpenMarket={openMarket} />
+      <CategoryDiscoverySection onSelectCategory={openCategory} />
+      <ClosingSoonSection onOpenMarket={openMarket} />
+      <Text variant="bodyStrong" className="px-4 pb-1 pt-2">
+        Latest
+      </Text>
+    </>
+  );
+
   if (feed.status === 'pending') {
     return (
       <Screen className="px-0 pb-4" edges={['top']}>
         <Header />
-        <FeedTabs value={activeTab} onChange={setActiveTab} />
-        <View className="px-4 pt-4">
+        {tabs}
+        {discoverySections}
+        <View className="px-4 pt-2">
           <LoadingState rows={4} />
         </View>
       </Screen>
@@ -71,7 +201,8 @@ export function HomeScreen() {
     return (
       <Screen className="px-0" edges={['top']}>
         <Header />
-        <FeedTabs value={activeTab} onChange={setActiveTab} />
+        {tabs}
+        {discoverySections}
         <ErrorState message="Couldn't load your feed." onRetry={() => feed.refetch()} />
       </Screen>
     );
@@ -89,7 +220,8 @@ export function HomeScreen() {
         ListHeaderComponent={
           <>
             <Header />
-            <FeedTabs value={activeTab} onChange={setActiveTab} />
+            {tabs}
+            {discoverySections}
           </>
         }
         refreshControl={

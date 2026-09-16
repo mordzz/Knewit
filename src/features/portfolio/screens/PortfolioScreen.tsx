@@ -6,6 +6,7 @@ import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Icon } from '@/components/ui/Icon';
 import { EmptyState } from '@/components/feedback/EmptyState';
+import { WalletAddress } from '@/features/wallet/components/WalletAddress';
 import { useWallet } from '@/hooks/useWallet';
 
 /**
@@ -24,7 +25,11 @@ export function PortfolioScreen() {
       <Card contentClassName="flex-row items-center gap-3">
         <Icon name="wallet-outline" color={isConnected ? 'yes' : 'textTertiary'} />
         <View className="flex-1 gap-0.5">
-          <Text variant="bodyStrong">{isConnected ? address : 'No wallet connected'}</Text>
+          {isConnected && address ? (
+            <WalletAddress address={address} compact />
+          ) : (
+            <Text variant="bodyStrong">No wallet connected</Text>
+          )}
           <Text variant="caption" color="textSecondary">
             {isConnected ? 'Connected' : 'Connect to see your positions'}
           </Text>
