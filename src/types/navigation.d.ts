@@ -27,10 +27,11 @@ export type MainTabParamList = {
 export type AppParamList = {
   Main: NavigatorScreenParams<MainTabParamList> | undefined;
   Auth: undefined;
-  /** `intent` only changes the composer's default emphasis (Post vs
-   * Call) — see docs/DECISIONS.md; the underlying content model is
-   * unified either way (docs/SOCIAL-FEATURE.md). */
-  CreateCall: { intent?: 'post' | 'call' } | undefined;
+  /** The Callout composer — no params: every callout requires an
+   * attached market position (only buyers can post one), enforced by
+   * the screen itself — see docs/DECISIONS.md ("Black Glass for Callout
+   * Surfaces", superseding the earlier Post/Call `intent` choice). */
+  CreateCall: undefined;
   HomeFeed: undefined;
   Markets: undefined;
   Search: undefined;

@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Animated, Dimensions, Modal, Pressable, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { GlassSurface } from '@/components/ui/GlassSurface';
+import { colors } from '@/theme';
 
 export interface BottomSheetProps {
   visible: boolean;
@@ -15,8 +15,17 @@ const SCREEN_HEIGHT = Dimensions.get('window').height;
  * A foundation-level bottom sheet: slide-up + backdrop, no drag/snap
  * points. Built on the built-in Modal + Animated APIs to avoid pulling in
  * react-native-gesture-handler/reanimated-driven gestures before a real
- * need for them exists — see docs/DECISIONS.md. Glass surface (top
- * corners only) — see docs/DESIGN.md.
+ * need for them exists — see docs/DECISIONS.md.
+ *
+ * Deliberately does **not** use `GlassSurface` — every other card/panel
+ * in the app is real glassmorphism (blur + translucency), but this sheet
+ * specifically stays a solid, opaque panel (`colors.surfaceElevated` +
+ * a plain top border), by request — see docs/DECISIONS.md
+ * ("Glassmorphism Restored Outside BottomSheet"). Building its own
+ * surface directly (rather than adding a third `GlassSurface` tone)
+ * keeps that scoping explicit in the code, not just in a prop default
+ * someone could change later without noticing this sheet was meant to
+ * be the one exception.
  */
 export function BottomSheet({ visible, onClose, children }: BottomSheetProps) {
   const [translateY] = useState(() => new Animated.Value(SCREEN_HEIGHT));
@@ -38,21 +47,22 @@ export function BottomSheet({ visible, onClose, children }: BottomSheetProps) {
       >
         <Animated.View className="w-full" style={{ transform: [{ translateY }] }}>
           <Pressable onPress={(e) => e.stopPropagation()}>
-            <GlassSurface
+            <View
+              className="p-6"
               style={{
+                backgroundColor: colors.surfaceElevated,
                 borderTopLeftRadius: 20,
                 borderTopRightRadius: 20,
-                borderBottomLeftRadius: 0,
-                borderBottomRightRadius: 0,
+                borderWidth: 1,
+                borderColor: colors.border,
                 borderBottomWidth: 0,
               }}
-              contentClassName="p-6"
             >
               <SafeAreaView edges={['bottom']}>
                 <View className="mb-3 h-1 w-9 self-center rounded-full bg-white/20" />
                 {children}
               </SafeAreaView>
-            </GlassSurface>
+            </View>
           </Pressable>
         </Animated.View>
       </Pressable>

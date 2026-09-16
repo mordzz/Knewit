@@ -1,7 +1,7 @@
 import { apiRequest } from '@/services/api/client';
 import { endpoints } from '@/services/api/endpoints';
 import { env } from '@/app/config/env';
-import { buildMockFeed, buildMockTrendingCalls } from '@/features/home/fixtures/feed.mock';
+import { buildMockFeed } from '@/features/home/fixtures/feed.mock';
 import type { Paginated } from '@/types/common';
 import type { FeedItem } from '@/types/social';
 
@@ -66,31 +66,6 @@ export async function getFollowingFeed(cursor?: string): Promise<Paginated<FeedI
         error
       );
       return { items: [], nextCursor: null };
-    }
-    throw error;
-  }
-}
-
-const TRENDING_CALLS_LIMIT = 6;
-
-/**
- * A small, non-paginated set of currently-trending Posts/Calls for
- * Home's horizontal "Trending Calls" strip — ranking is a backend
- * responsibility (see docs/DECISIONS.md, "Feed Ranking Is a Backend
- * Responsibility"); this call never reorders what it receives. Dev-mock
- * fallback uses a documented, deterministic local sort — see
- * `feed.mock.ts::buildMockTrendingCalls`.
- */
-export async function getTrendingCalls(): Promise<FeedItem[]> {
-  try {
-    return await apiRequest<FeedItem[]>(`${endpoints.feedTrending}?limit=${TRENDING_CALLS_LIMIT}`);
-  } catch (error) {
-    if (env.isDev) {
-      console.warn(
-        '[feedService] backend unreachable — using a local mock trending sort for development only.',
-        error
-      );
-      return buildMockTrendingCalls(TRENDING_CALLS_LIMIT);
     }
     throw error;
   }

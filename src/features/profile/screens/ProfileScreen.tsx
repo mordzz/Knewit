@@ -6,8 +6,8 @@ import { Text } from '@/components/ui/Text';
 import { Icon } from '@/components/ui/Icon';
 import { Avatar } from '@/components/ui/Avatar';
 import { Button } from '@/components/ui/Button';
-import { Card } from '@/components/ui/Card';
 import { Divider } from '@/components/ui/Divider';
+import { BottomSheet } from '@/components/ui/BottomSheet';
 import { TabRow, TabRowOption } from '@/components/ui/TabRow';
 import { LoadingState } from '@/components/feedback/LoadingState';
 import { EmptyState } from '@/components/feedback/EmptyState';
@@ -58,6 +58,7 @@ export function ProfileScreen() {
 
   const isOwnProfileRoute = userId === undefined;
   const needsSignIn = isOwnProfileRoute && !isAuthenticated;
+  const [settingsVisible, setSettingsVisible] = useState(false);
 
   const profile = useProfile(userId, !needsSignIn);
   const toggleFollow = useFollowToggle();
@@ -163,12 +164,14 @@ export function ProfileScreen() {
       <View className="flex-row items-start justify-between">
         <Avatar uri={user.avatarUrl} fallbackLabel={user.displayName} size={64} />
         {user.isSelf ? (
-          <Button
-            label="Edit Profile"
-            variant="secondary"
-            onPress={() => navigation.navigate('EditProfile')}
-            className="mt-1"
-          />
+          <Pressable
+            onPress={() => setSettingsVisible(true)}
+            className="mt-1 h-10 w-10 items-center justify-center rounded-full border border-border"
+            accessibilityRole="button"
+            accessibilityLabel="Settings"
+          >
+            <Icon name="settings-outline" size={20} color="textSecondary" />
+          </Pressable>
         ) : (
           <Button
             label={user.isFollowing ? 'Following' : 'Follow'}
@@ -220,7 +223,7 @@ export function ProfileScreen() {
       {user.isSelf ? (
         <Pressable
           onPress={() => navigation.navigate('Wallet')}
-          className="flex-row items-center gap-3 rounded-xl border border-border p-3 active:opacity-90"
+          className="flex-row items-center gap-3 border-b border-border py-3 active:opacity-90"
           accessibilityRole="button"
           accessibilityLabel="Open Wallet"
         >
@@ -234,29 +237,29 @@ export function ProfileScreen() {
           <Icon name="chevron-forward" size={18} color="textTertiary" />
         </Pressable>
       ) : user.walletAddress ? (
-        <Card contentClassName="gap-1">
+        <View className="gap-1 border-b border-border py-3">
           <Text variant="caption" color="textSecondary">
             Wallet
           </Text>
           <WalletAddress address={user.walletAddress} />
-        </Card>
+        </View>
       ) : null}
 
       {user.tradingVolume != null ? (
-        <Card contentClassName="gap-2">
+        <View className="gap-2 border-b border-border py-3">
           <Text variant="bodyStrong">Trading Performance</Text>
           <View className="flex-row justify-between">
             <StatColumn label="Trading Volume" value={formatUsd(user.tradingVolume)} />
             <StatColumn label="Calls" value={String(user.callCount)} />
             <StatColumn label="Posts" value={String(user.postCount)} />
           </View>
-        </Card>
+        </View>
       ) : null}
 
       {user.leaderboardRank != null ? (
         <Pressable
           onPress={() => navigation.navigate('Main', { screen: 'LeaderboardTab' })}
-          className="flex-row items-center justify-between rounded-xl border border-border p-3 active:opacity-90"
+          className="flex-row items-center justify-between border-b border-border py-3 active:opacity-90"
           accessibilityRole="button"
           accessibilityLabel={`Leaderboard rank ${user.leaderboardRank}`}
         >
@@ -271,7 +274,7 @@ export function ProfileScreen() {
       walletConnected &&
       positions.status === 'success' &&
       positions.data.length > 0 ? (
-        <Card contentClassName="gap-2">
+        <View className="gap-2 border-b border-border py-3">
           <Text variant="bodyStrong">Wallet Activity</Text>
           {positions.data.map((position) => (
             <View key={position.id} className="flex-row items-center justify-between">
@@ -297,7 +300,7 @@ export function ProfileScreen() {
               </View>
             </View>
           ))}
-        </Card>
+        </View>
       ) : null}
 
       <Divider />
@@ -372,7 +375,62 @@ export function ProfileScreen() {
           ) : null
         }
       />
+
+      <BottomSheet visible={settingsVisible} onClose={() => setSettingsVisible(false)}>
+        <View className="gap-3">
+          <Text variant="heading">Settings</Text>
+          <SettingsRow
+            icon="person-outline"
+            label="Edit Profile"
+            onPress={() => {
+              setSettingsVisible(false);
+              navigation.navigate('EditProfile');
+            }}
+          />
+          <SettingsRow
+            icon="wallet-outline"
+            label="Wallet"
+            onPress={() => {
+              setSettingsVisible(false);
+              navigation.navigate('Wallet');
+            }}
+          />
+        </View>
+      </BottomSheet>
     </Screen>
+  );
+}
+
+/**
+ * Deliberately minimal — "Edit Profile" and "Wallet" are the only real
+ * destinations this app has today. Adding more rows here just to make
+ * the sheet look fuller would be inventing settings that don't exist
+ * yet — same "don't invent infrastructure a sprint doesn't need"
+ * principle as `EditProfileScreen`'s own scope (display name/bio only)
+ * — see docs/DECISIONS.md.
+ */
+function SettingsRow({
+  icon,
+  label,
+  onPress,
+}: {
+  icon: 'person-outline' | 'wallet-outline';
+  label: string;
+  onPress: () => void;
+}) {
+  return (
+    <Pressable
+      onPress={onPress}
+      className="flex-row items-center gap-3 rounded-xl border border-border p-3 active:opacity-90"
+      accessibilityRole="button"
+      accessibilityLabel={label}
+    >
+      <Icon name={icon} color="accent" />
+      <Text variant="bodyStrong" className="flex-1">
+        {label}
+      </Text>
+      <Icon name="chevron-forward" size={18} color="textTertiary" />
+    </Pressable>
   );
 }
 

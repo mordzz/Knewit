@@ -1,7 +1,6 @@
 import { Pressable, View } from 'react-native';
 import { Text } from '@/components/ui/Text';
 import { Avatar } from '@/components/ui/Avatar';
-import { GlassSurface } from '@/components/ui/GlassSurface';
 import { formatUsd } from '@/utils/formatCurrency';
 import type { LeaderboardEntry } from '@/types/leaderboard';
 
@@ -23,7 +22,7 @@ export function TopPerformers({ entries, onPressUser }: TopPerformersProps) {
   const [first, second, third] = entries;
 
   return (
-    <GlassSurface contentClassName="gap-3 p-4">
+    <View className="gap-3 border-b border-border py-3">
       <Text variant="bodyStrong" className="text-center">
         Top Performers
       </Text>
@@ -32,7 +31,7 @@ export function TopPerformers({ entries, onPressUser }: TopPerformersProps) {
         <PodiumSlot entry={first} avatarSize={60} emphasized onPress={onPressUser} />
         <PodiumSlot entry={third} avatarSize={48} onPress={onPressUser} />
       </View>
-    </GlassSurface>
+    </View>
   );
 }
 

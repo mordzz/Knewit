@@ -40,16 +40,31 @@ const spinnerColor: Record<ButtonVariant, string> = {
   ghost: colors.textSecondary,
 };
 
-// A flat saturated yellow reads as pasted-on against pure black without
-// this — see docs/DECISIONS.md. Only `primary` gets it; yes/no are
-// already high-contrast enough on their own and a glow on every button
-// variant would stop meaning anything.
-const glowStyle = {
-  shadowColor: colors.accent,
-  shadowOffset: { width: 0, height: 3 },
-  shadowOpacity: 0.35,
-  shadowRadius: 10,
-  elevation: 6,
+// Glossy, not glass: every variant keeps its own solid, opaque fill (no
+// translucency) — see docs/DECISIONS.md ("Glossy Solid Buttons",
+// superseding "Black Glass for Callout Surfaces" for buttons
+// specifically). A brief 3D-bevel border phase (light top/left, dark
+// bottom/right) was removed by request — see docs/DECISIONS.md ("Solid
+// Surfaces, No 3D Bevel") — back to one plain uniform border on every
+// variant, plus a soft drop shadow tinted with the variant's own
+// identity color on `primary`/`yes`/`no` (a plain neutral shadow on
+// `secondary`/`ghost`, which have no identity color — a colored glow on
+// a neutral button would stop meaning anything).
+const BORDER_COLOR = 'rgba(255, 255, 255, 0.16)';
+const glowColor: Record<ButtonVariant, string> = {
+  primary: colors.accent,
+  yes: colors.yes,
+  no: colors.no,
+  secondary: '#000000',
+  ghost: '#000000',
+};
+
+const glowOpacity: Record<ButtonVariant, number> = {
+  primary: 0.35,
+  yes: 0.3,
+  no: 0.3,
+  secondary: 0.25,
+  ghost: 0.18,
 };
 
 export function Button({
@@ -61,17 +76,31 @@ export function Button({
   style,
   ...rest
 }: ButtonProps) {
+  const isInactive = disabled || loading;
+
   return (
     <Pressable
-      disabled={disabled || loading}
+      disabled={isInactive}
       className={cn(
         'min-h-12 items-center justify-center rounded-md px-6 py-3',
         containerClass[variant],
-        (disabled || loading) && 'opacity-50',
+        isInactive && 'opacity-50',
         'active:opacity-85',
         className
       )}
-      style={[variant === 'primary' && !disabled ? glowStyle : null, style]}
+      style={[
+        { borderWidth: 1, borderColor: BORDER_COLOR },
+        !isInactive
+          ? {
+              shadowColor: glowColor[variant],
+              shadowOffset: { width: 0, height: 3 },
+              shadowOpacity: glowOpacity[variant],
+              shadowRadius: 10,
+              elevation: 6,
+            }
+          : null,
+        style,
+      ]}
       {...rest}
     >
       {loading ? (

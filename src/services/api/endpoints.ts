@@ -7,6 +7,7 @@ export const endpoints = {
   market: (id: string) => `/markets/${id}`,
   marketActivity: (id: string) => `/markets/${id}/activity`,
   marketHolders: (id: string) => `/markets/${id}/holders`,
+  marketPriceHistory: (id: string) => `/markets/${id}/price-history`,
   marketsTrending: '/markets/trending',
   marketsClosingSoon: '/markets/closing-soon',
   events: '/events',
@@ -23,6 +24,9 @@ export const endpoints = {
   like: (id: string) => `/calls/${id}/like`,
   comments: (postId: string) => `/calls/${postId}/comments`,
   comment: (id: string) => `/comments/${id}`,
+  commentReplies: (id: string) => `/comments/${id}/replies`,
+  commentLike: (id: string) => `/comments/${id}/like`,
+  commentShare: (id: string) => `/comments/${id}/share`,
   /** `id` accepts the literal `"me"` to resolve to the authenticated
    * caller — see docs/API.md. Used identically for all the
    * `users/:id/...` sub-resources below. */

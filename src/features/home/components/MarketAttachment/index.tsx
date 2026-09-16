@@ -1,14 +1,11 @@
 import { View, Pressable } from 'react-native';
 import { Text } from '@/components/ui/Text';
 import { Icon } from '@/components/ui/Icon';
-import { Badge } from '@/components/ui/Badge';
-import { GlassSurface } from '@/components/ui/GlassSurface';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { MarketVisual } from '@/components/ui/MarketVisual';
 import { MarketOutcomeButtons } from '@/components/ui/MarketOutcomeButtons';
-import { formatPrice } from '@/utils/formatCurrency';
-import { calculatePositionPnlPercent } from '@/utils/calculatePnl';
-import { getStatusBadge } from '@/utils/marketStatus';
+import { GlassSurface } from '@/components/ui/GlassSurface';
+import { formatUsd } from '@/utils/formatCurrency';
 import { buildMarketMetrics } from '@/utils/marketMetrics';
 import { typography } from '@/theme';
 import type { ColorToken } from '@/theme/colors';
@@ -32,27 +29,33 @@ export interface MarketAttachmentProps {
  * `MarketGroupSummary` data model, they just render it differently for
  * different contexts — see docs/DECISIONS.md.
  *
- * Layout: the market's own icon/image on the left, its question on the
- * right (wraps naturally up to 3 lines — never force-truncated to one
- * line, since clipping a market's actual question is worse than a
- * taller card) — no separate category text label; the visual alone
- * carries that signal. Trending/Closed/Resolved badges, when present,
- * sit just above the question. Below that: solid Yes/No outcome
- * buttons (`MarketOutcomeButtons`, shared with `MarketCard` so a
- * binary market without a position reads the same wherever it's
- * shown), the verified position block, or a non-binary preview when
- * the market isn't binary — then a volume/liquidity/time-remaining
- * metrics line. Rendered as a glass surface — see docs/DESIGN.md
- * "Modern Web3 Direction".
+ * Layout, per the pump.fun-style reference: a top row with **only** the
+ * market's visual and its name (the `question` — the data model has no
+ * shorter name field, wrapped up to 3 lines rather than clipped to one
+ * — a long question staying readable matters more than a fixed row
+ * height here), and the card's "point" below it. With a
+ * `positionSnapshot` that point is the two-column Position/Profit read:
+ * **Position** is the outcome the user actually picked (e.g. "Yes"),
+ * colored green/red, not a dollar figure — the pick itself is the point
+ * of a callout; **Profit** is the dollar PnL, green when ahead, red when
+ * behind, computed from real fields only. Both columns are exactly
+ * half-width so neither dominates. Without a position, it's the solid
+ * Yes/No outcome buttons (`MarketOutcomeButtons`, shared with
+ * `MarketCard` so a binary market reads the same wherever it's shown),
+ * a non-binary preview, and the volume/liquidity/time metrics footer.
+ * No status badge and no category signal on this card — see
+ * docs/DECISIONS.md.
+ *
+ * Rendered as a solid black card (`GlassSurface` `tone="dark"`) rather
+ * than the old flat panel — see docs/DECISIONS.md ("Black Glass for
+ * Callout Surfaces", superseding "Glass Surfaces Reserved for Overlays
+ * Only", and "Solid Surfaces, No 3D Bevel" for the current solid-fill-
+ * plus-plain-border look).
  */
 export function MarketAttachment({ market, positionSnapshot, onPress }: MarketAttachmentProps) {
-  const pnlPercent = positionSnapshot
-    ? calculatePositionPnlPercent(positionSnapshot, market)
-    : null;
-  const outcomeColor: ColorToken = positionSnapshot?.outcome === 'NO' ? 'no' : 'yes';
   const isBinary = market.isBinary !== false;
-  const badge = getStatusBadge(market);
   const metrics = buildMarketMetrics(market);
+  const hasPosition = positionSnapshot != null;
 
   return (
     <Pressable
@@ -61,28 +64,21 @@ export function MarketAttachment({ market, positionSnapshot, onPress }: MarketAt
       accessibilityRole="button"
       accessibilityLabel={`Open market: ${market.question}`}
     >
-      <GlassSurface contentClassName="gap-2.5 p-3">
-        <View className="flex-row items-start gap-2.5">
-          <MarketVisual imageUrl={market.imageUrl} category={market.category} />
-          <View className="flex-1 gap-1">
-            {badge ? <Badge label={badge.label} variant={badge.variant} /> : null}
-            <Text
-              variant="bodyStrong"
-              numberOfLines={1}
-              style={{ fontFamily: typography.family.bold }}
-            >
-              {market.question}
-            </Text>
-          </View>
+      <GlassSurface tone="dark" blur={false} radius={18} contentClassName="gap-3 p-3.5">
+        <View className="flex-row items-center gap-2.5">
+          <MarketVisual imageUrl={market.imageUrl} fallbackIcon="trending-up-outline" />
+          <Text
+            variant="bodyStrong"
+            numberOfLines={3}
+            className="flex-1"
+            style={{ fontFamily: typography.family.bold }}
+          >
+            {market.question}
+          </Text>
         </View>
 
-        {positionSnapshot && pnlPercent !== null ? (
-          <PositionBlock
-            snapshot={positionSnapshot}
-            market={market}
-            outcomeColor={outcomeColor}
-            pnlPercent={pnlPercent}
-          />
+        {positionSnapshot ? (
+          <PositionColumns snapshot={positionSnapshot} market={market} />
         ) : !isBinary ? (
           <MultiOutcomePreview market={market} />
         ) : (
@@ -94,7 +90,7 @@ export function MarketAttachment({ market, positionSnapshot, onPress }: MarketAt
           />
         )}
 
-        {metrics.length > 0 ? (
+        {!hasPosition && metrics.length > 0 ? (
           <Text variant="micro" color="textTertiary" numberOfLines={1}>
             {metrics.join(' · ')}
           </Text>
@@ -126,44 +122,52 @@ function MultiOutcomePreview({ market }: { market: MarketSummary }) {
   );
 }
 
-function PositionBlock({
+/**
+ * The reference's Position/Profit read, split exactly half-and-half.
+ * **Position** shows the outcome the user actually picked (`market`'s
+ * own "Yes"/"No" labels, or a custom override e.g. "Up"/"Down"), colored
+ * green/red — the callout's whole point is "here's the side I took,"
+ * not a dollar figure that duplicates the Profit column next to it.
+ * **Profit** is the dollar PnL, computed from real fields only —
+ * `snapshot.entryPrice`/`snapshot.size` plus the market's own current
+ * outcome price, never a stored, possibly-stale total. Green when
+ * positive, red when negative, with the sign carried by the prefix (the
+ * value itself is formatted absolute, so a `-` can't double up).
+ */
+function PositionColumns({
   snapshot,
   market,
-  outcomeColor,
-  pnlPercent,
 }: {
   snapshot: PositionSnapshot;
   market: MarketSummary;
-  outcomeColor: ColorToken;
-  pnlPercent: number;
 }) {
+  const labels = market.outcomeLabels ?? { yes: 'Yes', no: 'No' };
+  const outcomeColor: ColorToken = snapshot.outcome === 'YES' ? 'yes' : 'no';
+  const pickLabel = snapshot.outcome === 'YES' ? labels.yes : labels.no;
+
   const currentPrice = snapshot.outcome === 'YES' ? market.yesPrice : market.noPrice;
-  const pnlColor: ColorToken = pnlPercent >= 0 ? 'yes' : 'no';
+  const costBasis = (snapshot.entryPrice / 100) * snapshot.size;
+  const currentValue = (currentPrice / 100) * snapshot.size;
+  const profit = currentValue - costBasis;
+  const profitColor: ColorToken = profit >= 0 ? 'yes' : 'no';
 
   return (
-    <View
-      className={
-        outcomeColor === 'yes'
-          ? 'gap-1 rounded-xl bg-yes-muted p-2.5'
-          : 'gap-1 rounded-xl bg-no-muted p-2.5'
-      }
-    >
-      <Text variant="bodyStrong" color={outcomeColor}>
-        {snapshot.outcome}
-      </Text>
-      <View className="flex-row items-center justify-between">
+    <View className="flex-row items-center">
+      <View className="flex-1 gap-0.5">
         <Text variant="caption" color="textSecondary">
-          {formatPrice(snapshot.entryPrice)} → {formatPrice(currentPrice)}
+          Position
         </Text>
-        <Text variant="bodyStrong" color={pnlColor}>
-          {pnlPercent >= 0 ? '+' : ''}
-          {pnlPercent.toFixed(1)}%
+        <Text variant="bodyStrong" color={outcomeColor}>
+          {pickLabel}
         </Text>
       </View>
-      <View className="flex-row items-center gap-1">
-        <Icon name="checkmark-circle" size={12} color="accent" />
-        <Text variant="micro" color="accent">
-          Verified Position
+      <View className="flex-1 items-end gap-0.5">
+        <Text variant="caption" color="textSecondary">
+          Profit
+        </Text>
+        <Text variant="bodyStrong" color={profitColor}>
+          {profit >= 0 ? '+' : '−'}
+          {formatUsd(Math.abs(profit))}
         </Text>
       </View>
     </View>
@@ -171,24 +175,19 @@ function PositionBlock({
 }
 
 /** Loading placeholder matching MarketAttachment's footprint — same
- * glass surface as the loaded card, not a flat bordered box, so a list
- * of skeletons doesn't visually jump when real cards swap in. For
- * consumers fetching market data asynchronously (this component itself
- * stays a pure, props-driven presentational component). */
+ * black glass surface as the loaded card, not a different treatment, so
+ * a list of skeletons doesn't visually jump when real cards swap in. */
 export function MarketAttachmentSkeleton() {
   return (
     <View className="mt-3">
-      <GlassSurface contentClassName="gap-2.5 p-3">
-        <View className="flex-row items-start gap-2.5">
+      <GlassSurface tone="dark" blur={false} radius={18} contentClassName="gap-3 p-3.5">
+        <View className="flex-row items-center gap-2.5">
           <Skeleton width={40} height={40} className="rounded-xl" />
-          <View className="flex-1 gap-1.5 pt-0.5">
-            <Skeleton height={18} />
-            <Skeleton height={18} className="w-3/4" />
-          </View>
+          <Skeleton height={18} className="flex-1" />
         </View>
-        <View className="flex-row gap-2">
-          <Skeleton height={48} className="flex-1 rounded-xl" />
-          <Skeleton height={48} className="flex-1 rounded-xl" />
+        <View className="flex-row justify-between">
+          <Skeleton height={32} className="w-24" />
+          <Skeleton height={32} className="w-24" />
         </View>
       </GlassSurface>
     </View>

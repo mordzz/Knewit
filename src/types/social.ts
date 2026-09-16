@@ -98,6 +98,17 @@ export interface Comment {
  * must independently reject an unauthorized delete regardless of what
  * the client shows) — see docs/DECISIONS.md.
  */
+/**
+ * Replies are one level deep, not a recursive tree: a reply's
+ * `parentCommentId` always points at the top-level comment its thread
+ * belongs to, even when the user tapped "Reply" on another reply — see
+ * docs/DECISIONS.md ("One Reply Level"). `liked`/`likeCount` follow the
+ * same viewer-relative/server-computed convention as `FeedItem.liked`.
+ * `shareCount` is genuinely persisted (unlike a Post/Call's Share, which
+ * carries no count — see docs/DECISIONS.md, "Native Share, Not In-App
+ * Repost"): every comment share is counted, via the same
+ * optimistic-mutation pattern as Like (`useShareComment`).
+ */
 export interface CommentItem {
   id: ID;
   postId: ID;
@@ -105,16 +116,36 @@ export interface CommentItem {
   body: string;
   createdAt: ISODateString;
   canDelete: boolean;
+  liked: boolean;
+  likeCount: number;
+  shareCount: number;
+  /** Direct replies only, not a recursive total. Always `0` on a reply
+   * itself — replies don't have their own reply count/thread. */
+  replyCount: number;
+  /** `null` for a top-level comment. Set to the top-level comment's id
+   * for a reply (never another reply's id — see "One Reply Level"). */
+  parentCommentId: ID | null;
 }
 
-/** `postId` travels in the URL path (`endpoints.comments`), not the body. */
+/** `postId` travels in the URL path (`endpoints.comments`), not the
+ * body. `parentCommentId` is omitted for a top-level comment; set it to
+ * reply within an existing thread — the backend rejects (or this
+ * client never sends) a `parentCommentId` that isn't itself a
+ * top-level comment, per "One Reply Level" (docs/DECISIONS.md). */
 export interface CreateCommentInput {
   body: string;
+  parentCommentId?: ID;
 }
 
 export interface LikeResult {
   liked: boolean;
   likeCount: number;
+}
+
+/** A comment share has no "unshare" — this is an increment-only count,
+ * unlike `LikeResult`'s toggle. See docs/DECISIONS.md. */
+export interface ShareResult {
+  shareCount: number;
 }
 
 export interface FollowResult {
@@ -324,4 +355,20 @@ export interface MarketHolder {
   avatarUrl: string | null;
   outcome: Outcome;
   shares: number;
+}
+
+/** Polymarket's own set of chart time windows — see docs/DECISIONS.md
+ * ("Market Price Chart"). */
+export type PriceRange = '1H' | '6H' | '1D' | '1W' | '1M' | 'ALL';
+
+/**
+ * One point of a market's YES-price history — `price` is cents, the
+ * same unit as `MarketSummary.yesPrice`, so the chart's most recent
+ * point always agrees with whatever live price the rest of the screen
+ * shows (never a second, differently-scaled number for the same thing
+ * — see docs/DECISIONS.md).
+ */
+export interface PricePoint {
+  timestamp: ISODateString;
+  price: number;
 }

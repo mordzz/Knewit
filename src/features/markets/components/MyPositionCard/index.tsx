@@ -1,6 +1,6 @@
 import { View } from 'react-native';
 import { Text } from '@/components/ui/Text';
-import { GlassSurface } from '@/components/ui/GlassSurface';
+import { Card } from '@/components/ui/Card';
 import { formatPrice, formatUsd } from '@/utils/formatCurrency';
 import type { UserPosition } from '@/types/social';
 import type { ColorToken } from '@/theme/colors';
@@ -29,7 +29,7 @@ export function MyPositionCard({
   const canComputePnl = position.size > 0 && position.entryPrice > 0;
 
   return (
-    <GlassSurface contentClassName="gap-3 p-4">
+    <Card contentClassName="gap-3 p-4">
       <Text variant="bodyStrong">My Position</Text>
 
       <View className="flex-row items-center justify-between">
@@ -49,7 +49,7 @@ export function MyPositionCard({
         <PositionRow label="Current" value={formatPrice(liveCurrentPriceCents)} />
         <PositionRow label="Size" value={formatUsd(costBasis)} />
       </View>
-    </GlassSurface>
+    </Card>
   );
 }
 

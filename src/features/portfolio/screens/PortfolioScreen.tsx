@@ -2,7 +2,6 @@ import { View } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { Screen } from '@/components/layout/Screen';
 import { Text } from '@/components/ui/Text';
-import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Icon } from '@/components/ui/Icon';
 import { EmptyState } from '@/components/feedback/EmptyState';
@@ -12,17 +11,21 @@ import { useWallet } from '@/hooks/useWallet';
 /**
  * Shell only — real positions/PnL require the backend and a connected
  * wallet (docs/WALLET.md). The wallet row here reads real client state
- * (`useWallet`) even though nothing can actually connect yet.
+ * (`useWallet`) even though nothing can actually connect yet. Plain
+ * hairline-divided sections, not cards — the app-wide rows-over-cards
+ * convention (docs/DESIGN.md).
  */
 export function PortfolioScreen() {
   const navigation = useNavigation();
   const { isConnected, address } = useWallet();
 
   return (
-    <Screen className="gap-3 pt-4">
-      <Text variant="heading">Portfolio</Text>
+    <Screen className="gap-3 px-0 pt-4">
+      <Text variant="heading" className="px-4">
+        Portfolio
+      </Text>
 
-      <Card contentClassName="flex-row items-center gap-3">
+      <View className="flex-row items-center gap-3 border-b border-border px-4 py-3">
         <Icon name="wallet-outline" color={isConnected ? 'yes' : 'textTertiary'} />
         <View className="flex-1 gap-0.5">
           {isConnected && address ? (
@@ -37,21 +40,21 @@ export function PortfolioScreen() {
         {!isConnected ? (
           <Button label="Connect" variant="secondary" onPress={() => navigation.navigate('Auth')} />
         ) : null}
-      </Card>
+      </View>
 
-      <View className="flex-row gap-3">
-        <Card className="flex-1" contentClassName="gap-1">
+      <View className="flex-row border-b border-border px-4 py-3">
+        <View className="flex-1 gap-0.5">
           <Text variant="caption" color="textSecondary">
             Open Positions
           </Text>
           <Text variant="title">0</Text>
-        </Card>
-        <Card className="flex-1" contentClassName="gap-1">
+        </View>
+        <View className="flex-1 gap-0.5">
           <Text variant="caption" color="textSecondary">
             Unrealized PnL
           </Text>
           <Text variant="title">$0.00</Text>
-        </Card>
+        </View>
       </View>
 
       <View className="flex-1">

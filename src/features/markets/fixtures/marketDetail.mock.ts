@@ -1,4 +1,4 @@
-import type { FeedItem, MarketHolder } from '@/types/social';
+import type { FeedItem, MarketHolder, PricePoint, PriceRange } from '@/types/social';
 
 /**
  * DEVELOPMENT-ONLY fixture data — same rule as every other `*.mock.ts`
@@ -69,6 +69,73 @@ export function buildMockHolders(marketId: string): MarketHolder[] {
     avatarUrl: author.avatarUrl,
     outcome: index % 2 === 0 ? 'YES' : 'NO',
     shares: (index + 1) * 125.5,
+  }));
+}
+
+function hashSeed(value: string): number {
+  let hash = 0;
+  for (let i = 0; i < value.length; i += 1) {
+    hash = (hash * 31 + value.charCodeAt(i)) | 0;
+  }
+  return Math.abs(hash) || 1;
+}
+
+/** Tiny deterministic PRNG (mulberry32) — seeded per `marketId`+`range`,
+ * so the same market/range combination always renders the same series
+ * within a session rather than jittering on every refetch, without
+ * needing a real `Math.random` seed API. */
+function mulberry32(seed: number) {
+  let state = seed;
+  return () => {
+    state = (state + 0x6d2b79f5) | 0;
+    let t = state;
+    t = Math.imul(t ^ (t >>> 15), t | 1);
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+const RANGE_CONFIG: Record<PriceRange, { points: number; stepMs: number }> = {
+  '1H': { points: 12, stepMs: 5 * 60_000 },
+  '6H': { points: 24, stepMs: 15 * 60_000 },
+  '1D': { points: 24, stepMs: 60 * 60_000 },
+  '1W': { points: 14, stepMs: 12 * 60 * 60_000 },
+  '1M': { points: 30, stepMs: 24 * 60 * 60_000 },
+  ALL: { points: 52, stepMs: 7 * 24 * 60 * 60_000 },
+};
+
+/**
+ * A deterministic random-walk series ending *exactly* at
+ * `currentPriceCents` — the market's own live YES price, the same
+ * number the rest of the screen shows — so the chart never disagrees
+ * with itself about "what is this market's price right now" (see
+ * docs/DECISIONS.md, "Market Price Chart"). Values are clamped to
+ * [1, 99] cents throughout, since this models a probability.
+ */
+export function buildMockPriceHistory(
+  marketId: string,
+  range: PriceRange,
+  currentPriceCents: number
+): PricePoint[] {
+  const { points, stepMs } = RANGE_CONFIG[range];
+  const random = mulberry32(hashSeed(`${marketId}:${range}`));
+  const target = Math.max(1, Math.min(99, currentPriceCents));
+
+  // Walk backward from the known current price so the *last* point is
+  // guaranteed exact, then reverse into chronological order.
+  const reversed: number[] = [target];
+  let price = target;
+  for (let i = 1; i < points; i += 1) {
+    const drift = (random() - 0.5) * 6;
+    price = Math.max(1, Math.min(99, price - drift));
+    reversed.push(price);
+  }
+  const prices = reversed.reverse();
+
+  const now = Date.now();
+  return prices.map((value, index) => ({
+    timestamp: new Date(now - (points - 1 - index) * stepMs).toISOString(),
+    price: Math.round(value),
   }));
 }
 

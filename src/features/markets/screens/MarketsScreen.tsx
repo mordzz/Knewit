@@ -2,12 +2,14 @@ import { useCallback, useState } from 'react';
 import { ActivityIndicator, FlatList, RefreshControl, View } from 'react-native';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { Screen } from '@/components/layout/Screen';
+import { Text } from '@/components/ui/Text';
+import { Divider } from '@/components/ui/Divider';
 import { EmptyState } from '@/components/feedback/EmptyState';
 import { ErrorState } from '@/components/feedback/ErrorState';
 import { TabRow, TabRowOption } from '@/components/ui/TabRow';
 import { MarketCard, MarketCardSkeleton } from '@/features/markets/components/MarketCard';
 import { useMarkets } from '@/features/markets/hooks/useMarkets';
-import { colors } from '@/theme';
+import { colors, typography } from '@/theme';
 import { KNOWN_CATEGORIES } from '@/types/common';
 import type { MainTabParamList } from '@/types/navigation';
 import type { MarketListItem } from '@/types/social';
@@ -25,12 +27,12 @@ function itemKey(item: MarketListItem): string {
 
 /**
  * Dedicated prediction-market discovery — Trending is the default
- * category. No header title/subtitle and no search box: Search is its
- * own bottom tab, and this screen's job is to get straight into
- * browsing, not repeat chrome the tab bar already provides — see
- * docs/DECISIONS.md (Markets visual refresh). Renders `MarketCard`,
- * distinct from the Home feed's `MarketAttachment` — see that
- * component's own docs for why they're separate.
+ * category. A bare "Markets" page title + divider sits above the
+ * category row (no subtitle) — see docs/DECISIONS.md ("Decorated Top-3
+ * Rank Numbers", which also covers this and the other main tabs' title
+ * headers). No search box: Search is its own bottom tab. Renders
+ * `MarketCard`, distinct from the Home feed's `MarketAttachment` — see
+ * that component's own docs for why they're separate.
  */
 export function MarketsScreen() {
   const navigation = useNavigation();
@@ -49,12 +51,24 @@ export function MarketsScreen() {
   );
 
   const header = (
-    <TabRow options={CATEGORY_OPTIONS} value={category} onChange={setCategory} scroll />
+    <View>
+      <Text
+        variant="heading"
+        className="px-4 pb-3 pt-2 text-4xl"
+        style={{ fontFamily: typography.family.extrabold }}
+      >
+        Markets
+      </Text>
+      <Divider />
+      <View className="pt-4">
+        <TabRow options={CATEGORY_OPTIONS} value={category} onChange={setCategory} scroll />
+      </View>
+    </View>
   );
 
   if (markets.status === 'pending') {
     return (
-      <Screen className="gap-3 pt-4">
+      <Screen className="px-0" edges={['top']}>
         {header}
         <View>
           {SKELETON_ROWS.map((row) => (
@@ -67,9 +81,11 @@ export function MarketsScreen() {
 
   if (markets.status === 'error') {
     return (
-      <Screen className="gap-3 pt-4">
+      <Screen className="px-0" edges={['top']}>
         {header}
-        <ErrorState message="Couldn't load markets." onRetry={() => markets.refetch()} />
+        <View className="px-4">
+          <ErrorState message="Couldn't load markets." onRetry={() => markets.refetch()} />
+        </View>
       </Screen>
     );
   }
@@ -77,7 +93,7 @@ export function MarketsScreen() {
   const items = markets.data.pages.flatMap((page) => page.items);
 
   return (
-    <Screen className="gap-3 pt-4">
+    <Screen className="px-0" edges={['top']}>
       {header}
       <FlatList
         className="flex-1"

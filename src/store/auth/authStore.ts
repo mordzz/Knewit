@@ -4,8 +4,17 @@ import type { User } from '@/types/social';
 interface AuthState {
   user: User | null;
   isAuthenticated: boolean;
+  /** `false` until Privy has finished checking for an existing session
+   * on cold start (`usePrivy().isReady`, mirrored here by
+   * `PrivySessionBridge`). The root navigator waits for this before
+   * deciding "show the login gate" vs "go straight to Main" — deciding
+   * from `isAuthenticated` alone, before Privy has actually resolved,
+   * would flash the login screen even for an already-logged-in user —
+   * see docs/DECISIONS.md ("Hard Login Gate"). */
+  isReady: boolean;
   setSession: (user: User | null) => void;
   clearSession: () => void;
+  setReady: () => void;
 }
 
 /**
@@ -30,6 +39,8 @@ interface AuthState {
 export const useAuthStore = create<AuthState>((set) => ({
   user: null,
   isAuthenticated: false,
+  isReady: false,
   setSession: (user) => set({ user, isAuthenticated: true }),
   clearSession: () => set({ user: null, isAuthenticated: false }),
+  setReady: () => set({ isReady: true }),
 }));

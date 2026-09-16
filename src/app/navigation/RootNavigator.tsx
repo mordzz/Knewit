@@ -1,30 +1,61 @@
+import { ActivityIndicator, View } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { MainTabNavigator } from '@/app/navigation/MainTabNavigator';
 import { AuthNavigator } from '@/app/navigation/AuthNavigator';
 import { CreateCallScreen } from '@/features/home/screens/CreateCallScreen';
+import { useAuth } from '@/hooks/useAuth';
+import { colors } from '@/theme';
 import type { AppParamList } from '@/types/navigation';
 
 const Stack = createNativeStackNavigator<AppParamList>();
 
 /**
- * Main is always the initial route — browsing markets and Calls never
- * requires a wallet (docs/PRODUCT-FLOW.md), so the root does not gate on
- * auth state. Auth and CreateCall are wired here as modal routes any
- * screen can present on demand (Auth: taking a position; CreateCall: the
- * FAB in MainTabNavigator) — see docs/DECISIONS.md.
+ * Hard login gate — by request, this supersedes the earlier "Main is
+ * always the initial route, browsing never requires a wallet" decision
+ * (see docs/DECISIONS.md, "Hard Login Gate"). Until Privy has resolved
+ * (`isReady`, mirrored from `usePrivy()` by `PrivySessionBridge`) this
+ * renders a bare loading state, not the login form — deciding from
+ * `isAuthenticated` alone before Privy has actually checked would flash
+ * the login screen even for an already-logged-in user. Once ready:
+ * signed out sees only `AuthNavigator` (no `Main`/`CreateCall` routes
+ * registered at all, so there's nothing to fall back to); signed in
+ * sees `Main` as the initial route, with `Auth`/`CreateCall` still
+ * available as on-demand modal routes (e.g. connecting an embedded
+ * wallet specifically, distinct from being logged out entirely) exactly
+ * as before.
  */
 export function RootNavigator() {
+  const { isAuthenticated, isReady } = useAuth();
+
+  if (!isReady) {
+    return (
+      <View className="flex-1 items-center justify-center bg-background">
+        <ActivityIndicator color={colors.accent} />
+      </View>
+    );
+  }
+
   return (
     <NavigationContainer>
       <Stack.Navigator screenOptions={{ headerShown: false }}>
-        <Stack.Screen name="Main" component={MainTabNavigator} />
-        <Stack.Screen name="Auth" component={AuthNavigator} options={{ presentation: 'modal' }} />
-        <Stack.Screen
-          name="CreateCall"
-          component={CreateCallScreen}
-          options={{ presentation: 'modal' }}
-        />
+        {isAuthenticated ? (
+          <>
+            <Stack.Screen name="Main" component={MainTabNavigator} />
+            <Stack.Screen
+              name="Auth"
+              component={AuthNavigator}
+              options={{ presentation: 'modal' }}
+            />
+            <Stack.Screen
+              name="CreateCall"
+              component={CreateCallScreen}
+              options={{ presentation: 'modal' }}
+            />
+          </>
+        ) : (
+          <Stack.Screen name="Auth" component={AuthNavigator} />
+        )}
       </Stack.Navigator>
     </NavigationContainer>
   );

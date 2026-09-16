@@ -6,7 +6,7 @@ import type { MarketGroupSummary, MarketListItem, MarketSummary } from '@/types/
  * when the real `/markets` backend is unreachable, never presented as
  * real data. `imageUrl` is intentionally omitted on every entry (not
  * fetching from arbitrary third-party image hosts for mock data) — this
- * also exercises `MarketVisual`'s category-icon fallback path.
+ * also exercises `MarketVisual`'s fixed-icon fallback path.
  *
  * Deliberately includes one `closed` (not yet resolved), one `resolved`,
  * one non-binary (`isBinary: false`), and one `outcomeLabels`-overridden
@@ -255,54 +255,6 @@ export function buildMockMarketList(size: number, category?: string): MarketList
   }
 
   return items;
-}
-
-/**
- * Dev-mock fallback for `marketService.ts::getTrendingMarkets` (Home's
- * "Trending Markets" discovery strip). Filters to the base templates
- * already flagged `trending: true` (the same flag `MarketCard`/
- * `MarketAttachment` render a "Trending" badge from — not a separate,
- * invented signal), sorted by volume descending — real fields, not a
- * fabricated score. Cycles to fill `limit` if fewer trending templates
- * exist than requested, same pattern as `buildMockMarkets`.
- */
-export function buildMockTrendingMarkets(limit: number): MarketSummary[] {
-  const trending = BASE_MARKETS.filter((m) => m.trending).sort(
-    (a, b) => (b.volume ?? 0) - (a.volume ?? 0)
-  );
-  if (trending.length === 0) return [];
-
-  return Array.from({ length: Math.min(limit, trending.length * 3) }, (_, index) => ({
-    ...trending[index % trending.length],
-    id: `mock-market-trending-${index}`,
-  })).slice(0, limit);
-}
-
-const CLOSING_SOON_OFFSETS_MS = [2 * 3_600_000, 6 * 3_600_000, 20 * 3_600_000, 40 * 3_600_000];
-
-/**
- * Dev-mock fallback for `marketService.ts::getClosingSoonMarkets`.
- * Real market fixtures have fixed authored `endDate`s that would drift
- * into the past as real wall-clock time passes this file's own authored
- * "today," making them useless as an always-demonstrable "closing soon"
- * fixture — so this one deliberately computes `endDate` relative to
- * `Date.now()` instead, the same way `feed.mock.ts`'s `createdAt`
- * fields are computed relative to now rather than hardcoded. Only ever
- * used as a dev fallback; the real endpoint returns real market
- * end-dates — see docs/DECISIONS.md.
- */
-export function buildMockClosingSoon(limit: number): MarketSummary[] {
-  const eligible = BASE_MARKETS.filter((m) => !m.closed && !m.resolved);
-  if (eligible.length === 0) return [];
-
-  return Array.from({ length: Math.min(limit, CLOSING_SOON_OFFSETS_MS.length) }, (_, index) => {
-    const base = eligible[index % eligible.length];
-    return {
-      ...base,
-      id: `mock-market-closing-soon-${index}`,
-      endDate: new Date(Date.now() + CLOSING_SOON_OFFSETS_MS[index]).toISOString(),
-    };
-  });
 }
 
 /**

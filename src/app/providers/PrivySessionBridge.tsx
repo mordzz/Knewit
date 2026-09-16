@@ -3,6 +3,7 @@ import { usePrivy, useEmbeddedEthereumWallet } from '@privy-io/expo';
 import { useQueryClient } from '@tanstack/react-query';
 import { useAuthStore } from '@/store/auth/authStore';
 import { useWalletStore } from '@/store/wallet/walletStore';
+import { isPrivyConfigured } from '@/app/config/env';
 
 /**
  * Mounted once, inside `PrivyProvider` — pushes Privy's real
@@ -11,6 +12,11 @@ import { useWalletStore } from '@/store/wallet/walletStore';
  * component (or just prefer the existing `useAuth`/`useWallet` hooks)
  * stay correct, without those stores ever becoming a second source of
  * truth. Renders nothing.
+ *
+ * Also mirrors Privy's own `isReady` (cold-start "have we finished
+ * checking for an existing session yet" flag) into `authStore.isReady`
+ * — `RootNavigator` waits on that before choosing between the login
+ * gate and Main, see docs/DECISIONS.md ("Hard Login Gate").
  *
  * Deliberately does **not** call `useEmbeddedEthereumWallet().create()`
  * itself — wallet creation is a real, deliberate action.
@@ -24,6 +30,7 @@ export function PrivySessionBridge() {
   const queryClient = useQueryClient();
   const setSession = useAuthStore((state) => state.setSession);
   const clearSession = useAuthStore((state) => state.clearSession);
+  const setReady = useAuthStore((state) => state.setReady);
   const setConnecting = useWalletStore((state) => state.setConnecting);
   const setConnected = useWalletStore((state) => state.setConnected);
   const setDisconnected = useWalletStore((state) => state.setDisconnected);
@@ -31,6 +38,19 @@ export function PrivySessionBridge() {
   const previousAddress = useRef<string | null>(null);
 
   useEffect(() => {
+    // Gated on Privy's own `isReady`: before Privy has finished checking
+    // for an existing session, `user` is just falsy-by-default, not
+    // "confirmed logged out" — syncing `clearSession()` from that would
+    // tell `RootNavigator` to show the login gate for an instant even
+    // when the person is actually already signed in. See
+    // docs/DECISIONS.md ("Hard Login Gate"). Skipped entirely when Privy
+    // isn't configured (`PrivyProvider` is still mounted with a blank
+    // `appId` in that case, per `AppProviders`' own doc comment) — its
+    // `isReady` has no real session to resolve and shouldn't gate
+    // anything; `authStore.isReady` flips true immediately so the login
+    // gate shows its honest "not configured" state instead of hanging.
+    if (!isReady && isPrivyConfigured) return;
+
     if (user) {
       // Our own backend's `User` record (handle/displayName/avatar)
       // doesn't exist yet — see docs/WALLET.md — so `authStore.user`
@@ -40,7 +60,8 @@ export function PrivySessionBridge() {
     } else {
       clearSession();
     }
-  }, [user, setSession, clearSession]);
+    setReady();
+  }, [isReady, user, setSession, clearSession, setReady]);
 
   useEffect(() => {
     if (!isReady) return;

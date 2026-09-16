@@ -21,7 +21,7 @@ export function PersonResult({ user, onPress }: PersonResultProps) {
   return (
     <Pressable
       onPress={onPress}
-      className="flex-row items-center gap-3 px-1 py-2.5 active:opacity-70"
+      className="flex-row items-center gap-3 border-b border-border px-4 py-3 active:bg-surface"
       accessibilityRole="button"
       accessibilityLabel={`Open profile: ${user.displayName}, @${user.handle}`}
     >

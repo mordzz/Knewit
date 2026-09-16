@@ -1,50 +1,98 @@
-import { apiRequest } from '@/services/api/client';
-import { endpoints } from '@/services/api/endpoints';
 import { env } from '@/app/config/env';
 import {
+  fetchGammaEvents,
+  fetchGammaMarketById,
+  fetchGammaEventById,
+} from '@/services/polymarket/gammaClient';
+import { fetchClobPriceHistory } from '@/services/polymarket/clobClient';
+import { fetchHolders } from '@/services/polymarket/dataApiClient';
+import { resolveCategoryTagId, deriveCategoryFromTags } from '@/services/polymarket/categories';
+import {
+  gammaEventToListItem,
+  gammaMarketToDetail,
+  getClobTokenIds,
+  clobHistoryToPricePoints,
+  dataApiHoldersToMarketHolders,
+} from '@/services/polymarket/transform';
+import type { GammaMarket } from '@/services/polymarket/gammaClient';
+import {
   buildMockMarketList,
-  buildMockTrendingMarkets,
-  buildMockClosingSoon,
   pickMockMarketTemplate,
 } from '@/features/markets/fixtures/markets.mock';
 import {
   buildMockRules,
   buildMockHolders,
   buildMockMarketActivity,
+  buildMockPriceHistory,
 } from '@/features/markets/fixtures/marketDetail.mock';
+import { apiRequest } from '@/services/api/client';
+import { endpoints } from '@/services/api/endpoints';
 import type { Paginated } from '@/types/common';
 import type {
   FeedItem,
   MarketDetail,
   MarketHolder,
   MarketListItem,
-  MarketSummary,
+  PricePoint,
+  PriceRange,
 } from '@/types/social';
+
+/**
+ * Real market data (this file) now comes directly from Polymarket's
+ * public Gamma/CLOB/Data APIs, not "our own backend" — see
+ * docs/DECISIONS.md ("Direct Polymarket Integration for Market Data"),
+ * which supersedes docs/ARCHITECTURE.md's "never call Polymarket
+ * directly" for this specific case (read-only market data needs no
+ * credentials; that decision's actual concern — never holding
+ * Polymarket API secrets or signing orders client-side — still holds
+ * for trading, which this file never touches: `getMarketActivity`
+ * below and everything in `tradingService.ts`/`positionService.ts`
+ * still go through our own backend, unchanged).
+ *
+ * Every function below still follows this app's standing "real source
+ * first, dev-mock fallback only in dev, only on failure" convention —
+ * "real source" just means Polymarket now instead of a backend that
+ * doesn't exist yet.
+ */
 
 function delay(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 /**
+ * A market id might actually be an *event* id — tapping a combo's
+ * header (`GroupCard`) opens the event itself, not one of its
+ * candidate markets, and Polymarket's `/markets/{id}` only knows
+ * individual markets. Tries the market id first (the common case); only
+ * on failure does it try the id as an event and use that event's first
+ * market — a reasonable stand-in until Market Detail understands combo
+ * groups as their own concept (see docs/DECISIONS.md).
+ */
+async function fetchGammaMarketOrEventFirstMarket(id: string): Promise<GammaMarket> {
+  try {
+    return await fetchGammaMarketById(id);
+  } catch (marketError) {
+    const event = await fetchGammaEventById(id);
+    const first = event.markets?.[0];
+    if (!first) throw marketError;
+    return first;
+  }
+}
+
+/**
  * `MarketDetail` — every `MarketSummary` field plus detail-only ones
  * (`rules`, `openedAt`); not `Market` (`types/market.ts`), which stays
- * the DB-normalized documentation type — see docs/DATABASE.md. Used for
- * a single market lookup (Market Detail), never a grouped one — a
- * group's individual outcome rows are each still an ordinary market
- * with their own id, so this works the same way whether the id came
- * from a plain market card or a group's row.
- *
- * Real endpoint first — falls back to a mock fixture only in dev, only
- * on failure, same pattern as `getMarkets` below. Calls OUR backend,
- * never Polymarket directly — see docs/ARCHITECTURE.md.
+ * the DB-normalized documentation type — see docs/DATABASE.md.
  */
 export async function getMarketById(id: string): Promise<MarketDetail> {
   try {
-    return await apiRequest<MarketDetail>(endpoints.market(id));
+    const raw = await fetchGammaMarketOrEventFirstMarket(id);
+    const category = deriveCategoryFromTags(raw.tags);
+    return gammaMarketToDetail(raw, category);
   } catch (error) {
     if (env.isDev) {
       console.warn(
-        '[marketService] backend unreachable — using a local mock market fixture for development only.',
+        '[marketService] Polymarket unreachable — using a local mock market fixture for development only.',
         error
       );
       const fallback = pickMockMarketTemplate(id);
@@ -66,9 +114,8 @@ export async function getMarketById(id: string): Promise<MarketDetail> {
 
 /**
  * Posts/Calls referencing this market — Market Detail's "Comments" tab.
- * Not paginated in this pass (a fixed, reasonably small batch) — see
- * docs/DECISIONS.md (Market Detail rebuild) for why infinite scroll
- * wasn't added here.
+ * This is *our own* social data, not Polymarket's — still goes through
+ * our own backend, unaffected by the Polymarket integration above.
  */
 export async function getMarketActivity(marketId: string): Promise<FeedItem[]> {
   try {
@@ -86,15 +133,20 @@ export async function getMarketActivity(marketId: string): Promise<FeedItem[]> {
   }
 }
 
-/** Market Detail's "Top Holders" tab — see `MarketHolder` in
- * `types/social.ts` for why this isn't the same as `Position`. */
+/** Market Detail's "Top Holders" tab — Polymarket's real current
+ * holders for this market, one ranked list across both outcomes. See
+ * `MarketHolder` in `types/social.ts` for why this isn't the same as
+ * `Position`. */
 export async function getTopHolders(marketId: string): Promise<MarketHolder[]> {
   try {
-    return await apiRequest<MarketHolder[]>(endpoints.marketHolders(marketId));
+    const market = await fetchGammaMarketOrEventFirstMarket(marketId);
+    if (!market.conditionId) return [];
+    const entries = await fetchHolders(market.conditionId);
+    return dataApiHoldersToMarketHolders(entries);
   } catch (error) {
     if (env.isDev) {
       console.warn(
-        '[marketService] backend unreachable — using local mock holder data for development only.',
+        '[marketService] Polymarket unreachable — using local mock holder data for development only.',
         error
       );
       await delay(300);
@@ -104,8 +156,40 @@ export async function getTopHolders(marketId: string): Promise<MarketHolder[]> {
   }
 }
 
+/**
+ * Market Detail's price chart (see docs/DECISIONS.md, "Market Price
+ * Chart") — real history from Polymarket's CLOB now. `currentPriceCents`
+ * is only used by the dev-mock fallback, to seed a series that ends
+ * exactly at the market's own live YES price rather than a disagreeing
+ * number — the real CLOB call never receives or needs it.
+ */
+export async function getMarketPriceHistory(
+  marketId: string,
+  range: PriceRange,
+  currentPriceCents: number
+): Promise<PricePoint[]> {
+  try {
+    const market = await fetchGammaMarketOrEventFirstMarket(marketId);
+    const [yesTokenId] = getClobTokenIds(market);
+    if (!yesTokenId) return [];
+    const raw = await fetchClobPriceHistory(yesTokenId, range);
+    return clobHistoryToPricePoints(raw);
+  } catch (error) {
+    if (env.isDev) {
+      console.warn(
+        '[marketService] Polymarket unreachable — using local mock price history for development only.',
+        error
+      );
+      await delay(200);
+      return buildMockPriceHistory(marketId, range, currentPriceCents);
+    }
+    throw error;
+  }
+}
+
 const MOCK_PAGE_SIZE = 6;
 const MOCK_LIST_SIZE = 18;
+const PAGE_SIZE = 8;
 
 async function getMockMarketsPage(
   cursor: string | undefined,
@@ -120,84 +204,46 @@ async function getMockMarketsPage(
 }
 
 /**
- * The Markets discovery feed — a page can mix plain single markets and
- * grouped ones (`MarketListItem`, see docs/DECISIONS.md, Markets visual
- * refresh), the same way Polymarket's own market/event data mixes
- * shapes. Real endpoint first — the shipped path. Falls back to labeled
- * mock fixtures only in dev, only on failure, same pattern as
- * `features/home/services/feedService.ts` — see docs/DECISIONS.md.
+ * The Markets discovery feed — fetches Polymarket *events*, not raw
+ * markets: an event wrapping exactly one market becomes a plain
+ * `MarketSummary` row, one wrapping several becomes a `MarketGroupSummary`
+ * combo (`MarketListItem`, see docs/DECISIONS.md, Markets visual
+ * refresh) — this is Polymarket's own real grouping, not something this
+ * app invents. `category` resolves to a Polymarket tag id first
+ * (`resolveCategoryTagId`); "Trending" (the default) fetches with no tag
+ * filter, sorted by 24h volume instead.
  */
 export async function getMarkets(
   cursor?: string,
   category?: string
 ): Promise<Paginated<MarketListItem>> {
-  const params = new URLSearchParams();
-  if (cursor) params.set('cursor', cursor);
-  if (category && category !== 'Trending') params.set('category', category);
-  const query = params.toString() ? `?${params.toString()}` : '';
+  const offset = cursor ? Number(cursor) : 0;
+  const resolvedCategory = category ?? 'Trending';
 
   try {
-    return await apiRequest<Paginated<MarketListItem>>(`${endpoints.markets}${query}`);
+    const tagId = await resolveCategoryTagId(resolvedCategory);
+    const events = await fetchGammaEvents({
+      limit: PAGE_SIZE,
+      offset,
+      tagId: tagId ?? undefined,
+      order: 'volume24hr',
+      ascending: false,
+      closed: false,
+    });
+
+    const items = events
+      .map((event) => gammaEventToListItem(event, resolvedCategory))
+      .filter((item): item is MarketListItem => item !== null);
+    const nextCursor = events.length === PAGE_SIZE ? String(offset + PAGE_SIZE) : null;
+
+    return { items, nextCursor };
   } catch (error) {
     if (env.isDev) {
       console.warn(
-        '[marketService] backend unreachable — using local mock market fixtures for development only.',
+        '[marketService] Polymarket unreachable — using local mock market fixtures for development only.',
         error
       );
       return getMockMarketsPage(cursor, category);
-    }
-    throw error;
-  }
-}
-
-const TRENDING_MARKETS_LIMIT = 8;
-const CLOSING_SOON_LIMIT = 6;
-
-/**
- * A small, non-paginated set of currently-trending markets for Home's
- * horizontal "Trending Markets" strip. Ranking (volume, liquidity,
- * recent activity) is a backend responsibility — see docs/DECISIONS.md
- * ("Feed Ranking Is a Backend Responsibility"); this call never
- * reorders what it receives. Dev-mock fallback filters to the same
- * `trending: true`-flagged fixture templates `MarketCard` already
- * renders a badge from — a real field, not an invented score.
- */
-export async function getTrendingMarkets(): Promise<MarketSummary[]> {
-  try {
-    return await apiRequest<MarketSummary[]>(
-      `${endpoints.marketsTrending}?limit=${TRENDING_MARKETS_LIMIT}`
-    );
-  } catch (error) {
-    if (env.isDev) {
-      console.warn(
-        '[marketService] backend unreachable — using local mock trending markets for development only.',
-        error
-      );
-      return buildMockTrendingMarkets(TRENDING_MARKETS_LIMIT);
-    }
-    throw error;
-  }
-}
-
-/**
- * Markets whose real `endDate` falls within a near-term window the
- * backend defines — never a client-invented "closing soon" flag.
- * Closed/resolved markets are excluded server-side (and by the dev-mock
- * fallback) — a market that already stopped trading isn't "closing
- * soon," it's already closed.
- */
-export async function getClosingSoonMarkets(): Promise<MarketSummary[]> {
-  try {
-    return await apiRequest<MarketSummary[]>(
-      `${endpoints.marketsClosingSoon}?limit=${CLOSING_SOON_LIMIT}`
-    );
-  } catch (error) {
-    if (env.isDev) {
-      console.warn(
-        '[marketService] backend unreachable — using local mock closing-soon markets for development only.',
-        error
-      );
-      return buildMockClosingSoon(CLOSING_SOON_LIMIT);
     }
     throw error;
   }

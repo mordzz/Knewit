@@ -173,21 +173,6 @@ export function pickMockFeedItem(id: string): FeedItem {
   return { ...base, id, createdAt: new Date(Date.now() - 3 * 60 * 60_000).toISOString() };
 }
 
-/**
- * Dev-mock fallback for `feedService.ts::getTrendingCalls`. Sorts the
- * same mock items by `likeCount + commentCount * 2` — a simple,
- * deterministic stand-in **for this local fixture only**, not a claim
- * about the real ranking algorithm, which is a backend responsibility
- * (`GET /feed/trending`) — see docs/DECISIONS.md ("Feed Ranking Is a
- * Backend Responsibility; Client Never Reorders Real Data").
- */
-export function buildMockTrendingCalls(limit: number): FeedItem[] {
-  return buildMockFeed(BASE_ITEMS.length)
-    .slice()
-    .sort((a, b) => b.likeCount + b.commentCount * 2 - (a.likeCount + a.commentCount * 2))
-    .slice(0, limit);
-}
-
 const MOCK_USER_CONTENT_PAGE_SIZE = 3;
 
 /**

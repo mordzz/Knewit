@@ -5,6 +5,10 @@ const MAX_RECENTS = 8;
 interface RecentSearchesState {
   recent: string[];
   addRecent: (query: string) => void;
+  /** Removes one past search — case-insensitive match, same rule
+   * `addRecent`'s de-dupe already uses. */
+  removeRecent: (query: string) => void;
+  clearRecent: () => void;
 }
 
 /**
@@ -28,4 +32,9 @@ export const useRecentSearchesStore = create<RecentSearchesState>((set) => ({
       ];
       return { recent: deduped.slice(0, MAX_RECENTS) };
     }),
+  removeRecent: (query) =>
+    set((state) => ({
+      recent: state.recent.filter((existing) => existing.toLowerCase() !== query.toLowerCase()),
+    })),
+  clearRecent: () => set({ recent: [] }),
 }));

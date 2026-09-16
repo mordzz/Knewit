@@ -8,7 +8,11 @@ export interface ModalProps {
 }
 
 /**
- * A centered glass dialog. For a bottom-anchored sheet, use
+ * A centered glass dialog (real glassmorphism, via `GlassSurface`'s
+ * default `tone="light"`) — `BottomSheet` is the one surface in the app
+ * that stays solid instead; every other panel, including this one, is
+ * glass — see docs/DECISIONS.md ("Glassmorphism Restored Outside
+ * BottomSheet"). For a bottom-anchored sheet, use
  * `components/ui/BottomSheet` instead.
  */
 export function Modal({ visible, onClose, children }: ModalProps) {

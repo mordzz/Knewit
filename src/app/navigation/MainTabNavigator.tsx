@@ -5,9 +5,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { colors, spacing } from '@/theme';
+import { colors, spacing, TAB_BAR_HEIGHT } from '@/theme';
 import { FAB } from '@/components/ui/FAB';
-import { CreateChoiceSheet } from '@/features/home/components/CreateChoiceSheet';
 import { HomeScreen } from '@/features/home/screens/HomeScreen';
 import { PostDetailScreen } from '@/features/home/screens/PostDetailScreen';
 import { MarketsScreen } from '@/features/markets/screens/MarketsScreen';
@@ -160,12 +159,6 @@ export function MainTabNavigator() {
   const navigation = useNavigation();
   const insets = useSafeAreaInsets();
   const [activeTab, setActiveTab] = useState<keyof MainTabParamList>('HomeTab');
-  const [createChoiceVisible, setCreateChoiceVisible] = useState(false);
-
-  function openComposer(intent: 'post' | 'call') {
-    setCreateChoiceVisible(false);
-    navigation.navigate('CreateCall', { intent });
-  }
 
   return (
     <View className="flex-1">
@@ -218,22 +211,12 @@ export function MainTabNavigator() {
 
       {activeTab === 'HomeTab' ? (
         <FAB
-          accessibilityLabel="Create a post or Call"
-          onPress={() => setCreateChoiceVisible(true)}
+          accessibilityLabel="Create a Callout"
+          onPress={() => navigation.navigate('CreateCall')}
           className="absolute right-6"
           style={{ bottom: insets.bottom + TAB_BAR_HEIGHT + spacing.sm }}
         />
       ) : null}
-
-      <CreateChoiceSheet
-        visible={createChoiceVisible}
-        onClose={() => setCreateChoiceVisible(false)}
-        onSelect={openComposer}
-      />
     </View>
   );
 }
-
-// Approximate default React Navigation bottom-tab bar height, before the
-// safe-area inset (which is added separately via `insets.bottom` above).
-const TAB_BAR_HEIGHT = 49;

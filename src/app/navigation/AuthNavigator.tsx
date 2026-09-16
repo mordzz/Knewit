@@ -8,8 +8,11 @@ export type AuthStackParamList = {
 const Stack = createNativeStackNavigator<AuthStackParamList>();
 
 /**
- * Presented modally on demand (from a Buy/Create-Call action), not shown
- * at launch — browsing never requires a wallet, see docs/PRODUCT-FLOW.md.
+ * Two contexts now, not one — see docs/DECISIONS.md ("Hard Login
+ * Gate"). Signed out, `RootNavigator` renders this as the app's only
+ * route at launch (no modal, nothing to dismiss to). Signed in but
+ * without an embedded wallet connected yet, it's still presented
+ * modally on demand (a Buy/Create-Call action), same as before.
  */
 export function AuthNavigator() {
   return (

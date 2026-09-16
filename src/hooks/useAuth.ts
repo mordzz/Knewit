@@ -4,16 +4,20 @@ import { isPrivyConfigured } from '@/app/config/env';
 
 /**
  * Thin, stable hook wrapper around authStore so screens don't import the
- * store directly. `isAuthenticated`/`user` are kept in sync with Privy's
- * real auth state by `PrivySessionBridge` — see docs/WALLET.md.
+ * store directly. `isAuthenticated`/`user`/`isReady` are kept in sync
+ * with Privy's real auth state by `PrivySessionBridge` — see
+ * docs/WALLET.md. `isReady` is what `RootNavigator` waits on before
+ * deciding between the login gate and Main — see docs/DECISIONS.md
+ * ("Hard Login Gate").
  */
 export function useAuth() {
   const user = useAuthStore((state) => state.user);
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+  const isReady = useAuthStore((state) => state.isReady);
   const setSession = useAuthStore((state) => state.setSession);
   const clearSession = useAuthStore((state) => state.clearSession);
 
-  return { user, isAuthenticated, setSession, clearSession };
+  return { user, isAuthenticated, isReady, setSession, clearSession };
 }
 
 /**

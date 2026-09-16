@@ -27,3 +27,26 @@ export const colors = {
 } as const;
 
 export type ColorToken = keyof typeof colors;
+
+/**
+ * Black-glass card surface raw values (`GlassSurface` `tone="dark"`,
+ * e.g. `MarketAttachment`) — genuinely translucent, not solid: this
+ * component briefly went fully solid ("Solid Surfaces, No 3D Bevel")
+ * before that was scoped back down to `BottomSheet` only — every other
+ * glass surface (this one included) stays real glassmorphism — see
+ * docs/DECISIONS.md ("Glassmorphism Restored Outside BottomSheet").
+ * `fill` at 0.88 alpha is "near-opaque, not see-through" (the earlier
+ * "too transparent" complaint) while still being a translucent tint,
+ * not a flat color; `border`/`highlight` sell the glass edge — a faint
+ * uniform border plus a brighter top-edge sheen (glossy shine, not a
+ * full directional bevel). Kept out of `colors` itself (not a
+ * `ColorToken`): every `ColorToken` is expected to work as a matching
+ * `bg-`/`text-`/`border-` Tailwind class too (see `theme/tw.ts` and
+ * `tailwind.config.js`), which these translucent rgba values don't —
+ * they're only ever consumed as raw values in `style`, never `className`.
+ */
+export const glass = {
+  fill: 'rgba(14, 15, 19, 0.88)',
+  border: 'rgba(255, 255, 255, 0.14)',
+  highlight: 'rgba(255, 255, 255, 0.3)',
+} as const;

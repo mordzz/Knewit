@@ -10,12 +10,16 @@ export interface FABProps extends Omit<PressableProps, 'onPress' | 'style'> {
   style?: StyleProp<ViewStyle>;
 }
 
+const BORDER_COLOR = 'rgba(255, 255, 255, 0.2)';
+
 /**
  * A primary floating action, not a navigation destination — see
- * docs/DECISIONS.md for why Create is a FAB rather than a tab. The glow
- * is tinted with the accent color itself (not a plain black shadow) —
- * see docs/DECISIONS.md for why a flat saturated yellow needs that to
- * read as integrated against pure black rather than pasted on.
+ * docs/DECISIONS.md for why Create is a FAB rather than a tab. Solid
+ * accent fill (glossy, not glass — see docs/DECISIONS.md "Glossy Solid
+ * Buttons") with a plain border and an accent-tinted glow, since a flat
+ * saturated yellow needs that to read as integrated against pure black
+ * rather than pasted on. A brief 3D-bevel border phase was removed by
+ * request — see docs/DECISIONS.md ("Solid Surfaces, No 3D Bevel").
  */
 export function FAB({
   onPress,
@@ -36,6 +40,8 @@ export function FAB({
       )}
       style={[
         {
+          borderWidth: 1,
+          borderColor: BORDER_COLOR,
           shadowColor: colors.accent,
           shadowOffset: { width: 0, height: 4 },
           shadowOpacity: 0.45,

@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+import { useCallback, useState } from 'react';
 import {
   ActivityIndicator,
   FlatList,
@@ -46,6 +46,7 @@ export function PostDetailScreen() {
   const comments = useComments(postId);
   const createComment = useCreateComment(postId);
   const deleteCommentMutation = useDeleteComment(postId);
+  const [replyTarget, setReplyTarget] = useState<CommentItem | null>(null);
 
   const openAuthor = useCallback(
     (userId: string) => navigation.navigate('Profile', { userId }),
@@ -63,12 +64,16 @@ export function PostDetailScreen() {
     ({ item }: { item: CommentItem }) => (
       <CommentRow
         comment={item}
+        postId={postId}
         onDelete={(commentId) => deleteCommentMutation.mutate(commentId)}
         onOpenAuthor={openAuthor}
-        isDeleting={deleteCommentMutation.isPending && deleteCommentMutation.variables === item.id}
+        onReply={setReplyTarget}
+        deletingCommentId={
+          deleteCommentMutation.isPending ? (deleteCommentMutation.variables ?? null) : null
+        }
       />
     ),
-    [deleteCommentMutation, openAuthor]
+    [deleteCommentMutation, openAuthor, postId]
   );
 
   return (
@@ -156,7 +161,15 @@ export function PostDetailScreen() {
         {post.status === 'success' ? (
           <CommentComposer
             isSubmitting={createComment.isPending}
-            onSubmit={(body) => createComment.mutate({ body })}
+            replyingToHandle={replyTarget?.author.handle ?? null}
+            onCancelReply={() => setReplyTarget(null)}
+            onSubmit={(body) => {
+              const parentCommentId = replyTarget?.id;
+              createComment.mutate(
+                { body, parentCommentId },
+                { onSuccess: () => setReplyTarget(null) }
+              );
+            }}
           />
         ) : null}
       </Screen>
@@ -195,6 +208,11 @@ function PostContent({
         liked={item.liked}
         likeCount={item.likeCount}
         commentCount={item.commentCount}
+        shareMessage={
+          item.market
+            ? `${item.body}\n\n${item.market.question} — via Knewit`
+            : `${item.body}\n\nvia Knewit`
+        }
       />
 
       <View className="mt-2 border-t border-border pt-3">

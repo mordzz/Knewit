@@ -5,7 +5,7 @@ import { Text } from '@/components/ui/Text';
 import { Button } from '@/components/ui/Button';
 import { Icon } from '@/components/ui/Icon';
 import { Input } from '@/components/ui/Input';
-import { GlassSurface } from '@/components/ui/GlassSurface';
+import { Card } from '@/components/ui/Card';
 import { BottomSheet } from '@/components/ui/BottomSheet';
 import { WalletAddress } from '@/features/wallet/components/WalletAddress';
 import { useWallet } from '@/hooks/useWallet';
@@ -33,12 +33,18 @@ function validateAmount(amount: number): string | null {
 }
 
 /**
- * Market Detail's real trading interaction — outcome selection, amount
- * entry, a live estimate, and a Confirm Trade sheet that actually calls
- * the backend (`useCreateTrade`). Never fabricates a successful trade:
- * if the backend call fails (including because no backend exists in
- * this environment), the sheet shows a real "Trade failed" state — see
- * docs/DECISIONS.md ("No Fake Trade Success").
+ * Market Detail's real trading interaction — a single "Trade" button
+ * rather than an always-visible panel (see docs/DECISIONS.md, "Trade
+ * Button, Not an Inline Panel"), opening one `BottomSheet` whose content
+ * switches between two internal steps: **pick** (outcome + amount,
+ * what used to be the always-visible Card) and **confirm** (the
+ * existing review → pending → success/failed machine, unchanged). One
+ * sheet with a step, not two stacked sheets — nesting a second RN Modal
+ * on top of a first is the kind of thing that gets visually janky on at
+ * least one platform for no benefit here. Never fabricates a successful
+ * trade: if the backend call fails (including because no backend exists
+ * in this environment), the sheet shows a real "Trade failed" state —
+ * see docs/DECISIONS.md ("No Fake Trade Success").
  */
 export function TradingPanel({ market }: { market: MarketDetail }) {
   const navigation = useNavigation();
@@ -46,6 +52,7 @@ export function TradingPanel({ market }: { market: MarketDetail }) {
   const [outcome, setOutcome] = useState<Outcome>('YES');
   const [amountText, setAmountText] = useState('');
   const [sheetVisible, setSheetVisible] = useState(false);
+  const [step, setStep] = useState<'pick' | 'confirm'>('pick');
   const [isValidating, setIsValidating] = useState(false);
   const mutation = useCreateTrade(market.id);
 
@@ -58,14 +65,19 @@ export function TradingPanel({ market }: { market: MarketDetail }) {
     setAmountText(text.replace(/[^0-9]/g, ''));
   }
 
-  function openConfirm() {
+  function openSheet() {
     if (!isConnected) {
       navigation.navigate('Auth');
       return;
     }
-    if (validateAmount(amount)) return;
     mutation.reset();
+    setStep('pick');
     setSheetVisible(true);
+  }
+
+  function goToConfirm() {
+    if (validateAmount(amount)) return;
+    setStep('confirm');
   }
 
   async function handleConfirm() {
@@ -85,6 +97,7 @@ export function TradingPanel({ market }: { market: MarketDetail }) {
 
   function closeSheet() {
     setSheetVisible(false);
+    setStep('pick');
     if (mutation.isSuccess) {
       // Reset for the next trade only after the user has dismissed a
       // successful one — keeps "Trade successful" on screen while the
@@ -114,89 +127,142 @@ export function TradingPanel({ market }: { market: MarketDetail }) {
 
   return (
     <>
-      <GlassSurface contentClassName="gap-3 p-4">
-        <View className="flex-row gap-2">
-          <OutcomeCard
-            label={labels.yes}
-            priceCents={market.yesPrice}
-            selected={outcome === 'YES'}
-            variant="yes"
-            onPress={() => setOutcome('YES')}
-          />
-          <OutcomeCard
-            label={labels.no}
-            priceCents={market.noPrice}
-            selected={outcome === 'NO'}
-            variant="no"
-            onPress={() => setOutcome('NO')}
-          />
-        </View>
-
-        <Input
-          label="Amount"
-          keyboardType="numeric"
-          value={amountText}
-          onChangeText={handleChangeAmount}
-          placeholder="$0"
-          accessibilityLabel="Trade amount in dollars"
-        />
-
-        <View className="flex-row gap-2">
-          {AMOUNT_PRESETS.map((preset) => (
-            <Pressable
-              key={preset}
-              onPress={() => setAmountText(String(preset))}
-              className="rounded-full border border-border px-3 py-1.5 active:opacity-70"
-              accessibilityRole="button"
-              accessibilityLabel={`Set amount to $${preset}`}
-            >
-              <Text variant="caption" color="textSecondary">
-                ${preset}
-              </Text>
-            </Pressable>
-          ))}
-        </View>
-
-        {amount > 0 ? (
-          <View className="gap-1 rounded-lg bg-surface-elevated p-3">
-            <EstimateRow label="Estimated shares" value={shares.toFixed(2)} />
-            <EstimateRow label="Estimated price" value={formatPrice(price)} />
-            <EstimateRow label="Estimated cost" value={formatUsd(amount)} />
-            <EstimateRow label="Payout if correct" value={formatUsd(shares)} />
-          </View>
-        ) : null}
-
-        <Button
-          variant={outcome === 'YES' ? 'yes' : 'no'}
-          label={
-            !isConnected
-              ? 'Connect Wallet'
-              : `Buy ${outcomeLabel(market, outcome)}${amount > 0 ? ` · ${formatUsd(amount)}` : ''}`
-          }
-          onPress={openConfirm}
-          disabled={isConnected && !canSubmit}
-          accessibilityLabel={
-            !isConnected ? 'Connect Wallet to trade' : `Buy ${outcomeLabel(market, outcome)}`
-          }
-        />
-      </GlassSurface>
+      <Button
+        label={isConnected ? 'Trade' : 'Connect Wallet to Trade'}
+        onPress={openSheet}
+        accessibilityLabel="Trade this market"
+      />
 
       <BottomSheet visible={sheetVisible} onClose={closeSheet}>
-        <ConfirmTradeContent
-          market={market}
-          outcome={outcome}
-          amount={amount}
-          shares={shares}
-          price={price}
-          address={address}
-          isValidating={isValidating}
-          mutationStatus={mutation.status}
-          errorMessage={mutation.error?.message ?? null}
-          onConfirm={handleConfirm}
-          onClose={closeSheet}
-        />
+        {step === 'pick' ? (
+          <PickStep
+            labels={labels}
+            outcome={outcome}
+            onSelectOutcome={setOutcome}
+            yesPrice={market.yesPrice}
+            noPrice={market.noPrice}
+            amountText={amountText}
+            onChangeAmount={handleChangeAmount}
+            amount={amount}
+            price={price}
+            shares={shares}
+            canSubmit={canSubmit}
+            onContinue={goToConfirm}
+          />
+        ) : (
+          <ConfirmTradeContent
+            market={market}
+            outcome={outcome}
+            amount={amount}
+            shares={shares}
+            price={price}
+            address={address}
+            isValidating={isValidating}
+            mutationStatus={mutation.status}
+            errorMessage={mutation.error?.message ?? null}
+            onConfirm={handleConfirm}
+            onBack={() => setStep('pick')}
+            onClose={closeSheet}
+          />
+        )}
       </BottomSheet>
     </>
+  );
+}
+
+/** Step 1 of the Trade sheet — outcome + amount, what used to be the
+ * always-visible Card's contents. Purely a picker; nothing here submits
+ * a trade, `onContinue` only advances to the review step. */
+function PickStep({
+  labels,
+  outcome,
+  onSelectOutcome,
+  yesPrice,
+  noPrice,
+  amountText,
+  onChangeAmount,
+  amount,
+  price,
+  shares,
+  canSubmit,
+  onContinue,
+}: {
+  labels: { yes: string; no: string };
+  outcome: Outcome;
+  onSelectOutcome: (outcome: Outcome) => void;
+  yesPrice: number;
+  noPrice: number;
+  amountText: string;
+  onChangeAmount: (text: string) => void;
+  amount: number;
+  price: number;
+  shares: number;
+  canSubmit: boolean;
+  onContinue: () => void;
+}) {
+  return (
+    <View className="gap-3">
+      <Text variant="heading">Trade</Text>
+
+      <View className="flex-row gap-2">
+        <OutcomeCard
+          label={labels.yes}
+          priceCents={yesPrice}
+          selected={outcome === 'YES'}
+          variant="yes"
+          onPress={() => onSelectOutcome('YES')}
+        />
+        <OutcomeCard
+          label={labels.no}
+          priceCents={noPrice}
+          selected={outcome === 'NO'}
+          variant="no"
+          onPress={() => onSelectOutcome('NO')}
+        />
+      </View>
+
+      <Input
+        label="Amount"
+        keyboardType="numeric"
+        value={amountText}
+        onChangeText={onChangeAmount}
+        placeholder="$0"
+        accessibilityLabel="Trade amount in dollars"
+      />
+
+      <View className="flex-row gap-2">
+        {AMOUNT_PRESETS.map((preset) => (
+          <Pressable
+            key={preset}
+            onPress={() => onChangeAmount(String(preset))}
+            className="rounded-full border border-border px-3 py-1.5 active:opacity-70"
+            accessibilityRole="button"
+            accessibilityLabel={`Set amount to $${preset}`}
+          >
+            <Text variant="caption" color="textSecondary">
+              ${preset}
+            </Text>
+          </Pressable>
+        ))}
+      </View>
+
+      {amount > 0 ? (
+        <View className="gap-1 rounded-lg bg-surface-elevated p-3">
+          <EstimateRow label="Estimated shares" value={shares.toFixed(2)} />
+          <EstimateRow label="Estimated price" value={formatPrice(price)} />
+          <EstimateRow label="Estimated cost" value={formatUsd(amount)} />
+          <EstimateRow label="Payout if correct" value={formatUsd(shares)} />
+        </View>
+      ) : null}
+
+      <Button
+        variant={outcome === 'YES' ? 'yes' : 'no'}
+        label={`Continue with ${outcome === 'YES' ? labels.yes : labels.no}${amount > 0 ? ` · ${formatUsd(amount)}` : ''}`}
+        onPress={onContinue}
+        disabled={!canSubmit}
+        accessibilityLabel={`Continue with ${outcome === 'YES' ? labels.yes : labels.no}`}
+      />
+    </View>
   );
 }
 
@@ -260,6 +326,7 @@ function ConfirmTradeContent({
   mutationStatus,
   errorMessage,
   onConfirm,
+  onBack,
   onClose,
 }: {
   market: MarketDetail;
@@ -272,6 +339,7 @@ function ConfirmTradeContent({
   mutationStatus: 'idle' | 'pending' | 'error' | 'success';
   errorMessage: string | null;
   onConfirm: () => void;
+  onBack: () => void;
   onClose: () => void;
 }) {
   // "signing" is a real, defined state (types/trading.ts) that this flow
@@ -350,7 +418,7 @@ function ConfirmTradeContent({
         onPress={onConfirm}
         className="mt-2"
       />
-      <Button label="Cancel" variant="ghost" onPress={onClose} />
+      <Button label="Back" variant="ghost" onPress={onBack} />
     </View>
   );
 }
@@ -388,10 +456,10 @@ function friendlyTradeError(message: string | null): string {
 
 function InfoBanner({ text }: { text: string }) {
   return (
-    <GlassSurface contentClassName="p-4">
+    <Card contentClassName="p-4">
       <Text variant="body" color="textSecondary" className="text-center">
         {text}
       </Text>
-    </GlassSurface>
+    </Card>
   );
 }

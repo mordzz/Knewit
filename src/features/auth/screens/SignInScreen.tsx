@@ -9,11 +9,17 @@ import { Icon } from '@/components/ui/Icon';
 import { isPrivyConfigured } from '@/app/config/env';
 
 /**
- * Privy's embedded-wallet email sign-in flow — presented as a modal from
- * wherever a wallet is required (e.g. taking a position), not shown at
- * app launch — see docs/DECISIONS.md for why the root isn't auth-gated.
- * No seed phrase is ever shown or collected; Privy manages the embedded
- * wallet's key material entirely — see docs/WALLET.md.
+ * Privy's embedded-wallet email sign-in flow. Two contexts now, per
+ * docs/DECISIONS.md ("Hard Login Gate"): the app's own launch gate when
+ * signed out (`RootNavigator` renders this with nothing to go back to),
+ * and a modal presented on demand when already signed in but not yet
+ * wallet-connected (e.g. taking a position). `navigation.goBack()`
+ * below only does anything in the second case — react-navigation's
+ * `goBack()` is a documented no-op with nothing to go back to, and
+ * either way `isAuthenticated` flipping true is what actually swaps
+ * `RootNavigator` off this screen in the launch-gate case, not this
+ * call. No seed phrase is ever shown or collected; Privy manages the
+ * embedded wallet's key material entirely — see docs/WALLET.md.
  */
 export function SignInScreen() {
   const navigation = useNavigation();
