@@ -20,31 +20,28 @@ export interface LeaderboardMetric {
   value: number;
 }
 
-/** `global` ranks every user; `following` ranks only accounts the
- * authenticated viewer follows (Sprint 9's real Follow relationships) —
- * see docs/DECISIONS.md. */
-export type LeaderboardScope = 'global' | 'following';
-
 /**
- * `isFollowing`/`isSelf` are server-computed and viewer-relative, same
- * pattern as `FeedItem.liked`/`UserProfile.isFollowing` (Sprint 9) — see
- * docs/DECISIONS.md. Carried directly on each row rather than having
- * `LeaderboardUserCard` fetch a full profile per row: a leaderboard page
- * can list dozens of users, and firing one `GET /users/:id` per row
- * would be the exact N+1 request pattern this project's performance
- * guidance warns against.
+ * One row of Polymarket's **global** ranking, exactly as the backend
+ * returns it — and, by request, nothing else: no scope (Polymarket's global
+ * list is the only one), no `isFollowing`/`isSelf` (this app's users and
+ * Polymarket's users are different populations, so nothing on this list is
+ * a social relationship), and no profile link. `user.id` is Polymarket's
+ * own proxy wallet address, used purely as a list key — never a `users` row
+ * id, never a `/users/:id` or `/users/:id/follow` target. See
+ * docs/DECISIONS.md, "Round 6: Leaderboard Is a Read-Only Polymarket
+ * Ranking — No Follow, No Profile Links."
  */
 export interface LeaderboardEntry {
   rank: number;
   user: Pick<User, 'id' | 'handle' | 'displayName' | 'avatarUrl'>;
   metric: LeaderboardMetric;
-  isFollowing: boolean;
-  isSelf: boolean;
 }
 
-/** The authenticated viewer's own rank — `null` when not authenticated
- * or when the backend has no reliable rank for them yet (never a
- * client-computed guess). */
+/** The authenticated viewer's own live standing in Polymarket's global
+ * ranking — the one viewer-relative figure this read still carries, since
+ * it describes the viewer's own wallet rather than another ranked trader.
+ * `null` when signed out, or when the backend has no reliable rank for them
+ * (never a client-computed guess). */
 export interface LeaderboardSelf {
   rank: number;
   metric: LeaderboardMetric;

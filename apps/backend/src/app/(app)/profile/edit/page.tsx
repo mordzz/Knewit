@@ -2,117 +2,103 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { IoClose } from 'react-icons/io5';
-import { apiRequest } from '@/lib/apiClient';
-import type { UpdateProfileInput, UserProfile } from '@/types/social';
+import { Text } from '@/components/ui/Text';
+import { Icon } from '@/components/ui/Icon';
+import { Input } from '@/components/ui/Input';
+import { Button } from '@/components/ui/Button';
+import { useProfile } from '@/hooks/useProfile';
+import { useUpdateProfile } from '@/hooks/useUpdateProfile';
 
-const MAX_DISPLAY_NAME_LENGTH = 50;
 const MAX_BIO_LENGTH = 160;
+const MAX_DISPLAY_NAME_LENGTH = 50;
 
 /**
- * Web port of `apps/frontend`'s `EditProfileScreen` — only
+ * Direct conversion of `apps/mobile`'s `EditProfileScreen` — only
  * `displayName`/`bio` are editable (docs/DECISIONS.md, "Edit Profile
- * Scope"): no username rename or avatar upload anywhere in this
- * codebase yet. Seeds the form from the fetched profile the same
- * "derived state during render, guarded by id" way the mobile screen
- * does (see its own comment) rather than a `useEffect` + `setState`,
- * which this project's lint config specifically discourages anyway.
+ * Scope"). Seeds the form from the fetched profile the same "derived
+ * state during render, guarded by id" way mobile does.
  */
 export default function EditProfilePage() {
   const router = useRouter();
-  const queryClient = useQueryClient();
-  const profileQuery = useQuery({
-    queryKey: ['profile', 'me'],
-    queryFn: () => apiRequest<UserProfile>('/api/users/me'),
-  });
-
+  const profile = useProfile();
+  const mutation = useUpdateProfile();
   const [displayName, setDisplayName] = useState('');
   const [bio, setBio] = useState('');
   const [seededFor, setSeededFor] = useState<string | null>(null);
 
-  if (profileQuery.data && seededFor !== profileQuery.data.id) {
-    setDisplayName(profileQuery.data.displayName);
-    setBio(profileQuery.data.bio ?? '');
-    setSeededFor(profileQuery.data.id);
+  if (profile.status === 'success' && seededFor !== profile.data.id) {
+    setDisplayName(profile.data.displayName);
+    setBio(profile.data.bio ?? '');
+    setSeededFor(profile.data.id);
   }
 
-  const mutation = useMutation({
-    mutationFn: (input: UpdateProfileInput) =>
-      apiRequest<UserProfile>('/api/users/me', {
-        method: 'PATCH',
-        body: JSON.stringify(input),
-      }),
-    onSuccess: (updated) => {
-      queryClient.setQueryData(['profile', 'me'], updated);
-      router.push('/profile');
-    },
-  });
-
   const trimmedName = displayName.trim();
-  const isValid =
-    trimmedName.length > 0 &&
-    displayName.length <= MAX_DISPLAY_NAME_LENGTH &&
-    bio.length <= MAX_BIO_LENGTH;
+  const isValid = trimmedName.length > 0 && displayName.length <= MAX_DISPLAY_NAME_LENGTH && bio.length <= MAX_BIO_LENGTH;
   const canSave = isValid && !mutation.isPending;
 
+  function handleSave() {
+    if (!canSave) return;
+    mutation.mutate(
+      { displayName: trimmedName, bio: bio.trim() },
+      { onSuccess: () => router.push('/profile') }
+    );
+  }
+
   return (
-    <main className="w-full px-4 pb-8 pt-4">
+    <main className="flex w-full flex-col gap-3 px-4 pb-8 pt-4">
       <div className="flex items-center justify-between">
         <button type="button" onClick={() => router.back()} aria-label="Cancel">
-          <IoClose size={24} />
+          <Icon name="close" size={24} />
         </button>
-        <h1 className="text-xl font-bold">Edit Profile</h1>
+        <Text variant="heading">Edit Profile</Text>
         <span className="w-6" />
       </div>
 
-      <div className="mt-6 flex flex-col gap-1">
-        <label className="text-sm text-text-secondary" htmlFor="displayName">
-          Display name
-        </label>
-        <input
-          id="displayName"
+      <div>
+        <Input
+          label="Display name"
           value={displayName}
           onChange={(e) => setDisplayName(e.target.value)}
           placeholder="Your name"
-          className="min-h-12 rounded-md border border-border bg-surface-elevated px-3 py-3 text-text-primary placeholder:text-text-tertiary focus:outline-none focus:ring-1 focus:ring-accent"
         />
-        <p className="text-right text-xs text-text-tertiary">
+        <Text variant="micro" color="textTertiary" className="-mt-2 block text-right">
           {displayName.length}/{MAX_DISPLAY_NAME_LENGTH}
-        </p>
+        </Text>
       </div>
 
-      <div className="mt-3 flex flex-col gap-1">
-        <label className="text-sm text-text-secondary" htmlFor="bio">
-          Bio
-        </label>
-        <textarea
-          id="bio"
-          value={bio}
-          onChange={(e) => setBio(e.target.value)}
-          placeholder="Tell people about yourself"
-          rows={3}
-          className="min-h-20 rounded-md border border-border bg-surface-elevated px-3 py-3 text-text-primary placeholder:text-text-tertiary focus:outline-none focus:ring-1 focus:ring-accent"
-        />
-        <p className="text-right text-xs text-text-tertiary">
+      <div>
+        <div className="flex flex-col gap-1">
+          <Text variant="caption" color="textSecondary" className="ml-1">
+            Bio
+          </Text>
+          <textarea
+            value={bio}
+            onChange={(e) => setBio(e.target.value)}
+            placeholder="Tell people about yourself"
+            rows={3}
+            className="min-h-20 rounded-md border border-border bg-surface-elevated px-3 py-3 text-body text-text-primary placeholder:text-text-tertiary focus:outline-none"
+          />
+        </div>
+        <Text variant="micro" color="textTertiary" className="-mt-2 block text-right">
           {bio.length}/{MAX_BIO_LENGTH}
-        </p>
+        </Text>
       </div>
 
       {mutation.isError ? (
-        <p className="mt-2 text-sm text-danger">
-          Couldn&apos;t save your changes right now. Please try again.
-        </p>
+        <Text variant="caption" color="danger">
+          {friendlyEditError(mutation.error?.message ?? null)}
+        </Text>
       ) : null}
 
-      <button
-        type="button"
-        onClick={() => mutation.mutate({ displayName: trimmedName, bio: bio.trim() })}
-        disabled={!canSave}
-        className="mt-4 w-full rounded-md border border-white/15 bg-accent py-3 font-semibold text-text-inverse disabled:opacity-50"
-      >
-        {mutation.isPending ? 'Saving…' : 'Save'}
-      </button>
+      <Button label="Save" onClick={handleSave} disabled={!canSave} loading={mutation.isPending} className="mt-1" />
     </main>
   );
+}
+
+function friendlyEditError(message: string | null): string {
+  if (!message) return "Couldn't save your changes right now. Please try again.";
+  if (/network/i.test(message)) {
+    return 'Network error — check your connection and try again.';
+  }
+  return "Couldn't save your changes right now. Please try again.";
 }

@@ -81,6 +81,16 @@ export interface MarketHolder {
   shares: number;
 }
 
+/** Polymarket's own set of chart time windows. */
+export type PriceRange = '1H' | '6H' | '1D' | '1W' | '1M' | 'ALL';
+
+/** One point of a market's YES-price history — `price` is cents, the
+ * same unit as `MarketSummary.yesPrice`. */
+export interface PricePoint {
+  timestamp: ISODateString;
+  price: number;
+}
+
 export interface FeedItem {
   id: ID;
   author: User;
@@ -107,9 +117,11 @@ export interface UserPosition {
 
 /** Phase 2 (Social core) types. */
 
+/** A Callout always attaches a held position — `positionId` required
+ * (docs/DECISIONS.md, "Callouts Require a Held Position"). */
 export interface CreatePostInput {
   body: string;
-  positionId?: string;
+  positionId: string;
 }
 
 export interface CommentItem {

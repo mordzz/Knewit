@@ -1,9 +1,11 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { createPost } from '@/features/home/services/postService';
 
-/** On success, invalidates the feed so the new Post/Call appears without
- * a full app reload — see docs/DECISIONS.md ("Query Invalidation, Not
- * Manual Cache Insertion"). */
+/** On success, invalidates every query a new Callout appears in — the
+ * feed, the author's own Profile tabs/counters, and the referenced
+ * market's activity list — without a full app reload. `['profile']` also
+ * covers `['profile', id]` (prefix match). See docs/DECISIONS.md ("Query
+ * Invalidation, Not Manual Cache Insertion"). */
 export function useCreatePost() {
   const queryClient = useQueryClient();
 
@@ -11,6 +13,10 @@ export function useCreatePost() {
     mutationFn: createPost,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['feed'] });
+      queryClient.invalidateQueries({ queryKey: ['profile-calls'] });
+      queryClient.invalidateQueries({ queryKey: ['profile-activity'] });
+      queryClient.invalidateQueries({ queryKey: ['market-activity'] });
+      queryClient.invalidateQueries({ queryKey: ['profile'] });
     },
   });
 }

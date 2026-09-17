@@ -1,13 +1,8 @@
-import { useCallback, useMemo, useState } from 'react';
-import { ActivityIndicator, FlatList, Pressable, View } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useCallback, useMemo } from 'react';
+import { ActivityIndicator, FlatList, View } from 'react-native';
 import { Screen } from '@/components/layout/Screen';
 import { Text } from '@/components/ui/Text';
-import { Icon } from '@/components/ui/Icon';
 import { Divider } from '@/components/ui/Divider';
-import { FAB } from '@/components/ui/FAB';
-import { BottomSheet } from '@/components/ui/BottomSheet';
 import { LoadingState } from '@/components/feedback/LoadingState';
 import { EmptyState } from '@/components/feedback/EmptyState';
 import { ErrorState } from '@/components/feedback/ErrorState';
@@ -16,13 +11,8 @@ import { YourRankCard } from '@/features/leaderboard/components/YourRankCard';
 import { TopPerformers } from '@/features/leaderboard/components/TopPerformers';
 import { useLeaderboard } from '@/features/leaderboard/hooks/useLeaderboard';
 import { useAuth } from '@/hooks/useAuth';
-import { colors, typography, spacing } from '@/theme';
-import type { LeaderboardEntry, LeaderboardScope } from '@/types/leaderboard';
-
-const SCOPE_OPTIONS: { key: LeaderboardScope; label: string }[] = [
-  { key: 'global', label: 'Global' },
-  { key: 'following', label: 'Following' },
-];
+import { colors, typography } from '@/theme';
+import type { LeaderboardEntry } from '@/types/leaderboard';
 
 /**
  * Ranked by **Trading Volume only** — not PnL, ROI, or win rate. This
@@ -30,29 +20,28 @@ const SCOPE_OPTIONS: { key: LeaderboardScope; label: string }[] = [
  * yet, so any PnL-based metric would have to be estimated or guessed;
  * Volume is the one figure a backend can compute honestly from executed
  * orders alone — see docs/DECISIONS.md ("Leaderboard Metric: Volume,
- * Not PnL"). No period/category filter: this app has no historical
- * time-series or category-tagged trading data to filter by yet, and a
- * filter that doesn't actually filter anything would be exactly the
- * "kosmetik" filter the spec forbids.
+ * Not PnL"). No period/category filter: the window is fixed at
+ * all-time/overall (`ALL`/`OVERALL`), so a filter control would be exactly
+ * the "kosmetik" filter the spec forbids.
+ *
+ * A read-only list, by request. Polymarket's users and this app's users are
+ * two different populations, so there is no Global/Following switch (there
+ * is no following scope), no Follow button on a row, and no tapping a row
+ * to open a profile: a row is a ranked Polymarket trader identified by
+ * proxy wallet, never a Knewit account (docs/DECISIONS.md, "Round 6:
+ * Leaderboard Is a Read-Only Polymarket Ranking — No Follow, No Profile
+ * Links"). The one personal element left is "Your Rank" — the viewer's own
+ * live standing, read from their own wallet, rendered only when signed in
+ * and only when their rank falls outside the podium.
  *
  * Header is a bare page title (no subtitle) + a divider — see
- * docs/DECISIONS.md ("Decorated Top-3 Rank Numbers"). The Global/
- * Following scope switch moved out of an always-visible `TabRow` into a
- * screen-local FAB (`LeaderboardFilterFab` below) that opens a
- * `BottomSheet` — a filter control scoped to this screen only, not the
- * global cross-tab Create FAB. "Your Rank" doesn't render at all when
- * signed out (no sign-in prompt in its place) — see `YourRankCard`.
+ * docs/DECISIONS.md ("Decorated Top-3 Rank Numbers"). "Your Rank" doesn't
+ * render at all when signed out (no sign-in prompt in its place) — see
+ * `YourRankCard`.
  */
 export function LeaderboardScreen() {
-  const navigation = useNavigation();
   const { isAuthenticated } = useAuth();
-  const [scope, setScope] = useState<LeaderboardScope>('global');
-  const leaderboard = useLeaderboard(scope);
-
-  const openUser = useCallback(
-    (userId: string) => navigation.navigate('Profile', { userId }),
-    [navigation]
-  );
+  const leaderboard = useLeaderboard();
 
   const items = useMemo(
     () => leaderboard.data?.pages.flatMap((page) => page.items) ?? [],
@@ -66,10 +55,8 @@ export function LeaderboardScreen() {
   const rest = topThree ? items.slice(3) : items;
 
   const renderItem = useCallback(
-    ({ item }: { item: LeaderboardEntry }) => (
-      <LeaderboardUserCard entry={item} onPress={() => openUser(item.user.id)} />
-    ),
-    [openUser]
+    ({ item }: { item: LeaderboardEntry }) => <LeaderboardUserCard entry={item} />,
+    []
   );
 
   const titleBlock = (
@@ -91,8 +78,7 @@ export function LeaderboardScreen() {
   // screen at once. "Your Rank" only renders once the viewer's rank
   // falls outside the podium — see docs/DECISIONS.md ("Less
   // Transparent Glass", which also covers this).
-  const showYourRank =
-    isAuthenticated && scope === 'global' && (!currentUser || currentUser.rank > 3);
+  const showYourRank = isAuthenticated && (!currentUser || currentUser.rank > 3);
 
   const header = (
     <View className="gap-3 pt-3">
@@ -101,7 +87,7 @@ export function LeaderboardScreen() {
           <YourRankCard self={currentUser} />
         </View>
       ) : null}
-      {topThree ? <TopPerformers entries={topThree} onPressUser={openUser} /> : null}
+      {topThree ? <TopPerformers entries={topThree} /> : null}
     </View>
   );
 
@@ -112,7 +98,6 @@ export function LeaderboardScreen() {
         <View className="px-4 pt-3">
           <LoadingState rows={5} />
         </View>
-        <LeaderboardFilterFab scope={scope} onChangeScope={setScope} />
       </Screen>
     );
   }
@@ -122,7 +107,6 @@ export function LeaderboardScreen() {
       <Screen className="gap-0 px-0" edges={['top']}>
         {titleBlock}
         <ErrorState message="Unable to load leaderboard." onRetry={() => leaderboard.refetch()} />
-        <LeaderboardFilterFab scope={scope} onChangeScope={setScope} />
       </Screen>
     );
   }
@@ -144,19 +128,11 @@ export function LeaderboardScreen() {
         }}
         ListEmptyComponent={
           <View className="px-4">
-            {scope === 'following' ? (
-              <EmptyState
-                icon="trophy-outline"
-                title="No followed traders yet"
-                message="Follow traders to see their activity here."
-              />
-            ) : (
-              <EmptyState
-                icon="trophy-outline"
-                title="No leaderboard data yet"
-                message="Trading activity will appear here when reliable performance data is available."
-              />
-            )}
+            <EmptyState
+              icon="trophy-outline"
+              title="No leaderboard data yet"
+              message="Polymarket's ranked traders will appear here when the ranking is available."
+            />
           </View>
         }
         ListFooterComponent={
@@ -167,57 +143,6 @@ export function LeaderboardScreen() {
           ) : null
         }
       />
-      <LeaderboardFilterFab scope={scope} onChangeScope={setScope} />
     </Screen>
-  );
-}
-
-/**
- * The Global/Following switch, as a screen-local FAB + `BottomSheet`
- * rather than an always-visible `TabRow` — "like the FAB, but scoped to
- * this screen only," not the global cross-tab Create FAB (which only
- * ever shows on Home) — see docs/DECISIONS.md.
- */
-function LeaderboardFilterFab({
-  scope,
-  onChangeScope,
-}: {
-  scope: LeaderboardScope;
-  onChangeScope: (scope: LeaderboardScope) => void;
-}) {
-  const insets = useSafeAreaInsets();
-  const [visible, setVisible] = useState(false);
-
-  return (
-    <>
-      <FAB
-        icon="options-outline"
-        accessibilityLabel="Filter leaderboard"
-        onPress={() => setVisible(true)}
-        className="absolute right-6"
-        style={{ bottom: insets.bottom + spacing.md }}
-      />
-      <BottomSheet visible={visible} onClose={() => setVisible(false)}>
-        <View className="gap-3">
-          <Text variant="heading">Filter</Text>
-          {SCOPE_OPTIONS.map((option) => (
-            <Pressable
-              key={option.key}
-              onPress={() => {
-                onChangeScope(option.key);
-                setVisible(false);
-              }}
-              className="flex-row items-center justify-between rounded-xl border border-border p-3 active:opacity-90"
-              accessibilityRole="button"
-              accessibilityLabel={option.label}
-              accessibilityState={{ selected: scope === option.key }}
-            >
-              <Text variant="bodyStrong">{option.label}</Text>
-              {scope === option.key ? <Icon name="checkmark" size={18} color="accent" /> : null}
-            </Pressable>
-          ))}
-        </View>
-      </BottomSheet>
-    </>
   );
 }

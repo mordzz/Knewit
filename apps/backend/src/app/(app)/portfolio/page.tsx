@@ -2,25 +2,30 @@
 
 import { usePrivy } from '@privy-io/react-auth';
 import { useQuery } from '@tanstack/react-query';
-import { IoWalletOutline } from 'react-icons/io5';
-import { apiRequest, ApiRequestError } from '@/lib/apiClient';
+import { useRouter } from 'next/navigation';
+import { Text } from '@/components/ui/Text';
+import { Icon } from '@/components/ui/Icon';
+import { Button } from '@/components/ui/Button';
+import { Divider } from '@/components/ui/Divider';
+import { EmptyState } from '@/components/feedback/EmptyState';
+import { ErrorState } from '@/components/feedback/ErrorState';
+import { apiRequest } from '@/lib/apiClient';
 import { formatProbability } from '@/lib/formatters';
 import type { UserPosition } from '@/types/social';
 
 /**
- * Web port of `apps/frontend`'s `PortfolioScreen` — but real, not a
- * static shell: the mobile screen hardcodes "0 Open Positions"/"$0.00
- * PnL" rather than calling `GET /positions` (its own `usePositions`
- * hook exists but was never wired into that screen). This page calls
- * the real endpoint — an honestly empty list is exactly as truthful as
- * the mobile screen's hardcoded zero, and a non-empty one is strictly
- * more so. No PnL figure is shown at all (not even $0.00): this app's
- * data model has no realized/unrealized PnL computation
- * (docs/DECISIONS.md, "Leaderboard Metric — Volume, Not PnL" — the
- * same reasoning applies here), so showing one would be fabricated
- * precision this app doesn't have anywhere else.
+ * Direct conversion of `apps/mobile`'s `PortfolioScreen` — same wallet
+ * row + "Open Positions" stat + position list layout. Real, not a
+ * static shell: mobile's own screen hardcodes "0 Open Positions" rather
+ * than calling `GET /positions` (its `usePositions` hook exists but
+ * isn't wired into that screen yet) — this page calls the real
+ * endpoint, which is strictly more truthful, never less. No PnL figure
+ * anywhere (not even $0.00) — this app's data model has no realized/
+ * unrealized PnL computation (docs/DECISIONS.md, "Leaderboard Metric —
+ * Volume, Not PnL"), so showing one would be fabricated precision.
  */
 export default function PortfolioPage() {
+  const router = useRouter();
   const { user } = usePrivy();
   const address = user?.wallet?.address ?? null;
 
@@ -32,42 +37,54 @@ export default function PortfolioPage() {
   const positions = positionsQuery.data ?? [];
 
   return (
-    <main className="w-full">
-      <h1 className="px-4 pb-3 pt-6 text-2xl font-bold">Portfolio</h1>
+    <main className="flex w-full flex-col gap-3 px-0 pt-4">
+      <Text variant="heading" className="px-4">
+        Portfolio
+      </Text>
 
       <div className="flex items-center gap-3 border-b border-border px-4 py-3">
-        <IoWalletOutline size={20} className={address ? 'text-yes' : 'text-text-tertiary'} />
+        <Icon name="wallet-outline" color={address ? 'yes' : 'textTertiary'} />
         <div className="flex-1">
-          <p className="font-bold">
+          <Text variant="bodyStrong" className="block">
             {address ? `${address.slice(0, 6)}…${address.slice(-4)}` : 'No wallet connected'}
-          </p>
-          <p className="text-sm text-text-secondary">
+          </Text>
+          <Text variant="caption" color="textSecondary">
             {address ? 'Connected' : 'Connect to see your positions'}
-          </p>
+          </Text>
         </div>
+        {!address ? (
+          <Button label="Connect" variant="secondary" onClick={() => router.push('/wallet')} />
+        ) : null}
       </div>
 
       <div className="flex border-b border-border px-4 py-3">
         <div className="flex-1">
-          <p className="text-sm text-text-secondary">Open Positions</p>
-          <p className="text-xl font-bold">{positions.length}</p>
+          <Text variant="caption" color="textSecondary" className="block">
+            Open Positions
+          </Text>
+          <Text variant="title">{positions.length}</Text>
         </div>
       </div>
 
       {positionsQuery.isError ? (
-        <p className="p-6 text-center text-danger">
-          {positionsQuery.error instanceof ApiRequestError
-            ? positionsQuery.error.message
-            : "Couldn't load your positions."}
-        </p>
+        <ErrorState message="Couldn't load your positions." onRetry={() => positionsQuery.refetch()} />
       ) : positionsQuery.isPending ? (
-        <p className="p-6 text-center text-text-secondary">Loading…</p>
+        <div className="flex justify-center py-12">
+          <div className="h-5 w-5 animate-spin rounded-full border-2 border-text-secondary border-t-transparent" />
+        </div>
       ) : positions.length === 0 ? (
-        <p className="p-6 text-center text-text-secondary">
-          Positions you take on markets will show up here.
-        </p>
+        <EmptyState
+          icon="trending-up-outline"
+          title="No positions yet"
+          message="Positions you take on markets will show up here."
+        />
       ) : (
-        positions.map((position) => <PositionRow key={position.id} position={position} />)
+        positions.map((position, index) => (
+          <div key={position.id}>
+            <PositionRow position={position} />
+            {index < positions.length - 1 ? <Divider /> : null}
+          </div>
+        ))
       )}
     </main>
   );
@@ -75,28 +92,38 @@ export default function PortfolioPage() {
 
 function PositionRow({ position }: { position: UserPosition }) {
   return (
-    <article className="border-b border-border px-4 py-3">
-      <p className="line-clamp-2 font-bold">{position.marketQuestion}</p>
+    <article className="px-4 py-3">
+      <Text variant="bodyStrong" numberOfLines={2} className="block">
+        {position.marketQuestion}
+      </Text>
       <div className="mt-2 flex gap-6">
         <div>
-          <p className="text-xs text-text-tertiary">Position</p>
-          <p className={`font-bold ${position.outcome === 'YES' ? 'text-yes' : 'text-no'}`}>
+          <Text variant="caption" color="textTertiary" className="block">
+            Position
+          </Text>
+          <Text variant="bodyStrong" color={position.outcome === 'YES' ? 'yes' : 'no'}>
             {position.outcome}
-          </p>
+          </Text>
         </div>
         <div>
-          <p className="text-xs text-text-tertiary">Entry</p>
-          <p className="font-bold">{formatProbability(position.entryPrice)}</p>
+          <Text variant="caption" color="textTertiary" className="block">
+            Entry
+          </Text>
+          <Text variant="bodyStrong">{formatProbability(position.entryPrice)}</Text>
         </div>
         <div>
-          <p className="text-xs text-text-tertiary">Current</p>
-          <p className="font-bold">
+          <Text variant="caption" color="textTertiary" className="block">
+            Current
+          </Text>
+          <Text variant="bodyStrong">
             {position.currentPrice != null ? formatProbability(position.currentPrice) : '—'}
-          </p>
+          </Text>
         </div>
         <div>
-          <p className="text-xs text-text-tertiary">Size</p>
-          <p className="font-bold">{position.size}</p>
+          <Text variant="caption" color="textTertiary" className="block">
+            Size
+          </Text>
+          <Text variant="bodyStrong">{position.size}</Text>
         </div>
       </div>
     </article>

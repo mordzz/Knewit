@@ -9,24 +9,22 @@ import type {
 } from '@/types/social';
 
 /**
- * Primary category is the event's first tag — Polymarket doesn't
- * expose a single canonical "category" field, only a tag list (see the
- * live-API probe recorded in the Phase 1 design notes). Taking the
- * first tag is a simplification: an event's tags aren't ordered by
- * relevance in any documented way, so this is a best-effort category,
- * not an authoritative one. `'Other'` covers not just a genuinely
- * untagged event, but a tag list that only contains process/marketing
- * tags Polymarket puts first for its own site (e.g. "Featured") which
- * would otherwise surface as a nonsensical category here — the
- * KNOWN_CATEGORIES-adjacent tags are preferred when present.
+ * Categories follow the API's own data, never a hardcoded taxonomy.
+ * Polymarket exposes no canonical "category" field on events (the
+ * documented `category`/`categories` fields are absent from real
+ * responses — verified live), only an ordered `tags` list, so:
+ *
+ * - When the request is filtered (`preferredSlug` = the `tag_slug` the
+ *   backend queried with), that tag wins — every event returned under a
+ *   category tab genuinely carries it, and this keeps the label
+ *   consistent with the tab the user chose.
+ * - Otherwise (Trending / search / single-market reads), the API's own
+ *   first tag is used as-is.
+ * - `'Other'` only when the event has no tags at all.
  */
-export function categoryFromTags(tags: GammaTag[]): string {
+export function categoryFromTags(tags: GammaTag[], preferredSlug?: string): string {
   if (tags.length === 0) return 'Other';
-  const preferred = tags.find((tag) =>
-    ['politics', 'sports', 'crypto', 'pop-culture', 'business', 'economics', 'technology', 'world'].some(
-      (known) => tag.slug.includes(known)
-    )
-  );
+  const preferred = preferredSlug ? tags.find((tag) => tag.slug === preferredSlug) : undefined;
   return (preferred ?? tags[0]).label;
 }
 
@@ -148,8 +146,8 @@ function toMarketGroupSummary(event: GammaEvent, category: string): MarketGroupS
  * event with a single market, or where `groupItemTitle` is empty for
  * any market, is emitted as ordinary flat `{ kind: 'market' }` row(s).
  */
-export function toMarketListItems(event: GammaEvent): MarketListItem[] {
-  const category = categoryFromTags(event.tags);
+export function toMarketListItems(event: GammaEvent, filterTagSlug?: string): MarketListItem[] {
+  const category = categoryFromTags(event.tags, filterTagSlug);
   const isGroup = event.markets.length > 1 && event.markets.every((market) => market.groupItemTitle);
 
   if (isGroup) {

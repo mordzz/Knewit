@@ -43,7 +43,9 @@ export async function GET(request: Request) {
       walletAddress: u.wallet_address as string | null,
     }));
 
-    const markets: MarketListItem[] = events.flatMap(toMarketListItems).slice(0, MARKET_ITEM_LIMIT);
+    const markets: MarketListItem[] = events
+      .flatMap((event) => toMarketListItems(event))
+      .slice(0, MARKET_ITEM_LIMIT);
 
     const results: SearchResults = { people, markets };
     return Response.json(results);

@@ -46,3 +46,22 @@ export function formatCompactUsd(amount: number): string {
 export function formatUsd(amount: number): string {
   return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(amount);
 }
+
+/** Market prices are probabilities in cents, e.g. 42 -> "42¢" — used for
+ * trade-economics contexts (entry price, current price). */
+export function formatPrice(cents: number): string {
+  return `${Math.round(cents)}¢`;
+}
+
+/** Compact countdown for a market's end date, e.g. "24d left", "6h left",
+ * "Ended" once past — used in the market attachment's metrics footer. */
+export function formatTimeRemaining(iso: string): string {
+  const diffMs = new Date(iso).getTime() - Date.now();
+  if (diffMs <= 0) return 'Ended';
+
+  const hours = Math.floor(diffMs / 3_600_000);
+  if (hours < 24) return `${Math.max(hours, 1)}h left`;
+
+  const days = Math.floor(hours / 24);
+  return `${days}d left`;
+}

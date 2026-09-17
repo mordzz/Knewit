@@ -1,156 +1,136 @@
 'use client';
 
-import { useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { apiRequest, ApiRequestError } from '@/lib/apiClient';
-import { formatUsd } from '@/lib/formatters';
-import type { LeaderboardEntry, LeaderboardPage as LeaderboardPageData, LeaderboardScope } from '@/types/leaderboard';
-import type { FollowResult } from '@/types/social';
+import { useEffect, useMemo, useRef } from 'react';
+import { usePrivy } from '@privy-io/react-auth';
+import { Text } from '@/components/ui/Text';
+import { Divider } from '@/components/ui/Divider';
+import { LoadingState } from '@/components/feedback/LoadingState';
+import { EmptyState } from '@/components/feedback/EmptyState';
+import { ErrorState } from '@/components/feedback/ErrorState';
+import { LeaderboardUserCard } from '@/components/LeaderboardUserCard';
+import { YourRankCard } from '@/components/YourRankCard';
+import { TopPerformers } from '@/components/TopPerformers';
+import { useLeaderboard } from '@/hooks/useLeaderboard';
+import type { LeaderboardEntry } from '@/types/leaderboard';
 
 /**
- * Web port of `apps/frontend`'s Leaderboard tab
- * (`LeaderboardScreen` + `LeaderboardUserCard`) — same Global/Following
- * scope, same volume-only metric (never PnL — docs/DECISIONS.md,
- * "Leaderboard Metric: Volume, Not PnL"). Simplified from the mobile
- * screen: a plain scope toggle instead of a FAB + BottomSheet filter,
- * and no separate `TopPerformers` podium for the top 3 — every rank
- * renders as the same row. "Your Rank" (the `currentUser` field on the
- * first page) still gets its own highlighted line above the list when
- * it falls outside the loaded page, same as mobile.
+ * Direct conversion of `apps/mobile`'s `LeaderboardScreen` — Polymarket's
+ * own global ranking, read-only (docs/DECISIONS.md, "Round 6"): no
+ * Follow button, no profile links, a row is a ranked Polymarket trader
+ * identified by proxy wallet, never a Knewit account. Same Top
+ * Performers podium for the first 3 real ranked entries, and the same
+ * "Your Rank" line (only rendered when signed in and outside the
+ * podium) mobile has.
  */
 export default function LeaderboardPage() {
-  const [scope, setScope] = useState<LeaderboardScope>('global');
-  const queryClient = useQueryClient();
+  const { authenticated } = usePrivy();
+  const leaderboard = useLeaderboard();
 
-  const leaderboardQuery = useQuery({
-    queryKey: ['leaderboard', scope],
-    queryFn: () => apiRequest<LeaderboardPageData>(`/api/leaderboard?scope=${scope}`),
-  });
+  const items = useMemo(() => leaderboard.data?.pages.flatMap((page) => page.items) ?? [], [leaderboard.data]);
+  const currentUser = leaderboard.data?.pages[0]?.currentUser;
+  const topThree = items.length >= 3 ? (items.slice(0, 3) as [LeaderboardEntry, LeaderboardEntry, LeaderboardEntry]) : null;
+  const rest = topThree ? items.slice(3) : items;
 
-  const toggleFollow = useMutation({
-    mutationFn: (entry: LeaderboardEntry) =>
-      apiRequest<FollowResult>(`/api/users/${entry.user.id}/follow`, {
-        method: entry.isFollowing ? 'DELETE' : 'POST',
-      }),
-    onSuccess: (result, entry) => {
-      queryClient.setQueryData<LeaderboardPageData>(['leaderboard', scope], (current) =>
-        current
-          ? {
-              ...current,
-              items: current.items.map((row) =>
-                row.user.id === entry.user.id ? { ...row, isFollowing: result.following } : row
-              ),
-            }
-          : current
-      );
-    },
-  });
+  const titleBlock = (
+    <div>
+      <Text variant="heading" className="block px-4 pb-3 pt-2 text-4xl font-inter-extrabold">
+        Leaderboard
+      </Text>
+      <Divider />
+    </div>
+  );
 
-  const data = leaderboardQuery.data;
-  const items = data?.items ?? [];
+  const showYourRank = authenticated && (!currentUser || currentUser.rank > 3);
+
+  if (leaderboard.status === 'pending') {
+    return (
+      <main className="w-full">
+        {titleBlock}
+        <div className="px-4 pt-3">
+          <LoadingState rows={5} />
+        </div>
+      </main>
+    );
+  }
+
+  if (leaderboard.status === 'error') {
+    return (
+      <main className="w-full">
+        {titleBlock}
+        <ErrorState message="Unable to load leaderboard." onRetry={() => leaderboard.refetch()} />
+      </main>
+    );
+  }
 
   return (
     <main className="w-full">
-      <h1 className="px-4 pb-3 pt-6 text-4xl font-extrabold">Leaderboard</h1>
-      <div className="border-b border-border" />
-
-      <div className="flex border-b border-border">
-        {(['global', 'following'] as const).map((key) => (
-          <button
-            key={key}
-            type="button"
-            onClick={() => setScope(key)}
-            className={`flex-1 py-3 text-center font-semibold capitalize transition-colors ${
-              scope === key ? 'border-b-2 border-accent text-text-primary' : 'text-text-secondary'
-            }`}
-          >
-            {key}
-          </button>
-        ))}
+      {titleBlock}
+      <div className="flex flex-col gap-3 pt-3">
+        {showYourRank ? (
+          <div className="px-4">
+            <YourRankCard self={currentUser} />
+          </div>
+        ) : null}
+        {topThree ? <TopPerformers entries={topThree} /> : null}
       </div>
 
-      {data?.currentUser && data.currentUser.rank > 3 ? (
-        <div className="flex items-center justify-between border-b border-border bg-surface px-4 py-3">
-          <span className="font-semibold">Your rank</span>
-          <span className="font-bold text-accent">
-            #{data.currentUser.rank} · {formatUsd(data.currentUser.metric.value)}
-          </span>
-        </div>
-      ) : null}
-
-      {leaderboardQuery.isError ? (
-        <p className="p-6 text-center text-danger">
-          {leaderboardQuery.error instanceof ApiRequestError
-            ? leaderboardQuery.error.message
-            : "Couldn't load the leaderboard."}
-        </p>
-      ) : leaderboardQuery.isPending ? (
-        <p className="p-6 text-center text-text-secondary">Loading…</p>
-      ) : items.length === 0 ? (
-        <p className="p-6 text-center text-text-secondary">
-          {scope === 'following'
-            ? "No ranked activity yet from accounts you follow."
-            : 'No ranked activity yet.'}
-        </p>
-      ) : (
-        items.map((entry) => (
-          <LeaderboardRow
-            key={entry.user.id}
-            entry={entry}
-            onToggleFollow={() => toggleFollow.mutate(entry)}
-            isPending={toggleFollow.isPending && toggleFollow.variables?.user.id === entry.user.id}
+      {rest.length === 0 && !topThree ? (
+        <div className="px-4">
+          <EmptyState
+            icon="trophy-outline"
+            title="No leaderboard data yet"
+            message="Polymarket's ranked traders will appear here when the ranking is available."
           />
-        ))
+        </div>
+      ) : (
+        <>
+          {rest.map((entry) => (
+            <LeaderboardUserCard key={entry.user.id} entry={entry} />
+          ))}
+          <InfiniteScrollSentinel
+            hasNextPage={!!leaderboard.hasNextPage}
+            isFetchingNextPage={leaderboard.isFetchingNextPage}
+            onLoadMore={() => leaderboard.fetchNextPage()}
+          />
+        </>
       )}
     </main>
   );
 }
 
-function LeaderboardRow({
-  entry,
-  onToggleFollow,
-  isPending,
+function InfiniteScrollSentinel({
+  hasNextPage,
+  isFetchingNextPage,
+  onLoadMore,
 }: {
-  entry: LeaderboardEntry;
-  onToggleFollow: () => void;
-  isPending: boolean;
+  hasNextPage: boolean;
+  isFetchingNextPage: boolean;
+  onLoadMore: () => void;
 }) {
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const node = ref.current;
+    if (!node || !hasNextPage) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0]?.isIntersecting && !isFetchingNextPage) {
+          onLoadMore();
+        }
+      },
+      { rootMargin: '400px' }
+    );
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, [hasNextPage, isFetchingNextPage, onLoadMore]);
+
+  if (!hasNextPage) return null;
+
   return (
-    <div className="flex items-center gap-3 border-b border-border px-4 py-3">
-      <span className="w-6 flex-shrink-0 text-center font-bold text-text-tertiary">{entry.rank}</span>
-      <div className="flex h-11 w-11 flex-shrink-0 items-center justify-center overflow-hidden rounded-full bg-accent">
-        {entry.user.avatarUrl ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={entry.user.avatarUrl}
-            alt={entry.user.displayName}
-            className="h-full w-full object-cover"
-          />
-        ) : (
-          <span className="font-bold text-text-inverse">
-            {entry.user.displayName.trim().charAt(0).toUpperCase() || '?'}
-          </span>
-        )}
-      </div>
-      <div className="min-w-0 flex-1">
-        <p className="truncate font-bold">{entry.user.displayName}</p>
-        <p className="truncate text-sm text-text-secondary">@{entry.user.handle}</p>
-      </div>
-      <div className="text-right">
-        <p className="font-bold">{formatUsd(entry.metric.value)}</p>
-        <p className="text-xs text-text-tertiary">Trading Volume</p>
-      </div>
-      {!entry.isSelf ? (
-        <button
-          type="button"
-          onClick={onToggleFollow}
-          disabled={isPending}
-          className={`ml-2 flex-shrink-0 rounded-md border border-white/15 px-4 py-2 text-sm font-semibold disabled:opacity-50 ${
-            entry.isFollowing ? 'bg-surface-elevated text-text-primary' : 'bg-accent text-text-inverse'
-          }`}
-        >
-          {entry.isFollowing ? 'Following' : 'Follow'}
-        </button>
+    <div ref={ref} className="py-4">
+      {isFetchingNextPage ? (
+        <div className="mx-auto h-5 w-5 animate-spin rounded-full border-2 border-text-secondary border-t-transparent" />
       ) : null}
     </div>
   );

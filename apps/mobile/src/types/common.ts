@@ -15,3 +15,14 @@ export interface Paginated<T> {
  * docs/DECISIONS.md.
  */
 export type Category = string;
+
+/**
+ * One entry of `GET /categories`. The tab's `slug` is what goes back to
+ * the API as the `category` filter — never a slug derived from the
+ * label (`pop-culture`'s label is "Culture", so slugify(label) is
+ * wrong upstream).
+ */
+export interface CategoryOption {
+  label: string;
+  slug: string;
+}

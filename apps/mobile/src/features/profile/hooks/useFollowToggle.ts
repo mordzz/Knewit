@@ -1,7 +1,6 @@
 import { useMutation, useQueryClient, InfiniteData } from '@tanstack/react-query';
 import { followUser, unfollowUser } from '@/features/profile/services/userService';
 import type { FollowListItem, UserProfile } from '@/types/social';
-import type { LeaderboardPage } from '@/types/leaderboard';
 import type { Paginated } from '@/types/common';
 
 interface ToggleFollowInput {
@@ -17,15 +16,16 @@ interface ToggleFollowInput {
  * extra rollback complexity — see docs/DECISIONS.md.
  *
  * On success, patches every place this target user's follow state is
- * cached: their own `['profile', userId]` entry, any row for them
- * inside a currently-cached Followers/Following list (any owner —
- * TanStack's prefix matching finds every `['followers'/'following',
- * *]` entry), and any Leaderboard row (`['leaderboard', *]`, both
- * scopes) — the same user can legitimately appear in all of these at
- * once, and the spec requires Follow state to stay consistent
- * everywhere it's shown. This is the single, shared place that logic
- * lives — callers (`AuthorRow`, `UserProfileScreen`... now unified into
- * `ProfileScreen`, `FollowListRow`, `LeaderboardUserCard`) never each
+ * cached: their own `['profile', userId]` entry and any row for them
+ * inside a currently-cached Followers/Following list (any owner — TanStack's
+ * prefix matching finds every `['followers'/'following', *]` entry) — the
+ * same user can legitimately appear in all of these at once, and the spec
+ * requires Follow state to stay consistent everywhere it's shown. There is
+ * deliberately no leaderboard patch any more: a leaderboard row is a
+ * Polymarket trader with no follow state to keep in sync (docs/DECISIONS.md,
+ * "Round 6: Leaderboard Is a Read-Only Polymarket Ranking — No Follow, No
+ * Profile Links"). This is the single, shared place that logic lives —
+ * callers (`AuthorRow`, `ProfileScreen`, `FollowListRow`) never each
  * re-implement their own cache patch.
  */
 export function useFollowToggle() {
@@ -60,22 +60,6 @@ export function useFollowToggle() {
       queryClient.setQueriesData<InfiniteData<Paginated<FollowListItem>>>(
         { queryKey: ['following'] },
         patchList
-      );
-
-      queryClient.setQueriesData<InfiniteData<LeaderboardPage>>(
-        { queryKey: ['leaderboard'] },
-        (data) => {
-          if (!data) return data;
-          return {
-            ...data,
-            pages: data.pages.map((page) => ({
-              ...page,
-              items: page.items.map((item) =>
-                item.user.id === userId ? { ...item, isFollowing: result.following } : item
-              ),
-            })),
-          };
-        }
       );
     },
   });

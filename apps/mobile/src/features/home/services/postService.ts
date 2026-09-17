@@ -10,9 +10,10 @@ import type { Paginated } from '@/types/common';
 import type { CreatePostInput, FeedItem, LikeResult } from '@/types/social';
 
 /**
- * Creates a Post, or a position-backed Call when `input.positionId` is
- * set — the same endpoint either way (see docs/SOCIAL-FEATURE.md, "no
- * separate Call table/type"). Deliberately **no dev-mock fallback**,
+ * Creates a position-backed Callout — `input.positionId` is required
+ * (the backend rejects a request without one; see
+ * docs/SOCIAL-FEATURE.md, "no separate Call table/type"). Deliberately
+ * **no dev-mock fallback**,
  * same principle as Sprint 7's `createTrade`: publishing is a real,
  * user-visible mutating action, and a "successful" post that never
  * reached a backend would be exactly the kind of fabricated result this

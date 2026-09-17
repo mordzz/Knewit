@@ -1,9 +1,15 @@
 import { apiRequest } from '@/services/api/client';
 import { endpoints } from '@/services/api/endpoints';
 import { env } from '@/app/config/env';
-import type { LeaderboardPage, LeaderboardScope } from '@/types/leaderboard';
+import type { LeaderboardPage } from '@/types/leaderboard';
 
 /**
+ * **No scope parameter**: this is Polymarket's own *global* ranking and the
+ * only list it publishes, so there is nothing to scope by — the old
+ * `following` scope is gone along with the Follow button on the leaderboard
+ * (docs/DECISIONS.md, "Round 6: Leaderboard Is a Read-Only Polymarket
+ * Ranking — No Follow, No Profile Links").
+ *
  * **No dev-mock fallback with fabricated rankings** — unlike most other
  * read-only services in this codebase (`marketService`, `feedService`),
  * which fall back to plausible-but-clearly-fictional fixture content.
@@ -16,15 +22,13 @@ import type { LeaderboardPage, LeaderboardScope } from '@/types/leaderboard';
  * Sprint 7, for the same reason (both are trading-performance data, not
  * social flavor text) — see docs/DECISIONS.md.
  */
-export async function getLeaderboard(
-  scope: LeaderboardScope,
-  cursor?: string
-): Promise<LeaderboardPage> {
-  const params = new URLSearchParams({ scope });
+export async function getLeaderboard(cursor?: string): Promise<LeaderboardPage> {
+  const params = new URLSearchParams();
   if (cursor) params.set('cursor', cursor);
+  const query = params.toString();
 
   try {
-    return await apiRequest<LeaderboardPage>(`${endpoints.leaderboard}?${params.toString()}`);
+    return await apiRequest<LeaderboardPage>(`${endpoints.leaderboard}${query ? `?${query}` : ''}`);
   } catch (error) {
     if (env.isDev) {
       console.warn(

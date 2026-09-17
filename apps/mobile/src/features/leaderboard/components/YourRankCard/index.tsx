@@ -1,7 +1,7 @@
 import { View } from 'react-native';
 import { Text } from '@/components/ui/Text';
 import { RankNumber } from '@/features/leaderboard/components/RankNumber';
-import { formatUsd } from '@/utils/formatCurrency';
+import { formatCompactUsd } from '@/utils/formatCurrency';
 import type { LeaderboardSelf } from '@/types/leaderboard';
 
 const METRIC_LABEL: Record<LeaderboardSelf['metric']['name'], string> = {
@@ -46,7 +46,7 @@ export function YourRankCard({ self }: YourRankCardProps) {
         <RankNumber rank={self.rank} size="hero" />
       </View>
       <View className="items-end">
-        <Text variant="bodyStrong">{formatUsd(self.metric.value)}</Text>
+        <Text variant="bodyStrong">{formatCompactUsd(self.metric.value)}</Text>
         <Text variant="micro" color="textTertiary">
           {METRIC_LABEL[self.metric.name]}
         </Text>

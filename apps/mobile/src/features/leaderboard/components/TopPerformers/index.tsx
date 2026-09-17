@@ -1,12 +1,11 @@
-import { Pressable, View } from 'react-native';
+import { View } from 'react-native';
 import { Text } from '@/components/ui/Text';
 import { Avatar } from '@/components/ui/Avatar';
-import { formatUsd } from '@/utils/formatCurrency';
+import { formatCompactUsd } from '@/utils/formatCurrency';
 import type { LeaderboardEntry } from '@/types/leaderboard';
 
 export interface TopPerformersProps {
   entries: [LeaderboardEntry, LeaderboardEntry, LeaderboardEntry];
-  onPressUser: (userId: string) => void;
 }
 
 /**
@@ -17,8 +16,15 @@ export interface TopPerformersProps {
  * real data would be exactly the fabricated "winner" visual Sprint 10's
  * spec warns against. Deliberately labeled "Top Performers," not
  * "Winners" or "Best Traders" — neutral, not a marketing claim.
+ *
+ * Display only: a slot is a `View`, not a `Pressable` — it shows a
+ * Polymarket trader identified by proxy wallet, not a Knewit account, so
+ * there is no profile behind it to open (docs/DECISIONS.md, "Round 6:
+ * Leaderboard Is a Read-Only Polymarket Ranking — No Follow, No Profile
+ * Links"). Volumes use `formatCompactUsd` so a billion-dollar figure fits a
+ * narrow slot — the same formatting the list rows below use.
  */
-export function TopPerformers({ entries, onPressUser }: TopPerformersProps) {
+export function TopPerformers({ entries }: TopPerformersProps) {
   const [first, second, third] = entries;
 
   return (
@@ -27,9 +33,9 @@ export function TopPerformers({ entries, onPressUser }: TopPerformersProps) {
         Top Performers
       </Text>
       <View className="flex-row items-end justify-center gap-3">
-        <PodiumSlot entry={second} avatarSize={48} onPress={onPressUser} />
-        <PodiumSlot entry={first} avatarSize={60} emphasized onPress={onPressUser} />
-        <PodiumSlot entry={third} avatarSize={48} onPress={onPressUser} />
+        <PodiumSlot entry={second} avatarSize={48} />
+        <PodiumSlot entry={first} avatarSize={60} emphasized />
+        <PodiumSlot entry={third} avatarSize={48} />
       </View>
     </View>
   );
@@ -39,19 +45,16 @@ function PodiumSlot({
   entry,
   avatarSize,
   emphasized,
-  onPress,
 }: {
   entry: LeaderboardEntry;
   avatarSize: number;
   emphasized?: boolean;
-  onPress: (userId: string) => void;
 }) {
   return (
-    <Pressable
-      onPress={() => onPress(entry.user.id)}
+    <View
+      accessible
+      accessibilityLabel={`Rank ${entry.rank}, ${entry.user.displayName}, ${formatCompactUsd(entry.metric.value)} trading volume`}
       className="flex-1 items-center gap-1"
-      accessibilityRole="button"
-      accessibilityLabel={`Rank ${entry.rank}, ${entry.user.displayName}, ${formatUsd(entry.metric.value)} trading volume`}
     >
       <Text variant={emphasized ? 'title' : 'bodyStrong'} color="accent">
         #{entry.rank}
@@ -61,8 +64,8 @@ function PodiumSlot({
         {entry.user.displayName}
       </Text>
       <Text variant="micro" color="textSecondary">
-        {formatUsd(entry.metric.value)}
+        {formatCompactUsd(entry.metric.value)}
       </Text>
-    </Pressable>
+    </View>
   );
 }

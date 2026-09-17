@@ -185,11 +185,17 @@ export function pickMockMarketTemplate(seed: string): Omit<MarketSummary, 'id'> 
   return BASE_MARKETS[hashString(seed) % BASE_MARKETS.length];
 }
 
+/** `category` is a live Polymarket tag slug (see `GET /categories`), so
+ * the mock's display labels are compared slugified — never equal-by-eye. */
+function slugify(label: string): string {
+  return label.toLowerCase().replace(/\s+/g, '-');
+}
+
 /** Deterministic, id-unique list built by cycling the templates above. */
 export function buildMockMarkets(size: number, category?: string): MarketSummary[] {
   const source =
     category && category !== 'Trending'
-      ? BASE_MARKETS.filter((m) => m.category === category)
+      ? BASE_MARKETS.filter((m) => slugify(m.category) === category)
       : BASE_MARKETS;
 
   if (source.length === 0) return [];
@@ -204,7 +210,7 @@ export function buildMockMarkets(size: number, category?: string): MarketSummary
 export function buildMockGroups(size: number, category?: string): MarketGroupSummary[] {
   const source =
     category && category !== 'Trending'
-      ? BASE_GROUPS.filter((g) => g.category === category)
+      ? BASE_GROUPS.filter((g) => slugify(g.category) === category)
       : BASE_GROUPS;
 
   if (source.length === 0) return [];

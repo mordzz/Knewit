@@ -69,42 +69,38 @@ export async function fetchEventForMarket(marketId: string): Promise<GammaEvent 
 }
 
 /**
- * Polymarket's `/tags` list has no "this is a top-level category" flag
- * (`forceShow` is `false` even on foundational tags like "Politics"/
- * "Sports" — verified live) and isn't ordered by relevance, so paging
- * through it produces a noisy mix of thousands of narrow tags (a single
- * athlete's name, a one-off show). There's also no dedicated "give me
- * the site's nav categories" endpoint. So this resolves a candidate
- * slug list against Polymarket's `/tags/slug/:slug`, live, one call per
- * candidate — same mechanism as before, but the candidates themselves
- * are no longer this app's own opinion. They were derived from
- * Polymarket's own live behavior, not decided here: cross-referenced
- * against the real category links Polymarket's own site currently
- * serves in its markets navigation, then corroborated by aggregating
- * the tags actually attached to ~1500 of Polymarket's own current
- * highest-volume active events (each of these appeared on 80-500+ of
- * them — Sports, Politics, and Elections alone cover the majority),
- * which is a materially different (and larger) set than this app's old
- * candidate list, which just mirrored the mobile app's own hardcoded
- * `KNOWN_CATEGORIES` dressed up as "verified." A candidate that 404s
- * (doesn't exist on Polymarket right now, or gets renamed later) is
- * silently dropped rather than fabricated — this list is a starting
- * point for the live lookup below, not itself the source of truth.
+ * The category tabs' slugs are Polymarket's **own markets-navigation
+ * slugs**, verified live from polymarket.com's rendered nav (2026-09-17,
+ * e.g. `href="/pop-culture"` → label "Culture"): the site links by slug,
+ * and each slug's label comes from the tag API itself. There is no
+ * "give me the nav categories" endpoint — `/tags` is an unordered dump
+ * of thousands of narrow tags (no category flag: `forceShow` is `false`
+ * even on foundational tags, and is `true` for non-categories like
+ * "Bitcoin"/"Featured"), and `/categories` does not exist (404). So the
+ * only API-faithful approach is: keep the nav's slug list, resolve each
+ * one live via `/tags/slug/:slug`, and take `{label, slug}` from the
+ * response — never reconstruct a slug from a label.
+ *
+ * `mentions` is deliberately absent: it's a Polymarket site page, not a
+ * tag (404s upstream — verified live). Slugs not in the current nav
+ * (`world`, `ai`) are not tabs here even though they're valid tags.
+ * A candidate that 404s (renamed/removed upstream) is silently dropped
+ * rather than fabricated — this list is a starting point for the live
+ * lookup below, not itself the source of truth.
  */
 const CATEGORY_SLUG_CANDIDATES = [
   'politics',
   'sports',
-  'elections',
   'crypto',
-  'geopolitics',
-  'finance',
-  'economy',
-  'tech',
-  'world',
-  'pop-culture',
   'esports',
+  'iran',
+  'finance',
+  'geopolitics',
+  'tech',
+  'pop-culture',
+  'economy',
   'weather',
-  'ai',
+  'elections',
 ];
 
 export async function fetchCategoryTags(): Promise<GammaTag[]> {

@@ -1,7 +1,8 @@
 import { PrivyClient } from '@privy-io/node';
 import { env } from '@/lib/env';
 import { getSupabase } from '@/lib/supabase';
-import { unauthorized } from '@/lib/apiError';
+import { notFound, unauthorized } from '@/lib/apiError';
+import { isWalletAddress, normalizeWalletAddress } from '@/lib/polymarket/address';
 
 export interface DbUser {
   id: string;
@@ -126,18 +127,53 @@ export async function getOrCreateUser(privyUserId: string): Promise<DbUser> {
   return created as DbUser;
 }
 
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/** Our own `users` row for a Polymarket wallet, if this app has one. */
+export async function findUserByWalletAddress(walletAddress: string): Promise<DbUser | null> {
+  const { data } = await getSupabase()
+    .from('users')
+    .select('*')
+    .eq('wallet_address', normalizeWalletAddress(walletAddress))
+    .maybeSingle();
+  return (data as DbUser | null) ?? null;
+}
+
 /** Resolves a `:id` path param that may be the literal `"me"`
  * (docs/API.md, "Literal `me` as the Self-Profile Identifier") to an
- * internal user id. Every other value is trusted as-is — it can only
- * be an id this backend itself emitted in a prior response (a
- * `FeedItem.author.id`, `FollowListItem.user.id`, etc.), never a
- * client-invented value with authorization implications.
+ * internal user id. A UUID is trusted as-is — it can only be an id this
+ * backend itself emitted in a prior response (a `FeedItem.author.id`,
+ * `FollowListItem.user.id`, etc.), never a client-invented value with
+ * authorization implications.
+ *
+ * A wallet address (`0x…`, a `users.wallet_address`) resolves to that
+ * account's row when one exists. It stays accepted because it is the exact
+ * key `users.wallet_address` is stored under, not because the leaderboard
+ * hands out wallet ids any more — `GET /leaderboard`'s rows are Polymarket
+ * traders, never profiles (docs/DECISIONS.md, "Round 6: Leaderboard Is a
+ * Read-Only Polymarket Ranking — No Follow, No Profile Links"), and no
+ * Polymarket trader is ever imported or synthesized into a `users` row.
+ * Anything else — including a malformed id, which used to reach Postgres
+ * and fail as a `uuid` cast error (a 500) — is an honest 404, so every
+ * `users/:id/...` read answers "no such user" instead of "something went
+ * wrong".
  */
 export async function resolveTargetUserId(idParam: string, viewerPrivyUserId: string | null): Promise<string> {
-  if (idParam !== 'me') return idParam;
-  if (!viewerPrivyUserId) {
-    throw unauthorized('Authentication required to resolve "me".');
+  if (idParam === 'me') {
+    if (!viewerPrivyUserId) {
+      throw unauthorized('Authentication required to resolve "me".');
+    }
+    const viewer = await getOrCreateUser(viewerPrivyUserId);
+    return viewer.id;
   }
-  const viewer = await getOrCreateUser(viewerPrivyUserId);
-  return viewer.id;
+
+  if (UUID_RE.test(idParam)) return idParam;
+
+  if (isWalletAddress(idParam)) {
+    const local = await findUserByWalletAddress(idParam);
+    if (local) return local.id;
+    throw notFound(`No Knewit profile for wallet ${idParam} yet.`);
+  }
+
+  throw notFound(`User ${idParam} not found.`);
 }

@@ -21,4 +21,10 @@ export const env = {
   get polymarketGammaBaseUrl() {
     return process.env.POLYMARKET_GAMMA_BASE_URL ?? 'https://gamma-api.polymarket.com';
   },
+  get polymarketDataBaseUrl() {
+    return process.env.POLYMARKET_DATA_BASE_URL ?? 'https://data-api.polymarket.com';
+  },
+  get polymarketClobBaseUrl() {
+    return process.env.POLYMARKET_CLOB_BASE_URL ?? 'https://clob.polymarket.com';
+  },
 };

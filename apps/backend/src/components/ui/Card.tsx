@@ -1,7 +1,7 @@
 import type { HTMLAttributes } from 'react';
 import { cn } from '@/lib/cn';
 
-export interface CardProps extends HTMLAttributes<HTMLDivElement> {
+export interface CardProps extends Omit<HTMLAttributes<HTMLDivElement>, 'onClick'> {
   onPress?: () => void;
   contentClassName?: string;
 }
@@ -21,15 +21,16 @@ export function Card({ onPress, className, contentClassName, children, ...rest }
 
   if (onPress) {
     return (
-      <button type="button" onClick={onPress} className="text-left transition-opacity hover:opacity-90" {...rest}>
+      <button
+        type="button"
+        onClick={onPress}
+        className="w-full text-left transition-opacity hover:opacity-90"
+        {...(rest as HTMLAttributes<HTMLButtonElement>)}
+      >
         {surface}
       </button>
     );
   }
 
-  return (
-    <div {...rest}>
-      {surface}
-    </div>
-  );
+  return <div {...rest}>{surface}</div>;
 }

@@ -1,109 +1,110 @@
 'use client';
 
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import Link from 'next/link';
-import { apiRequest } from '@/lib/apiClient';
-import type { Paginated } from '@/types/common';
-import type { FollowListItem, FollowResult } from '@/types/social';
+import { useEffect, useRef } from 'react';
+import { useRouter } from 'next/navigation';
+import { useInfiniteQuery } from '@tanstack/react-query';
+import { Text } from '@/components/ui/Text';
+import { Icon } from '@/components/ui/Icon';
+import { LoadingState } from '@/components/feedback/LoadingState';
+import { EmptyState } from '@/components/feedback/EmptyState';
+import { ErrorState } from '@/components/feedback/ErrorState';
+import { FollowListRow } from '@/components/FollowListRow';
+import { getFollowers, getFollowing } from '@/lib/userService';
 
 /**
- * Shared by `/profile/[userId]/followers` and `.../following` — same
- * row shape either way (`FollowListRow` on mobile), just a different
- * endpoint. Unlike mobile's two near-identical screen files, this one
- * component takes `kind` as a prop since the web routes don't have the
- * same "each route file owns its own copy" convention to preserve.
+ * Direct conversion of `apps/mobile`'s `FollowersScreen`/`FollowingScreen`
+ * — same back-button + title header, same `FollowListRow`, same
+ * infinite scroll. Mobile keeps these as two near-identical files; this
+ * stays one component parameterized by `kind`, matching the web
+ * project's own established convention for this pair.
  */
-export function FollowListView({
-  userId,
-  kind,
-}: {
-  userId: string;
-  kind: 'followers' | 'following';
-}) {
-  const queryClient = useQueryClient();
-
-  const listQuery = useQuery({
+export function FollowListView({ userId, kind }: { userId: string; kind: 'followers' | 'following' }) {
+  const router = useRouter();
+  const list = useInfiniteQuery({
     queryKey: [kind, userId],
-    queryFn: () => apiRequest<Paginated<FollowListItem>>(`/api/users/${userId}/${kind}`),
+    queryFn: ({ pageParam }) => (kind === 'followers' ? getFollowers(userId, pageParam) : getFollowing(userId, pageParam)),
+    initialPageParam: undefined as string | undefined,
+    getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
   });
 
-  const toggleFollow = useMutation({
-    mutationFn: (item: FollowListItem) =>
-      apiRequest<FollowResult>(`/api/users/${item.user.id}/follow`, {
-        method: item.isFollowing ? 'DELETE' : 'POST',
-      }),
-    onSuccess: (result, item) => {
-      queryClient.setQueryData<Paginated<FollowListItem>>([kind, userId], (current) =>
-        current
-          ? {
-              ...current,
-              items: current.items.map((row) =>
-                row.user.id === item.user.id ? { ...row, isFollowing: result.following } : row
-              ),
-            }
-          : current
-      );
-    },
-  });
-
-  const items = listQuery.data?.items ?? [];
+  const items = list.data?.pages.flatMap((page) => page.items) ?? [];
   const title = kind === 'followers' ? 'Followers' : 'Following';
 
   return (
-    <main className="w-full">
-      <h1 className="px-4 pb-3 pt-6 text-2xl font-bold">{title}</h1>
-      <div className="border-b border-border" />
+    <main className="w-full pt-4">
+      <div className="flex items-center px-4 pb-2">
+        <button type="button" onClick={() => router.back()} aria-label="Go back">
+          <Icon name="chevron-back" size={24} />
+        </button>
+        <Text variant="heading" className="ml-2">
+          {title}
+        </Text>
+      </div>
 
-      {listQuery.isPending ? (
-        <p className="p-6 text-center text-text-secondary">Loading…</p>
+      {list.status === 'pending' ? (
+        <div className="px-4">
+          <LoadingState rows={5} />
+        </div>
+      ) : list.status === 'error' ? (
+        <div className="px-4">
+          <ErrorState message={`Unable to load ${kind}.`} onRetry={() => list.refetch()} />
+        </div>
       ) : items.length === 0 ? (
-        <p className="p-6 text-center text-text-secondary">
-          {kind === 'followers' ? 'No followers yet.' : 'Not following anyone yet.'}
-        </p>
+        <EmptyState icon="person-outline" title={kind === 'followers' ? 'No followers yet.' : 'Not following anyone yet.'} />
       ) : (
-        items.map((item) => (
-          <div
-            key={item.user.id}
-            className="flex items-center gap-3 border-b border-border px-4 py-3"
-          >
-            <Link
-              href={item.isSelf ? '/profile' : `/profile/${item.user.id}`}
-              className="flex flex-1 items-center gap-3"
-            >
-              <div className="flex h-11 w-11 flex-shrink-0 items-center justify-center overflow-hidden rounded-full bg-accent">
-                {item.user.avatarUrl ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    src={item.user.avatarUrl}
-                    alt={item.user.displayName}
-                    className="h-full w-full object-cover"
-                  />
-                ) : (
-                  <span className="font-bold text-text-inverse">
-                    {item.user.displayName.trim().charAt(0).toUpperCase() || '?'}
-                  </span>
-                )}
-              </div>
-              <div className="min-w-0">
-                <p className="truncate font-bold">{item.user.displayName}</p>
-                <p className="truncate text-sm text-text-secondary">@{item.user.handle}</p>
-              </div>
-            </Link>
-            {!item.isSelf ? (
-              <button
-                type="button"
-                onClick={() => toggleFollow.mutate(item)}
-                disabled={toggleFollow.isPending}
-                className={`rounded-md border border-white/15 px-4 py-2 text-sm font-semibold disabled:opacity-50 ${
-                  item.isFollowing ? 'bg-surface-elevated text-text-primary' : 'bg-accent text-text-inverse'
-                }`}
-              >
-                {item.isFollowing ? 'Following' : 'Follow'}
-              </button>
-            ) : null}
-          </div>
-        ))
+        <>
+          {items.map((item) => (
+            <FollowListRow
+              key={item.user.id}
+              item={item}
+              onPress={() => router.push(item.isSelf ? '/profile' : `/profile/${item.user.id}`)}
+            />
+          ))}
+          <InfiniteScrollSentinel
+            hasNextPage={!!list.hasNextPage}
+            isFetchingNextPage={list.isFetchingNextPage}
+            onLoadMore={() => list.fetchNextPage()}
+          />
+        </>
       )}
     </main>
+  );
+}
+
+function InfiniteScrollSentinel({
+  hasNextPage,
+  isFetchingNextPage,
+  onLoadMore,
+}: {
+  hasNextPage: boolean;
+  isFetchingNextPage: boolean;
+  onLoadMore: () => void;
+}) {
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const node = ref.current;
+    if (!node || !hasNextPage) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0]?.isIntersecting && !isFetchingNextPage) {
+          onLoadMore();
+        }
+      },
+      { rootMargin: '400px' }
+    );
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, [hasNextPage, isFetchingNextPage, onLoadMore]);
+
+  if (!hasNextPage) return null;
+
+  return (
+    <div ref={ref} className="py-4">
+      {isFetchingNextPage ? (
+        <div className="mx-auto h-5 w-5 animate-spin rounded-full border-2 border-text-secondary border-t-transparent" />
+      ) : null}
+    </div>
   );
 }

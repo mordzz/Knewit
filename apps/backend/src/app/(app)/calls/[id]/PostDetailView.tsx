@@ -1,191 +1,194 @@
 'use client';
 
-import { useState } from 'react';
-import Link from 'next/link';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { IoArrowBack, IoHeart, IoHeartOutline, IoTrash } from 'react-icons/io5';
-import { apiRequest, ApiRequestError } from '@/lib/apiClient';
-import { formatRelativeTime, formatProbability, formatCompactNumber } from '@/lib/formatters';
-import type { Paginated } from '@/types/common';
-import type { CommentItem, FeedItem, LikeResult } from '@/types/social';
+import { useEffect, useRef, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { Text } from '@/components/ui/Text';
+import { Icon } from '@/components/ui/Icon';
+import { LoadingState } from '@/components/feedback/LoadingState';
+import { EmptyState } from '@/components/feedback/EmptyState';
+import { ErrorState } from '@/components/feedback/ErrorState';
+import { AuthorRow } from '@/components/AuthorRow';
+import { MarketAttachment } from '@/components/MarketAttachment';
+import { SocialActionBar } from '@/components/SocialActionBar';
+import { CommentRow } from '@/components/CommentRow';
+import { CommentComposer } from '@/components/CommentComposer';
+import { usePost } from '@/hooks/usePost';
+import { useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { getComments, createComment } from '@/lib/commentService';
+import { useDeleteComment } from '@/hooks/useDeleteComment';
+import { patchComment } from '@/lib/commentCache';
+import { ApiRequestError } from '@/lib/apiClient';
+import { formatRelativeTime } from '@/lib/formatters';
+import type { CommentItem, CreateCommentInput, FeedItem } from '@/types/social';
 
 /**
- * Web port of `apps/frontend`'s `PostDetailScreen` — serves both a
- * normal Post and a position-backed Call, same as mobile
- * (docs/SOCIAL-FEATURE.md). Simplified: comments are one level deep
- * on this page (no reply-to-a-reply UI — `GET /comments/:id/replies`
- * exists but isn't wired up here), and Share/comment-like are omitted.
+ * Direct conversion of `apps/mobile`'s `PostDetailScreen` — serves both
+ * a normal Post and a position-backed Call, same screen. Threaded
+ * comments (one level deep), infinite scroll on the comment list, and a
+ * composer that supports replying to a specific top-level comment.
  */
 export function PostDetailView({ postId }: { postId: string }) {
+  const router = useRouter();
   const queryClient = useQueryClient();
-  const [comment, setComment] = useState('');
-
-  const postQuery = useQuery({
-    queryKey: ['post', postId],
-    queryFn: () => apiRequest<FeedItem>(`/api/calls/${postId}`),
-  });
-
-  const commentsQuery = useQuery({
+  const post = usePost(postId);
+  const comments = useInfiniteQuery({
     queryKey: ['comments', postId],
-    queryFn: () => apiRequest<Paginated<CommentItem>>(`/api/calls/${postId}/comments`),
+    queryFn: ({ pageParam }: { pageParam?: string }) => getComments(postId, pageParam),
+    initialPageParam: undefined as string | undefined,
+    getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
   });
-
-  const toggleLike = useMutation({
-    mutationFn: () =>
-      apiRequest<LikeResult>(`/api/calls/${postId}/like`, {
-        method: postQuery.data?.liked ? 'DELETE' : 'POST',
-      }),
-    onSuccess: (result) => {
+  const createCommentMutation = useMutation({
+    mutationFn: (input: CreateCommentInput) => createComment(postId, input),
+    onSuccess: (_result, input) => {
+      if (input.parentCommentId) {
+        queryClient.invalidateQueries({ queryKey: ['commentReplies', input.parentCommentId] });
+        patchComment(queryClient, postId, input.parentCommentId, (item) => ({ ...item, replyCount: item.replyCount + 1 }));
+      } else {
+        queryClient.invalidateQueries({ queryKey: ['comments', postId] });
+      }
       queryClient.setQueryData<FeedItem>(['post', postId], (current) =>
-        current ? { ...current, liked: result.liked, likeCount: result.likeCount } : current
+        current ? { ...current, commentCount: current.commentCount + 1 } : current
       );
     },
   });
+  const deleteCommentMutation = useDeleteComment(postId);
+  const [replyTarget, setReplyTarget] = useState<CommentItem | null>(null);
+  const sentinelRef = useRef<HTMLDivElement>(null);
 
-  const createComment = useMutation({
-    mutationFn: (body: string) =>
-      apiRequest<CommentItem>(`/api/calls/${postId}/comments`, {
-        method: 'POST',
-        body: JSON.stringify({ body }),
-      }),
-    onSuccess: (created) => {
-      setComment('');
-      queryClient.setQueryData<Paginated<CommentItem>>(['comments', postId], (current) =>
-        current ? { ...current, items: [created, ...current.items] } : current
-      );
-    },
-  });
+  const openAuthor = (userId: string) => router.push(`/profile/${userId}`);
+  const openMarket = (marketId: string) => router.push(`/markets/${marketId}`);
 
-  const deleteComment = useMutation({
-    mutationFn: (commentId: string) => apiRequest(`/api/comments/${commentId}`, { method: 'DELETE' }),
-    onSuccess: (_, commentId) => {
-      queryClient.setQueryData<Paginated<CommentItem>>(['comments', postId], (current) =>
-        current ? { ...current, items: current.items.filter((c) => c.id !== commentId) } : current
-      );
-    },
-  });
+  const isNotFound = post.status === 'error' && post.error instanceof ApiRequestError && post.error.status === 404;
+  const commentItems = comments.data?.pages.flatMap((page) => page.items) ?? [];
 
-  if (postQuery.isPending) {
-    return <p className="p-6 text-center text-text-secondary">Loading…</p>;
-  }
+  const hasNextCommentsPage = comments.hasNextPage;
+  const isFetchingNextCommentsPage = comments.isFetchingNextPage;
+  const fetchNextCommentsPage = comments.fetchNextPage;
 
-  if (postQuery.isError) {
-    const notFound = postQuery.error instanceof ApiRequestError && postQuery.error.status === 404;
-    return (
-      <p className="p-6 text-center text-text-secondary">
-        {notFound ? 'This Call was not found.' : "Couldn't load this Call."}
-      </p>
+  useEffect(() => {
+    const node = sentinelRef.current;
+    if (!node || !hasNextCommentsPage) return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0]?.isIntersecting && !isFetchingNextCommentsPage) fetchNextCommentsPage();
+      },
+      { rootMargin: '400px' }
     );
-  }
-
-  const post = postQuery.data;
-  const comments = commentsQuery.data?.items ?? [];
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, [hasNextCommentsPage, isFetchingNextCommentsPage, fetchNextCommentsPage]);
 
   return (
-    <main className="w-full">
-      <div className="flex items-center gap-3 px-4 pt-4">
-        <Link href="/" aria-label="Back to Home">
-          <IoArrowBack size={22} />
-        </Link>
-        <h1 className="text-lg font-bold">Call</h1>
-      </div>
-
-      <article className="border-b border-border px-4 py-4">
-        <div className="flex items-baseline justify-between gap-2">
-          <Link href={`/profile/${post.author.id}`} className="flex items-baseline gap-1 hover:underline">
-            <span className="font-bold">{post.author.displayName}</span>
-            <span className="text-text-tertiary">@{post.author.handle}</span>
-          </Link>
-          <span className="text-sm text-text-tertiary">{formatRelativeTime(post.createdAt)}</span>
-        </div>
-
-        <p className="mt-2 whitespace-pre-wrap text-lg">{post.body}</p>
-
-        {post.market ? (
-          <Link
-            href={`/markets/${post.market.id}`}
-            className="mt-3 block rounded-2xl border border-border bg-surface p-3.5 hover:opacity-90"
-          >
-            <p className="font-bold">{post.market.question}</p>
-            {post.positionSnapshot ? (
-              <div className="mt-2 flex gap-4">
-                <div>
-                  <p className="text-xs text-text-tertiary">Position</p>
-                  <p
-                    className={`font-bold ${post.positionSnapshot.outcome === 'YES' ? 'text-yes' : 'text-no'}`}
-                  >
-                    {post.positionSnapshot.outcome}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-xs text-text-tertiary">Entry</p>
-                  <p className="font-bold">{formatProbability(post.positionSnapshot.entryPrice)}</p>
-                </div>
-              </div>
-            ) : null}
-          </Link>
-        ) : null}
-
-        <div className="mt-3 flex items-center gap-6 text-text-secondary">
-          <button
-            type="button"
-            onClick={() => toggleLike.mutate()}
-            className={`flex items-center gap-1.5 ${post.liked ? 'text-danger' : 'hover:text-danger'}`}
-          >
-            {post.liked ? <IoHeart size={18} /> : <IoHeartOutline size={18} />}
-            <span className="text-sm">{formatCompactNumber(post.likeCount)}</span>
-          </button>
-          <span className="text-sm">{formatCompactNumber(post.commentCount)} comments</span>
-        </div>
-      </article>
-
-      <div className="flex items-center gap-3 border-b border-border px-4 py-3">
-        <input
-          value={comment}
-          onChange={(e) => setComment(e.target.value)}
-          placeholder="Post your reply"
-          className="min-h-10 flex-1 rounded-full border border-border bg-surface-elevated px-4 text-text-primary placeholder:text-text-tertiary focus:outline-none focus:ring-1 focus:ring-accent"
-        />
-        <button
-          type="button"
-          onClick={() => comment.trim() && createComment.mutate(comment.trim())}
-          disabled={createComment.isPending || comment.trim().length === 0}
-          className="rounded-full bg-accent px-4 py-2 font-semibold text-text-inverse disabled:opacity-50"
-        >
-          Reply
+    <div className="flex h-full w-full flex-col">
+      <div className="flex flex-shrink-0 items-center px-4 pb-2 pt-4">
+        <button type="button" onClick={() => router.back()} aria-label="Go back">
+          <Icon name="chevron-back" size={24} />
         </button>
       </div>
 
-      {commentsQuery.isPending ? (
-        <p className="p-6 text-center text-text-secondary">Loading comments…</p>
-      ) : comments.length === 0 ? (
-        <p className="p-6 text-center text-text-secondary">No comments yet.</p>
-      ) : (
-        comments.map((c) => (
-          <div key={c.id} className="border-b border-border px-4 py-3">
-            <div className="flex items-baseline justify-between gap-2">
-              <Link href={`/profile/${c.author.id}`} className="flex items-baseline gap-1 hover:underline">
-                <span className="font-bold">{c.author.displayName}</span>
-                <span className="text-text-tertiary">@{c.author.handle}</span>
-              </Link>
-              <div className="flex items-center gap-2">
-                <span className="text-sm text-text-tertiary">{formatRelativeTime(c.createdAt)}</span>
-                {c.canDelete ? (
-                  <button
-                    type="button"
-                    onClick={() => deleteComment.mutate(c.id)}
-                    aria-label="Delete comment"
-                    className="text-text-tertiary hover:text-danger"
-                  >
-                    <IoTrash size={14} />
-                  </button>
-                ) : null}
-              </div>
-            </div>
-            <p className="mt-0.5 whitespace-pre-wrap">{c.body}</p>
+      <div className="flex-1 overflow-y-auto">
+        {post.status === 'pending' ? (
+          <div className="px-4">
+            <LoadingState rows={3} />
           </div>
-        ))
-      )}
-    </main>
+        ) : null}
+
+        {post.status === 'error' && isNotFound ? (
+          <EmptyState
+            icon="search"
+            title="Post not found"
+            message="This post may have been removed or the link is incorrect."
+            actionLabel="Go back"
+            onAction={() => router.back()}
+          />
+        ) : null}
+
+        {post.status === 'error' && !isNotFound ? (
+          <div className="px-4">
+            <ErrorState message="Couldn't load this post." onRetry={() => post.refetch()} />
+          </div>
+        ) : null}
+
+        {post.status === 'success' ? (
+          <>
+            <PostContent item={post.data} onOpenAuthor={openAuthor} onOpenMarket={openMarket} />
+
+            {comments.status === 'pending' ? (
+              <div className="px-4">
+                <LoadingState rows={2} />
+              </div>
+            ) : comments.status === 'error' ? (
+              <ErrorState message="Couldn't load comments." onRetry={() => comments.refetch()} />
+            ) : commentItems.length === 0 ? (
+              <EmptyState icon="chatbubble-outline" title="No comments yet" message="Be the first to share your thoughts." />
+            ) : (
+              <>
+                {commentItems.map((item) => (
+                  <CommentRow
+                    key={item.id}
+                    comment={item}
+                    postId={postId}
+                    onDelete={(commentId) => deleteCommentMutation.mutate(commentId)}
+                    onOpenAuthor={openAuthor}
+                    onReply={setReplyTarget}
+                    deletingCommentId={deleteCommentMutation.isPending ? (deleteCommentMutation.variables ?? null) : null}
+                  />
+                ))}
+                <div ref={sentinelRef} className="py-4">
+                  {comments.isFetchingNextPage ? (
+                    <div className="mx-auto h-5 w-5 animate-spin rounded-full border-2 border-text-secondary border-t-transparent" />
+                  ) : null}
+                </div>
+              </>
+            )}
+          </>
+        ) : null}
+      </div>
+
+      {post.status === 'success' ? (
+        <div className="flex-shrink-0">
+          <CommentComposer
+            isSubmitting={createCommentMutation.isPending}
+            replyingToHandle={replyTarget?.author.handle ?? null}
+            onCancelReply={() => setReplyTarget(null)}
+            onSubmit={(body) => {
+              const parentCommentId = replyTarget?.id;
+              createCommentMutation.mutate({ body, parentCommentId }, { onSuccess: () => setReplyTarget(null) });
+            }}
+          />
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+function PostContent({
+  item,
+  onOpenAuthor,
+  onOpenMarket,
+}: {
+  item: FeedItem;
+  onOpenAuthor: (userId: string) => void;
+  onOpenMarket: (marketId: string) => void;
+}) {
+  return (
+    <div className="flex flex-col gap-3 px-4 pb-4">
+      <AuthorRow author={item.author} onPress={() => onOpenAuthor(item.author.id)} />
+
+      <Text variant="body">{item.body}</Text>
+      <Text variant="caption" color="textTertiary">
+        {formatRelativeTime(item.createdAt)}
+      </Text>
+
+      {item.market ? (
+        <MarketAttachment market={item.market} positionSnapshot={item.positionSnapshot} onPress={() => onOpenMarket(item.market!.id)} />
+      ) : null}
+
+      <SocialActionBar postId={item.id} liked={item.liked} likeCount={item.likeCount} commentCount={item.commentCount} />
+
+      <div className="mt-2 border-t border-border pt-3">
+        <Text variant="bodyStrong">Comments</Text>
+      </div>
+    </div>
   );
 }

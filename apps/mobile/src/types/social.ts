@@ -61,20 +61,20 @@ export interface Post {
 }
 
 /**
- * What the mobile app sends to create a Post or a position-backed Call
- * — the same request shape either way, since they're the same entity
- * (see docs/SOCIAL-FEATURE.md). `positionId` is the *only* position
- * information the client ever sends: never `entryPrice`, `size`, or a
- * `verified` flag. The backend resolves ownership, fetches the
- * authoritative position, and builds the immutable snapshot itself — a
- * client-supplied snapshot would defeat the entire point of "verified"
- * (see docs/DECISIONS.md, "Client Is Never the Snapshot Source of
- * Truth"). Omitting `positionId` (or leaving it undefined) creates a
- * normal Post.
+ * What the mobile app sends to create a Callout. `positionId` is
+ * **required** — there is only a Callout now, and it always attaches a
+ * held position (docs/DECISIONS.md, "Callouts Require a Held
+ * Position"); the backend rejects a request without one. `positionId`
+ * is the *only* position information the client ever sends: never
+ * `entryPrice`, `size`, or a `verified` flag. The backend resolves
+ * ownership, fetches the authoritative position, and builds the
+ * immutable snapshot itself — a client-supplied snapshot would defeat
+ * the entire point of "verified" (see docs/DECISIONS.md, "Client Is
+ * Never the Snapshot Source of Truth").
  */
 export interface CreatePostInput {
   body: string;
-  positionId?: string;
+  positionId: string;
 }
 
 export interface Comment {

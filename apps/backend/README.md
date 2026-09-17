@@ -13,6 +13,7 @@ request, rather than a separate `apps/web` project.
    - `SUPABASE_URL` / `SUPABASE_SERVICE_ROLE_KEY` — from your Supabase project's Settings -> API.
    - `PRIVY_APP_ID` / `PRIVY_APP_SECRET` — from the Privy dashboard's API Keys page (same app as the mobile client's `EXPO_PUBLIC_PRIVY_APP_ID`).
    - `NEXT_PUBLIC_PRIVY_APP_ID` — same value as `PRIVY_APP_ID`, just re-exposed under Next.js's required `NEXT_PUBLIC_` prefix for the web app's client-side Privy provider.
+   - Optional, both defaulting to Polymarket's real public endpoints: `POLYMARKET_GAMMA_BASE_URL` (markets/events/categories) and `POLYMARKET_DATA_BASE_URL` (the leaderboard ranking — a different Polymarket service, `data-api.polymarket.com`).
 2. Run all three schema migrations against your Supabase project, in order:
    paste `0001_init.sql`, then `0002_leaderboard.sql`, then
    `0003_user_activity.sql` (all in `supabase/migrations/`) into the Supabase
@@ -40,6 +41,19 @@ intended formula (see the route's doc comment).
 `@polymarket/clob-client` with a custom signer (`src/lib/trading/privyClobSigner.ts`)
 that proxies EIP-712 signing to Privy's server-side wallet API
 (`eth_signTypedData_v4`), so this backend never touches a private key.
+
+`GET /leaderboard` is the one Phase 3 read that does **not** come from our
+own tables: since `orders` only gets rows once a trade fills (and trading
+is still unverified), its ranking is Polymarket's own live ranked
+leaderboard (`src/lib/polymarket/dataApiClient.ts`), volume-only/all-time —
+the same live-proxy pattern Phase 1 uses for Gamma. It is a **read-only
+table**: global only (no `scope=following`), no Follow button, and no
+profile link — a ranked row is a Polymarket trader identified by proxy
+wallet, not an account here, and the route touches no Supabase table at all
+except to fill `currentUser` from the caller's own `users.wallet_address`.
+See `src/app/api/leaderboard/route.ts` and docs/DECISIONS.md, "Round 6:
+Leaderboard Is a Read-Only Polymarket Ranking — No Follow, No Profile
+Links".
 
 ### ⚠️ Trading is unverified end-to-end
 
@@ -91,9 +105,13 @@ A web port of the entire mobile app, sharing this project and its APIs
   Callouts/Top Holders tabs, and a **real** trade form — see the
   trading caveat above; this calls the actual `POST /trading/orders`).
   No price chart.
-- `/search` — People + Markets together, `localStorage`-backed Recents.
-- `/leaderboard` — Global/Following scope, real Follow toggle. No
-  `TopPerformers` podium — every rank is the same row.
+- `/search` — People (this app's own accounts only) + Markets together,
+  `localStorage`-backed Recents.
+- `/leaderboard` — read-only: Polymarket's **global** ranking only (no scope
+  toggle, no Follow button, no profile link — its rows are Polymarket
+  traders, not accounts here). No `TopPerformers` podium — every rank is
+  the same row. "Your rank" is the one personal line: the signed-in
+  viewer's own standing, shown when it falls outside the loaded page.
 - `/profile`, `/profile/[userId]`, `.../followers`, `.../following`,
   `/profile/edit` — one shared `ProfileView` component for self and
   anyone else (mirrors the mobile app's "One Profile Route/Screen"

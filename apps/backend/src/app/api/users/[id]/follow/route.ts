@@ -16,7 +16,16 @@ async function followerCount(targetId: string): Promise<number> {
 /** `POST /users/:id/follow` — the follower is always the authenticated
  * caller, never client-supplied; `followerId === followingId` is
  * rejected here *and* by the DB's `follows_no_self_follow` check
- * constraint (docs/DATABASE.md — belt and suspenders). */
+ * constraint (docs/DATABASE.md — belt and suspenders).
+ *
+ * `:id` is an account in **this** app: a `users` row id, or a wallet
+ * address that matches one (`resolveTargetUserId`). It is deliberately
+ * *not* the wallet address of a ranked Polymarket trader: Polymarket's
+ * users and this app's users are different populations, so nobody is
+ * imported to make a follow possible, and the leaderboard offers no follow
+ * control at all (docs/DECISIONS.md, "Round 6: Leaderboard Is a Read-Only
+ * Polymarket Ranking — No Follow, No Profile Links"). A wallet with no
+ * local account is a clean 404. */
 export async function POST(request: Request, { params }: { params: Promise<{ id: string }> }) {
   return withErrorHandling(async () => {
     const { id } = await params;

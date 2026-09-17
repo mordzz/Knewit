@@ -46,9 +46,13 @@ export function MarketsScreen() {
   const [category, setCategory] = useState(route.params?.category ?? 'Trending');
   const markets = useMarkets(category);
   const categoriesQuery = useQuery({ queryKey: ['categories'], queryFn: getCategories });
-  const categoryOptions: TabRowOption<string>[] = ['Trending', ...(categoriesQuery.data ?? [])].map(
-    (option) => ({ key: option, label: option })
-  );
+  // `key` is the API's tag slug (what the backend filters by); `label`
+  // is only what the tab shows — the two are different namespaces
+  // upstream (`pop-culture` ↔ "Culture"), never derived from each other.
+  const categoryOptions: TabRowOption<string>[] = [
+    { key: 'Trending', label: 'Trending' },
+    ...(categoriesQuery.data ?? []).map((option) => ({ key: option.slug, label: option.label })),
+  ];
 
   const openMarket = useCallback(
     (marketId: string) => navigation.navigate('MarketDetail', { marketId }),

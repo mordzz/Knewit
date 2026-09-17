@@ -1,10 +1,8 @@
-import { Pressable, View } from 'react-native';
+import { View } from 'react-native';
 import { Text } from '@/components/ui/Text';
 import { Avatar } from '@/components/ui/Avatar';
-import { Button } from '@/components/ui/Button';
 import { RankNumber } from '@/features/leaderboard/components/RankNumber';
-import { useFollowToggle } from '@/features/profile/hooks/useFollowToggle';
-import { formatUsd } from '@/utils/formatCurrency';
+import { formatCompactUsd } from '@/utils/formatCurrency';
 import type { LeaderboardEntry } from '@/types/leaderboard';
 
 const METRIC_LABEL: Record<LeaderboardEntry['metric']['name'], string> = {
@@ -13,7 +11,6 @@ const METRIC_LABEL: Record<LeaderboardEntry['metric']['name'], string> = {
 
 export interface LeaderboardUserCardProps {
   entry: LeaderboardEntry;
-  onPress: () => void;
 }
 
 /**
@@ -21,23 +18,24 @@ export interface LeaderboardUserCardProps {
  * (`border-b border-border px-4 py-3`, no card/blur) rather than a
  * glass card per row, so a long ranked list reads as one coherent list
  * instead of a stack of individual boxes — see docs/DECISIONS.md
- * ("Glass Surfaces Reserved for Overlays Only"). `isFollowing`/`isSelf`
- * come from the leaderboard response itself (server-computed, see
- * docs/DECISIONS.md), not a per-row profile fetch — avoids an N+1
- * request pattern across a page of dozens of rows. Follow state after
- * a toggle is kept in sync here by `useFollowToggle` itself (it patches
- * every cached `['leaderboard', ...]` entry) — this component doesn't
- * need its own cache-patch logic.
+ * ("Glass Surfaces Reserved for Overlays Only").
+ *
+ * Deliberately **not** pressable and with no Follow button: a ranked row is
+ * a Polymarket trader, identified by proxy wallet, which is not a Knewit
+ * account — there is no profile here to open and no relationship to toggle,
+ * because this app's users and Polymarket's users are different populations
+ * (docs/DECISIONS.md, "Round 6: Leaderboard Is a Read-Only Polymarket
+ * Ranking — No Follow, No Profile Links"). It renders as a `View` rather
+ * than a `Pressable` on purpose, so nothing promises an action that doesn't
+ * exist. The row is still `accessible` with a spoken label, since rank +
+ * volume is real information for a screen reader even with no tap target.
  */
-export function LeaderboardUserCard({ entry, onPress }: LeaderboardUserCardProps) {
-  const toggleFollow = useFollowToggle();
-
+export function LeaderboardUserCard({ entry }: LeaderboardUserCardProps) {
   return (
-    <Pressable
-      onPress={onPress}
-      className="flex-row items-center gap-3 border-b border-border px-4 py-3 active:bg-surface"
-      accessibilityRole="button"
-      accessibilityLabel={`Rank ${entry.rank}, ${entry.user.displayName}, ${METRIC_LABEL[entry.metric.name]} ${formatUsd(entry.metric.value)}`}
+    <View
+      accessible
+      accessibilityLabel={`Rank ${entry.rank}, ${entry.user.displayName}, ${METRIC_LABEL[entry.metric.name]} ${formatCompactUsd(entry.metric.value)}`}
+      className="flex-row items-center gap-3 border-b border-border px-4 py-3"
     >
       <RankNumber rank={entry.rank} />
       <Avatar uri={entry.user.avatarUrl} fallbackLabel={entry.user.displayName} size={44} />
@@ -50,22 +48,11 @@ export function LeaderboardUserCard({ entry, onPress }: LeaderboardUserCardProps
         </Text>
       </View>
       <View className="items-end">
-        <Text variant="bodyStrong">{formatUsd(entry.metric.value)}</Text>
+        <Text variant="bodyStrong">{formatCompactUsd(entry.metric.value)}</Text>
         <Text variant="micro" color="textTertiary">
           {METRIC_LABEL[entry.metric.name]}
         </Text>
       </View>
-      {!entry.isSelf ? (
-        <Button
-          label={entry.isFollowing ? 'Following' : 'Follow'}
-          variant={entry.isFollowing ? 'secondary' : 'primary'}
-          loading={toggleFollow.isPending}
-          onPress={() =>
-            toggleFollow.mutate({ userId: entry.user.id, following: entry.isFollowing })
-          }
-          accessibilityLabel={entry.isFollowing ? 'Unfollow' : 'Follow'}
-        />
-      ) : null}
-    </Pressable>
+    </View>
   );
 }

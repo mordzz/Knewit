@@ -1,5 +1,6 @@
 import { getSupabase } from '@/lib/supabase';
 import { getCachedOrLiveMarketSummary } from '@/lib/marketCache';
+import { fetchPolymarketStanding } from '@/lib/leaderboard';
 import type { DbUser } from '@/lib/users';
 import type { CommentItem, FeedItem, PositionSnapshot, User, UserProfile } from '@/types/social';
 
@@ -42,7 +43,7 @@ export function toPublicUser(user: DbUser): User {
 export async function buildUserProfile(target: DbUser, viewerUserId: string | null): Promise<UserProfile> {
   const supabase = getSupabase();
 
-  const [followerCount, followingCount, postCount, callCount] = await Promise.all([
+  const [followerCount, followingCount, postCount, callCount, standing] = await Promise.all([
     supabase.from('follows').select('follower_id', { count: 'exact', head: true }).eq('following_id', target.id),
     supabase.from('follows').select('following_id', { count: 'exact', head: true }).eq('follower_id', target.id),
     supabase
@@ -55,6 +56,7 @@ export async function buildUserProfile(target: DbUser, viewerUserId: string | nu
       .select('id', { count: 'exact', head: true })
       .eq('author_id', target.id)
       .not('position_snapshot_market_id', 'is', null),
+    fetchPolymarketStanding(target.wallet_address),
   ]);
 
   let isFollowing = false;
@@ -77,10 +79,14 @@ export async function buildUserProfile(target: DbUser, viewerUserId: string | nu
     callCount: callCount.count ?? 0,
     isFollowing,
     isSelf: viewerUserId === target.id,
-    // `Order` (Phase 3) has no rows yet — never guessed from Post/Position
-    // data, per docs/DATABASE.md's exact volume definition.
-    tradingVolume: null,
-    leaderboardRank: null,
+    // This account's live Polymarket standing — the *same* ranking the
+    // Leaderboard shows (docs/DECISIONS.md, "Profile Trading Metric
+    // Matches Leaderboard's Definition Exactly"), asked of Polymarket by
+    // wallet address rather than summed from our own `orders` rows (which
+    // have none). `null` when there's no wallet, no ranked volume, or the
+    // lookup fails — never guessed.
+    tradingVolume: standing?.volume ?? null,
+    leaderboardRank: standing?.rank ?? null,
   };
 }
 
