@@ -1,4 +1,10 @@
-import type { MarketGroupSummary, MarketListItem, MarketSummary } from '@/types/social';
+import type { MarketChoice } from '@/types/market';
+import type {
+  MarketGroupSummary,
+  MarketListItem,
+  MarketOutcomeRow,
+  MarketSummary,
+} from '@/types/social';
 
 /**
  * DEVELOPMENT-ONLY fixture data — same rule as
@@ -17,7 +23,27 @@ import type { MarketGroupSummary, MarketListItem, MarketSummary } from '@/types/
  * fixtures at all. See docs/DECISIONS.md (Sprint 3, Markets visual
  * refresh).
  */
-const BASE_MARKETS: Omit<MarketSummary, 'id'>[] = [
+type MockMarketTemplate = Omit<MarketSummary, 'id' | 'choices'> & {
+  /** Legacy fixture-only label override, mapped onto `choices` below. */
+  outcomeLabels?: { yes: string; no: string };
+  choices?: MarketChoice[];
+};
+
+/** A binary pair's choices, derived from the fixture's own yes/no fields
+ * — the same shape a real `/markets` response carries. */
+function binaryChoices(
+  yesLabel: string,
+  noLabel: string,
+  yesPrice: number,
+  noPrice: number
+): MarketChoice[] {
+  return [
+    { index: 0, label: yesLabel, price: yesPrice },
+    { index: 1, label: noLabel, price: noPrice },
+  ];
+}
+
+const RAW_MARKETS: MockMarketTemplate[] = [
   {
     question: 'Will Bitcoin reach $120K before December?',
     category: 'Crypto',
@@ -85,6 +111,13 @@ const BASE_MARKETS: Omit<MarketSummary, 'id'>[] = [
     endDate: '2027-03-10T00:00:00.000Z',
     isBinary: false,
     outcomeCount: 9,
+    choices: ['Oppenheimer', 'Sinners', 'Dune: Part Three', 'Wicked: For Good', 'Anora', 'The Brutalist', 'Conclave', 'A Real Pain', 'Emilia Pérez'].map(
+      (label, index) => ({
+        index,
+        label,
+        price: Math.max(1, 24 - index * 2),
+      })
+    ),
   },
   {
     question: 'Will a ceasefire hold through the year?',
@@ -108,11 +141,25 @@ const BASE_MARKETS: Omit<MarketSummary, 'id'>[] = [
   },
 ];
 
+const BASE_MARKETS: Omit<MarketSummary, 'id'>[] = RAW_MARKETS.map(
+  ({ outcomeLabels, choices, ...market }) => ({
+    ...market,
+    choices:
+      choices ??
+      binaryChoices(
+        outcomeLabels?.yes ?? 'Yes',
+        outcomeLabels?.no ?? 'No',
+        market.yesPrice,
+        market.noPrice
+      ),
+  })
+);
+
 type MockGroupTemplate = Omit<MarketGroupSummary, 'id' | 'outcomes'> & {
-  outcomes: Omit<MarketGroupSummary['outcomes'][number], 'id'>[];
+  outcomes: Omit<MarketOutcomeRow, 'id' | 'choices'>[];
 };
 
-const BASE_GROUPS: MockGroupTemplate[] = [
+const RAW_GROUPS: MockGroupTemplate[] = [
   {
     title: 'Fed Decision in September?',
     category: 'Economics',
@@ -163,6 +210,14 @@ const BASE_GROUPS: MockGroupTemplate[] = [
     ],
   },
 ];
+
+const BASE_GROUPS = RAW_GROUPS.map((group) => ({
+  ...group,
+  outcomes: group.outcomes.map((outcome) => ({
+    ...outcome,
+    choices: binaryChoices('Yes', 'No', outcome.yesPrice, outcome.noPrice),
+  })),
+}));
 
 function hashString(value: string): number {
   let hash = 0;

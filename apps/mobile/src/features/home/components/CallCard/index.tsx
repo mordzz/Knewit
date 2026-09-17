@@ -5,11 +5,13 @@ import { Avatar } from '@/components/ui/Avatar';
 import { MarketAttachment } from '@/features/home/components/MarketAttachment';
 import { SocialActionBar } from '@/features/home/components/SocialActionBar';
 import { formatRelativeTime } from '@/utils/formatRelativeTime';
-import type { FeedItem } from '@/types/social';
+import type { FeedItem, MarketSummary } from '@/types/social';
 
 export interface CallCardProps {
   item: FeedItem;
-  onOpenMarket: (marketId: string) => void;
+  /** Receives the market itself so the caller can route a child market
+   * to its parent event (docs/DECISIONS.md). */
+  onOpenMarket: (market: MarketSummary) => void;
   onOpenAuthor: (userId: string) => void;
   onOpenPost: (postId: string) => void;
 }
@@ -81,7 +83,7 @@ function CallCardComponent({ item, onOpenMarket, onOpenAuthor, onOpenPost }: Cal
           <MarketAttachment
             market={item.market}
             positionSnapshot={item.positionSnapshot}
-            onPress={() => onOpenMarket(item.market!.id)}
+            onPress={() => onOpenMarket(item.market!)}
           />
         ) : null}
 

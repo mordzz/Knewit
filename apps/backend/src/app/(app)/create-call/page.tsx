@@ -7,11 +7,12 @@ import { Text } from '@/components/ui/Text';
 import { Icon } from '@/components/ui/Icon';
 import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
+import { choiceTextColor, choiceTone } from '@/lib/choiceTone';
 import { Card } from '@/components/ui/Card';
 import { Avatar } from '@/components/ui/Avatar';
 import { GlassSurface } from '@/components/ui/GlassSurface';
 import { PositionPickerSheet } from '@/components/PositionPickerSheet';
-import { useCreatePost } from '@/hooks/useCreatePost';
+import { useCreateCall } from '@/hooks/useCreateCall';
 import { formatPrice, formatUsd } from '@/lib/formatters';
 import type { UserPosition } from '@/types/social';
 
@@ -22,7 +23,7 @@ const MAX_POST_LENGTH = 280;
  * always requires an attached market position (docs/DECISIONS.md,
  * "Callouts Require a Held Position"): Publish stays disabled until one
  * is selected from `PositionPickerSheet`. No dev-mock fallback on
- * publish (`useCreatePost` — "No Fake Publish Success").
+ * publish (`useCreateCall` — "No Fake Publish Success").
  */
 export default function CreateCallPage() {
   const router = useRouter();
@@ -30,7 +31,7 @@ export default function CreateCallPage() {
   const [content, setContent] = useState('');
   const [selectedPosition, setSelectedPosition] = useState<UserPosition | null>(null);
   const [pickerVisible, setPickerVisible] = useState(false);
-  const mutation = useCreatePost();
+  const mutation = useCreateCall();
 
   const trimmed = content.trim();
   const isContentValid = trimmed.length > 0 && content.length <= MAX_POST_LENGTH;
@@ -124,7 +125,7 @@ function SelectedPositionCard({
   onChange: () => void;
   onRemove: () => void;
 }) {
-  const outcomeColor = position.outcome === 'YES' ? 'yes' : 'no';
+  const outcomeColor = choiceTextColor(choiceTone({ index: position.choiceIndex, label: position.outcome }));
   const costBasis = (position.entryPrice / 100) * position.size;
 
   return (

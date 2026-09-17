@@ -12,10 +12,14 @@ export const endpoints = {
   marketsTrending: '/markets/trending',
   marketsClosingSoon: '/markets/closing-soon',
   events: '/events',
+  event: (id: string) => `/events/${id}`,
+  eventActivity: (id: string) => `/events/${id}/activity`,
+  eventHolders: (id: string) => `/events/${id}/holders`,
   categories: '/categories',
   positions: '/positions',
   position: (marketId: string) => `/positions/${marketId}`,
   tradingOrders: '/trading/orders',
+  walletBalance: '/wallet/balance',
   feed: '/feed',
   feedFollowing: '/feed/following',
   feedTrending: '/feed/trending',
@@ -32,7 +36,6 @@ export const endpoints = {
    * caller — see docs/API.md. Used identically for all the
    * `users/:id/...` sub-resources below. */
   users: (id: string) => `/users/${id}`,
-  userPosts: (id: string) => `/users/${id}/posts`,
   userCalls: (id: string) => `/users/${id}/calls`,
   userReplies: (id: string) => `/users/${id}/replies`,
   userActivity: (id: string) => `/users/${id}/activity`,

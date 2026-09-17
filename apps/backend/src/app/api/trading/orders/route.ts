@@ -4,11 +4,13 @@ import { getOrCreateUser } from '@/lib/users';
 import { getSupabase } from '@/lib/supabase';
 import { getAndCacheMarketSummary } from '@/lib/marketCache';
 import { placeMarketOrder } from '@/lib/trading/orders';
-import type { Order, Outcome } from '@/types/market';
+import type { Order } from '@/types/market';
 
 interface CreateTradeOrderInput {
   marketId: string;
-  outcome: Outcome;
+  /** Index into the market's own `outcomes` array — the client never
+   * sends a label; the backend resolves it from the live market. */
+  choiceIndex: number;
   usdAmount: number;
 }
 
@@ -33,17 +35,20 @@ export async function POST(request: Request) {
     if (
       !body ||
       typeof body.marketId !== 'string' ||
-      (body.outcome !== 'YES' && body.outcome !== 'NO') ||
+      !Number.isInteger(body.choiceIndex) ||
+      (body.choiceIndex as number) < 0 ||
       typeof body.usdAmount !== 'number' ||
       body.usdAmount <= 0
     ) {
-      throw badRequest('Expected { marketId: string, outcome: "YES" | "NO", usdAmount: number > 0 }.');
+      throw badRequest('Expected { marketId: string, choiceIndex: integer >= 0, usdAmount: number > 0 }.');
     }
+
+    const choiceIndex = body.choiceIndex as number;
 
     const result = await placeMarketOrder({
       privyUserId,
       marketId: body.marketId,
-      outcome: body.outcome,
+      choiceIndex,
       usdAmount: body.usdAmount,
     });
 
@@ -57,7 +62,8 @@ export async function POST(request: Request) {
       .insert({
         user_id: viewer.id,
         market_id: body.marketId,
-        outcome: body.outcome,
+        outcome: result.choiceLabel,
+        choice_index: choiceIndex,
         size: result.filledSize,
         price: result.filledPrice,
         status: result.status,
@@ -73,7 +79,8 @@ export async function POST(request: Request) {
     const { error: positionError } = await supabase.from('positions').insert({
       user_id: viewer.id,
       market_id: body.marketId,
-      outcome: body.outcome,
+      outcome: result.choiceLabel,
+      choice_index: choiceIndex,
       entry_price: result.filledPrice,
       size: result.filledSize,
     });
@@ -84,6 +91,7 @@ export async function POST(request: Request) {
       userId: orderRow.user_id,
       marketId: orderRow.market_id,
       outcome: orderRow.outcome,
+      choiceIndex: orderRow.choice_index,
       size: orderRow.size,
       price: orderRow.price,
       status: orderRow.status,

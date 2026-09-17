@@ -19,7 +19,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ mark
 
     const { data: row } = await getSupabase()
       .from('positions')
-      .select('id, market_id, outcome, entry_price, size, opened_at')
+      .select('id, market_id, outcome, choice_index, entry_price, size, opened_at')
       .eq('user_id', viewer.id)
       .eq('market_id', marketId)
       .order('opened_at', { ascending: false })
@@ -34,8 +34,9 @@ export async function GET(request: Request, { params }: { params: Promise<{ mark
       marketId: row.market_id,
       marketQuestion: market?.question ?? '(market unavailable)',
       outcome: row.outcome,
+      choiceIndex: row.choice_index,
       entryPrice: row.entry_price,
-      currentPrice: row.outcome === 'YES' ? (market?.yesPrice ?? null) : (market?.noPrice ?? null),
+      currentPrice: market?.choices?.[row.choice_index]?.price ?? null,
       size: row.size,
       openedAt: row.opened_at,
     };

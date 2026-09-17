@@ -32,6 +32,13 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
     }
 
     const category = categoryFromTags(event.tags);
-    return Response.json(toMarketDetail(market, category, event.liquidity));
+    return Response.json(
+      toMarketDetail(
+        market,
+        category,
+        event.liquidity,
+        event.markets.length > 1 ? event.id : null
+      )
+    );
   });
 }

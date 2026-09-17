@@ -1,10 +1,13 @@
 import { View, Image, Pressable, Share } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
 import { Text } from '@/components/ui/Text';
 import { Icon } from '@/components/ui/Icon';
 import { MarketVisual } from '@/components/ui/MarketVisual';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { formatCompactUsd } from '@/utils/formatCurrency';
+import { choiceTone, type ChoiceTone } from '@/utils/choiceTone';
 import { typography } from '@/theme';
+import type { MarketChoice } from '@/types/market';
 import type {
   MarketGroupSummary,
   MarketListItem,
@@ -39,12 +42,14 @@ export interface MarketCardProps {
  * No buy/sell action anywhere in this card, and no *price* anywhere in
  * it either — price/trading only ever appears in Market Detail now,
  * not this discovery list (see docs/DECISIONS.md, "Price Only in
- * Market Detail"). The *choice types* still show (Yes/No pills for a
- * binary market, each candidate's name + Yes/No pills for a combo) —
- * only the price/probability number attached to them is gone (the old
+ * Market Detail"). The *choice types* still show (labels from the
+ * market's own API choices, each candidate's name + pills for a combo)
+ * — only the price/probability number attached to them is gone (the old
  * Yes/No price buttons, the per-candidate probability percentage, and
- * the combo trend chart). Every tap (the whole single-market row, a
- * group's header, or one of its outcome rows) opens Market Detail. The
+ * the combo trend chart). A single-market row opens Market Detail; a
+ * group card opens that same detail screen in event mode and is the
+ * card's **only** click target — its outcome rows are display-only, see
+ * docs/DECISIONS.md ("Group Cards Are One Click"). The
  * footer shows Volume only (not Liquidity/time — see
  * `buildMarketMetrics` for the full set `MarketAttachment` still shows)
  * with a Share action on the right, native OS share sheet, same pattern
@@ -59,7 +64,11 @@ export interface MarketCardProps {
  */
 export function MarketCard({ item, onOpenMarket }: MarketCardProps) {
   if (item.kind === 'group') {
-    return <GroupCard group={item.group} onOpenMarket={onOpenMarket} />;
+    // One click target only: the whole group card opens the same
+    // Market Detail surface in event mode. Child rows are display-only
+    // (no separate press) — see docs/DECISIONS.md ("One Detail
+    // Surface").
+    return <GroupCard group={item.group} />;
   }
   return <SingleMarketCard market={item.market} onOpenMarket={onOpenMarket} />;
 }
@@ -102,8 +111,6 @@ function SingleMarketCard({
   market: MarketSummary;
   onOpenMarket: (id: string) => void;
 }) {
-  const isBinary = market.isBinary !== false;
-
   return (
     <Pressable
       onPress={() => onOpenMarket(market.id)}
@@ -123,13 +130,14 @@ function SingleMarketCard({
         </Text>
       </View>
 
-      {!isBinary ? (
-        <MultiOutcomeNotice outcomeCount={market.outcomeCount} />
-      ) : (
+      {market.choices.length === 2 ? (
         <View className="flex-row gap-2">
-          <ChoiceBlock label={market.outcomeLabels?.yes ?? 'Yes'} color="yes" />
-          <ChoiceBlock label={market.outcomeLabels?.no ?? 'No'} color="no" />
+          {market.choices.map((choice) => (
+            <ChoiceBlock key={choice.index} label={choice.label} tone={choiceTone(choice)} />
+          ))}
         </View>
+      ) : (
+        <ChoiceList choices={market.choices} />
       )}
 
       <VolumeAndShare volume={market.volume} title={market.question} />
@@ -137,37 +145,64 @@ function SingleMarketCard({
   );
 }
 
+/** Three or more choices — the same `MiniPill` treatment the group
+ * rows' Yes/No pills already use, one per choice, wrapping. When the
+ * API actually provides an image for a choice, the pills switch to the
+ * same image+label row `OutcomeRow` uses; the market's own image is
+ * never substituted. Prices stay off this card (docs/DECISIONS.md,
+ * "Price Only in Market Detail"). */
+function ChoiceList({ choices }: { choices: MarketChoice[] }) {
+  if (choices.length === 0) return null;
+
+  if (choices.some((choice) => choice.imageUrl)) {
+    return (
+      <View className="gap-2">
+        {choices.map((choice) => (
+          <View key={choice.index} className="flex-row items-center gap-2">
+            {choice.imageUrl ? (
+              <Image source={{ uri: choice.imageUrl }} className="h-6 w-6 rounded-full" />
+            ) : null}
+            <Text variant="caption" numberOfLines={1} className="flex-1">
+              {choice.label}
+            </Text>
+          </View>
+        ))}
+      </View>
+    );
+  }
+
+  return (
+    <View className="flex-row flex-wrap gap-1.5">
+      {choices.map((choice) => (
+        <MiniPill key={choice.index} label={choice.label} tone={choiceTone(choice)} />
+      ))}
+    </View>
+  );
+}
+
 const ROW_LIMIT = 4;
 
 /**
- * A combo market (several named outcomes under one market entity, e.g.
- * an election with multiple candidates) — still a flat list row, same
- * as `SingleMarketCard`, just a taller one (header + its own internal
- * outcome sub-list) rather than a separate boxed panel — see
- * docs/DECISIONS.md ("List Rows, Not Cards, for the Markets Tab").
+ * A combo market (several named outcomes under one event) — still a
+ * flat list row, just a taller one. **One click target only**: the whole
+ * card opens the same Market Detail surface in event mode; the outcome
+ * rows below are display-only (no separate press). Rows only show an
+ * image when the API provides one that identifies the child — no
+ * placeholder art, no shared league/tournament art.
  */
-function GroupCard({
-  group,
-  onOpenMarket,
-}: {
-  group: MarketGroupSummary;
-  onOpenMarket: (id: string) => void;
-}) {
+function GroupCard({ group }: { group: MarketGroupSummary }) {
+  const navigation = useNavigation();
   const visibleRows = group.outcomes.slice(0, ROW_LIMIT);
   const remaining = group.outcomes.length - visibleRows.length;
   const isHeadToHead = group.outcomes.length === 2;
 
   return (
-    <View className="gap-3 border-b border-border px-4 py-3">
-      {/* `group.id` is Polymarket's *event* id, not a market id —
-          `getMarketById`/`GET /markets/:id` only ever resolves a real
-          market id (see docs/ARCHITECTURE.md: "a group's individual
-          outcome row is still just an ordinary market with its own
-          id"). A combo market has no single-market detail screen to
-          open with this header, so it's plain (non-pressable), not a
-          button — only each `OutcomeRow` below is a real market id and
-          navigable. Previously pressable anyway, which opened Market
-          Detail to a 404 every time. */}
+    <Pressable
+      onPress={() => navigation.navigate('MarketDetail', { eventId: group.id })}
+      className="gap-3 border-b border-border px-4 py-3 active:opacity-90"
+      accessibilityRole="button"
+      accessibilityLabel={`Open event: ${group.title}`}
+    >
       <View className="flex-row items-center gap-2.5">
         <MarketVisual imageUrl={group.imageUrl} fallbackIcon="trending-up-outline" />
         <Text
@@ -182,12 +217,7 @@ function GroupCard({
 
       <View className="gap-2">
         {visibleRows.map((row) => (
-          <OutcomeRow
-            key={row.id}
-            row={row}
-            large={isHeadToHead}
-            onPress={() => onOpenMarket(row.id)}
-          />
+          <OutcomeRow key={row.id} row={row} large={isHeadToHead} />
         ))}
         {remaining > 0 ? (
           <Text variant="micro" color="textTertiary">
@@ -197,50 +227,31 @@ function GroupCard({
       </View>
 
       <VolumeAndShare volume={group.volume} title={group.title} />
-    </View>
+    </Pressable>
   );
 }
 
-function OutcomeRow({
-  row,
-  large,
-  onPress,
-}: {
-  row: MarketOutcomeRow;
-  large: boolean;
-  onPress: () => void;
-}) {
+function OutcomeRow({ row, large }: { row: MarketOutcomeRow; large: boolean }) {
   const avatarSize = large ? 32 : 22;
 
   return (
-    <Pressable
-      onPress={onPress}
-      className="flex-row items-center gap-2 active:opacity-70"
-      accessibilityRole="button"
-      accessibilityLabel={row.label}
-    >
+    <View className="flex-row items-center gap-2">
       {row.imageUrl ? (
         <Image
           source={{ uri: row.imageUrl }}
           style={{ width: avatarSize, height: avatarSize }}
           className="rounded-full"
         />
-      ) : (
-        <View
-          style={{ width: avatarSize, height: avatarSize }}
-          className="items-center justify-center rounded-full bg-accent-muted"
-        >
-          <Icon name="person-outline" size={Math.round(avatarSize * 0.55)} color="accent" />
-        </View>
-      )}
+      ) : null}
       <Text variant={large ? 'body' : 'caption'} numberOfLines={1} className="flex-1">
         {row.label}
       </Text>
       <View className="flex-row gap-1">
-        <MiniPill label="Yes" color="yes" />
-        <MiniPill label="No" color="no" />
+        {row.choices.slice(0, 2).map((choice) => (
+          <MiniPill key={choice.index} label={choice.label} tone={choiceTone(choice)} />
+        ))}
       </View>
-    </Pressable>
+    </View>
   );
 }
 
@@ -254,51 +265,40 @@ function OutcomeRow({
  * to be the bigger, more square-cornered treatment the request asked
  * for.
  */
-function ChoiceBlock({ label, color }: { label: string; color: 'yes' | 'no' }) {
-  const bgClass = color === 'yes' ? 'bg-yes' : 'bg-no';
-  const textColor = color === 'yes' ? 'textInverse' : 'textPrimary';
+const TONE_BLOCK_CLASS: Record<ChoiceTone, string> = {
+  yes: 'bg-yes',
+  no: 'bg-no',
+  accent: 'bg-accent',
+  neutral: 'border border-border bg-surface-elevated',
+};
+
+const TONE_TEXT_COLOR: Record<ChoiceTone, 'textInverse' | 'textPrimary'> = {
+  yes: 'textInverse',
+  no: 'textPrimary',
+  accent: 'textInverse',
+  neutral: 'textPrimary',
+};
+
+function ChoiceBlock({ label, tone }: { label: string; tone: ChoiceTone }) {
   return (
-    <View className={`flex-1 items-center rounded-md px-3 py-2.5 ${bgClass}`}>
-      <Text variant="bodyStrong" color={textColor}>
+    <View className={`flex-1 items-center rounded-md px-3 py-2.5 ${TONE_BLOCK_CLASS[tone]}`}>
+      <Text variant="bodyStrong" color={TONE_TEXT_COLOR[tone]}>
         {label}
       </Text>
     </View>
   );
 }
 
-/** Same yes/no contrast choice `Button` already made (yes: dark text on
- * bright green, no: white text on the pink/red) — replicated rather
- * than shared since `Button`'s own size (min-h-12) is too tall for a
- * dense outcome-row list; this is the compact equivalent for that
+/** Same contrast choice `Button` already made (dark text on bright
+ * fills, light text on the pink/red and neutral surfaces) — replicated
+ * rather than shared since `Button`'s own size (min-h-12) is too tall
+ * for a dense outcome-row list; this is the compact equivalent for that
  * context only. */
-function MiniPill({ label, color }: { label: string; color: 'yes' | 'no' }) {
-  const bgClass = color === 'yes' ? 'bg-yes' : 'bg-no';
-  const textColor = color === 'yes' ? 'textInverse' : 'textPrimary';
+function MiniPill({ label, tone }: { label: string; tone: ChoiceTone }) {
   return (
-    <View className={`rounded-full px-2.5 py-1 ${bgClass}`}>
-      <Text variant="micro" color={textColor}>
+    <View className={`rounded-full px-2.5 py-1 ${TONE_BLOCK_CLASS[tone]}`}>
+      <Text variant="micro" color={TONE_TEXT_COLOR[tone]}>
         {label}
-      </Text>
-    </View>
-  );
-}
-
-/**
- * MVP trading is binary-only (see docs/PRD.md) — this never forces a
- * non-binary market into a fabricated YES/NO split. Mirrors
- * `MarketAttachment`'s own non-binary treatment (see docs/DECISIONS.md,
- * Sprint 3) since the two cards should never disagree about what "this
- * market isn't binary" looks like, even though they're separate
- * components for separate contexts.
- */
-function MultiOutcomeNotice({ outcomeCount }: { outcomeCount?: number | null }) {
-  const label = outcomeCount != null ? `${outcomeCount} outcomes` : 'Multiple outcomes';
-
-  return (
-    <View className="flex-row items-center gap-2 rounded-xl bg-surface-elevated p-2.5">
-      <Icon name="layers-outline" size={16} color="textSecondary" />
-      <Text variant="caption" color="textSecondary" className="flex-1">
-        {label} · not available for YES/NO trading yet
       </Text>
     </View>
   );

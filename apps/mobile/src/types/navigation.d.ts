@@ -19,7 +19,7 @@ export type MainTabParamList = {
  * global `useNavigation()` typing without per-screen composite navigation
  * props. Screens are physically owned by different navigators (Main/Auth/
  * CreateCall by the root stack; MarketDetail lives in both Home's and
- * Markets' own stacks; Portfolio lives in Profile's stack — see
+ * Markets' own stacks; Wallet lives in Profile's stack — see
  * MainTabNavigator.tsx), but `navigate()` bubbles up through parent
  * navigators at runtime regardless of where a screen is typed, so one
  * flat list keeps every call site simple.
@@ -28,7 +28,7 @@ export type AppParamList = {
   Main: NavigatorScreenParams<MainTabParamList> | undefined;
   Auth: undefined;
   /** The Callout composer — no params: every callout requires an
-   * attached market position (only buyers can post one), enforced by
+   * attached market position (only buyers can publish one), enforced by
    * the screen itself — see docs/DECISIONS.md ("Black Glass for Callout
    * Surfaces", superseding the earlier Post/Call `intent` choice). */
   CreateCall: undefined;
@@ -48,10 +48,12 @@ export type AppParamList = {
   Followers: { userId: string };
   Following: { userId: string };
   Wallet: undefined;
-  Portfolio: undefined;
-  MarketDetail: { marketId: string };
-  /** Serves both a normal Post and a position-backed Call — same
-   * screen either way (docs/SOCIAL-FEATURE.md). */
+  /** One detail screen for a single market (`marketId`) and a grouped
+   * event (`eventId`) — event mode shows the event's own chart, child
+   * markets with inline Trade sheets, and combined tabs; there is no
+   * separate event screen. */
+  MarketDetail: { marketId?: string; eventId?: string };
+  /** A position-backed Callout's detail. */
   PostDetail: { postId: string };
 };
 

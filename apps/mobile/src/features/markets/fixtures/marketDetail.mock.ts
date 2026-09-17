@@ -67,7 +67,7 @@ export function buildMockHolders(marketId: string): MarketHolder[] {
     displayName: author.displayName,
     handle: author.handle,
     avatarUrl: author.avatarUrl,
-    outcome: index % 2 === 0 ? 'YES' : 'NO',
+    outcome: index % 2 === 0 ? 'Yes' : 'No',
     shares: (index + 1) * 125.5,
   }));
 }
@@ -115,10 +115,11 @@ const RANGE_CONFIG: Record<PriceRange, { points: number; stepMs: number }> = {
 export function buildMockPriceHistory(
   marketId: string,
   range: PriceRange,
-  currentPriceCents: number
+  currentPriceCents: number,
+  choiceIndex = 0
 ): PricePoint[] {
   const { points, stepMs } = RANGE_CONFIG[range];
-  const random = mulberry32(hashSeed(`${marketId}:${range}`));
+  const random = mulberry32(hashSeed(`${marketId}:${range}:${choiceIndex}`));
   const target = Math.max(1, Math.min(99, currentPriceCents));
 
   // Walk backward from the known current price so the *last* point is
@@ -142,16 +143,25 @@ export function buildMockPriceHistory(
 export function buildMockMarketActivity(marketId: string): FeedItem[] {
   return MOCK_COMMENT_BODIES.map((body, index) => {
     const author = MOCK_AUTHORS[index % MOCK_AUTHORS.length];
+    const createdAt = new Date(Date.now() - (index + 1) * 3_600_000).toISOString();
     return {
       id: `${marketId}-activity-${index}`,
       author,
       body,
       market: null,
-      positionSnapshot: null,
+      positionSnapshot: {
+        marketId,
+        outcome: 'Yes',
+        choiceIndex: 0,
+        entryPrice: 50,
+        size: 10,
+        capturedAt: createdAt,
+      },
       likeCount: (index + 1) * 3,
       commentCount: 0,
       liked: false,
-      createdAt: new Date(Date.now() - (index + 1) * 3_600_000).toISOString(),
+      canDelete: false,
+      createdAt,
     };
   });
 }

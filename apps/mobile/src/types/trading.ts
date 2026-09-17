@@ -1,5 +1,5 @@
 import type { ID } from '@/types/common';
-import type { Outcome, Order } from '@/types/market';
+import type { Order } from '@/types/market';
 
 /**
  * Client-side trade UX state — distinct from `Order.status`
@@ -15,10 +15,12 @@ export type TradeStatus = 'idle' | 'preparing' | 'signing' | 'pending' | 'succes
 
 /** What the mobile app sends to request a trade — the authenticated
  * wallet/user is resolved server-side from the request's Privy session
- * token (see `services/api/client.ts`), not passed explicitly here. */
+ * token (see `services/api/client.ts`), not passed explicitly here.
+ * `choiceIndex` indexes the market's own `outcomes` array; the label is
+ * never sent — the backend resolves it from the live market. */
 export interface CreateTradeInput {
   marketId: ID;
-  outcome: Outcome;
+  choiceIndex: number;
   usdAmount: number;
 }
 

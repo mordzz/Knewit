@@ -7,6 +7,7 @@ import { Text } from '@/components/ui/Text';
 import { Icon } from '@/components/ui/Icon';
 import { Avatar } from '@/components/ui/Avatar';
 import { Button } from '@/components/ui/Button';
+import { choiceTextColor, choiceTone } from '@/lib/choiceTone';
 import { Divider } from '@/components/ui/Divider';
 import { BottomSheet } from '@/components/ui/BottomSheet';
 import { TabRow, type TabRowOption } from '@/components/ui/TabRow';
@@ -40,7 +41,7 @@ const PROFILE_TAB_OPTIONS: TabRowOption<ProfileTab>[] = [
  * Direct conversion of `apps/mobile`'s `ProfileScreen` — the one
  * Profile route/screen for both the viewer's own profile and anyone
  * else's. Same header (avatar + Settings gear opening a sheet with Edit
- * Profile/Wallet, or a Follow button), same Wallet/Portfolio rows,
+ * Profile/Wallet, or a Follow button), same Wallet row,
  * Trading Performance card, Leaderboard Rank row, and Wallet Activity
  * (own live positions) section — all previously missing from the web
  * port, now present.
@@ -157,7 +158,7 @@ export function ProfileView({ userId }: { userId?: string }) {
                 Wallet
               </Text>
               <Text variant="caption" color="textSecondary">
-                Connection status and wallet address
+                Address, positions, and PnL
               </Text>
             </div>
             <Icon name="chevron-forward" size={18} color="textTertiary" />
@@ -171,28 +172,12 @@ export function ProfileView({ userId }: { userId?: string }) {
           </div>
         ) : null}
 
-        {user.isSelf ? (
-          <Link href="/portfolio" className="flex items-center gap-3 border-b border-border py-3 hover:opacity-90">
-            <Icon name="trending-up-outline" color="accent" />
-            <div className="flex-1">
-              <Text variant="bodyStrong" className="block">
-                Portfolio
-              </Text>
-              <Text variant="caption" color="textSecondary">
-                Your open positions
-              </Text>
-            </div>
-            <Icon name="chevron-forward" size={18} color="textTertiary" />
-          </Link>
-        ) : null}
-
         {user.tradingVolume != null ? (
           <div className="gap-2 border-b border-border py-3">
             <Text variant="bodyStrong">Trading Performance</Text>
             <div className="mt-2 flex justify-between">
               <StatColumn label="Trading Volume" value={formatUsd(user.tradingVolume)} />
               <StatColumn label="Calls" value={String(user.callCount)} />
-              <StatColumn label="Posts" value={String(user.postCount)} />
             </div>
           </div>
         ) : null}
@@ -217,7 +202,7 @@ export function ProfileView({ userId }: { userId?: string }) {
             {positions.data.map((position) => (
               <div key={position.id} className="mt-2 flex items-center justify-between">
                 <div className="min-w-0 flex-1">
-                  <Text variant="caption" color={position.outcome === 'YES' ? 'yes' : 'no'} className="mb-0.5 block">
+                  <Text variant="caption" color={choiceTextColor(choiceTone({ index: position.choiceIndex, label: position.outcome }))} className="mb-0.5 block">
                     {position.outcome}
                   </Text>
                   <Text variant="caption" numberOfLines={1}>
@@ -250,10 +235,10 @@ export function ProfileView({ userId }: { userId?: string }) {
           title={tab === 'replies' ? 'No replies yet' : tab === 'calls' ? 'No Calls yet' : 'No activity yet'}
           message={
             tab === 'replies'
-              ? 'Comments this user has made on Posts and Calls will show up here.'
+              ? 'Comments this user has made on Calls will show up here.'
               : tab === 'calls'
                 ? 'Position-backed Calls this user has published will show up here.'
-                : 'Trades, Calls, Posts, and follows will show up here.'
+                : 'Trades, Calls, and follows will show up here.'
           }
         />
       ) : tab === 'activity' ? (
@@ -315,7 +300,7 @@ function ProfileReplyRow({ item, onOpenPost }: { item: CommentItem; onOpenPost: 
     >
       <div className="flex items-baseline justify-between gap-2">
         <Text variant="caption" color="textTertiary">
-          Replying to a post
+          Replying to a Call
         </Text>
         <Text variant="caption" color="textTertiary">
           {formatRelativeTime(item.createdAt)}

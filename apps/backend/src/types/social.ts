@@ -1,5 +1,5 @@
 import type { Category, ID, ISODateString } from '@/types/common';
-import type { Outcome } from '@/types/market';
+import type { MarketChoice, Outcome } from '@/types/market';
 
 /** Mirrors `apps/frontend/src/types/social.ts` exactly — this backend is
  * a separate package so it can't import mobile's types directly, but
@@ -8,7 +8,9 @@ import type { Outcome } from '@/types/market';
 
 export interface PositionSnapshot {
   marketId: ID;
-  outcome: Outcome;
+  /** The choice's label at capture time ("Yes", "Manchester City", ...). */
+  outcome: string;
+  choiceIndex: number;
   entryPrice: number; // cents
   size: number; // shares
   capturedAt: ISODateString;
@@ -25,6 +27,18 @@ export interface User {
 export interface MarketSummary {
   id: ID;
   question: string;
+  /** The short outcome label when this market is one row of a grouped
+   * event (`groupItemTitle`, e.g. "Gavin Newsom", "25 bps decrease");
+   * `null` for ordinary markets. The event page and the child's own
+   * Market Detail hero prefer this over the long `question` so the rows
+   * don't all read as the same headline. */
+  label?: string | null;
+  /** Set only when this market is a **child** of an event with more than
+   * one market; opening it from a post attachment goes to the parent
+   * event's detail instead of the child's own page — see
+   * docs/DECISIONS.md ("Attachment of a Child Market Opens Its Parent
+   * Event"). */
+  parentEventId?: ID | null;
   category: Category;
   yesPrice: number; // cents
   noPrice: number; // cents
@@ -37,7 +51,9 @@ export interface MarketSummary {
   isBinary?: boolean;
   outcomeCount?: number | null;
   imageUrl?: string | null;
-  outcomeLabels?: { yes: string; no: string };
+  /** Every tradeable choice, in the market's own API order — what the
+   * UI renders instead of a hardcoded Yes/No pair. */
+  choices: MarketChoice[];
 }
 
 export interface MarketOutcomeRow {
@@ -46,6 +62,7 @@ export interface MarketOutcomeRow {
   yesPrice: number;
   noPrice: number;
   imageUrl?: string | null;
+  choices: MarketChoice[];
 }
 
 export interface MarketGroupSummary {
@@ -77,7 +94,38 @@ export interface MarketHolder {
   displayName: string;
   handle: string;
   avatarUrl: string | null;
-  outcome: Outcome;
+  outcome: string;
+  shares: number;
+}
+
+/**
+ * A grouped event's own detail shape (`GET /events/:id`) — the event
+ * header plus every discoverable child market, each of which is an
+ * ordinary `MarketSummary` with its own `label`. Built live from
+ * Polymarket's `/events/{id}` (docs/API.md).
+ */
+export interface EventDetail {
+  id: ID;
+  title: string;
+  category: Category;
+  imageUrl: string | null;
+  volume: number | null;
+  liquidity: number | null;
+  endDate: ISODateString | null;
+  /** The event's own description/rules text, when Polymarket has one. */
+  description: string | null;
+  markets: MarketSummary[];
+}
+
+/** One event-level Top Holders row — a position in one of the event's
+ * child markets, with enough context to render the row without a second
+ * lookup. Sourced from our own `positions` table (docs/API.md). */
+export interface EventHolderRow {
+  id: ID;
+  user: Pick<User, 'id' | 'handle' | 'displayName' | 'avatarUrl'>;
+  marketId: ID;
+  marketLabel: string;
+  outcome: string;
   shares: number;
 }
 
@@ -100,6 +148,10 @@ export interface FeedItem {
   likeCount: number;
   commentCount: number;
   liked: boolean;
+  /** Server-computed — whether the *authenticated viewer* may delete this
+   * Callout. The client has no reliable local copy of its own user id,
+   * same rule as `CommentItem.canDelete` (docs/DECISIONS.md). */
+  canDelete: boolean;
   createdAt: ISODateString;
 }
 
@@ -108,7 +160,9 @@ export interface UserPosition {
   id: ID;
   marketId: ID;
   marketQuestion: string;
-  outcome: Outcome;
+  /** The chosen choice's label, as the market's API data had it. */
+  outcome: string;
+  choiceIndex: number;
   entryPrice: number; // cents
   currentPrice: number | null; // cents
   size: number; // shares
@@ -119,7 +173,7 @@ export interface UserPosition {
 
 /** A Callout always attaches a held position — `positionId` required
  * (docs/DECISIONS.md, "Callouts Require a Held Position"). */
-export interface CreatePostInput {
+export interface CreateCallInput {
   body: string;
   positionId: string;
 }
@@ -161,7 +215,6 @@ export interface UserProfile extends User {
   bio: string | null;
   followerCount: number;
   followingCount: number;
-  postCount: number;
   callCount: number;
   isFollowing: boolean;
   isSelf: boolean;

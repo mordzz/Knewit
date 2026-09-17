@@ -22,12 +22,14 @@ import { useUserReplies } from '@/features/profile/hooks/useUserReplies';
 import { useUserCalls } from '@/features/profile/hooks/useUserCalls';
 import { useUserActivity } from '@/features/profile/hooks/useUserActivity';
 import { usePositions } from '@/features/portfolio/hooks/usePositions';
+import { navigateToMarketDetail } from '@/features/markets/utils/openMarketDetail';
 import { useWallet } from '@/hooks/useWallet';
 import { useAuth } from '@/hooks/useAuth';
 import { ApiRequestError } from '@/services/api/client';
 import { formatCompactNumber } from '@/utils/formatNumber';
 import { formatPrice, formatUsd } from '@/utils/formatCurrency';
-import type { CommentItem, FeedItem } from '@/types/social';
+import { choiceTextColor, choiceTone } from '@/utils/choiceTone';
+import type { CommentItem, FeedItem, MarketSummary } from '@/types/social';
 import type { ActivityItem } from '@/types/activity';
 import type { AppParamList } from '@/types/navigation';
 
@@ -69,7 +71,11 @@ export function ProfileScreen() {
   const positions = usePositions();
 
   const openAuthor = (id: string) => navigation.navigate('Profile', { userId: id });
-  const openMarket = (marketId: string) => navigation.navigate('MarketDetail', { marketId });
+  const openMarket = (market: MarketSummary) => navigateToMarketDetail(navigation, market);
+  // Activity rows only carry a market id (no parent-event info), so they
+  // still open that market directly.
+  const openActivityMarket = (marketId: string) =>
+    navigation.navigate('MarketDetail', { marketId });
   const openPost = (postId: string) => navigation.navigate('PostDetail', { postId });
 
   if (needsSignIn) {
@@ -232,7 +238,7 @@ export function ProfileScreen() {
           <View className="flex-1">
             <Text variant="bodyStrong">Wallet</Text>
             <Text variant="caption" color="textSecondary">
-              Connection status and wallet address
+              Address, positions, and PnL
             </Text>
           </View>
           <Icon name="chevron-forward" size={18} color="textTertiary" />
@@ -252,7 +258,6 @@ export function ProfileScreen() {
           <View className="flex-row justify-between">
             <StatColumn label="Trading Volume" value={formatUsd(user.tradingVolume)} />
             <StatColumn label="Calls" value={String(user.callCount)} />
-            <StatColumn label="Posts" value={String(user.postCount)} />
           </View>
         </View>
       ) : null}
@@ -282,7 +287,7 @@ export function ProfileScreen() {
               <View className="flex-1">
                 <Text
                   variant="caption"
-                  color={position.outcome === 'YES' ? 'yes' : 'no'}
+                  color={choiceTextColor(choiceTone({ index: position.choiceIndex, label: position.outcome }))}
                   className="mb-0.5"
                 >
                   {position.outcome}
@@ -321,7 +326,7 @@ export function ProfileScreen() {
             <ActivityRow
               item={item as ActivityItem}
               onOpenPost={openPost}
-              onOpenMarket={openMarket}
+              onOpenMarket={openActivityMarket}
               onOpenUser={openAuthor}
             />
           ) : tab === 'replies' ? (

@@ -34,7 +34,7 @@ export async function fetchEventsPage(cursor: string | undefined, categoryTagSlu
   nextCursor: string | null;
 }> {
   const offset = cursor ? Number(cursor) : 0;
-  const events = await gammaGet<GammaEvent[]>('/events', {
+  const page = await gammaGet<GammaEvent[]>('/events', {
     limit: PAGE_SIZE,
     offset,
     active: true,
@@ -43,7 +43,12 @@ export async function fetchEventsPage(cursor: string | undefined, categoryTagSlu
     ascending: false,
     tag_slug: categoryTagSlug,
   });
-  const nextCursor = events.length === PAGE_SIZE ? String(offset + PAGE_SIZE) : null;
+  // The cursor advances by the raw page size — the sub-event filter must
+  // not stop pagination early. Verified live: `public-search` also
+  // excludes these "- More Markets" extras, so a list should never show
+  // them (GET /events/:id still serves them for a direct link).
+  const nextCursor = page.length === PAGE_SIZE ? String(offset + PAGE_SIZE) : null;
+  const events = page.filter((event) => !event.parentEventId);
   return { events, nextCursor };
 }
 
@@ -66,6 +71,16 @@ export async function fetchEventForMarket(marketId: string): Promise<GammaEvent 
   const eventId = markets[0]?.events?.[0]?.id;
   if (!eventId) return null;
   return gammaGet<GammaEvent>(`/events/${eventId}`, {});
+}
+
+/** Single event by id — backs `GET /events/:id` (the group/event detail
+ * page). Uses the list endpoint's `id` filter (verified live) rather
+ * than `/events/{id}`, so an unknown id comes back as an empty list
+ * (`null` here) and a real upstream failure still propagates as an
+ * upstream error, mirroring `fetchMarketById`. */
+export async function fetchEventById(eventId: string): Promise<GammaEvent | null> {
+  const events = await gammaGet<GammaEvent[]>('/events', { id: eventId });
+  return events[0] ?? null;
 }
 
 /**

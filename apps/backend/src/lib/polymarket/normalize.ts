@@ -1,5 +1,5 @@
 import type { GammaEvent, GammaMarket, GammaTag } from '@/lib/polymarket/gammaTypes';
-import type { Event as DomainEvent, Market as DomainMarket, Outcome } from '@/types/market';
+import type { Event as DomainEvent, Market as DomainMarket, MarketChoice, Outcome } from '@/types/market';
 import type {
   MarketDetail,
   MarketGroupSummary,
@@ -29,18 +29,19 @@ export function categoryFromTags(tags: GammaTag[], preferredSlug?: string): stri
 }
 
 /**
- * Resolves which Polymarket CLOB token id a YES/NO trade should use —
- * `outcomes`/`clobTokenIds` are parallel JSON-encoded arrays (verified
- * live). Only meaningful for a binary (literal "Yes"/"No") market;
- * returns `null` for a non-binary market or an outcome that isn't
- * present, since a trading endpoint must never guess a token id.
+ * Resolves which Polymarket CLOB token id a trade on `choiceIndex`
+ * should use — `outcomes`/`clobTokenIds` are parallel JSON-encoded
+ * arrays (verified live), so the index into `outcomes` (what the API
+ * response's `MarketChoice.index` carries) is also the index into the
+ * token list. Returns `null` for an out-of-range index, since a trading
+ * endpoint must never guess a token id.
  */
-export function getOutcomeTokenId(market: GammaMarket, outcome: Outcome): string | null {
-  const outcomes = parseJsonArray(market.outcomes);
+export function getChoiceTokenId(market: GammaMarket, choiceIndex: number): string | null {
   const tokenIds = parseJsonArray(market.clobTokenIds);
-  const index = outcomes.findIndex((o) => o.toLowerCase() === outcome.toLowerCase());
-  if (index === -1 || !tokenIds[index]) return null;
-  return tokenIds[index];
+  if (!Number.isInteger(choiceIndex) || choiceIndex < 0 || choiceIndex >= tokenIds.length) {
+    return null;
+  }
+  return tokenIds[choiceIndex] ?? null;
 }
 
 function parseJsonArray(raw: string): string[] {
@@ -54,42 +55,70 @@ function parseJsonArray(raw: string): string[] {
 
 /**
  * `outcomes`/`outcomePrices` are JSON-encoded parallel string arrays,
- * prices in the 0-1 range. A market is treated as binary only when its
- * outcomes are literally "Yes"/"No" (case-insensitive) — anything else
- * (a 3+ outcome market, or two differently-labeled outcomes) is
- * surfaced as non-binary per docs/PRD.md ("never forced into a
- * fabricated YES/NO split"), with `yesPrice`/`noPrice` falling back to
- * the first two outcome prices so the card still has *something*
- * numeric to render, not because those necessarily mean "yes"/"no".
+ * prices in the 0-1 range — this is the market's own list of tradeable
+ * choices, in the API's order, and is rendered as-is (never forced into
+ * a fabricated Yes/No pair). See `MarketChoice`.
  */
-function parseOutcomePrices(market: GammaMarket): {
+export function parseChoices(market: GammaMarket): MarketChoice[] {
+  const outcomes = parseJsonArray(market.outcomes);
+  const prices = parseJsonArray(market.outcomePrices).map((p) => Number(p));
+
+  const toCents = (fraction: number | undefined) =>
+    Number.isFinite(fraction) ? Math.round((fraction as number) * 100) : 0;
+
+  return outcomes.map((label, index) => ({
+    index,
+    label,
+    price: toCents(prices[index]),
+  }));
+}
+
+/**
+ * The legacy summary fields derived from `choices`: `isBinary` means the
+ * two labels are literally "Yes"/"No" (the only case the app's
+ * green/red pair maps to meaning), and `yesPrice`/`noPrice` then point
+ * at whichever index each label has — for any other market they fall
+ * back to the first two choices' prices so existing readers still get a
+ * number.
+ */
+function summarizeChoices(choices: MarketChoice[]): {
   yesPrice: number;
   noPrice: number;
   isBinary: boolean;
   outcomeCount: number;
 } {
-  const outcomes = parseJsonArray(market.outcomes);
-  const prices = parseJsonArray(market.outcomePrices).map((p) => Number(p));
-  const yesIndex = outcomes.findIndex((o) => o.toLowerCase() === 'yes');
-  const noIndex = outcomes.findIndex((o) => o.toLowerCase() === 'no');
-  const isBinary = outcomes.length === 2 && yesIndex !== -1 && noIndex !== -1;
-
-  const toCents = (fraction: number | undefined) =>
-    Number.isFinite(fraction) ? Math.round((fraction as number) * 100) : 0;
+  const yesIndex = choices.findIndex((c) => c.label.toLowerCase() === 'yes');
+  const noIndex = choices.findIndex((c) => c.label.toLowerCase() === 'no');
+  const isBinary = choices.length === 2 && yesIndex !== -1 && noIndex !== -1;
 
   return {
-    yesPrice: isBinary ? toCents(prices[yesIndex]) : toCents(prices[0]),
-    noPrice: isBinary ? toCents(prices[noIndex]) : toCents(prices[1]),
+    yesPrice: isBinary ? choices[yesIndex].price : (choices[0]?.price ?? 0),
+    noPrice: isBinary ? choices[noIndex].price : (choices[1]?.price ?? 0),
     isBinary,
-    outcomeCount: outcomes.length,
+    outcomeCount: choices.length,
   };
 }
 
-export function toMarketSummary(market: GammaMarket, category: string, eventLiquidity: number | null): MarketSummary {
-  const { yesPrice, noPrice, isBinary, outcomeCount } = parseOutcomePrices(market);
+export function toMarketSummary(
+  market: GammaMarket,
+  category: string,
+  eventLiquidity: number | null,
+  /** Child-image override from `childImageUrls` — present only for
+   * markets inside a multi-market event. */
+  imageOverrides?: Map<string, string | null>,
+  /** The parent event's id, passed only when that event has more than
+   * one market (i.e. this market is a child). */
+  parentEventId?: string | null
+): MarketSummary {
+  const choices = parseChoices(market);
+  const { yesPrice, noPrice, isBinary, outcomeCount } = summarizeChoices(choices);
   return {
     id: market.id,
     question: market.question,
+    // The short grouped-event label, when this market is one row of an
+    // event — the event page/hero prefer it over the long `question`.
+    label: market.groupItemTitle || null,
+    parentEventId: parentEventId ?? null,
     category,
     yesPrice,
     noPrice,
@@ -104,22 +133,33 @@ export function toMarketSummary(market: GammaMarket, category: string, eventLiqu
     // `resolved` is left `undefined` rather than guessed from `closed`.
     isBinary,
     outcomeCount,
-    imageUrl: market.image ?? market.icon ?? null,
+    imageUrl: imageOverrides ? (imageOverrides.get(market.id) ?? null) : (market.image ?? market.icon ?? null),
+    choices,
   };
 }
 
-function toMarketOutcomeRow(market: GammaMarket): MarketOutcomeRow {
-  const { yesPrice, noPrice } = parseOutcomePrices(market);
+function toMarketOutcomeRow(
+  market: GammaMarket,
+  imageOverrides?: Map<string, string | null>
+): MarketOutcomeRow {
+  const choices = parseChoices(market);
+  const { yesPrice, noPrice } = summarizeChoices(choices);
   return {
     id: market.id,
     label: market.groupItemTitle || market.question,
     yesPrice,
     noPrice,
-    imageUrl: market.image ?? market.icon ?? null,
+    imageUrl: imageOverrides ? (imageOverrides.get(market.id) ?? null) : (market.image ?? market.icon ?? null),
+    choices,
   };
 }
 
-function toMarketGroupSummary(event: GammaEvent, category: string): MarketGroupSummary {
+function toMarketGroupSummary(
+  event: GammaEvent,
+  category: string,
+  markets: GammaMarket[],
+  imageOverrides?: Map<string, string | null>
+): MarketGroupSummary {
   return {
     id: event.id,
     title: event.title,
@@ -130,8 +170,43 @@ function toMarketGroupSummary(event: GammaEvent, category: string): MarketGroupS
     endDate: event.endDate,
     trending: event.featured,
     closed: event.closed,
-    outcomes: event.markets.map(toMarketOutcomeRow),
+    outcomes: markets.map((market) => toMarketOutcomeRow(market, imageOverrides)),
   };
+}
+
+/** Markets Polymarket no longer offers should not show up in discovery:
+ * `closed` means trading stopped, `archived` means it was pulled from
+ * Polymarket's own lists, and `active === false` marks the placeholder
+ * child markets Polymarket never lists (verified live: 554 of 560
+ * inactive children carry no price at all — the "Party B"/"Other" rows
+ * in elections). Individual invalid child markets inside an otherwise-
+ * open event are dropped here — the entry point for every list surface
+ * (Markets tab, Search, Trending). Single-market reads
+ * (`GET /markets/:id`) deliberately do NOT filter, so a link or an
+ * older Callout can still open its detail page. */
+export function isDiscoverable(market: GammaMarket): boolean {
+  return !market.closed && !market.archived && market.active !== false;
+}
+
+/**
+ * A child market keeps its own API image unless it is the **event's own
+ * image** — that one merely repeats the card/header and says nothing
+ * about the child, so it is dropped (`null`) and the row renders text
+ * only. Sibling-shared art that differs from the event's (e.g. the
+ * `Repetitive-markets/MLB.jpg` Polymarket gives every Spread/O-U row,
+ * while the event itself uses the league icon) is kept: it is still the
+ * image the API attaches to that market, verified live.
+ */
+export function childImageUrls(
+  markets: GammaMarket[],
+  eventImageUrl: string | null
+): Map<string, string | null> {
+  const overrides = new Map<string, string | null>();
+  for (const market of markets) {
+    const url = market.image ?? market.icon ?? null;
+    overrides.set(market.id, url && url !== eventImageUrl ? url : null);
+  }
+  return overrides;
 }
 
 /**
@@ -145,28 +220,46 @@ function toMarketGroupSummary(event: GammaEvent, category: string): MarketGroupS
  * single Markets page almost entirely one election's candidates. An
  * event with a single market, or where `groupItemTitle` is empty for
  * any market, is emitted as ordinary flat `{ kind: 'market' }` row(s).
+ * Closed/archived child markets are excluded first; if none remain, the
+ * event contributes no row at all.
  */
 export function toMarketListItems(event: GammaEvent, filterTagSlug?: string): MarketListItem[] {
+  const markets = event.markets.filter(isDiscoverable);
+  if (markets.length === 0) return [];
+
   const category = categoryFromTags(event.tags, filterTagSlug);
-  const isGroup = event.markets.length > 1 && event.markets.every((market) => market.groupItemTitle);
+  // Any event with more than one discoverable market is one group card —
+  // a child market must never surface as a standalone card, including
+  // the mixed events where the moneyline row lacks a `groupItemTitle`
+  // (verified live: "Lions vs. Bills" has 315 such children).
+  const isGroup = markets.length > 1;
+  // Child images: keep the market's own API image unless it's the
+  // event's own art (which is already on the card header).
+  const isChildEvent = event.markets.length > 1;
+  const imageOverrides =
+    markets.length > 1
+      ? childImageUrls(markets, event.image ?? event.icon ?? null)
+      : undefined;
+  const parentEventId = isChildEvent ? event.id : null;
 
   if (isGroup) {
-    return [{ kind: 'group', group: toMarketGroupSummary(event, category) }];
+    return [{ kind: 'group', group: toMarketGroupSummary(event, category, markets, imageOverrides) }];
   }
 
-  return event.markets.map((market) => ({
+  return markets.map((market) => ({
     kind: 'market' as const,
-    market: toMarketSummary(market, category, event.liquidity),
+    market: toMarketSummary(market, category, event.liquidity, imageOverrides, parentEventId),
   }));
 }
 
 export function toMarketDetail(
   market: GammaMarket,
   category: string,
-  eventLiquidity: number | null
+  eventLiquidity: number | null,
+  parentEventId?: string | null
 ): MarketDetail {
   return {
-    ...toMarketSummary(market, category, eventLiquidity),
+    ...toMarketSummary(market, category, eventLiquidity, undefined, parentEventId),
     rules: market.description ?? null,
     openedAt: market.startDate ?? null,
     resolvedOutcome: null,
@@ -183,12 +276,14 @@ export function toDomainEvent(event: GammaEvent): DomainEvent {
     id: event.id,
     title: event.title,
     category,
-    markets: event.markets.map((market) => toDomainMarket(market, event.id, event.liquidity)),
+    markets: event.markets
+      .filter(isDiscoverable)
+      .map((market) => toDomainMarket(market, event.id, event.liquidity)),
   };
 }
 
 function toDomainMarket(market: GammaMarket, eventId: string, eventLiquidity: number | null): DomainMarket {
-  const { yesPrice, noPrice } = parseOutcomePrices(market);
+  const { yesPrice, noPrice } = summarizeChoices(parseChoices(market));
   return {
     id: market.id,
     eventId,

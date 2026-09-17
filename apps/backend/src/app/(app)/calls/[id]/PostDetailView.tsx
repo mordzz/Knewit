@@ -4,6 +4,8 @@ import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Text } from '@/components/ui/Text';
 import { Icon } from '@/components/ui/Icon';
+import { Button } from '@/components/ui/Button';
+import { Modal } from '@/components/ui/Modal';
 import { LoadingState } from '@/components/feedback/LoadingState';
 import { EmptyState } from '@/components/feedback/EmptyState';
 import { ErrorState } from '@/components/feedback/ErrorState';
@@ -16,16 +18,18 @@ import { usePost } from '@/hooks/usePost';
 import { useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { getComments, createComment } from '@/lib/commentService';
 import { useDeleteComment } from '@/hooks/useDeleteComment';
+import { useDeletePost } from '@/hooks/useDeletePost';
 import { patchComment } from '@/lib/commentCache';
 import { ApiRequestError } from '@/lib/apiClient';
 import { formatRelativeTime } from '@/lib/formatters';
-import type { CommentItem, CreateCommentInput, FeedItem } from '@/types/social';
+import type { CommentItem, CreateCommentInput, FeedItem, MarketSummary } from '@/types/social';
 
 /**
- * Direct conversion of `apps/mobile`'s `PostDetailScreen` — serves both
- * a normal Post and a position-backed Call, same screen. Threaded
- * comments (one level deep), infinite scroll on the comment list, and a
- * composer that supports replying to a specific top-level comment.
+ * Direct conversion of `apps/mobile`'s `PostDetailScreen` — a
+ * position-backed Callout's detail. Threaded comments (one level deep),
+ * infinite scroll on the comment list, a composer that supports replying
+ * to a specific top-level comment, and a header "…" that deletes the
+ * Callout when the viewer authored it (`canDelete`, server-computed).
  */
 export function PostDetailView({ postId }: { postId: string }) {
   const router = useRouter();
@@ -52,11 +56,16 @@ export function PostDetailView({ postId }: { postId: string }) {
     },
   });
   const deleteCommentMutation = useDeleteComment(postId);
+  const deletePostMutation = useDeletePost(postId);
   const [replyTarget, setReplyTarget] = useState<CommentItem | null>(null);
+  const [confirmDeleteVisible, setConfirmDeleteVisible] = useState(false);
   const sentinelRef = useRef<HTMLDivElement>(null);
 
   const openAuthor = (userId: string) => router.push(`/profile/${userId}`);
-  const openMarket = (marketId: string) => router.push(`/markets/${marketId}`);
+  // A child market's attachment opens its parent event's detail instead
+  // of the child's own page (docs/DECISIONS.md).
+  const openMarket = (market: MarketSummary) =>
+    router.push(`/markets/${market.parentEventId ?? market.id}`);
 
   const isNotFound = post.status === 'error' && post.error instanceof ApiRequestError && post.error.status === 404;
   const commentItems = comments.data?.pages.flatMap((page) => page.items) ?? [];
@@ -80,10 +89,20 @@ export function PostDetailView({ postId }: { postId: string }) {
 
   return (
     <div className="flex h-full w-full flex-col">
-      <div className="flex flex-shrink-0 items-center px-4 pb-2 pt-4">
+      <div className="flex flex-shrink-0 items-center justify-between px-4 pb-2 pt-4">
         <button type="button" onClick={() => router.back()} aria-label="Go back">
           <Icon name="chevron-back" size={24} />
         </button>
+        {post.status === 'success' && post.data.canDelete ? (
+          <button
+            type="button"
+            onClick={() => setConfirmDeleteVisible(true)}
+            disabled={deletePostMutation.isPending}
+            aria-label="Call options"
+          >
+            <Icon name="ellipsis-horizontal" size={24} color="textTertiary" />
+          </button>
+        ) : null}
       </div>
 
       <div className="flex-1 overflow-y-auto">
@@ -96,8 +115,8 @@ export function PostDetailView({ postId }: { postId: string }) {
         {post.status === 'error' && isNotFound ? (
           <EmptyState
             icon="search"
-            title="Post not found"
-            message="This post may have been removed or the link is incorrect."
+            title="Callout not found"
+            message="This Callout may have been removed or the link is incorrect."
             actionLabel="Go back"
             onAction={() => router.back()}
           />
@@ -105,7 +124,7 @@ export function PostDetailView({ postId }: { postId: string }) {
 
         {post.status === 'error' && !isNotFound ? (
           <div className="px-4">
-            <ErrorState message="Couldn't load this post." onRetry={() => post.refetch()} />
+            <ErrorState message="Couldn't load this Callout." onRetry={() => post.refetch()} />
           </div>
         ) : null}
 
@@ -158,6 +177,32 @@ export function PostDetailView({ postId }: { postId: string }) {
           />
         </div>
       ) : null}
+
+      <Modal visible={confirmDeleteVisible} onClose={() => setConfirmDeleteVisible(false)}>
+        <div className="flex flex-col gap-3">
+          <Text variant="bodyStrong">Delete this Callout?</Text>
+          <Text variant="body" color="textSecondary">
+            Its comments and likes go too. This action cannot be undone.
+          </Text>
+          <div className="flex gap-2">
+            <Button label="Cancel" variant="ghost" onClick={() => setConfirmDeleteVisible(false)} className="flex-1" />
+            <Button
+              label="Delete"
+              variant="no"
+              loading={deletePostMutation.isPending}
+              onClick={() => {
+                deletePostMutation.mutate(undefined, { onSuccess: () => router.back() });
+              }}
+              className="flex-1"
+            />
+          </div>
+          {deletePostMutation.isError ? (
+            <Text variant="caption" color="danger">
+              Couldn&apos;t delete this Callout. Please try again.
+            </Text>
+          ) : null}
+        </div>
+      </Modal>
     </div>
   );
 }
@@ -169,7 +214,7 @@ function PostContent({
 }: {
   item: FeedItem;
   onOpenAuthor: (userId: string) => void;
-  onOpenMarket: (marketId: string) => void;
+  onOpenMarket: (market: MarketSummary) => void;
 }) {
   return (
     <div className="flex flex-col gap-3 px-4 pb-4">
@@ -181,7 +226,7 @@ function PostContent({
       </Text>
 
       {item.market ? (
-        <MarketAttachment market={item.market} positionSnapshot={item.positionSnapshot} onPress={() => onOpenMarket(item.market!.id)} />
+        <MarketAttachment market={item.market} positionSnapshot={item.positionSnapshot} onPress={() => onOpenMarket(item.market!)} />
       ) : null}
 
       <SocialActionBar postId={item.id} liked={item.liked} likeCount={item.likeCount} commentCount={item.commentCount} />

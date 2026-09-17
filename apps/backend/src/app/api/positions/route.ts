@@ -8,7 +8,8 @@ import type { UserPosition } from '@/types/social';
 interface PositionRow {
   id: string;
   market_id: string;
-  outcome: 'YES' | 'NO';
+  outcome: string;
+  choice_index: number;
   entry_price: number;
   size: number;
   opened_at: string;
@@ -28,7 +29,7 @@ export async function GET(request: Request) {
 
     const { data: rows } = await getSupabase()
       .from('positions')
-      .select('id, market_id, outcome, entry_price, size, opened_at')
+      .select('id, market_id, outcome, choice_index, entry_price, size, opened_at')
       .eq('user_id', viewer.id)
       .order('opened_at', { ascending: false });
 
@@ -41,8 +42,9 @@ export async function GET(request: Request) {
           marketId: row.market_id,
           marketQuestion: market?.question ?? '(market unavailable)',
           outcome: row.outcome,
+          choiceIndex: row.choice_index,
           entryPrice: row.entry_price,
-          currentPrice: row.outcome === 'YES' ? (market?.yesPrice ?? null) : (market?.noPrice ?? null),
+          currentPrice: market?.choices?.[row.choice_index]?.price ?? null,
           size: row.size,
           openedAt: row.opened_at,
         };

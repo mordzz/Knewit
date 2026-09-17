@@ -10,10 +10,10 @@ import { Icon } from '@/components/ui/Icon';
 import { Avatar } from '@/components/ui/Avatar';
 import { GlassSurface } from '@/components/ui/GlassSurface';
 import { PositionPickerSheet } from '@/features/home/components/PositionPickerSheet';
-import { useCreatePost } from '@/features/home/hooks/useCreatePost';
+import { useCreateCall } from '@/features/home/hooks/useCreateCall';
 import { useAuth } from '@/hooks/useAuth';
 import { formatPrice, formatUsd } from '@/utils/formatCurrency';
-import type { ColorToken } from '@/theme/colors';
+import { choiceTextColor, choiceTone } from '@/utils/choiceTone';
 import type { UserPosition } from '@/types/social';
 
 const MAX_POST_LENGTH = 280;
@@ -28,7 +28,7 @@ const MAX_POST_LENGTH = 280;
  * Publish disabled until one is selected from `PositionPickerSheet`
  * (which itself gates on wallet connection and an honest "no positions
  * yet" empty state). Never fabricates a successful publish:
- * `useCreatePost` has no dev-mock fallback (see docs/DECISIONS.md, "No
+ * `useCreateCall` has no dev-mock fallback (see docs/DECISIONS.md, "No
  * Fake Publish Success"), and the "✓ Verified Position" badge only ever
  * appears on a callout once the backend has actually returned one
  * (rendered by `MarketAttachment` on the feed after this screen closes)
@@ -40,7 +40,7 @@ export function CreateCallScreen() {
   const [content, setContent] = useState('');
   const [selectedPosition, setSelectedPosition] = useState<UserPosition | null>(null);
   const [pickerVisible, setPickerVisible] = useState(false);
-  const mutation = useCreatePost();
+  const mutation = useCreateCall();
 
   const trimmed = content.trim();
   const isContentValid = trimmed.length > 0 && content.length <= MAX_POST_LENGTH;
@@ -84,7 +84,7 @@ export function CreateCallScreen() {
 
         {!isAuthenticated ? (
           <Card contentClassName="gap-1">
-            <Text variant="bodyStrong">Sign in to post</Text>
+            <Text variant="bodyStrong">Sign in to publish</Text>
             <Text variant="caption" color="textSecondary">
               You need to be signed in to publish a Callout.
             </Text>
@@ -180,7 +180,7 @@ function SelectedPositionCard({
   onChange: () => void;
   onRemove: () => void;
 }) {
-  const outcomeColor: ColorToken = position.outcome === 'YES' ? 'yes' : 'no';
+  const outcomeColor = choiceTextColor(choiceTone({ index: position.choiceIndex, label: position.outcome }));
   const costBasis = (position.entryPrice / 100) * position.size;
 
   return (

@@ -1,9 +1,8 @@
 import type { ID, ISODateString } from '@/types/common';
-import type { Outcome } from '@/types/market';
 import type { User } from '@/types/social';
 
 /** Mirrors `apps/frontend/src/types/activity.ts` exactly. */
-export type ActivityType = 'TRADE' | 'CALL' | 'POST' | 'FOLLOW';
+export type ActivityType = 'TRADE' | 'CALL' | 'FOLLOW';
 
 interface ActivityItemBase {
   id: ID;
@@ -14,7 +13,9 @@ export interface TradeActivityItem extends ActivityItemBase {
   type: 'TRADE';
   marketId: ID;
   marketQuestion: string;
-  outcome: Outcome;
+  /** The chosen choice's label, as the market's API data had it. */
+  outcome: string;
+  choiceIndex: number;
   usdAmount: number;
 }
 
@@ -22,12 +23,8 @@ export interface CallActivityItem extends ActivityItemBase {
   type: 'CALL';
   postId: ID;
   marketQuestion: string;
-  outcome: Outcome;
-}
-
-export interface PostActivityItem extends ActivityItemBase {
-  type: 'POST';
-  postId: ID;
+  outcome: string;
+  choiceIndex: number;
 }
 
 export interface FollowActivityItem extends ActivityItemBase {
@@ -35,4 +32,4 @@ export interface FollowActivityItem extends ActivityItemBase {
   followedUser: Pick<User, 'id' | 'displayName' | 'handle'>;
 }
 
-export type ActivityItem = TradeActivityItem | CallActivityItem | PostActivityItem | FollowActivityItem;
+export type ActivityItem = TradeActivityItem | CallActivityItem | FollowActivityItem;

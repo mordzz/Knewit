@@ -2,8 +2,8 @@ import { View } from 'react-native';
 import { Text } from '@/components/ui/Text';
 import { Card } from '@/components/ui/Card';
 import { formatPrice, formatUsd } from '@/utils/formatCurrency';
+import { choiceTextColor, choiceTone } from '@/utils/choiceTone';
 import type { UserPosition } from '@/types/social';
-import type { ColorToken } from '@/theme/colors';
 
 /**
  * "My Position" on Market Detail. Always prefers the market's own live
@@ -20,13 +20,14 @@ export function MyPositionCard({
   liveCurrentPriceCents,
 }: {
   position: UserPosition;
-  liveCurrentPriceCents: number;
+  liveCurrentPriceCents: number | null;
 }) {
-  const outcomeColor: ColorToken = position.outcome === 'YES' ? 'yes' : 'no';
+  const outcomeColor = choiceTextColor(choiceTone({ index: position.choiceIndex, label: position.outcome }));
   const costBasis = (position.entryPrice / 100) * position.size;
-  const currentValue = (liveCurrentPriceCents / 100) * position.size;
+  const canComputePnl =
+    liveCurrentPriceCents != null && position.size > 0 && position.entryPrice > 0;
+  const currentValue = canComputePnl ? (liveCurrentPriceCents / 100) * position.size : 0;
   const pnl = currentValue - costBasis;
-  const canComputePnl = position.size > 0 && position.entryPrice > 0;
 
   return (
     <Card contentClassName="gap-3 p-4">
@@ -46,7 +47,10 @@ export function MyPositionCard({
 
       <View className="gap-1.5">
         <PositionRow label="Entry" value={formatPrice(position.entryPrice)} />
-        <PositionRow label="Current" value={formatPrice(liveCurrentPriceCents)} />
+        <PositionRow
+          label="Current"
+          value={liveCurrentPriceCents != null ? formatPrice(liveCurrentPriceCents) : 'unavailable'}
+        />
         <PositionRow label="Size" value={formatUsd(costBasis)} />
       </View>
     </Card>

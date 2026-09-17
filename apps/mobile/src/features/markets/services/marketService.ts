@@ -114,11 +114,12 @@ export async function getTopHolders(marketId: string): Promise<MarketHolder[]> {
 export async function getMarketPriceHistory(
   marketId: string,
   range: PriceRange,
-  currentPriceCents: number
+  currentPriceCents: number,
+  choiceIndex: number
 ): Promise<PricePoint[]> {
   try {
     return await apiRequest<PricePoint[]>(
-      `${endpoints.marketPriceHistory(marketId)}?range=${range}`
+      `${endpoints.marketPriceHistory(marketId)}?range=${range}&choice=${choiceIndex}`
     );
   } catch (error) {
     if (env.isDev) {
@@ -127,7 +128,7 @@ export async function getMarketPriceHistory(
         error
       );
       await delay(200);
-      return buildMockPriceHistory(marketId, range, currentPriceCents);
+      return buildMockPriceHistory(marketId, range, currentPriceCents, choiceIndex);
     }
     throw error;
   }

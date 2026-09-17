@@ -6,6 +6,8 @@ import { Icon } from '@/components/ui/Icon';
 import { MarketVisual } from '@/components/ui/MarketVisual';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { formatCompactUsd } from '@/lib/formatters';
+import { choiceTone, type ChoiceTone } from '@/lib/choiceTone';
+import type { MarketChoice } from '@/types/market';
 import type { MarketGroupSummary, MarketListItem, MarketOutcomeRow, MarketSummary } from '@/types/social';
 
 export interface MarketCardProps {
@@ -17,14 +19,20 @@ export interface MarketCardProps {
  * (`features/markets/components/MarketCard`) — a flat, borderless list
  * row (same convention as `CallCard`), not a boxed card. No price
  * anywhere on this card (price/trading only ever appears in Market
- * Detail) — the choice *types* still show (Yes/No pills, or each
- * combo-market outcome's name + Yes/No pills), just not a probability
- * number. Every tap (the whole single-market row, or one of a group's
- * outcome rows) opens Market Detail — a group's own header does not
- * (see the comment inside `GroupCard`).
+ * Detail) — the choice *types* still show (labels from the market's own
+ * API choices, each combo-market outcome's name + pills), just not a
+ * probability number. A single-market row opens Market Detail; a group
+ * card opens the exact same detail surface in event mode (one chart
+ * line per child market, per-child Trade sheets), while each outcome
+ * group card opens the exact same detail surface in event mode (one
+ * chart line per child market, per-child Trade sheets), and its outcome
+ * rows are display-only — one click target per card, see
+ * docs/DECISIONS.md ("Group Cards Are One Click").
  */
 export function MarketCard({ item }: MarketCardProps) {
   if (item.kind === 'group') {
+    // One click target only: the whole card opens the same Market Detail
+    // surface in event mode; the rows below are display-only.
     return <GroupCard group={item.group} />;
   }
   return <SingleMarketCard market={item.market} />;
@@ -67,7 +75,6 @@ function VolumeAndShare({ volume, title }: { volume: number | null; title: strin
 
 function SingleMarketCard({ market }: { market: MarketSummary }) {
   const router = useRouter();
-  const isBinary = market.isBinary !== false;
 
   return (
     <div
@@ -87,13 +94,14 @@ function SingleMarketCard({ market }: { market: MarketSummary }) {
         </Text>
       </div>
 
-      {!isBinary ? (
-        <MultiOutcomeNotice outcomeCount={market.outcomeCount} />
-      ) : (
+      {market.choices.length === 2 ? (
         <div className="flex gap-2">
-          <ChoiceBlock label={market.outcomeLabels?.yes ?? 'Yes'} color="yes" />
-          <ChoiceBlock label={market.outcomeLabels?.no ?? 'No'} color="no" />
+          {market.choices.map((choice) => (
+            <ChoiceBlock key={choice.index} label={choice.label} tone={choiceTone(choice)} />
+          ))}
         </div>
+      ) : (
+        <ChoiceList choices={market.choices} />
       )}
 
       <VolumeAndShare volume={market.volume} title={market.question} />
@@ -101,22 +109,69 @@ function SingleMarketCard({ market }: { market: MarketSummary }) {
   );
 }
 
+/** Three or more choices — the same `MiniPill` treatment the group
+ * rows' Yes/No pills already use, one per choice, wrapping. When the
+ * API actually provides an image for a choice, the pills switch to the
+ * same image+label row `OutcomeRow` uses; the market's own image is
+ * never substituted. Prices stay off this card (docs/DECISIONS.md,
+ * "Price Only in Market Detail"). */
+function ChoiceList({ choices }: { choices: MarketChoice[] }) {
+  if (choices.length === 0) return null;
+
+  if (choices.some((choice) => choice.imageUrl)) {
+    return (
+      <div className="flex flex-col gap-2">
+        {choices.map((choice) => (
+          <div key={choice.index} className="flex items-center gap-2">
+            {choice.imageUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={choice.imageUrl} alt="" className="h-6 w-6 flex-shrink-0 rounded-full object-cover" />
+            ) : null}
+            <Text variant="caption" numberOfLines={1} className="flex-1">
+              {choice.label}
+            </Text>
+          </div>
+        ))}
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex flex-wrap gap-1.5">
+      {choices.map((choice) => (
+        <MiniPill key={choice.index} label={choice.label} tone={choiceTone(choice)} />
+      ))}
+    </div>
+  );
+}
+
 const ROW_LIMIT = 4;
 
 /**
- * A combo market (several named outcomes under one market entity) —
- * still a flat list row, just a taller one. `group.id` is Polymarket's
- * *event* id, not a market id — `GET /markets/:id` only ever resolves
- * a real market id — so this header is plain (not a link); only each
- * `OutcomeRow` below is a real market id and navigable.
+ * A combo market (several named outcomes under one event) — still a
+ * flat list row, just a taller one. **One click target only**: the whole
+ * card opens the same Market Detail surface in event mode; the outcome
+ * rows below are display-only (no separate press). Rows only show an
+ * image when the API provides one that identifies the child — no
+ * placeholder art, no shared league/tournament art.
  */
 function GroupCard({ group }: { group: MarketGroupSummary }) {
+  const router = useRouter();
   const visibleRows = group.outcomes.slice(0, ROW_LIMIT);
   const remaining = group.outcomes.length - visibleRows.length;
   const isHeadToHead = group.outcomes.length === 2;
 
   return (
-    <div className="flex flex-col gap-3 border-b border-border px-4 py-3">
+    <div
+      role="link"
+      tabIndex={0}
+      onClick={() => router.push(`/markets/${group.id}`)}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter') router.push(`/markets/${group.id}`);
+      }}
+      aria-label={`Open event: ${group.title}`}
+      className="flex cursor-pointer flex-col gap-3 border-b border-border px-4 py-3 hover:bg-surface"
+    >
       <div className="flex items-center gap-2.5">
         <MarketVisual imageUrl={group.imageUrl} fallbackIcon="trending-up-outline" />
         <Text variant="bodyStrong" numberOfLines={3} className="flex-1 font-inter-bold">
@@ -141,16 +196,10 @@ function GroupCard({ group }: { group: MarketGroupSummary }) {
 }
 
 function OutcomeRow({ row, large }: { row: MarketOutcomeRow; large: boolean }) {
-  const router = useRouter();
   const avatarSize = large ? 32 : 22;
 
   return (
-    <button
-      type="button"
-      onClick={() => router.push(`/markets/${row.id}`)}
-      aria-label={row.label}
-      className="flex items-center gap-2 text-left transition-opacity hover:opacity-70"
-    >
+    <div className="flex items-center gap-2">
       {row.imageUrl ? (
         // eslint-disable-next-line @next/next/no-img-element
         <img
@@ -159,57 +208,48 @@ function OutcomeRow({ row, large }: { row: MarketOutcomeRow; large: boolean }) {
           style={{ width: avatarSize, height: avatarSize }}
           className="flex-shrink-0 rounded-full object-cover"
         />
-      ) : (
-        <div
-          style={{ width: avatarSize, height: avatarSize }}
-          className="flex flex-shrink-0 items-center justify-center rounded-full bg-accent-muted"
-        >
-          <Icon name="person-outline" size={Math.round(avatarSize * 0.55)} color="accent" />
-        </div>
-      )}
+      ) : null}
       <Text variant={large ? 'body' : 'caption'} numberOfLines={1} className="flex-1">
         {row.label}
       </Text>
       <div className="flex flex-shrink-0 gap-1">
-        <MiniPill label="Yes" color="yes" />
-        <MiniPill label="No" color="no" />
+        {row.choices.slice(0, 2).map((choice) => (
+          <MiniPill key={choice.index} label={choice.label} tone={choiceTone(choice)} />
+        ))}
       </div>
-    </button>
+    </div>
   );
 }
 
-function ChoiceBlock({ label, color }: { label: string; color: 'yes' | 'no' }) {
-  const bgClass = color === 'yes' ? 'bg-yes' : 'bg-no';
-  const textColor = color === 'yes' ? 'textInverse' : 'textPrimary';
+const TONE_BLOCK_CLASS: Record<ChoiceTone, string> = {
+  yes: 'bg-yes',
+  no: 'bg-no',
+  accent: 'bg-accent',
+  neutral: 'border border-border bg-surface-elevated',
+};
+
+const TONE_TEXT_COLOR: Record<ChoiceTone, 'textInverse' | 'textPrimary'> = {
+  yes: 'textInverse',
+  no: 'textPrimary',
+  accent: 'textInverse',
+  neutral: 'textPrimary',
+};
+
+function ChoiceBlock({ label, tone }: { label: string; tone: ChoiceTone }) {
   return (
-    <div className={`flex-1 items-center rounded-md px-3 py-2.5 text-center ${bgClass}`}>
-      <Text variant="bodyStrong" color={textColor}>
+    <div className={`flex-1 items-center rounded-md px-3 py-2.5 text-center ${TONE_BLOCK_CLASS[tone]}`}>
+      <Text variant="bodyStrong" color={TONE_TEXT_COLOR[tone]}>
         {label}
       </Text>
     </div>
   );
 }
 
-function MiniPill({ label, color }: { label: string; color: 'yes' | 'no' }) {
-  const bgClass = color === 'yes' ? 'bg-yes' : 'bg-no';
-  const textColor = color === 'yes' ? 'textInverse' : 'textPrimary';
+function MiniPill({ label, tone }: { label: string; tone: ChoiceTone }) {
   return (
-    <div className={`rounded-full px-2.5 py-1 ${bgClass}`}>
-      <Text variant="micro" color={textColor}>
+    <div className={`rounded-full px-2.5 py-1 ${TONE_BLOCK_CLASS[tone]}`}>
+      <Text variant="micro" color={TONE_TEXT_COLOR[tone]}>
         {label}
-      </Text>
-    </div>
-  );
-}
-
-function MultiOutcomeNotice({ outcomeCount }: { outcomeCount?: number | null }) {
-  const label = outcomeCount != null ? `${outcomeCount} outcomes` : 'Multiple outcomes';
-
-  return (
-    <div className="flex items-center gap-2 rounded-xl bg-surface-elevated p-2.5">
-      <Icon name="layers-outline" size={16} color="textSecondary" />
-      <Text variant="caption" color="textSecondary" className="flex-1">
-        {label} · not available for YES/NO trading yet
       </Text>
     </div>
   );

@@ -7,7 +7,7 @@ import {
   pickMockFeedItem,
 } from '@/features/home/fixtures/feed.mock';
 import type { Paginated } from '@/types/common';
-import type { CreatePostInput, FeedItem, LikeResult } from '@/types/social';
+import type { CreateCallInput, FeedItem, LikeResult } from '@/types/social';
 
 /**
  * Creates a position-backed Callout — `input.positionId` is required
@@ -26,7 +26,7 @@ import type { CreatePostInput, FeedItem, LikeResult } from '@/types/social';
  * and writing the immutable `PositionSnapshot` — this call only ever
  * sends `body`/`positionId`, never a snapshot or a "verified" flag.
  */
-export async function createPost(input: CreatePostInput): Promise<FeedItem> {
+export async function createCall(input: CreateCallInput): Promise<FeedItem> {
   return apiRequest<FeedItem>(endpoints.calls, {
     method: 'POST',
     body: JSON.stringify(input),
@@ -34,8 +34,17 @@ export async function createPost(input: CreatePostInput): Promise<FeedItem> {
 }
 
 /**
- * A single Post/Call for the Detail screen. Real endpoint first —
- * read-only, so (unlike `createPost`) a dev-mock fallback is safe here,
+ * Deletes a Callout — mutually authenticated, and the backend enforces
+ * author-only (403 otherwise). **No dev-mock fallback**, same rule as
+ * `createCall`: deletion is a real, user-visible mutation.
+ */
+export async function deletePost(id: string): Promise<void> {
+  await apiRequest<Record<string, never>>(endpoints.call(id), { method: 'DELETE' });
+}
+
+/**
+ * A single Callout for the Detail screen. Real endpoint first —
+ * read-only, so (unlike `createCall`) a dev-mock fallback is safe here,
  * same pattern as `marketService.ts::getMarketById`.
  */
 export async function getPostById(id: string): Promise<FeedItem> {
@@ -73,10 +82,8 @@ export async function unlikePost(id: string): Promise<LikeResult> {
 
 /** Profile's Calls tab — position-backed Calls only
  * (`positionSnapshot !== null` server-side). `id` accepts `"me"` — see
- * docs/API.md. (Its sibling `getUserPosts`/Profile's old Posts tab was
- * removed — replaced by Replies, see `ProfileScreen`'s doc comment; a
- * plain, position-less Post already surfaces via `GET /feed` and its
- * own detail page.) */
+ * docs/API.md. (Normal, position-less Posts no longer exist at all —
+ * docs/DECISIONS.md, "Normal Posts Removed".) */
 export async function getUserCalls(id: string, cursor?: string): Promise<Paginated<FeedItem>> {
   const query = cursor ? `?cursor=${encodeURIComponent(cursor)}` : '';
 

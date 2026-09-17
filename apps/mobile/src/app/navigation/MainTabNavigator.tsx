@@ -11,6 +11,7 @@ import { HomeScreen } from '@/features/home/screens/HomeScreen';
 import { PostDetailScreen } from '@/features/home/screens/PostDetailScreen';
 import { MarketsScreen } from '@/features/markets/screens/MarketsScreen';
 import { MarketDetailScreen } from '@/features/markets/screens/MarketDetailScreen';
+
 import { SearchScreen } from '@/features/search/screens/SearchScreen';
 import { LeaderboardScreen } from '@/features/leaderboard/screens/LeaderboardScreen';
 import { ProfileScreen } from '@/features/profile/screens/ProfileScreen';
@@ -18,7 +19,6 @@ import { EditProfileScreen } from '@/features/profile/screens/EditProfileScreen'
 import { FollowersScreen } from '@/features/profile/screens/FollowersScreen';
 import { FollowingScreen } from '@/features/profile/screens/FollowingScreen';
 import { WalletScreen } from '@/features/wallet/screens/WalletScreen';
-import { PortfolioScreen } from '@/features/portfolio/screens/PortfolioScreen';
 import type { AppParamList, MainTabParamList } from '@/types/navigation';
 
 const Tab = createBottomTabNavigator<MainTabParamList>();
@@ -73,13 +73,12 @@ function MarketsStack() {
 const ProfileStackNav = createNativeStackNavigator<AppParamList>();
 
 /**
- * Wallet and Portfolio are reachable from Profile, not their own bottom
- * tabs — see docs/DECISIONS.md. Profile → Wallet → Portfolio (Sprint 6
- * inserted Wallet ahead of Portfolio in that chain; Portfolio remains
- * directly reachable too since it's already a distinct existing screen).
- * The tab's own root `Profile` screen renders with no `userId` param
- * (the viewer's own profile) — see docs/DECISIONS.md ("One Profile
- * Route/Screen for Self and Other Users").
+ * Wallet is reachable from Profile, not its own bottom tab — see
+ * docs/DECISIONS.md. It's the one account/funds screen (the old separate
+ * Portfolio screen is gone; docs/DECISIONS.md, "Wallet Replaces
+ * Portfolio"). The tab's own root `Profile` screen renders with no
+ * `userId` param (the viewer's own profile) — see docs/DECISIONS.md
+ * ("One Profile Route/Screen for Self and Other Users").
  */
 function ProfileStack() {
   return (
@@ -89,7 +88,6 @@ function ProfileStack() {
       <ProfileStackNav.Screen name="Following" component={FollowingScreen} />
       <ProfileStackNav.Screen name="EditProfile" component={EditProfileScreen} />
       <ProfileStackNav.Screen name="Wallet" component={WalletScreen} />
-      <ProfileStackNav.Screen name="Portfolio" component={PortfolioScreen} />
     </ProfileStackNav.Navigator>
   );
 }

@@ -2,6 +2,7 @@ import type { ReactNode } from 'react';
 import { Text } from '@/components/ui/Text';
 import { Icon, type IconName, type ColorToken } from '@/components/ui/Icon';
 import { formatUsd, formatRelativeTime } from '@/lib/formatters';
+import { choiceTextColor, choiceTone } from '@/lib/choiceTone';
 import type { ActivityItem } from '@/types/activity';
 
 export interface ActivityRowProps {
@@ -13,7 +14,7 @@ export interface ActivityRowProps {
 
 /**
  * Web equivalent of `apps/mobile/src/features/profile/components/ActivityRow`
- * — renders exactly one of the four real, server-verified activity
+ * — renders exactly one of the three real, server-verified activity
  * types (docs/DECISIONS.md, "Activity Types Limited to What This App
  * Can Actually Produce").
  */
@@ -22,7 +23,7 @@ export function ActivityRow({ item, onOpenPost, onOpenMarket, onOpenUser }: Acti
     case 'TRADE':
       return (
         <ActivityRowShell icon="trending-up-outline" onPress={() => onOpenMarket(item.marketId)} createdAt={item.createdAt}>
-          <Text variant="bodyStrong" color={item.outcome === 'YES' ? 'yes' : 'no'} className="block">
+          <Text variant="bodyStrong" color={choiceTextColor(choiceTone({ index: item.choiceIndex, label: item.outcome }))} className="block">
             {item.outcome} position opened
           </Text>
           <Text variant="body" numberOfLines={2} className="block">
@@ -42,12 +43,6 @@ export function ActivityRow({ item, onOpenPost, onOpenMarket, onOpenUser }: Acti
           <Text variant="body" numberOfLines={2} className="block">
             {item.marketQuestion}
           </Text>
-        </ActivityRowShell>
-      );
-    case 'POST':
-      return (
-        <ActivityRowShell icon="chatbubble-outline" onPress={() => onOpenPost(item.postId)} createdAt={item.createdAt}>
-          <Text variant="bodyStrong">Created a post</Text>
         </ActivityRowShell>
       );
     case 'FOLLOW':

@@ -24,12 +24,13 @@ function findCachedMarket(marketId: string, queryClient: ReturnType<typeof useQu
  * — reuses a cached Markets-list entry as `placeholderData` so opening
  * a market already visible in a list renders instantly, but always
  * re-fetches the latest data too. */
-export function useMarket(marketId: string) {
+export function useMarket(marketId: string, options?: { enabled?: boolean }) {
   const queryClient = useQueryClient();
 
   return useQuery({
     queryKey: ['market', marketId],
     queryFn: () => getMarketById(marketId),
     placeholderData: () => findCachedMarket(marketId, queryClient),
+    enabled: options?.enabled ?? true,
   });
 }

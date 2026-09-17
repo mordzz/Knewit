@@ -3,6 +3,7 @@ import { Text } from '@/components/ui/Text';
 import { Icon } from '@/components/ui/Icon';
 import { formatUsd } from '@/utils/formatCurrency';
 import { formatRelativeTime } from '@/utils/formatRelativeTime';
+import { choiceTextColor, choiceTone } from '@/utils/choiceTone';
 import type { ActivityItem } from '@/types/activity';
 import type { ColorToken } from '@/theme/colors';
 
@@ -29,7 +30,10 @@ export function ActivityRow({ item, onOpenPost, onOpenMarket, onOpenUser }: Acti
           accessibilityLabel={`${item.outcome} position opened in ${item.marketQuestion}, ${formatUsd(item.usdAmount)}`}
           createdAt={item.createdAt}
         >
-          <Text variant="bodyStrong" color={item.outcome === 'YES' ? 'yes' : 'no'}>
+          <Text
+            variant="bodyStrong"
+            color={choiceTextColor(choiceTone({ index: item.choiceIndex, label: item.outcome }))}
+          >
             {item.outcome} position opened
           </Text>
           <Text variant="body" numberOfLines={2}>
@@ -52,17 +56,6 @@ export function ActivityRow({ item, onOpenPost, onOpenMarket, onOpenUser }: Acti
           <Text variant="body" numberOfLines={2}>
             {item.marketQuestion}
           </Text>
-        </ActivityRowShell>
-      );
-    case 'POST':
-      return (
-        <ActivityRowShell
-          icon="chatbubble-outline"
-          onPress={() => onOpenPost(item.postId)}
-          accessibilityLabel="Created a post"
-          createdAt={item.createdAt}
-        >
-          <Text variant="bodyStrong">Created a post</Text>
         </ActivityRowShell>
       );
     case 'FOLLOW':

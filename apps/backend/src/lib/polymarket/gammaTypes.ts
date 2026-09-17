@@ -13,6 +13,9 @@ export interface GammaTag {
 
 export interface GammaMarket {
   id: string;
+  /** Polymarket's on-chain condition id — what the Data API's
+   * `/holders` endpoint takes (it does not accept our market id). */
+  conditionId: string;
   question: string;
   description: string | null;
   image: string | null;
@@ -33,17 +36,27 @@ export interface GammaMarket {
   startDate: string | null;
   closed: boolean;
   active: boolean;
+  /** Set by Polymarket when a market is pulled from discovery; archived
+   * markets are excluded from our lists the same way `closed` ones are
+   * (verified live: the flag exists on real rows). */
+  archived: boolean;
   featured: boolean;
   /** JSON-encoded string array of CLOB token ids, same order as
    * `outcomes` (verified live) — e.g. `'["123...", "456..."]'` for
    * `["Yes", "No"]`. Used by the trading flow to know which token a
-   * BUY YES/NO order is for. */
+   * BUY on a given choice is for. */
   clobTokenIds: string;
 }
 
 export interface GammaEvent {
   id: string;
+  /** Set when this event is a **sub-event** of another one — Polymarket's
+   * "- More Markets" extras. Such events are not standalone listings
+   * (`public-search` excludes them too), so lists filter them out; the
+   * event-detail endpoint still serves them for a direct link. */
+  parentEventId?: string | null;
   title: string;
+  description: string | null;
   image: string | null;
   icon: string | null;
   volume: number | null;

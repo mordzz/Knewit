@@ -74,7 +74,11 @@ export function CallCard({ item }: CallCardProps) {
             <MarketAttachment
               market={item.market}
               positionSnapshot={item.positionSnapshot}
-              onPress={() => router.push(`/markets/${item.market!.id}`)}
+              // A child market's attachment opens its parent event's
+              // detail instead of the child's own page (docs/DECISIONS.md).
+              onPress={() =>
+                router.push(`/markets/${item.market!.parentEventId ?? item.market!.id}`)
+              }
             />
           </div>
         ) : null}

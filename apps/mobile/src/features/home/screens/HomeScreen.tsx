@@ -12,10 +12,12 @@ import { TabRow, TabRowOption } from '@/components/ui/TabRow';
 import { CallCard } from '@/features/home/components/CallCard';
 import { useHomeFeed } from '@/features/home/hooks/useHomeFeed';
 import { useFollowingFeed } from '@/features/home/hooks/useFollowingFeed';
+import { useWalletBalance } from '@/features/wallet/hooks/useWalletBalance';
+import { navigateToMarketDetail } from '@/features/markets/utils/openMarketDetail';
 import { useAuth } from '@/hooks/useAuth';
 import { colors, FAB_CLEARANCE } from '@/theme';
 import { formatUsd } from '@/utils/formatCurrency';
-import type { FeedItem } from '@/types/social';
+import type { FeedItem, MarketSummary } from '@/types/social';
 
 type FeedTabKey = 'forYou' | 'following';
 
@@ -49,7 +51,7 @@ export function HomeScreen() {
   const fabClearance = insets.bottom + FAB_CLEARANCE;
 
   const openMarket = useCallback(
-    (marketId: string) => navigation.navigate('MarketDetail', { marketId }),
+    (market: MarketSummary) => navigateToMarketDetail(navigation, market),
     [navigation]
   );
   const openAuthor = useCallback(
@@ -226,7 +228,7 @@ export function HomeScreen() {
           <EmptyState
             icon="heart-outline"
             title="No Calls yet"
-            message="Be the first to back a prediction and post about it."
+            message="Be the first to back a prediction and publish a Callout."
           />
         }
         ListFooterComponent={
@@ -247,27 +249,21 @@ export function HomeScreen() {
 
 /**
  * Single row: balance on the left, Deposit on the right, separated
- * from the tabs below by a hairline bottom border. Balance uses a raw
- * `className="text-4xl font-bold"` override rather than a typography
- * variant, kept as a raw className even though it carries the known
- * caveats documented in docs/DECISIONS.md: `Text`'s own default
- * (`body`) classes are still applied underneath and aren't guaranteed
- * to lose a size/weight conflict to a later raw className the way two
- * recognized Tailwind utilities would, and stacking a numeric
- * `fontWeight` (`font-bold`) on top of a specific static Inter file can
- * make Android quietly fall back to the system font instead of erroring
- * — a real but purely cosmetic risk, not a crash.
- *
- * Balance is a placeholder ("$0.00") until a real wallet balance
- * endpoint exists, same honesty rule as Portfolio's placeholder cards —
- * plain text, not tappable.
+ * from the tabs below by a hairline bottom border. Balance is the real
+ * USDC collateral read from Polymarket's CLOB (`useWalletBalance`) —
+ * "—" when it's unavailable (no wallet, or signing not delegated yet),
+ * never a fabricated `$0.00`. Kept as a raw `className` size override
+ * (see docs/DECISIONS.md for the caveats) — same treatment as before.
  */
 function Header() {
   const navigation = useNavigation();
+  const balance = useWalletBalance();
+
+  const balanceLabel = balance.data?.usdc != null ? formatUsd(balance.data.usdc) : '—';
 
   return (
     <View className="flex-row items-center justify-between border-b border-border px-4 pb-3 pt-4">
-      <Text className="text-4xl font-bold">{formatUsd(0)}</Text>
+      <Text className="text-4xl font-bold">{balanceLabel}</Text>
       <Button
         label="Deposit"
         onPress={() => navigation.navigate('Auth')}

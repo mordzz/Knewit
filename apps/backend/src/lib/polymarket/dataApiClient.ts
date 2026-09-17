@@ -127,3 +127,42 @@ export async function fetchLeaderboardRowForWallet(wallet: string): Promise<Poly
   const rows = await fetchLeaderboardRowsForWallets([wallet]);
   return rows[0] ?? null;
 }
+
+/**
+ * One holder of a market's outcome token, straight from Polymarket's
+ * Data API `GET /holders?market=<conditionId>&limit=&offset=` (verified
+ * live; takes the condition id, not our market id, and returns groups
+ * keyed by outcome token). Public names are only shown when
+ * `displayUsernamePublic` is true — otherwise callers fall back to a
+ * shortened proxy-wallet address, never an invented handle.
+ */
+export interface PolymarketHolder {
+  proxyWallet: string;
+  name: string;
+  pseudonym: string;
+  profileImage: string;
+  profileImageOptimized: string;
+  outcomeIndex: number;
+  amount: number;
+  displayUsernamePublic: boolean;
+}
+
+interface PolymarketHolderGroup {
+  token: string;
+  holders: PolymarketHolder[];
+}
+
+/** The top holders of one market, largest position first. */
+export async function fetchMarketHolders(
+  conditionId: string,
+  limit: number,
+  offset = 0
+): Promise<PolymarketHolder[]> {
+  const payload = await dataGet<unknown>('/holders', { market: conditionId, limit, offset });
+  if (!Array.isArray(payload)) return [];
+
+  const groups = payload as PolymarketHolderGroup[];
+  return groups
+    .flatMap((group) => (Array.isArray(group.holders) ? group.holders : []))
+    .sort((a, b) => b.amount - a.amount);
+}

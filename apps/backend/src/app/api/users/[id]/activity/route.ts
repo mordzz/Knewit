@@ -8,20 +8,21 @@ import type { ActivityItem } from '@/types/activity';
 
 interface ActivityRow {
   id: string;
-  type: 'TRADE' | 'CALL' | 'POST' | 'FOLLOW';
+  type: 'TRADE' | 'CALL' | 'FOLLOW';
   created_at: string;
   market_id: string | null;
   market_question: string | null;
-  outcome: 'YES' | 'NO' | null;
+  outcome: string | null;
+  choice_index: number | null;
   usd_amount: number | null;
   post_id: string | null;
   followed_user_id: string | null;
 }
 
-/** `GET /users/:id/activity` — union of TRADE/CALL/POST/FOLLOW events
+/** `GET /users/:id/activity` — union of TRADE/CALL/FOLLOW events
  * (docs/API.md; see `supabase/migrations/0003_user_activity.sql` for
  * the query). Every row here reflects a completed server-side action
- * (a filled Order, a stored Post/Follow row) — never a client's
+ * (a filled Order, a stored Call/Follow row) — never a client's
  * optimistic assumption. */
 export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
   return withErrorHandling(async () => {
@@ -66,6 +67,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
               marketId: row.market_id,
               marketQuestion: row.market_question ?? '(market unavailable)',
               outcome: row.outcome,
+              choiceIndex: row.choice_index ?? 0,
               usdAmount: row.usd_amount,
             },
           ];
@@ -79,11 +81,9 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
               postId: row.post_id,
               marketQuestion: row.market_question ?? '(market unavailable)',
               outcome: row.outcome,
+              choiceIndex: row.choice_index ?? 0,
             },
           ];
-        case 'POST':
-          if (!row.post_id) return [];
-          return [{ id: row.id, type: 'POST', createdAt: row.created_at, postId: row.post_id }];
         case 'FOLLOW': {
           const followedUser = row.followed_user_id ? followedById.get(row.followed_user_id) : undefined;
           if (!followedUser) return [];

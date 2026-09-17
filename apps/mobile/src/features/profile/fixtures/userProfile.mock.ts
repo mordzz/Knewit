@@ -21,7 +21,6 @@ export function buildMockUserProfile(userId: string): UserProfile {
     bio: null,
     followerCount: 0,
     followingCount: 0,
-    postCount: 0,
     callCount: 0,
     isFollowing: false,
     isSelf,

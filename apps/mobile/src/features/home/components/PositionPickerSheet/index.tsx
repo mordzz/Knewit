@@ -10,7 +10,7 @@ import { EmptyState } from '@/components/feedback/EmptyState';
 import { usePositions } from '@/features/portfolio/hooks/usePositions';
 import { useWallet } from '@/hooks/useWallet';
 import { formatPrice, formatUsd } from '@/utils/formatCurrency';
-import type { ColorToken } from '@/theme/colors';
+import { choiceTextColor, choiceTone } from '@/utils/choiceTone';
 import type { UserPosition } from '@/types/social';
 
 export interface PositionPickerSheetProps {
@@ -102,7 +102,7 @@ export function PositionPickerSheet({ visible, onClose, onSelect }: PositionPick
 }
 
 function PositionRow({ position, onPress }: { position: UserPosition; onPress: () => void }) {
-  const outcomeColor: ColorToken = position.outcome === 'YES' ? 'yes' : 'no';
+  const outcomeColor = choiceTextColor(choiceTone({ index: position.choiceIndex, label: position.outcome }));
   const costBasis = (position.entryPrice / 100) * position.size;
 
   return (

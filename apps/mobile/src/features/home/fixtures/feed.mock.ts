@@ -1,4 +1,4 @@
-import type { FeedItem } from '@/types/social';
+import type { FeedItem, MarketSummary } from '@/types/social';
 
 /**
  * DEVELOPMENT-ONLY fixture data. Used solely as a local fallback by
@@ -38,8 +38,20 @@ const AUTHORS = {
   },
 } as const;
 
-const MARKETS = {
-  btc120k: {
+/** Binary fixture markets: choices are derived from the yes/no pair so
+ * the mock shape matches a real `/markets` response. */
+function feedMarket(market: Omit<MarketSummary, 'choices'>): MarketSummary {
+  return {
+    ...market,
+    choices: [
+      { index: 0, label: 'Yes', price: market.yesPrice },
+      { index: 1, label: 'No', price: market.noPrice },
+    ],
+  };
+}
+
+const MARKETS: Record<'btc120k' | 'election' | 'finals', MarketSummary> = {
+  btc120k: feedMarket({
     id: 'market-btc-120k',
     question: 'Will BTC reach $120K by end of 2026?',
     category: 'Crypto',
@@ -47,8 +59,8 @@ const MARKETS = {
     noPrice: 43,
     volume: 482_000,
     endDate: '2026-12-31T00:00:00.000Z',
-  },
-  election: {
+  }),
+  election: feedMarket({
     id: 'market-election-runoff',
     question: 'Will the incumbent win the runoff election?',
     category: 'Politics',
@@ -56,8 +68,8 @@ const MARKETS = {
     noPrice: 66,
     volume: 1_240_000,
     endDate: '2026-11-03T00:00:00.000Z',
-  },
-  finals: {
+  }),
+  finals: feedMarket({
     id: 'market-finals-mvp',
     question: 'Will the reigning MVP repeat this season?',
     category: 'Sports',
@@ -65,8 +77,8 @@ const MARKETS = {
     noPrice: 52,
     volume: 96_000,
     endDate: '2027-06-15T00:00:00.000Z',
-  },
-} as const;
+  }),
+};
 
 const BASE_ITEMS: Omit<FeedItem, 'id' | 'createdAt'>[] = [
   {
@@ -75,7 +87,8 @@ const BASE_ITEMS: Omit<FeedItem, 'id' | 'createdAt'>[] = [
     market: MARKETS.btc120k,
     positionSnapshot: {
       marketId: MARKETS.btc120k.id,
-      outcome: 'YES',
+      outcome: 'Yes',
+      choiceIndex: 0,
       entryPrice: 42,
       size: 12.5,
       capturedAt: '2026-08-20T10:00:00.000Z',
@@ -83,15 +96,7 @@ const BASE_ITEMS: Omit<FeedItem, 'id' | 'createdAt'>[] = [
     likeCount: 24,
     commentCount: 8,
     liked: false,
-  },
-  {
-    author: AUTHORS.maya,
-    body: "This market looks interesting but I'm not ready to take a position yet — watching the volume.",
-    market: null,
-    positionSnapshot: null,
-    likeCount: 3,
-    commentCount: 1,
-    liked: false,
+    canDelete: false,
   },
   {
     author: AUTHORS.theo,
@@ -99,7 +104,8 @@ const BASE_ITEMS: Omit<FeedItem, 'id' | 'createdAt'>[] = [
     market: MARKETS.election,
     positionSnapshot: {
       marketId: MARKETS.election.id,
-      outcome: 'NO',
+      outcome: 'No',
+      choiceIndex: 1,
       entryPrice: 71,
       size: 40,
       capturedAt: '2026-09-01T09:30:00.000Z',
@@ -107,15 +113,7 @@ const BASE_ITEMS: Omit<FeedItem, 'id' | 'createdAt'>[] = [
     likeCount: 56,
     commentCount: 19,
     liked: false,
-  },
-  {
-    author: AUTHORS.aria,
-    body: 'Volume on the election runoff market has tripled this week — worth a look.',
-    market: MARKETS.election,
-    positionSnapshot: null,
-    likeCount: 11,
-    commentCount: 4,
-    liked: false,
+    canDelete: false,
   },
   {
     author: AUTHORS.jordan,
@@ -123,7 +121,8 @@ const BASE_ITEMS: Omit<FeedItem, 'id' | 'createdAt'>[] = [
     market: MARKETS.finals,
     positionSnapshot: {
       marketId: MARKETS.finals.id,
-      outcome: 'YES',
+      outcome: 'Yes',
+      choiceIndex: 0,
       entryPrice: 39,
       size: 25,
       capturedAt: '2026-09-05T14:00:00.000Z',
@@ -131,15 +130,7 @@ const BASE_ITEMS: Omit<FeedItem, 'id' | 'createdAt'>[] = [
     likeCount: 18,
     commentCount: 6,
     liked: false,
-  },
-  {
-    author: AUTHORS.maya,
-    body: 'Prediction markets are honestly a better news source than most headlines right now.',
-    market: null,
-    positionSnapshot: null,
-    likeCount: 41,
-    commentCount: 12,
-    liked: false,
+    canDelete: false,
   },
 ];
 
@@ -177,13 +168,11 @@ const MOCK_USER_CONTENT_PAGE_SIZE = 3;
 
 /**
  * Dev-mock fallback for Profile's Calls tab (`postService.ts::getUserCalls`)
- * — used to also serve a "Posts" tab (filtered the other way, by
- * `positionSnapshot === null`), removed when Profile's Posts tab was
- * replaced by Replies (see `ProfileScreen`'s doc comment), so this only
- * ever needs the Calls filter now. Reassigns `author` to a profile
- * matching `userId`, so the mock content visibly belongs to whichever
- * profile is being viewed rather than one of the feed's own fixed
- * sample authors.
+ * — every entry is already a position-backed Call. Reassigns `author` to
+ * a profile matching `userId`, so the mock content visibly belongs to
+ * whichever profile is being viewed rather than one of the feed's own
+ * fixed sample authors; `canDelete` follows the same convention as
+ * `comments.mock.ts` (`userId === 'me'`).
  */
 export function buildMockUserContent(userId: string, cursor?: string): FeedItem[] {
   const filtered = BASE_ITEMS.filter((item) => item.positionSnapshot !== null);
@@ -206,6 +195,7 @@ export function buildMockUserContent(userId: string, cursor?: string): FeedItem[
       return {
         ...base,
         author,
+        canDelete: userId === 'me',
         id: `mock-calls-${userId}-${globalIndex}`,
         createdAt: new Date(Date.now() - (globalIndex + 1) * 6 * 3_600_000).toISOString(),
       };

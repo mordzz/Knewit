@@ -6,6 +6,7 @@ import { Text } from '@/components/ui/Text';
 import { Button } from '@/components/ui/Button';
 import { Icon } from '@/components/ui/Icon';
 import { BottomSheet } from '@/components/ui/BottomSheet';
+import { choiceTextColor, choiceTone } from '@/lib/choiceTone';
 import { LoadingState } from '@/components/feedback/LoadingState';
 import { ErrorState } from '@/components/feedback/ErrorState';
 import { EmptyState } from '@/components/feedback/EmptyState';
@@ -96,7 +97,7 @@ export function PositionPickerSheet({ visible, onClose, onSelect }: PositionPick
 }
 
 function PositionRow({ position, onPress }: { position: UserPosition; onPress: () => void }) {
-  const outcomeColor = position.outcome === 'YES' ? 'yes' : 'no';
+  const outcomeColor = choiceTextColor(choiceTone({ index: position.choiceIndex, label: position.outcome }));
   const costBasis = (position.entryPrice / 100) * position.size;
 
   return (

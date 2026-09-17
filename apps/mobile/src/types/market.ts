@@ -1,7 +1,24 @@
 import type { ID, ISODateString, Category } from '@/types/common';
 
-/** MVP supports binary markets only — see docs/PRD.md. */
+/** Settlement is binary — Polymarket resolves each token as paid (1) or
+ * not (0) — but a market may offer more than two tradeable **choices**
+ * (see `MarketChoice`); this type is only used for settlement outcomes. */
 export type Outcome = 'YES' | 'NO';
+
+/**
+ * One selectable choice of a market, exactly in Polymarket's own
+ * `outcomes` array order — `index` is the position in that array (and in
+ * the parallel `clobTokenIds` array), so it is the stable identifier a
+ * trade sends. `label` is display-only, straight from the API ("Yes",
+ * "Manchester City", "Over", ...). See docs/DECISIONS.md
+ * ("Trading Any Polymarket Choice").
+ */
+export interface MarketChoice {
+  index: number;
+  label: string;
+  price: number; // cents
+  imageUrl?: string | null;
+}
 
 export interface Event {
   id: ID;
@@ -27,7 +44,9 @@ export interface Position {
   id: ID;
   userId: ID;
   marketId: ID;
-  outcome: Outcome;
+  /** The chosen choice's label, as the market's API data had it. */
+  outcome: string;
+  choiceIndex: number;
   entryPrice: number; // cents at time of entry
   size: number; // shares
   openedAt: ISODateString;
@@ -38,7 +57,8 @@ export interface Order {
   id: ID;
   userId: ID;
   marketId: ID;
-  outcome: Outcome;
+  outcome: string;
+  choiceIndex: number;
   size: number;
   price: number; // cents
   status: 'pending' | 'filled' | 'failed';

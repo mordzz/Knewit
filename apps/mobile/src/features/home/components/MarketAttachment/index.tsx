@@ -1,14 +1,13 @@
 import { View, Pressable } from 'react-native';
 import { Text } from '@/components/ui/Text';
-import { Icon } from '@/components/ui/Icon';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { MarketVisual } from '@/components/ui/MarketVisual';
 import { MarketOutcomeButtons } from '@/components/ui/MarketOutcomeButtons';
 import { GlassSurface } from '@/components/ui/GlassSurface';
 import { formatUsd } from '@/utils/formatCurrency';
 import { buildMarketMetrics } from '@/utils/marketMetrics';
+import { choiceTextColor, choiceTone } from '@/utils/choiceTone';
 import { typography } from '@/theme';
-import type { ColorToken } from '@/theme/colors';
 import type { MarketSummary, PositionSnapshot } from '@/types/social';
 
 export interface MarketAttachmentProps {
@@ -53,7 +52,6 @@ export interface MarketAttachmentProps {
  * plus-plain-border look).
  */
 export function MarketAttachment({ market, positionSnapshot, onPress }: MarketAttachmentProps) {
-  const isBinary = market.isBinary !== false;
   const metrics = buildMarketMetrics(market);
   const hasPosition = positionSnapshot != null;
 
@@ -79,15 +77,8 @@ export function MarketAttachment({ market, positionSnapshot, onPress }: MarketAt
 
         {positionSnapshot ? (
           <PositionColumns snapshot={positionSnapshot} market={market} />
-        ) : !isBinary ? (
-          <MultiOutcomePreview market={market} />
         ) : (
-          <MarketOutcomeButtons
-            yesPrice={market.yesPrice}
-            noPrice={market.noPrice}
-            labels={market.outcomeLabels}
-            onPress={onPress}
-          />
+          <MarketOutcomeButtons choices={market.choices} onPress={onPress} />
         )}
 
         {!hasPosition && metrics.length > 0 ? (
@@ -101,38 +92,17 @@ export function MarketAttachment({ market, positionSnapshot, onPress }: MarketAt
 }
 
 /**
- * MVP trading is binary-only (see docs/PRD.md), but the data source can
- * surface markets with more than two outcomes — this never forces those
- * into a fabricated YES/NO split. Shows a neutral, honest preview
- * instead: how many outcomes exist (when known) and that trading UI for
- * them isn't part of this app yet. Tapping the card still opens Market
- * Detail like any other market — see docs/DECISIONS.md (Sprint 3).
- */
-function MultiOutcomePreview({ market }: { market: MarketSummary }) {
-  const label =
-    market.outcomeCount != null ? `${market.outcomeCount} outcomes` : 'Multiple outcomes';
-
-  return (
-    <View className="flex-row items-center gap-2 rounded-xl bg-surface-elevated p-2.5">
-      <Icon name="layers-outline" size={16} color="textSecondary" />
-      <Text variant="caption" color="textSecondary" className="flex-1">
-        {label} · not available for YES/NO trading yet
-      </Text>
-    </View>
-  );
-}
-
-/**
  * The reference's Position/Profit read, split exactly half-and-half.
- * **Position** shows the outcome the user actually picked (`market`'s
- * own "Yes"/"No" labels, or a custom override e.g. "Up"/"Down"), colored
- * green/red — the callout's whole point is "here's the side I took,"
- * not a dollar figure that duplicates the Profit column next to it.
- * **Profit** is the dollar PnL, computed from real fields only —
- * `snapshot.entryPrice`/`snapshot.size` plus the market's own current
- * outcome price, never a stored, possibly-stale total. Green when
- * positive, red when negative, with the sign carried by the prefix (the
- * value itself is formatted absolute, so a `-` can't double up).
+ * **Position** shows the choice the user actually picked (the label
+ * frozen into the snapshot at Call-creation time, straight from the
+ * market's own outcomes), colored with the existing yes/no pair — the
+ * callout's whole point is "here's the side I took," not a dollar figure
+ * that duplicates the Profit column next to it. **Profit** is the dollar
+ * PnL, computed from real fields only — `snapshot.entryPrice`/
+ * `snapshot.size` plus the market's own current price for that choice,
+ * never a stored, possibly-stale total. Green when positive, red when
+ * negative, with the sign carried by the prefix (the value itself is
+ * formatted absolute, so a `-` can't double up).
  */
 function PositionColumns({
   snapshot,
@@ -141,15 +111,19 @@ function PositionColumns({
   snapshot: PositionSnapshot;
   market: MarketSummary;
 }) {
-  const labels = market.outcomeLabels ?? { yes: 'Yes', no: 'No' };
-  const outcomeColor: ColorToken = snapshot.outcome === 'YES' ? 'yes' : 'no';
-  const pickLabel = snapshot.outcome === 'YES' ? labels.yes : labels.no;
+  // The live choice is looked up by the snapshot's frozen index; a
+  // legacy snapshot without one falls back to matching the label.
+  const choice =
+    market.choices.find((c) => c.index === snapshot.choiceIndex) ??
+    market.choices.find((c) => c.label.toLowerCase() === snapshot.outcome.toLowerCase()) ??
+    { index: snapshot.choiceIndex, label: snapshot.outcome };
+  const outcomeColor = choiceTextColor(choiceTone(choice));
 
-  const currentPrice = snapshot.outcome === 'YES' ? market.yesPrice : market.noPrice;
+  const currentPrice = market.choices.find((c) => c.index === choice.index)?.price ?? 0;
   const costBasis = (snapshot.entryPrice / 100) * snapshot.size;
   const currentValue = (currentPrice / 100) * snapshot.size;
   const profit = currentValue - costBasis;
-  const profitColor: ColorToken = profit >= 0 ? 'yes' : 'no';
+  const profitColor = profit >= 0 ? 'yes' : 'no';
 
   return (
     <View className="flex-row items-center">
@@ -158,7 +132,7 @@ function PositionColumns({
           Position
         </Text>
         <Text variant="bodyStrong" color={outcomeColor}>
-          {pickLabel}
+          {choice.label}
         </Text>
       </View>
       <View className="flex-1 items-end gap-0.5">

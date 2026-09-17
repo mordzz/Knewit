@@ -2,12 +2,14 @@ import { OrderType, Side } from '@polymarket/clob-client';
 import { ApiError, badRequest, notFound } from '@/lib/apiError';
 import { getPrimaryEthereumWallet } from '@/lib/users';
 import { fetchMarketById } from '@/lib/polymarket/gammaClient';
-import { getOutcomeTokenId } from '@/lib/polymarket/normalize';
+import { getChoiceTokenId, parseChoices } from '@/lib/polymarket/normalize';
 import { buildClobClientForUser } from '@/lib/trading/clobClient';
-import type { Outcome } from '@/types/market';
 
 export interface PlaceOrderResult {
   tokenId: string;
+  /** The chosen choice's label resolved from the live market — what the
+   * persisted Order/Position rows store. */
+  choiceLabel: string;
   status: 'filled' | 'failed';
   filledSize: number; // shares
   filledPrice: number; // cents
@@ -33,7 +35,7 @@ export interface PlaceOrderResult {
 export async function placeMarketOrder(params: {
   privyUserId: string;
   marketId: string;
-  outcome: Outcome;
+  choiceIndex: number;
   usdAmount: number;
 }): Promise<PlaceOrderResult> {
   const wallet = await getPrimaryEthereumWallet(params.privyUserId);
@@ -45,9 +47,13 @@ export async function placeMarketOrder(params: {
   const market = await fetchMarketById(params.marketId);
   if (!market) throw notFound(`Market ${params.marketId} not found.`);
 
-  const tokenId = getOutcomeTokenId(market, params.outcome);
+  const choice = parseChoices(market)[params.choiceIndex];
+  if (!choice) {
+    throw badRequest(`Market ${params.marketId} has no choice at index ${params.choiceIndex}.`);
+  }
+  const tokenId = getChoiceTokenId(market, params.choiceIndex);
   if (!tokenId) {
-    throw badRequest(`Market ${params.marketId} has no tradable ${params.outcome} outcome (non-binary market?).`);
+    throw badRequest(`Market ${params.marketId} has no tradable token for choice "${choice.label}".`);
   }
 
   const clobClient = await buildClobClientForUser(wallet.id, wallet.address);
@@ -87,6 +93,7 @@ export async function placeMarketOrder(params: {
   if (!response.success || filledSize <= 0) {
     return {
       tokenId,
+      choiceLabel: choice.label,
       status: 'failed',
       filledSize: 0,
       filledPrice: 0,
@@ -97,6 +104,7 @@ export async function placeMarketOrder(params: {
 
   return {
     tokenId,
+    choiceLabel: choice.label,
     status: 'filled',
     filledSize,
     filledPrice: Math.round((filledUsd / filledSize) * 100),

@@ -23,7 +23,7 @@ function hashString(value: string): number {
  * straight through avoids that entirely.
  */
 function buildTemplate(index: number, userId: string, id: string, createdAt: string): ActivityItem {
-  switch (index % 4) {
+  switch (index % 3) {
     case 0:
       return {
         id,
@@ -31,7 +31,8 @@ function buildTemplate(index: number, userId: string, id: string, createdAt: str
         type: 'TRADE',
         marketId: `mock-market-${userId}`,
         marketQuestion: 'Will BTC reach $120K by end of 2026?',
-        outcome: 'YES',
+        outcome: 'Yes',
+        choiceIndex: 0,
         usdAmount: 25,
       };
     case 1:
@@ -41,10 +42,9 @@ function buildTemplate(index: number, userId: string, id: string, createdAt: str
         type: 'CALL',
         postId: `mock-post-${userId}-${index}`,
         marketQuestion: 'Will the incumbent win the runoff election?',
-        outcome: 'NO',
+        outcome: 'No',
+        choiceIndex: 1,
       };
-    case 2:
-      return { id, createdAt, type: 'POST', postId: `mock-post-${userId}-${index}` };
     default:
       return {
         id,

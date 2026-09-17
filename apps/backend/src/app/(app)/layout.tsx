@@ -40,7 +40,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   // visitor who is already authenticated from a previous session (e.g.
   // one created before this config existed, or whose automatic
   // creation silently failed) and still has no wallet. Every other
-  // authenticated page reads `user.wallet` (Wallet, Portfolio, trading)
+  // authenticated page reads `user.wallet` (Wallet, trading)
   // assuming one exists, so this backstops it exactly once per session
   // here in the shared shell — the same "create the wallet manually"
   // step `apps/mobile`'s sign-in screen already does explicitly (see

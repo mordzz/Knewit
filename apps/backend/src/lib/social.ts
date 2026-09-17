@@ -10,7 +10,8 @@ export interface PostRow {
   body: string;
   market_id: string | null;
   position_snapshot_market_id: string | null;
-  position_snapshot_outcome: 'YES' | 'NO' | null;
+  position_snapshot_outcome: string | null;
+  position_snapshot_choice_index: number | null;
   position_snapshot_entry_price: number | null;
   position_snapshot_size: number | null;
   position_snapshot_captured_at: string | null;
@@ -43,14 +44,9 @@ export function toPublicUser(user: DbUser): User {
 export async function buildUserProfile(target: DbUser, viewerUserId: string | null): Promise<UserProfile> {
   const supabase = getSupabase();
 
-  const [followerCount, followingCount, postCount, callCount, standing] = await Promise.all([
+  const [followerCount, followingCount, callCount, standing] = await Promise.all([
     supabase.from('follows').select('follower_id', { count: 'exact', head: true }).eq('following_id', target.id),
     supabase.from('follows').select('following_id', { count: 'exact', head: true }).eq('follower_id', target.id),
-    supabase
-      .from('posts')
-      .select('id', { count: 'exact', head: true })
-      .eq('author_id', target.id)
-      .is('position_snapshot_market_id', null),
     supabase
       .from('posts')
       .select('id', { count: 'exact', head: true })
@@ -75,7 +71,6 @@ export async function buildUserProfile(target: DbUser, viewerUserId: string | nu
     bio: target.bio,
     followerCount: followerCount.count ?? 0,
     followingCount: followingCount.count ?? 0,
-    postCount: postCount.count ?? 0,
     callCount: callCount.count ?? 0,
     isFollowing,
     isSelf: viewerUserId === target.id,
@@ -94,7 +89,8 @@ function toPositionSnapshot(post: PostRow): PositionSnapshot | null {
   if (!post.position_snapshot_market_id) return null;
   return {
     marketId: post.position_snapshot_market_id,
-    outcome: post.position_snapshot_outcome as 'YES' | 'NO',
+    outcome: post.position_snapshot_outcome as string,
+    choiceIndex: post.position_snapshot_choice_index ?? 0,
     entryPrice: post.position_snapshot_entry_price as number,
     size: post.position_snapshot_size as number,
     capturedAt: post.position_snapshot_captured_at as string,
@@ -145,6 +141,7 @@ export async function buildFeedItems(posts: PostRow[], viewerUserId: string | nu
       likeCount: post.like_count,
       commentCount: post.comment_count,
       liked: likedPostIds.has(post.id),
+      canDelete: viewerUserId === post.author_id,
       createdAt: post.created_at,
     };
   });

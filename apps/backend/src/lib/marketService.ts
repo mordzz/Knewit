@@ -33,8 +33,14 @@ export async function getTopHolders(marketId: string): Promise<MarketHolder[]> {
   return apiRequest<MarketHolder[]>(`/api/markets/${marketId}/holders`);
 }
 
-/** Market Detail's price chart — real Polymarket YES-price history,
- * proxied by `GET /markets/:id/price-history`. */
-export async function getMarketPriceHistory(marketId: string, range: PriceRange): Promise<PricePoint[]> {
-  return apiRequest<PricePoint[]>(`/api/markets/${marketId}/price-history?range=${range}`);
+/** Market Detail's price chart for one choice — real Polymarket price
+ * history, proxied by `GET /markets/:id/price-history?choice=`. */
+export async function getMarketPriceHistory(
+  marketId: string,
+  range: PriceRange,
+  choiceIndex: number
+): Promise<PricePoint[]> {
+  return apiRequest<PricePoint[]>(
+    `/api/markets/${marketId}/price-history?range=${range}&choice=${choiceIndex}`
+  );
 }

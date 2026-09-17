@@ -11,6 +11,8 @@ import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { Screen } from '@/components/layout/Screen';
 import { Text } from '@/components/ui/Text';
 import { Icon } from '@/components/ui/Icon';
+import { Button } from '@/components/ui/Button';
+import { Modal } from '@/components/ui/Modal';
 import { LoadingState } from '@/components/feedback/LoadingState';
 import { EmptyState } from '@/components/feedback/EmptyState';
 import { ErrorState } from '@/components/feedback/ErrorState';
@@ -23,20 +25,21 @@ import { usePost } from '@/features/home/hooks/usePost';
 import { useComments } from '@/features/home/hooks/useComments';
 import { useCreateComment } from '@/features/home/hooks/useCreateComment';
 import { useDeleteComment } from '@/features/home/hooks/useDeleteComment';
+import { useDeletePost } from '@/features/home/hooks/useDeletePost';
+import { navigateToMarketDetail } from '@/features/markets/utils/openMarketDetail';
 import { ApiRequestError } from '@/services/api/client';
 import { formatRelativeTime } from '@/utils/formatRelativeTime';
 import { colors } from '@/theme';
-import type { CommentItem, FeedItem } from '@/types/social';
+import type { CommentItem, FeedItem, MarketSummary } from '@/types/social';
 import type { AppParamList } from '@/types/navigation';
 
 /**
- * Serves both a normal Post and a position-backed Call — same screen,
- * since they're the same entity (see docs/SOCIAL-FEATURE.md). The
- * Verified Position block only ever renders when `positionSnapshot` is
- * present, via the same `MarketAttachment` component used everywhere
- * else — no separate "Call Detail" market UI. The badge means "verified
- * when created," never "still holds this position" — see
- * docs/DECISIONS.md.
+ * A position-backed Callout's detail. The Verified Position block renders
+ * via the same `MarketAttachment` component used everywhere else — no
+ * separate "Call Detail" market UI. The badge means "verified when
+ * created," never "still holds this position" — see docs/DECISIONS.md.
+ * The header's "…" deletes the Callout when the viewer authored it
+ * (`canDelete`, server-computed).
  */
 export function PostDetailScreen() {
   const navigation = useNavigation();
@@ -46,14 +49,16 @@ export function PostDetailScreen() {
   const comments = useComments(postId);
   const createComment = useCreateComment(postId);
   const deleteCommentMutation = useDeleteComment(postId);
+  const deletePostMutation = useDeletePost(postId);
   const [replyTarget, setReplyTarget] = useState<CommentItem | null>(null);
+  const [confirmDeleteVisible, setConfirmDeleteVisible] = useState(false);
 
   const openAuthor = useCallback(
     (userId: string) => navigation.navigate('Profile', { userId }),
     [navigation]
   );
   const openMarket = useCallback(
-    (marketId: string) => navigation.navigate('MarketDetail', { marketId }),
+    (market: MarketSummary) => navigateToMarketDetail(navigation, market),
     [navigation]
   );
 
@@ -83,7 +88,7 @@ export function PostDetailScreen() {
       keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
     >
       <Screen className="gap-0 px-0 pt-4" edges={['top']}>
-        <View className="flex-row items-center px-4 pb-2">
+        <View className="flex-row items-center justify-between px-4 pb-2">
           <Pressable
             onPress={() => navigation.goBack()}
             accessibilityRole="button"
@@ -92,6 +97,17 @@ export function PostDetailScreen() {
           >
             <Icon name="chevron-back" size={24} />
           </Pressable>
+          {post.status === 'success' && post.data.canDelete ? (
+            <Pressable
+              onPress={() => setConfirmDeleteVisible(true)}
+              disabled={deletePostMutation.isPending}
+              accessibilityRole="button"
+              accessibilityLabel="Call options"
+              hitSlop={8}
+            >
+              <Icon name="ellipsis-horizontal" size={22} color="textTertiary" />
+            </Pressable>
+          ) : null}
         </View>
 
         {post.status === 'pending' ? (
@@ -104,8 +120,8 @@ export function PostDetailScreen() {
           <View className="flex-1 px-4">
             <EmptyState
               icon="search"
-              title="Post not found"
-              message="This post may have been removed or the link is incorrect."
+              title="Callout not found"
+              message="This Callout may have been removed or the link is incorrect."
               actionLabel="Go back"
               onAction={() => navigation.goBack()}
             />
@@ -114,7 +130,7 @@ export function PostDetailScreen() {
 
         {post.status === 'error' && !isNotFound ? (
           <View className="px-4">
-            <ErrorState message="Couldn't load this post." onRetry={() => post.refetch()} />
+            <ErrorState message="Couldn't load this Callout." onRetry={() => post.refetch()} />
           </View>
         ) : null}
 
@@ -173,6 +189,37 @@ export function PostDetailScreen() {
           />
         ) : null}
       </Screen>
+
+      <Modal visible={confirmDeleteVisible} onClose={() => setConfirmDeleteVisible(false)}>
+        <View className="gap-3">
+          <Text variant="bodyStrong">Delete this Callout?</Text>
+          <Text variant="body" color="textSecondary">
+            Its comments and likes go too. This action cannot be undone.
+          </Text>
+          <View className="flex-row gap-2">
+            <Button
+              label="Cancel"
+              variant="ghost"
+              onPress={() => setConfirmDeleteVisible(false)}
+              className="flex-1"
+            />
+            <Button
+              label="Delete"
+              variant="no"
+              loading={deletePostMutation.isPending}
+              onPress={() =>
+                deletePostMutation.mutate(undefined, { onSuccess: () => navigation.goBack() })
+              }
+              className="flex-1"
+            />
+          </View>
+          {deletePostMutation.isError ? (
+            <Text variant="caption" color="danger">
+              Couldn&apos;t delete this Callout. Please try again.
+            </Text>
+          ) : null}
+        </View>
+      </Modal>
     </KeyboardAvoidingView>
   );
 }
@@ -184,7 +231,7 @@ function PostContent({
 }: {
   item: FeedItem;
   onOpenAuthor: (userId: string) => void;
-  onOpenMarket: (marketId: string) => void;
+  onOpenMarket: (market: MarketSummary) => void;
 }) {
   return (
     <View className="gap-3 px-4 pb-4">
@@ -199,7 +246,7 @@ function PostContent({
         <MarketAttachment
           market={item.market}
           positionSnapshot={item.positionSnapshot}
-          onPress={() => onOpenMarket(item.market!.id)}
+          onPress={() => onOpenMarket(item.market!)}
         />
       ) : null}
 

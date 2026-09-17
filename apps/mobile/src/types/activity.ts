@@ -1,5 +1,4 @@
 import type { ID, ISODateString } from '@/types/common';
-import type { Outcome } from '@/types/market';
 import type { User } from '@/types/social';
 
 /**
@@ -12,7 +11,7 @@ import type { User } from '@/types/social';
  * Types Limited to What This App Can Actually Produce"). A "position
  * opened" is the direct result of a `TRADE`, not a separate event.
  */
-export type ActivityType = 'TRADE' | 'CALL' | 'POST' | 'FOLLOW';
+export type ActivityType = 'TRADE' | 'CALL' | 'FOLLOW';
 
 interface ActivityItemBase {
   id: ID;
@@ -23,7 +22,9 @@ export interface TradeActivityItem extends ActivityItemBase {
   type: 'TRADE';
   marketId: ID;
   marketQuestion: string;
-  outcome: Outcome;
+  /** The chosen choice's label, as the market's API data had it. */
+  outcome: string;
+  choiceIndex: number;
   usdAmount: number;
 }
 
@@ -35,12 +36,8 @@ export interface CallActivityItem extends ActivityItemBase {
   type: 'CALL';
   postId: ID;
   marketQuestion: string;
-  outcome: Outcome;
-}
-
-export interface PostActivityItem extends ActivityItemBase {
-  type: 'POST';
-  postId: ID;
+  outcome: string;
+  choiceIndex: number;
 }
 
 export interface FollowActivityItem extends ActivityItemBase {
@@ -58,4 +55,4 @@ export interface FollowActivityItem extends ActivityItemBase {
  * Actions").
  */
 export type ActivityItem =
-  TradeActivityItem | CallActivityItem | PostActivityItem | FollowActivityItem;
+  TradeActivityItem | CallActivityItem | FollowActivityItem;

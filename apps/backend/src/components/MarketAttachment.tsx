@@ -1,10 +1,10 @@
-import { Icon } from '@/components/ui/Icon';
 import { Text } from '@/components/ui/Text';
 import { GlassSurface } from '@/components/ui/GlassSurface';
 import { MarketVisual } from '@/components/ui/MarketVisual';
 import { MarketOutcomeButtons } from '@/components/ui/MarketOutcomeButtons';
 import { formatUsd } from '@/lib/formatters';
 import { buildMarketMetrics } from '@/lib/marketMetrics';
+import { choiceTextColor, choiceTone } from '@/lib/choiceTone';
 import type { MarketSummary, PositionSnapshot } from '@/types/social';
 
 export interface MarketAttachmentProps {
@@ -22,7 +22,6 @@ export interface MarketAttachmentProps {
  * liquidity/time metrics footer.
  */
 export function MarketAttachment({ market, positionSnapshot, onPress }: MarketAttachmentProps) {
-  const isBinary = market.isBinary !== false;
   const metrics = buildMarketMetrics(market);
   const hasPosition = positionSnapshot != null;
 
@@ -38,15 +37,8 @@ export function MarketAttachment({ market, positionSnapshot, onPress }: MarketAt
 
         {positionSnapshot ? (
           <PositionColumns snapshot={positionSnapshot} market={market} />
-        ) : !isBinary ? (
-          <MultiOutcomePreview market={market} />
         ) : (
-          <MarketOutcomeButtons
-            yesPrice={market.yesPrice}
-            noPrice={market.noPrice}
-            labels={market.outcomeLabels}
-            onPress={onPress}
-          />
+          <MarketOutcomeButtons choices={market.choices} onPress={onPress} />
         )}
 
         {!hasPosition && metrics.length > 0 ? (
@@ -59,25 +51,16 @@ export function MarketAttachment({ market, positionSnapshot, onPress }: MarketAt
   );
 }
 
-function MultiOutcomePreview({ market }: { market: MarketSummary }) {
-  const label = market.outcomeCount != null ? `${market.outcomeCount} outcomes` : 'Multiple outcomes';
-
-  return (
-    <div className="flex items-center gap-2 rounded-xl bg-surface-elevated p-2.5">
-      <Icon name="layers-outline" size={16} color="textSecondary" />
-      <Text variant="caption" color="textSecondary" className="flex-1">
-        {label} · not available for YES/NO trading yet
-      </Text>
-    </div>
-  );
-}
-
 function PositionColumns({ snapshot, market }: { snapshot: PositionSnapshot; market: MarketSummary }) {
-  const labels = market.outcomeLabels ?? { yes: 'Yes', no: 'No' };
-  const outcomeColor = snapshot.outcome === 'YES' ? 'yes' : 'no';
-  const pickLabel = snapshot.outcome === 'YES' ? labels.yes : labels.no;
+  // The live choice is looked up by the snapshot's frozen index; a
+  // legacy snapshot without one falls back to matching the label.
+  const choice =
+    market.choices.find((c) => c.index === snapshot.choiceIndex) ??
+    market.choices.find((c) => c.label.toLowerCase() === snapshot.outcome.toLowerCase()) ??
+    { index: snapshot.choiceIndex, label: snapshot.outcome };
+  const outcomeColor = choiceTextColor(choiceTone(choice));
 
-  const currentPrice = snapshot.outcome === 'YES' ? market.yesPrice : market.noPrice;
+  const currentPrice = market.choices.find((c) => c.index === choice.index)?.price ?? 0;
   const costBasis = (snapshot.entryPrice / 100) * snapshot.size;
   const currentValue = (currentPrice / 100) * snapshot.size;
   const profit = currentValue - costBasis;
@@ -90,7 +73,7 @@ function PositionColumns({ snapshot, market }: { snapshot: PositionSnapshot; mar
           Position
         </Text>
         <Text variant="bodyStrong" color={outcomeColor} className="block">
-          {pickLabel}
+          {choice.label}
         </Text>
       </div>
       <div className="flex-1 text-right">

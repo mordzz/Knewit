@@ -47,12 +47,13 @@ function findCachedMarket(
  * fetch still runs right away rather than waiting out the default
  * staleTime.
  */
-export function useMarket(marketId: string) {
+export function useMarket(marketId: string, options?: { enabled?: boolean }) {
   const queryClient = useQueryClient();
 
   return useQuery({
     queryKey: ['market', marketId],
     queryFn: () => getMarketById(marketId),
     placeholderData: () => findCachedMarket(marketId, queryClient),
+    enabled: options?.enabled ?? true,
   });
 }

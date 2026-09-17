@@ -12,6 +12,7 @@ import { ErrorState } from '@/components/feedback/ErrorState';
 import { CallCard } from '@/components/CallCard';
 import { useHomeFeed } from '@/hooks/useHomeFeed';
 import { useFollowingFeed } from '@/hooks/useFollowingFeed';
+import { useWalletBalance } from '@/hooks/useWalletBalance';
 import { formatUsd } from '@/lib/formatters';
 
 type FeedTabKey = 'forYou' | 'following';
@@ -192,16 +193,20 @@ function InfiniteScrollSentinel({
 
 /**
  * Single row: balance on the left, Deposit on the right, separated
- * from the tabs below by a hairline bottom border. Balance is a
- * placeholder ("$0.00") until a real wallet balance endpoint exists,
- * same honesty rule as Portfolio's placeholder cards.
+ * from the tabs below by a hairline bottom border. Balance is the real
+ * USDC collateral read from Polymarket's CLOB (`useWalletBalance`) —
+ * "—" when it's unavailable (no wallet, or signing not delegated yet),
+ * never a fabricated `$0.00`.
  */
 function Header() {
   const router = useRouter();
+  const balance = useWalletBalance();
+
+  const balanceLabel = balance.data?.usdc != null ? formatUsd(balance.data.usdc) : '—';
 
   return (
     <div className="flex items-center justify-between border-b border-border px-4 pb-3 pt-4">
-      <Text className="text-4xl font-bold">{formatUsd(0)}</Text>
+      <Text className="text-4xl font-bold">{balanceLabel}</Text>
       <Button label="Deposit" onClick={() => router.push('/sign-in')} className="h-12 min-h-0 rounded-full px-12 py-0" />
     </div>
   );

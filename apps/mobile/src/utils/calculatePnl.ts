@@ -10,6 +10,13 @@ export function calculatePositionPnlPercent(
   snapshot: PositionSnapshot,
   market: MarketSummary
 ): number {
-  const currentPrice = snapshot.outcome === 'YES' ? market.yesPrice : market.noPrice;
+  // The frozen choice is looked up by its index; legacy snapshots
+  // without one fall back to matching the frozen label.
+  const currentPrice =
+    market.choices.find((choice) => choice.index === snapshot.choiceIndex)?.price ??
+    market.choices.find(
+      (choice) => choice.label.toLowerCase() === snapshot.outcome.toLowerCase()
+    )?.price ??
+    0;
   return ((currentPrice - snapshot.entryPrice) / snapshot.entryPrice) * 100;
 }

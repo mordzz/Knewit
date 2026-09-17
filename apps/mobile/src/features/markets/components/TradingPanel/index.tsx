@@ -1,102 +1,115 @@
 import { useState } from 'react';
-import { Pressable, View } from 'react-native';
+import { Image, Pressable, View } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { Text } from '@/components/ui/Text';
-import { Button } from '@/components/ui/Button';
+import { Button, type ButtonVariant } from '@/components/ui/Button';
 import { Icon } from '@/components/ui/Icon';
 import { Input } from '@/components/ui/Input';
 import { Card } from '@/components/ui/Card';
 import { BottomSheet } from '@/components/ui/BottomSheet';
+import { LoadingState } from '@/components/feedback/LoadingState';
 import { WalletAddress } from '@/features/wallet/components/WalletAddress';
 import { useWallet } from '@/hooks/useWallet';
 import { useCreateTrade } from '@/features/markets/hooks/useCreateTrade';
 import { formatPrice, formatUsd } from '@/utils/formatCurrency';
-import type { Outcome } from '@/types/market';
+import { choiceTextColor, choiceTone, type ChoiceTone } from '@/utils/choiceTone';
+import type { MarketChoice } from '@/types/market';
 import type { MarketDetail } from '@/types/social';
 
 const AMOUNT_PRESETS = [5, 10, 25, 50];
 
-function outcomeLabel(market: MarketDetail, outcome: Outcome): string {
-  const labels = market.outcomeLabels ?? { yes: 'Yes', no: 'No' };
-  return outcome === 'YES' ? labels.yes : labels.no;
+/** Tone → `Button` variant: directional yes/no keep their semantic
+ * variants, everything else uses the neutral pair (docs/DECISIONS.md,
+ * "Trading Any Polymarket Choice"). */
+function buttonVariant(tone: ChoiceTone): ButtonVariant {
+  if (tone === 'accent') return 'primary';
+  if (tone === 'neutral') return 'secondary';
+  return tone;
 }
 
 function validateAmount(amount: number): string | null {
   if (amount === 0) return 'Enter an amount';
   if (amount < 0 || Number.isNaN(amount)) return 'Enter a valid amount';
-  // No minimum is enforced beyond ">0" — no real Polymarket/backend rule
-  // for one exists yet, and inventing a number would be exactly the
-  // fabricated constraint Sprint 7's spec forbids. Insufficient-balance
-  // validation is likewise omitted: no wallet balance data source exists
-  // yet (see docs/WALLET.md) — see docs/DECISIONS.md.
   return null;
 }
 
 /**
- * Market Detail's real trading interaction — a single "Trade" button
- * rather than an always-visible panel (see docs/DECISIONS.md, "Trade
- * Button, Not an Inline Panel"), opening one `BottomSheet` whose content
- * switches between two internal steps: **pick** (outcome + amount,
- * what used to be the always-visible Card) and **confirm** (the
- * existing review → pending → success/failed machine, unchanged). One
- * sheet with a step, not two stacked sheets — nesting a second RN Modal
- * on top of a first is the kind of thing that gets visually janky on at
- * least one platform for no benefit here. Never fabricates a successful
- * trade: if the backend call fails (including because no backend exists
- * in this environment), the sheet shows a real "Trade failed" state —
- * see docs/DECISIONS.md ("No Fake Trade Success").
+ * Market Detail's trade entry point — a single "Trade" button for the
+ * market it was given, opening the shared `TradeSheet`. Event rows open
+ * the exact same `TradeSheet` directly (with the child market they
+ * fetched), so trading from a list needs no new page.
  */
 export function TradingPanel({ market }: { market: MarketDetail }) {
   const navigation = useNavigation();
-  const { isConnected, address } = useWallet();
-  const [outcome, setOutcome] = useState<Outcome>('YES');
-  const [amountText, setAmountText] = useState('');
+  const { isConnected } = useWallet();
   const [sheetVisible, setSheetVisible] = useState(false);
+
+  if (market.resolved) {
+    return <InfoBanner text="This market has resolved." />;
+  }
+  if (market.closed) {
+    return <InfoBanner text="Market Closed — Trading is no longer available." />;
+  }
+  if (market.choices.length === 0) return null;
+
+  return (
+    <>
+      <Button
+        label={isConnected ? 'Trade' : 'Connect Wallet to Trade'}
+        onPress={() => {
+          if (!isConnected) {
+            navigation.navigate('Auth');
+            return;
+          }
+          setSheetVisible(true);
+        }}
+        accessibilityLabel="Trade this market"
+      />
+      <TradeSheet
+        market={market}
+        visible={sheetVisible}
+        onClose={() => setSheetVisible(false)}
+      />
+    </>
+  );
+}
+
+/**
+ * The reusable Trade bottom sheet — pick a choice + amount, review,
+ * submit (`CreateTradeInput.choiceIndex`; the label is resolved
+ * server-side). Pass `market: null` while a row-opened child market is
+ * still loading and the sheet shows an honest loading state. Never
+ * fabricates a successful trade — a failed backend call shows a real
+ * "Trade failed" state (docs/DECISIONS.md, "No Fake Trade Success").
+ */
+export function TradeSheet({
+  market,
+  visible,
+  onClose,
+}: {
+  market: MarketDetail | null;
+  visible: boolean;
+  onClose: () => void;
+}) {
+  const { isConnected, address } = useWallet();
+  const [choiceIndex, setChoiceIndex] = useState(0);
+  const [amountText, setAmountText] = useState('');
   const [step, setStep] = useState<'pick' | 'confirm'>('pick');
   const [isValidating, setIsValidating] = useState(false);
-  const mutation = useCreateTrade(market.id);
+  const mutation = useCreateTrade(market?.id ?? '');
 
+  const choice = market?.choices[choiceIndex] ?? market?.choices[0];
   const amount = Number(amountText) || 0;
-  const price = outcome === 'YES' ? market.yesPrice : market.noPrice;
+  const price = choice?.price ?? 0;
   const shares = amount > 0 && price > 0 ? (amount * 100) / price : 0;
-  const canSubmit = amount > 0 && price > 0;
+  const canSubmit = amount > 0 && price > 0 && choice != null;
 
   function handleChangeAmount(text: string) {
     setAmountText(text.replace(/[^0-9]/g, ''));
   }
 
-  function openSheet() {
-    if (!isConnected) {
-      navigation.navigate('Auth');
-      return;
-    }
-    mutation.reset();
-    setStep('pick');
-    setSheetVisible(true);
-  }
-
-  function goToConfirm() {
-    if (validateAmount(amount)) return;
-    setStep('confirm');
-  }
-
-  async function handleConfirm() {
-    // Re-checked here, immediately before submitting, rather than only
-    // when the sheet opened — guards against the wallet disconnecting
-    // or the amount becoming invalid while the sheet was open (Sprint 7:
-    // never trade against a stale wallet/market context).
-    setIsValidating(true);
-    const validationError = validateAmount(amount);
-    const stillTradeable = !market.closed && !market.resolved && market.isBinary !== false;
-    setIsValidating(false);
-    if (validationError || !isConnected || !address || !stillTradeable) {
-      return;
-    }
-    mutation.mutate({ marketId: market.id, outcome, usdAmount: amount });
-  }
-
   function closeSheet() {
-    setSheetVisible(false);
+    onClose();
     setStep('pick');
     if (mutation.isSuccess) {
       // Reset for the next trade only after the user has dismissed a
@@ -107,78 +120,79 @@ export function TradingPanel({ market }: { market: MarketDetail }) {
     }
   }
 
-  if (market.resolved) {
-    return (
-      <InfoBanner
-        text={
-          market.resolvedOutcome
-            ? `This market resolved ${outcomeLabel(market, market.resolvedOutcome)}.`
-            : 'This market has resolved.'
-        }
-      />
-    );
-  }
-  if (market.isBinary === false) return null;
-  if (market.closed) {
-    return <InfoBanner text="Market Closed — Trading is no longer available." />;
+  function goToConfirm() {
+    if (validateAmount(amount)) return;
+    setStep('confirm');
   }
 
-  const labels = market.outcomeLabels ?? { yes: 'Yes', no: 'No' };
+  async function handleConfirm() {
+    // Re-checked here, immediately before submitting, rather than only
+    // when the sheet opened — guards against the wallet disconnecting
+    // or the amount becoming invalid while the sheet was open.
+    setIsValidating(true);
+    const validationError = validateAmount(amount);
+    const stillTradeable = market != null && !market.closed && !market.resolved;
+    setIsValidating(false);
+    if (validationError || !isConnected || !address || !stillTradeable || !choice || !market) {
+      return;
+    }
+    mutation.mutate({ marketId: market.id, choiceIndex: choice.index, usdAmount: amount });
+  }
 
   return (
-    <>
-      <Button
-        label={isConnected ? 'Trade' : 'Connect Wallet to Trade'}
-        onPress={openSheet}
-        accessibilityLabel="Trade this market"
-      />
-
-      <BottomSheet visible={sheetVisible} onClose={closeSheet}>
-        {step === 'pick' ? (
-          <PickStep
-            labels={labels}
-            outcome={outcome}
-            onSelectOutcome={setOutcome}
-            yesPrice={market.yesPrice}
-            noPrice={market.noPrice}
-            amountText={amountText}
-            onChangeAmount={handleChangeAmount}
-            amount={amount}
-            price={price}
-            shares={shares}
-            canSubmit={canSubmit}
-            onContinue={goToConfirm}
-          />
-        ) : (
-          <ConfirmTradeContent
-            market={market}
-            outcome={outcome}
-            amount={amount}
-            shares={shares}
-            price={price}
-            address={address}
-            isValidating={isValidating}
-            mutationStatus={mutation.status}
-            errorMessage={mutation.error?.message ?? null}
-            onConfirm={handleConfirm}
-            onBack={() => setStep('pick')}
-            onClose={closeSheet}
-          />
-        )}
-      </BottomSheet>
-    </>
+    <BottomSheet visible={visible} onClose={closeSheet}>
+      {!market ? (
+        <View className="py-2">
+          <LoadingState rows={3} />
+        </View>
+      ) : market.resolved ? (
+        <InfoBanner text="This market has resolved." />
+      ) : market.closed ? (
+        <InfoBanner text="Market Closed — Trading is no longer available." />
+      ) : market.choices.length === 0 ? (
+        <InfoBanner text="This market has no tradeable outcomes." />
+      ) : step === 'pick' ? (
+        <PickStep
+          choices={market.choices}
+          choiceIndex={choiceIndex}
+          onSelectChoice={setChoiceIndex}
+          amountText={amountText}
+          onChangeAmount={handleChangeAmount}
+          amount={amount}
+          price={price}
+          shares={shares}
+          canSubmit={canSubmit}
+          onContinue={goToConfirm}
+        />
+      ) : (
+        <ConfirmTradeContent
+          market={market}
+          choice={choice}
+          amount={amount}
+          shares={shares}
+          price={price}
+          address={address}
+          isValidating={isValidating}
+          mutationStatus={mutation.status}
+          errorMessage={mutation.error?.message ?? null}
+          onConfirm={handleConfirm}
+          onBack={() => setStep('pick')}
+          onClose={closeSheet}
+        />
+      )}
+    </BottomSheet>
   );
 }
 
-/** Step 1 of the Trade sheet — outcome + amount, what used to be the
+/** Step 1 of the Trade sheet — choice + amount, what used to be the
  * always-visible Card's contents. Purely a picker; nothing here submits
- * a trade, `onContinue` only advances to the review step. */
+ * a trade, `onContinue` only advances to the review step. Two choices
+ * stay side by side (the original layout), three or more stack
+ * vertically, same `OutcomeCard` either way. */
 function PickStep({
-  labels,
-  outcome,
-  onSelectOutcome,
-  yesPrice,
-  noPrice,
+  choices,
+  choiceIndex,
+  onSelectChoice,
   amountText,
   onChangeAmount,
   amount,
@@ -187,11 +201,9 @@ function PickStep({
   canSubmit,
   onContinue,
 }: {
-  labels: { yes: string; no: string };
-  outcome: Outcome;
-  onSelectOutcome: (outcome: Outcome) => void;
-  yesPrice: number;
-  noPrice: number;
+  choices: MarketChoice[];
+  choiceIndex: number;
+  onSelectChoice: (index: number) => void;
   amountText: string;
   onChangeAmount: (text: string) => void;
   amount: number;
@@ -200,25 +212,26 @@ function PickStep({
   canSubmit: boolean;
   onContinue: () => void;
 }) {
+  const selected = choices[choiceIndex] ?? choices[0];
+  const stacked = choices.length !== 2;
+
   return (
     <View className="gap-3">
       <Text variant="heading">Trade</Text>
 
-      <View className="flex-row gap-2">
-        <OutcomeCard
-          label={labels.yes}
-          priceCents={yesPrice}
-          selected={outcome === 'YES'}
-          variant="yes"
-          onPress={() => onSelectOutcome('YES')}
-        />
-        <OutcomeCard
-          label={labels.no}
-          priceCents={noPrice}
-          selected={outcome === 'NO'}
-          variant="no"
-          onPress={() => onSelectOutcome('NO')}
-        />
+      <View className={stacked ? 'gap-2' : 'flex-row gap-2'}>
+        {choices.map((choice) => (
+          <OutcomeCard
+            key={choice.index}
+            label={choice.label}
+            priceCents={choice.price}
+            imageUrl={choice.imageUrl}
+            selected={choice.index === selected?.index}
+            tone={choiceTone(choice)}
+            stacked={stacked}
+            onPress={() => onSelectChoice(choice.index)}
+          />
+        ))}
       </View>
 
       <Input
@@ -256,42 +269,60 @@ function PickStep({
       ) : null}
 
       <Button
-        variant={outcome === 'YES' ? 'yes' : 'no'}
-        label={`Continue with ${outcome === 'YES' ? labels.yes : labels.no}${amount > 0 ? ` · ${formatUsd(amount)}` : ''}`}
+        variant={selected ? buttonVariant(choiceTone(selected)) : 'primary'}
+        label={`Continue with ${selected?.label ?? ''}${amount > 0 ? ` · ${formatUsd(amount)}` : ''}`}
         onPress={onContinue}
         disabled={!canSubmit}
-        accessibilityLabel={`Continue with ${outcome === 'YES' ? labels.yes : labels.no}`}
+        accessibilityLabel={`Continue with ${selected?.label ?? ''}`}
       />
     </View>
   );
 }
 
+const TONE_ACTIVE_CLASS: Record<ChoiceTone, string> = {
+  yes: 'border-yes bg-yes-muted',
+  no: 'border-no bg-no-muted',
+  accent: 'border-accent bg-accent-muted',
+  neutral: 'border-accent bg-accent-muted',
+};
+
+const TONE_TEXT: Record<ChoiceTone, 'yes' | 'no' | 'accent' | 'textPrimary'> = {
+  yes: 'yes',
+  no: 'no',
+  accent: 'accent',
+  neutral: 'textPrimary',
+};
+
 function OutcomeCard({
   label,
   priceCents,
+  imageUrl,
   selected,
-  variant,
+  tone,
+  stacked,
   onPress,
 }: {
   label: string;
   priceCents: number;
+  imageUrl?: string | null;
   selected: boolean;
-  variant: 'yes' | 'no';
+  tone: ChoiceTone;
+  stacked: boolean;
   onPress: () => void;
 }) {
-  const activeClass = variant === 'yes' ? 'border-yes bg-yes-muted' : 'border-no bg-no-muted';
-  const textColor = variant === 'yes' ? 'yes' : 'no';
+  const textColor = TONE_TEXT[tone];
 
   return (
     <Pressable
       onPress={onPress}
-      className={`flex-1 items-center gap-1 rounded-xl border p-3 ${
-        selected ? activeClass : 'border-border bg-surface-elevated'
+      className={`items-center gap-1 rounded-xl border p-3 ${stacked ? 'w-full' : 'flex-1'} ${
+        selected ? TONE_ACTIVE_CLASS[tone] : 'border-border bg-surface-elevated'
       }`}
       accessibilityRole="button"
       accessibilityState={{ selected }}
       accessibilityLabel={`${label}, ${formatPrice(priceCents)}${selected ? ', selected' : ''}`}
     >
+      {imageUrl ? <Image source={{ uri: imageUrl }} className="h-6 w-6 rounded-full" /> : null}
       <Text variant="bodyStrong" color={selected ? textColor : 'textPrimary'}>
         {label}
       </Text>
@@ -317,7 +348,7 @@ function EstimateRow({ label, value }: { label: string; value: string }) {
 
 function ConfirmTradeContent({
   market,
-  outcome,
+  choice,
   amount,
   shares,
   price,
@@ -330,7 +361,7 @@ function ConfirmTradeContent({
   onClose,
 }: {
   market: MarketDetail;
-  outcome: Outcome;
+  choice: MarketChoice | undefined;
   amount: number;
   shares: number;
   price: number;
@@ -401,7 +432,11 @@ function ConfirmTradeContent({
       <Text variant="heading">Confirm Trade</Text>
 
       <ConfirmRow label="Market" value={market.question} />
-      <ConfirmRow label="Position" value={outcome} valueColor={outcome === 'YES' ? 'yes' : 'no'} />
+      <ConfirmRow
+        label="Position"
+        value={choice?.label ?? ''}
+        valueColor={choice ? choiceTextColor(choiceTone(choice)) : 'textPrimary'}
+      />
       <ConfirmRow label="Amount" value={formatUsd(amount)} />
       <ConfirmRow label="Estimated price" value={formatPrice(price)} />
       <ConfirmRow label="Estimated shares" value={shares.toFixed(2)} />
@@ -413,7 +448,7 @@ function ConfirmTradeContent({
       </View>
 
       <Button
-        variant={outcome === 'YES' ? 'yes' : 'no'}
+        variant={choice ? buttonVariant(choiceTone(choice)) : 'primary'}
         label="Confirm Trade"
         onPress={onConfirm}
         className="mt-2"
@@ -430,7 +465,7 @@ function ConfirmRow({
 }: {
   label: string;
   value: string;
-  valueColor?: 'textPrimary' | 'yes' | 'no';
+  valueColor?: 'textPrimary' | 'yes' | 'no' | 'accent';
 }) {
   return (
     <View className="flex-row items-start justify-between gap-3">
