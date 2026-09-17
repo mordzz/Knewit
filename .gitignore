@@ -23,8 +23,8 @@ expo-env.d.ts
 
 *.tsbuildinfo
 
-/ios
-/android
+/apps/frontend/ios
+/apps/frontend/android
 
 docs/
 

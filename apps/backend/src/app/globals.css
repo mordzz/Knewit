@@ -1,0 +1,100 @@
+@import 'tailwindcss';
+
+/**
+ * Color tokens mirror `apps/frontend/src/theme/colors.ts` exactly (same
+ * dark-first palette, same names) so the web app reads as the same
+ * product, not a different-looking clone — see docs/DESIGN.md. Tailwind
+ * v4's `@theme` block generates `bg-*`/`text-*`/`border-*` utilities
+ * directly from these custom properties, so `bg-accent`, `text-text-
+ * secondary`, etc. all work exactly like their mobile-app equivalents.
+ */
+@theme {
+  --color-background: #000000;
+  --color-surface: #151923;
+  --color-surface-elevated: #1e2330;
+  --color-border: #2a3040;
+
+  --color-text-primary: #ffffff;
+  --color-text-secondary: #9aa3b2;
+  --color-text-tertiary: #5c6577;
+  --color-text-inverse: #000000;
+
+  --color-yes: #22c55e;
+  --color-yes-muted: rgba(34, 197, 94, 0.15);
+  --color-no: #f43f5e;
+  --color-no-muted: rgba(244, 63, 94, 0.15);
+
+  --color-accent: #fdcc03;
+  --color-accent-muted: rgba(253, 204, 3, 0.15);
+  --color-warning: #f59e0b;
+  --color-danger: #ef4444;
+
+  --color-overlay: rgba(0, 0, 0, 0.6);
+
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, -apple-system, sans-serif;
+
+  /**
+   * Text sizes and border radii mirror `apps/mobile/tailwind.config.js`
+   * exactly (same pixel values) — so a component copied over from a
+   * mobile screen using `text-jumbo`, `rounded-md`, etc. renders at the
+   * same size here, not whatever Tailwind's own unrelated defaults for
+   * those names happen to be.
+   */
+  --text-jumbo: 60px;
+  --text-jumbo--line-height: 54px;
+  --text-display: 32px;
+  --text-display--line-height: 38px;
+  --text-heading: 24px;
+  --text-heading--line-height: 30px;
+  --text-title: 18px;
+  --text-title--line-height: 24px;
+  --text-body: 15px;
+  --text-body--line-height: 21px;
+  --text-body-strong: 15px;
+  --text-body-strong--line-height: 21px;
+  --text-caption: 13px;
+  --text-caption--line-height: 18px;
+  --text-micro: 11px;
+  --text-micro--line-height: 15px;
+
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 16px;
+}
+
+/**
+ * `font-inter-*` utilities — mobile carries weight via which static
+ * Inter file is loaded (`theme/typography.ts`'s doc comment explains
+ * why: mixing a numeric `fontWeight` with a custom static font is an
+ * RN/Android gotcha). The web variable font has no such constraint, but
+ * these are kept as the same named utilities (family + weight bundled
+ * into one class) rather than switched to plain `font-bold` etc., so a
+ * component's className copied verbatim from a mobile screen works
+ * unchanged here.
+ */
+@utility font-inter-regular {
+  font-family: var(--font-inter);
+  font-weight: 400;
+}
+@utility font-inter-medium {
+  font-family: var(--font-inter);
+  font-weight: 500;
+}
+@utility font-inter-semibold {
+  font-family: var(--font-inter);
+  font-weight: 600;
+}
+@utility font-inter-bold {
+  font-family: var(--font-inter);
+  font-weight: 700;
+}
+@utility font-inter-extrabold {
+  font-family: var(--font-inter);
+  font-weight: 800;
+}
+
+html,
+body {
+  background-color: var(--color-background);
+  color: var(--color-text-primary);
+}

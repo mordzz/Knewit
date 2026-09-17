@@ -1,0 +1,330 @@
+import { useEffect, useState } from 'react';
+import { View, Image, KeyboardAvoidingView, Platform } from 'react-native';
+import Animated, {
+  useAnimatedStyle,
+  useSharedValue,
+  withDelay,
+  withTiming,
+} from 'react-native-reanimated';
+import {
+  useLoginWithEmail,
+  useLoginWithOAuth,
+  useEmbeddedEthereumWallet,
+  type User as PrivyUser,
+} from '@privy-io/expo';
+import { useNavigation } from '@react-navigation/native';
+import { Screen } from '@/components/layout/Screen';
+import { Text } from '@/components/ui/Text';
+import { Button } from '@/components/ui/Button';
+import { Input } from '@/components/ui/Input';
+import { GlassSurface } from '@/components/ui/GlassSurface';
+import { XLogo } from '@/components/ui/XLogo';
+import { isPrivyConfigured } from '@/app/config/env';
+
+/**
+ * Privy's embedded-wallet sign-in flow — email-OTP plus Google/X OAuth.
+ * Layout: ambient corner glow → plain logo → one glass panel, styled
+ * and anchored like a bottom sheet (edge-to-edge, rounded top corners
+ * only, flush with the screen's bottom edge), holding *everything*
+ * else on this screen — title, email/code step, "Or sign in with"
+ * divider, Google/X, the error line, and the security footnote. Only
+ * this screen uses `GlassSurface` this way (one shared full-bleed
+ * panel for every login option, not a single floating card) — every
+ * other use of `GlassSurface` in the app wraps a normal inset card, so
+ * this composition is deliberately scoped to `SignInScreen`, not a
+ * change to the component itself. `Screen`'s scroll content container
+ * hardcodes `px-4` (see `components/layout/Screen`) — countered here
+ * with an explicit `px-0` (via `cn`'s `tailwind-merge`, the last
+ * conflicting utility wins) so this panel is genuinely edge-to-edge;
+ * the logo section re-adds its own `px-4` since it isn't meant to be
+ * full-bleed. The email input and Google/X buttons also use a
+ * translucent (`bg-white/10`) fill instead of their normal solid one
+ * — an approximation, not a second `BlurView` per element, but
+ * sitting on top of the panel's own blur reads as "also glass" at
+ * rest — so every surface on this screen matches, not just the panel
+ * itself. The X brand mark is a real SVG path
+ * (`components/ui/XLogo`), not a font glyph — see that component's own
+ * comment for why. A brief fade/rise-in on mount uses
+ * `react-native-reanimated` rather than React Native's own `Animated`
+ * — this project's ESLint `react-hooks/refs` rule flags reading an
+ * `Animated.Value` during render (the classic API's normal, required
+ * usage) as an illegal ref read; Reanimated's `useSharedValue`/
+ * `useAnimatedStyle` are the compiler/lint-safe replacement.
+ *
+ * Two contexts, per docs/DECISIONS.md ("Hard Login Gate"): the app's
+ * own launch gate when signed out (`RootNavigator` renders this with
+ * nothing to go back to), and a modal presented on demand when already
+ * signed in but not yet wallet-connected (e.g. taking a position).
+ * `navigation.goBack()` below only does anything in the second case —
+ * react-navigation's `goBack()` is a documented no-op with nothing to
+ * go back to, and either way `isAuthenticated` flipping true is what
+ * actually swaps `RootNavigator` off this screen in the launch-gate
+ * case, not this call. No seed phrase is ever shown or collected;
+ * Privy manages the embedded wallet's key material entirely — see
+ * docs/WALLET.md.
+ *
+ * **Google/X sign-in requires those providers to be enabled as login
+ * methods in the Privy Dashboard** (Login Methods settings) — this is
+ * dashboard configuration, not something this code can do. Without it,
+ * `login({ provider })` below fails with a real Privy error, surfaced
+ * the same way any other auth failure is, never silently.
+ */
+export function SignInScreen() {
+  const navigation = useNavigation();
+  const [email, setEmail] = useState('');
+  const [code, setCode] = useState('');
+  const [walletError, setWalletError] = useState<string | null>(null);
+  const { create: createWallet } = useEmbeddedEthereumWallet();
+
+  const logoProgress = useSharedValue(0);
+  const bottomProgress = useSharedValue(0);
+
+  useEffect(() => {
+    logoProgress.value = withTiming(1, { duration: 480 });
+    bottomProgress.value = withDelay(120, withTiming(1, { duration: 480 }));
+  }, [logoProgress, bottomProgress]);
+
+  const logoAnimatedStyle = useAnimatedStyle(() => ({
+    opacity: logoProgress.value,
+    transform: [{ translateY: (1 - logoProgress.value) * 16 }],
+  }));
+  const bottomAnimatedStyle = useAnimatedStyle(() => ({
+    opacity: bottomProgress.value,
+    transform: [{ translateY: (1 - bottomProgress.value) * 24 }],
+  }));
+
+  /** Shared by every login path (email, Google, X) — a brand-new user
+   * has no embedded wallet yet, and creating one is a real, deliberate
+   * action tied to this specific login, not a silent background effect
+   * — see docs/DECISIONS.md. */
+  const ensureWalletThenClose = async (user: PrivyUser) => {
+    const hasEthereumWallet = user.linked_accounts.some(
+      (account) => account.type === 'wallet' && account.chain_type === 'ethereum'
+    );
+    if (!hasEthereumWallet) {
+      try {
+        await createWallet();
+      } catch (error) {
+        if (__DEV__) console.warn('[wallet] embedded wallet creation failed', error);
+        setWalletError("Signed in, but couldn't set up your wallet. Try again from Wallet.");
+        return;
+      }
+    }
+    navigation.goBack();
+  };
+
+  const { state, sendCode, loginWithCode } = useLoginWithEmail({
+    onLoginSuccess: ensureWalletThenClose,
+  });
+
+  const { state: oAuthState, login: loginWithOAuth } = useLoginWithOAuth();
+
+  if (!isPrivyConfigured) {
+    return (
+      <Screen className="items-center justify-center gap-2">
+        <Image
+          source={require('../../../../assets/icon.png')}
+          className="h-16 w-16 rounded-2xl"
+          accessibilityLabel="Knewit"
+        />
+        <Text variant="heading" className="mt-4 text-center">
+          Wallet sign-in isn&apos;t configured yet
+        </Text>
+        <Text variant="body" color="textSecondary" className="text-center">
+          This build is missing its Privy app credentials — see docs/WALLET.md.
+        </Text>
+      </Screen>
+    );
+  }
+
+  const isSendingCode = state.status === 'sending-code';
+  const isAwaitingCode =
+    state.status === 'awaiting-code-input' || state.status === 'submitting-code';
+  const isSubmittingCode = state.status === 'submitting-code';
+  const isOAuthLoading = oAuthState.status === 'loading';
+  const errorMessage =
+    state.status === 'error'
+      ? (state.error?.message ?? 'Something went wrong. Try again.')
+      : oAuthState.status === 'error'
+        ? (oAuthState.error?.message ?? 'Something went wrong. Try again.')
+        : walletError;
+
+  const handleSendCode = async () => {
+    setWalletError(null);
+    await sendCode({ email });
+  };
+
+  const handleVerifyCode = async () => {
+    setWalletError(null);
+    await loginWithCode({ code, email });
+  };
+
+  const handleOAuthLogin = async (provider: 'google' | 'twitter') => {
+    setWalletError(null);
+    const user = await loginWithOAuth({ provider });
+    if (user) await ensureWalletThenClose(user);
+  };
+
+  return (
+    <KeyboardAvoidingView
+      className="flex-1"
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+    >
+      <Screen scroll contentContainerClassName="flex-grow justify-between overflow-hidden px-0">
+        {/* Ambient corner glows — this app's stand-in for a mesh
+            gradient/hero illustration: no gradient library is
+            installed and no illustration asset exists, so depth comes
+            from large, very-low-opacity accent blobs anchored off two
+            corners rather than a flat black void. */}
+        <View
+          pointerEvents="none"
+          className="absolute -left-24 -top-16 h-72 w-72 rounded-full bg-accent"
+          style={{ opacity: 0.08 }}
+        />
+        <View
+          pointerEvents="none"
+          className="absolute -bottom-32 -right-20 h-80 w-80 rounded-full bg-accent"
+          style={{ opacity: 0.06 }}
+        />
+
+        <Animated.View
+          style={logoAnimatedStyle}
+          className="flex-1 items-center justify-center px-4 pt-10"
+        >
+          <Image
+            source={require('../../../../assets/icon.png')}
+            className="h-36 w-36 rounded-[32px]"
+            accessibilityLabel="Knewit"
+            style={{
+              shadowColor: '#000000',
+              shadowOffset: { width: 0, height: 18 },
+              shadowOpacity: 0.5,
+              shadowRadius: 24,
+            }}
+          />
+        </Animated.View>
+
+        <Animated.View style={bottomAnimatedStyle} className="w-full">
+          <GlassSurface
+            tone="dark"
+            radius={24}
+            className="w-full"
+            contentClassName="gap-4 px-4 pb-8 pt-3"
+            style={{ borderBottomLeftRadius: 0, borderBottomRightRadius: 0 }}
+          >
+            {/* Drag-handle bar — same visual cue `BottomSheet` uses, so
+                this glass panel reads as a bottom sheet even though it
+                doesn't reuse that component directly (this sheet never
+                closes/dismisses, so `BottomSheet`'s modal+backdrop
+                machinery isn't a fit here). */}
+            <View className="mb-1 h-1 w-9 self-center rounded-full bg-white/20" />
+
+            {!isAwaitingCode ? (
+              <>
+                <View className="items-center gap-1">
+                  <Text className="text-3xl font-bold text-center">
+                    Sign in
+                  </Text>
+                  <Text variant="caption" color="textSecondary" className="text-center">
+                    Enter your email to get started
+                  </Text>
+                </View>
+
+                <Input
+                  value={email}
+                  onChangeText={setEmail}
+                  placeholder="Enter your email"
+                  keyboardType="email-address"
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                  editable={!isSendingCode}
+                  accessibilityLabel="Email address"
+                  className="border-white/15 bg-white/10"
+                />
+                <Button
+                  label="Continue"
+                  onPress={handleSendCode}
+                  loading={isSendingCode}
+                  disabled={email.trim().length === 0}
+                  className="w-full"
+                />
+              </>
+            ) : (
+              <>
+                <Text variant="caption" color="textSecondary" className="text-center">
+                  Enter the code sent to {email}
+                </Text>
+                <Input
+                  value={code}
+                  onChangeText={setCode}
+                  placeholder="123456"
+                  keyboardType="number-pad"
+                  editable={!isSubmittingCode}
+                  accessibilityLabel="Verification code"
+                  className="border-white/15 bg-white/10"
+                />
+                <Button
+                  label="Verify"
+                  onPress={handleVerifyCode}
+                  loading={isSubmittingCode}
+                  disabled={code.trim().length === 0}
+                  className="w-full"
+                />
+                <Button
+                  label="Use a different email"
+                  variant="ghost"
+                  onPress={() => {
+                    setCode('');
+                    setWalletError(null);
+                    setEmail('');
+                  }}
+                  className="w-full"
+                />
+              </>
+            )}
+
+            <View className="w-full flex-row items-center gap-3">
+              <View className="h-px flex-1 bg-border" />
+              <Text variant="caption" color="textTertiary">
+                Or sign in with
+              </Text>
+              <View className="h-px flex-1 bg-border" />
+            </View>
+
+            <View className="w-full gap-3">
+              <Button
+                label="Continue with Google"
+                icon="logo-google"
+                variant="secondary"
+                onPress={() => handleOAuthLogin('google')}
+                disabled={isOAuthLoading || isAwaitingCode}
+                accessibilityLabel="Continue with Google"
+                className="w-full bg-white/10"
+              />
+              <Button
+                label="Continue with X"
+                iconElement={<XLogo size={16} color="textPrimary" />}
+                variant="secondary"
+                onPress={() => handleOAuthLogin('twitter')}
+                disabled={isOAuthLoading || isAwaitingCode}
+                accessibilityLabel="Continue with X"
+                className="w-full bg-white/10"
+              />
+            </View>
+
+            {errorMessage ? (
+              <Text variant="caption" color="danger" className="text-center">
+                {errorMessage}
+              </Text>
+            ) : null}
+
+            <Text variant="micro" color="textTertiary" className="text-center">
+              Your wallet is securely managed through Privy. We never see or store your private
+              keys.
+            </Text>
+          </GlassSurface>
+        </Animated.View>
+      </Screen>
+    </KeyboardAvoidingView>
+  );
+}

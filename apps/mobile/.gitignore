@@ -1,0 +1,7 @@
+/.expo
+.env
+
+.prettierignore
+.prettierjson
+
+/node_modules
