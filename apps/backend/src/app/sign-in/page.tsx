@@ -1,11 +1,12 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { useLoginWithEmail, useLoginWithOAuth } from '@privy-io/react-auth';
 import { FcGoogle } from 'react-icons/fc';
 import { FaXTwitter } from 'react-icons/fa6';
+import { CodeInput } from '@/components/ui/CodeInput';
 import { publicEnv } from '@/lib/publicEnv';
 
 /**
@@ -15,9 +16,10 @@ import { publicEnv } from '@/lib/publicEnv';
  * (`app/(app)/layout.tsx`) so this looks like the mobile app's screen
  * viewed bigger, not a separate desktop composition: ambient corner
  * glows, a centered logo above, and a bottom panel (rounded top
- * corners only, flush with the frame's own bottom edge — mobile's
- * bottom-sheet-styled `GlassSurface` panel, approximated here without
- * a blur effect DOM has no equivalent for) holding the email/code step,
+ * corners only, flush with the frame's own bottom edge — the same
+ * solid-black + glass-edge treatment as mobile's sign-in panel and the
+ * `Modal`/`BottomSheet` surfaces: `bg-background` + faint white border
+ * with a brighter top edge) holding the email/code step,
  * "Or sign in with" divider, Google/X buttons, error line, and security
  * footnote — same order, same copy.
  *
@@ -46,6 +48,13 @@ export default function SignInPage() {
   const router = useRouter();
   const [email, setEmail] = useState('');
   const [code, setCode] = useState('');
+  const [resendSeconds, setResendSeconds] = useState(0);
+
+  useEffect(() => {
+    if (resendSeconds <= 0) return;
+    const timer = setTimeout(() => setResendSeconds((seconds) => seconds - 1), 1000);
+    return () => clearTimeout(timer);
+  }, [resendSeconds]);
 
   const goHome = () => router.push('/');
 
@@ -80,6 +89,17 @@ export default function SignInPage() {
 
   const handleSendCode = async () => {
     await sendCode({ email });
+    setResendSeconds(60);
+  };
+
+  const handleResendCode = async () => {
+    setResendSeconds(60);
+    await sendCode({ email });
+  };
+
+  const handleChangeEmail = () => {
+    setCode('');
+    setEmail('');
   };
 
   const handleVerifyCode = async () => {
@@ -115,7 +135,7 @@ export default function SignInPage() {
         />
       </div>
 
-      <div className="relative z-10 w-full rounded-t-3xl border-t border-white/10 bg-surface px-4 pb-8 pt-3">
+      <div className="relative z-10 w-full rounded-t-3xl border border-b-0 border-white/[0.14] border-t-white/30 bg-background px-4 pb-8 pt-3">
         <div className="mb-1 h-1 w-9 self-center rounded-full bg-white/20" />
 
         {!isAwaitingCode ? (
@@ -145,33 +165,43 @@ export default function SignInPage() {
           </div>
         ) : (
           <div className="flex flex-col gap-4">
-            <p className="text-center text-sm text-text-secondary">
-              Enter the code sent to {email}
-            </p>
-            <input
-              type="text"
-              inputMode="numeric"
-              value={code}
-              onChange={(e) => setCode(e.target.value)}
-              placeholder="123456"
-              disabled={isSubmittingCode}
-              className="min-h-12 rounded-md border border-white/15 bg-white/10 px-3 py-3 text-center text-text-primary placeholder:text-text-tertiary focus:outline-none focus:ring-1 focus:ring-accent"
-            />
+            <div className="flex flex-col items-center gap-1 text-center">
+              <h1 className="text-3xl font-bold">Check your email</h1>
+              <p className="text-sm text-text-secondary">We sent a 6-digit code to {email}</p>
+            </div>
+
+            <CodeInput value={code} onChange={setCode} disabled={isSubmittingCode} />
+
             <button
               type="button"
               onClick={handleVerifyCode}
-              disabled={isSubmittingCode || code.trim().length === 0}
+              disabled={isSubmittingCode || code.length !== 6}
               className="min-h-12 rounded-md border border-white/15 bg-accent px-6 py-3 font-semibold text-text-inverse transition-opacity hover:opacity-90 disabled:opacity-50"
             >
               {isSubmittingCode ? 'Verifying…' : 'Verify'}
             </button>
-            <button
-              type="button"
-              onClick={() => setCode('')}
-              className="min-h-12 rounded-md border border-white/10 bg-transparent px-6 py-3 text-text-secondary transition-opacity hover:opacity-80"
-            >
-              Use a different email
-            </button>
+
+            <div className="flex items-center justify-center gap-4">
+              {resendSeconds > 0 ? (
+                <span className="text-xs text-text-tertiary">Resend in {resendSeconds}s</span>
+              ) : (
+                <button
+                  type="button"
+                  onClick={handleResendCode}
+                  disabled={isSendingCode}
+                  className="text-xs font-semibold text-text-secondary transition-opacity hover:opacity-80 disabled:opacity-50"
+                >
+                  Resend code
+                </button>
+              )}
+              <button
+                type="button"
+                onClick={handleChangeEmail}
+                className="text-xs font-semibold text-text-secondary transition-opacity hover:opacity-80"
+              >
+                Change email
+              </button>
+            </div>
           </div>
         )}
 

@@ -1,5 +1,4 @@
 import type { ReactNode } from 'react';
-import { GlassSurface } from '@/components/ui/GlassSurface';
 
 export interface ModalProps {
   visible: boolean;
@@ -9,8 +8,11 @@ export interface ModalProps {
 
 /**
  * Web equivalent of `apps/mobile/src/components/ui/Modal` — a centered
- * glass dialog. `BottomSheet` is the one surface that stays solid
- * instead; every other panel, including this one, is glass.
+ * dialog sharing the same solid surface as `BottomSheet`: absolute black
+ * (`bg-background`) with the glass *edge* only (faint white border plus a
+ * brighter top edge), instead of the old translucent `GlassSurface`.
+ * Non-overlay panels stay glass — see docs/DECISIONS.md ("BottomSheet &
+ * Modal Solid Black + Glass Border").
  */
 export function Modal({ visible, onClose, children }: ModalProps) {
   if (!visible) return null;
@@ -26,7 +28,9 @@ export function Modal({ visible, onClose, children }: ModalProps) {
       role="presentation"
     >
       <div className="w-full max-w-[420px]" onClick={(e) => e.stopPropagation()}>
-        <GlassSurface contentClassName="p-6">{children}</GlassSurface>
+        <div className="rounded-2xl border border-white/[0.14] border-t-white/30 bg-background p-6">
+          {children}
+        </div>
       </div>
     </div>
   );

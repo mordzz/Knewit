@@ -3,6 +3,7 @@ import { AppState, AppStateStatus, Platform } from 'react-native';
 import NetInfo from '@react-native-community/netinfo';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { PrivyProvider } from '@privy-io/expo';
+import { PrivyElements } from '@privy-io/expo/ui';
 import {
   QueryCache,
   QueryClient,
@@ -69,6 +70,11 @@ export function AppProviders({ children }: PropsWithChildren) {
       <QueryClientProvider client={queryClient}>
         <PrivyProvider appId={env.privyAppId} clientId={env.privyClientId || undefined}>
           <PrivySessionBridge />
+          {/* Privy's own UI layer — required by the `/ui` hooks, e.g. the
+              funding flow behind the Wallet screen's Deposit button
+              (docs/WALLET.md, "Deposit"). Dark + brand accent so its
+              modals match the app. */}
+          <PrivyElements config={{ appearance: { colorScheme: 'dark', accentColor: '#FDCC03' } }} />
           {children}
         </PrivyProvider>
       </QueryClientProvider>

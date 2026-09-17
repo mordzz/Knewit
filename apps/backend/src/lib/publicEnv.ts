@@ -10,6 +10,17 @@
  */
 export const publicEnv = {
   privyAppId: process.env.NEXT_PUBLIC_PRIVY_APP_ID ?? '',
+  /** Optional per Privy's SDK — the public client identifier from the
+   * dashboard's Clients section, same public value the mobile app ships
+   * as `EXPO_PUBLIC_PRIVY_CLIENT_ID`. Never the app secret. */
+  privyClientId: process.env.NEXT_PUBLIC_PRIVY_CLIENT_ID ?? '',
+  /** Public key-quorum ID of the backend's authorization key. Used by
+   * the Wallet screen's one-time "Enable trading" button
+   * (`useSigners().addSigners`) so the owner grants the backend's key
+   * signing authority on their embedded wallet — see docs/WALLET.md,
+   * "Backend Signing". Public by design; the private key stays on the
+   * backend. */
+  privySignerId: process.env.NEXT_PUBLIC_PRIVY_SIGNER_ID ?? '',
 };
 
 export const isPrivyConfigured = publicEnv.privyAppId.length > 0;

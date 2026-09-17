@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Animated, Dimensions, Modal, Pressable, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { colors } from '@/theme';
+import { colors, glass } from '@/theme';
 
 export interface BottomSheetProps {
   visible: boolean;
@@ -17,15 +17,16 @@ const SCREEN_HEIGHT = Dimensions.get('window').height;
  * react-native-gesture-handler/reanimated-driven gestures before a real
  * need for them exists — see docs/DECISIONS.md.
  *
- * Deliberately does **not** use `GlassSurface` — every other card/panel
- * in the app is real glassmorphism (blur + translucency), but this sheet
- * specifically stays a solid, opaque panel (`colors.surfaceElevated` +
- * a plain top border), by request — see docs/DECISIONS.md
- * ("Glassmorphism Restored Outside BottomSheet"). Building its own
- * surface directly (rather than adding a third `GlassSurface` tone)
- * keeps that scoping explicit in the code, not just in a prop default
- * someone could change later without noticing this sheet was meant to
- * be the one exception.
+ * Deliberately does **not** use `GlassSurface` — the sheet is a solid,
+ * opaque panel: absolute black (`colors.background`, #000000) with the
+ * *glass edge* recipe (`glass.border` + a brighter `glass.highlight` top
+ * edge) instead of a translucent fill; `Modal` now shares the same solid
+ * treatment, while every non-overlay card/panel stays real
+ * glassmorphism — see docs/DECISIONS.md ("BottomSheet & Modal Solid
+ * Black + Glass Border"). Building its own surface directly (rather than
+ * adding a `GlassSurface` tone) keeps that scoping explicit in the code,
+ * not just in a prop default someone could change later without noticing
+ * these surfaces were meant to be solid.
  */
 export function BottomSheet({ visible, onClose, children }: BottomSheetProps) {
   const [translateY] = useState(() => new Animated.Value(SCREEN_HEIGHT));
@@ -50,11 +51,12 @@ export function BottomSheet({ visible, onClose, children }: BottomSheetProps) {
             <View
               className="p-6"
               style={{
-                backgroundColor: colors.surfaceElevated,
+                backgroundColor: colors.background,
                 borderTopLeftRadius: 20,
                 borderTopRightRadius: 20,
                 borderWidth: 1,
-                borderColor: colors.border,
+                borderColor: glass.border,
+                borderTopColor: glass.highlight,
                 borderBottomWidth: 0,
               }}
             >

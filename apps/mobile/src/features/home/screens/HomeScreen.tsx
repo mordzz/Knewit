@@ -13,8 +13,11 @@ import { CallCard } from '@/features/home/components/CallCard';
 import { useHomeFeed } from '@/features/home/hooks/useHomeFeed';
 import { useFollowingFeed } from '@/features/home/hooks/useFollowingFeed';
 import { useWalletBalance } from '@/features/wallet/hooks/useWalletBalance';
+import { useDeposit } from '@/features/wallet/hooks/useDeposit';
+import { isUserCancelledFunding } from '@/features/wallet/utils/privyErrors';
 import { navigateToMarketDetail } from '@/features/markets/utils/openMarketDetail';
 import { useAuth } from '@/hooks/useAuth';
+import { useWallet } from '@/hooks/useWallet';
 import { colors, FAB_CLEARANCE } from '@/theme';
 import { formatUsd } from '@/utils/formatCurrency';
 import type { FeedItem, MarketSummary } from '@/types/social';
@@ -254,21 +257,54 @@ export function HomeScreen() {
  * "—" when it's unavailable (no wallet, or signing not delegated yet),
  * never a fabricated `$0.00`. Kept as a raw `className` size override
  * (see docs/DECISIONS.md for the caveats) — same treatment as before.
+ * Deposit opens Privy's funding flow once a wallet exists; before that
+ * it routes to sign-in like any gated action.
  */
 function Header() {
   const navigation = useNavigation();
+  const { isAuthenticated } = useAuth();
+  const { isConnected } = useWallet();
   const balance = useWalletBalance();
+  const { deposit } = useDeposit();
+  const [isDepositing, setIsDepositing] = useState(false);
+  const [depositError, setDepositError] = useState<string | null>(null);
 
   const balanceLabel = balance.data?.usdc != null ? formatUsd(balance.data.usdc) : '—';
 
+  const handleDeposit = async () => {
+    if (!isAuthenticated || !isConnected) {
+      navigation.navigate('Auth');
+      return;
+    }
+    setDepositError(null);
+    setIsDepositing(true);
+    try {
+      await deposit();
+    } catch (depositFailure) {
+      if (isUserCancelledFunding(depositFailure)) return; // closing Privy's modal is not a failure
+      if (__DEV__) console.warn('[home] deposit flow failed', depositFailure);
+      setDepositError("Couldn't open the deposit flow. Please try again.");
+    } finally {
+      setIsDepositing(false);
+    }
+  };
+
   return (
-    <View className="flex-row items-center justify-between border-b border-border px-4 pb-3 pt-4">
-      <Text className="text-4xl font-bold">{balanceLabel}</Text>
-      <Button
-        label="Deposit"
-        onPress={() => navigation.navigate('Auth')}
-        className="h-12 min-h-0 rounded-full px-12 py-0 text-lg font-semibold"
-      />
+    <View className="border-b border-border px-4 pb-3 pt-4">
+      <View className="flex-row items-center justify-between">
+        <Text className="text-4xl font-bold">{balanceLabel}</Text>
+        <Button
+          label="Deposit"
+          loading={isDepositing}
+          onPress={handleDeposit}
+          className="min-h-0 px-4 py-2"
+        />
+      </View>
+      {depositError ? (
+        <Text variant="caption" color="danger" className="mt-1">
+          {depositError}
+        </Text>
+      ) : null}
     </View>
   );
 }

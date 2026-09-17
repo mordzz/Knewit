@@ -11,8 +11,10 @@ export interface BottomSheetProps {
  * slide-up sheet anchored to the bottom of the app shell's own frame
  * (`absolute`, not `fixed` — see `Modal`'s comment on why), a CSS
  * transform transition standing in for RN's `Animated.timing`.
- * Deliberately solid (`bg-surface-elevated`), not glass — the one
- * exception to this app's glassmorphism, same as mobile.
+ * Solid absolute black (`bg-background`) with the glass *edge* only —
+ * a faint white border plus a brighter top edge — the same treatment
+ * `Modal` now shares; every non-overlay panel stays glass — see
+ * docs/DECISIONS.md ("BottomSheet & Modal Solid Black + Glass Border").
  */
 export function BottomSheet({ visible, onClose, children }: BottomSheetProps) {
   return (
@@ -24,7 +26,7 @@ export function BottomSheet({ visible, onClose, children }: BottomSheetProps) {
       role="presentation"
     >
       <div
-        className={`w-full rounded-t-[20px] border border-b-0 border-border bg-surface-elevated p-6 transition-transform duration-[250ms] ${
+        className={`w-full rounded-t-[20px] border border-b-0 border-white/[0.14] border-t-white/30 bg-background p-6 transition-transform duration-[250ms] ${
           visible ? 'translate-y-0' : 'translate-y-full'
         }`}
         onClick={(e) => e.stopPropagation()}

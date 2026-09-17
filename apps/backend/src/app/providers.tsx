@@ -2,8 +2,16 @@
 
 import { useState, type ReactNode } from 'react';
 import { PrivyProvider } from '@privy-io/react-auth';
+import { toSolanaWalletConnectors } from '@privy-io/react-auth/solana';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { publicEnv } from '@/lib/publicEnv';
+
+/** Module-level so the connector registry (and its wallet-standard
+ * listeners, registered by Privy via `onMount`) is created once, not on
+ * every `Providers` re-render. `@wallet-standard/app`'s `getWallets()` is
+ * SSR-safe (it returns early without `window`), so calling it during the
+ * server render of this client component is fine. */
+const solanaConnectors = toSolanaWalletConnectors();
 
 /**
  * Client-side provider tree for the web app — Privy (email-OTP +
@@ -26,10 +34,34 @@ export function Providers({ children }: { children: ReactNode }) {
     <QueryClientProvider client={queryClient}>
       <PrivyProvider
         appId={publicEnv.privyAppId}
+        clientId={publicEnv.privyClientId || undefined}
         config={{
           appearance: { theme: 'dark', accentColor: '#FDCC03' },
           loginMethods: ['email', 'google', 'twitter'],
           embeddedWallets: { ethereum: { createOnLogin: 'users-without-wallets' } },
+          // MoonPay's hosted UI has its own theme; match the app's dark +
+          // brand yellow so the deposit flow never flashes a light screen
+          // (the Privy-owned part already follows `appearance` above).
+          // Coinbase's on-ramp exposes no theme options.
+          fundingMethodConfig: {
+            moonpay: { uiConfig: { accentColor: '#FDCC03', theme: 'dark' } },
+          },
+          // Solana wallet login is enabled in the Privy Dashboard for this
+          // app, so the SDK warns unless real wallet-standard connectors
+          // are passed. `toSolanaWalletConnectors()` is Privy's own helper
+          // (needs the `@solana-program/*` peers installed — memo is the
+          // only one that wasn't); `loginMethods` above keeps Solana out of
+          // the login modal. See docs/WALLET.md.
+          //
+          // WalletConnect is disabled: this app never offers external
+          // wallets (email/Google/X only, embedded wallet is the trading
+          // wallet), and WalletConnect Core's dev-time double-init warning
+          // ("Init() was called 2 times") comes from it being initialized
+          // for a connector that can't surface anyway.
+          externalWallets: {
+            walletConnect: { enabled: false },
+            solana: { connectors: solanaConnectors },
+          },
         }}
       >
         {children}

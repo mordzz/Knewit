@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { usePrivy, useCreateWallet } from '@privy-io/react-auth';
 import { BottomTabBar } from '@/components/BottomTabBar';
 import { Fab } from '@/components/Fab';
+import { useAutoEnableSigner } from '@/hooks/useAutoEnableSigner';
 
 /**
  * Shell for every authenticated page (Home, Markets, Search,
@@ -28,6 +29,10 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   const { ready, authenticated, user } = usePrivy();
   const { createWallet } = useCreateWallet();
   const attemptedWalletCreation = useRef(false);
+
+  // Owner-consent for the backend's authorization key, once per session —
+  // see the hook's own doc comment (docs/WALLET.md, "Backend Signing").
+  useAutoEnableSigner();
 
   useEffect(() => {
     if (ready && !authenticated) {

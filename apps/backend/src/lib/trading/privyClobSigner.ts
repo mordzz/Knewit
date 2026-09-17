@@ -16,15 +16,16 @@ function getPrivyClient(): PrivyClient {
  * without this backend ever touching a private key — Privy does, via
  * its server-side wallet RPC (`eth_signTypedData_v4`).
  *
- * **Requires the wallet to have delegated signing authority to this
- * app** (Privy's "session signers"/delegated actions) — the mobile
- * app (`apps/frontend`, Sprint 6) only implemented wallet
- * creation/connection, not delegation, so this call is expected to be
- * rejected by Privy until that client-side prerequisite is added.
- * This is intentionally not silently caught: the caller (see
- * `app/api/trading/orders/route.ts`) surfaces whatever error Privy
- * returns as a real trade failure, never a fabricated success — see
- * docs/DECISIONS.md, "No Fake Trade Success."
+ * **Requires the app's Privy authorization key.** The user owns the
+ * embedded wallet, so Privy only accepts a signing request that carries
+ * an authorization signature from a key registered as a signer on that
+ * wallet: the P-256 key created in the Privy Dashboard's "Authorization
+ * keys", added as a signer on the app's embedded wallets, and provided
+ * here as `PRIVY_AUTHORIZATION_PRIVATE_KEY` (docs/WALLET.md, "Backend
+ * Signing"). Missing that key is a clear local error; a rejected or
+ * unauthorized request surfaces whatever Privy returns as a real trade
+ * failure — never a fabricated success (see docs/DECISIONS.md, "No Fake
+ * Trade Success").
  */
 /** Structurally matches `@polymarket/clob-client`'s `ClobSigner`
  * union's `EthersSigner` variant (`_signTypedData` + `getAddress`) —
@@ -61,6 +62,15 @@ export class PrivyClobSigner {
       throw new Error('signTypedData: no primary type found in `types`.');
     }
 
+    const authorizationPrivateKey = env.privyAuthorizationPrivateKey;
+    if (!authorizationPrivateKey) {
+      throw new Error(
+        'Missing PRIVY_AUTHORIZATION_PRIVATE_KEY. Create an authorization key in the Privy ' +
+          'Dashboard, register it as a signer on the app\'s embedded wallets, and set its ' +
+          'base64 PKCS8 private key in the backend environment — see docs/WALLET.md, "Backend Signing".'
+      );
+    }
+
     const result = await getPrivyClient().wallets().ethereum().signTypedData(this.walletId, {
       params: {
         typed_data: {
@@ -70,6 +80,7 @@ export class PrivyClobSigner {
           message: value,
         },
       },
+      authorization_context: { authorization_private_keys: [authorizationPrivateKey] },
     });
 
     return result.signature;

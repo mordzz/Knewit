@@ -1,5 +1,5 @@
-import { Modal as RNModal, Pressable } from 'react-native';
-import { GlassSurface } from '@/components/ui/GlassSurface';
+import { Modal as RNModal, Pressable, View } from 'react-native';
+import { colors, glass } from '@/theme';
 
 export interface ModalProps {
   visible: boolean;
@@ -8,11 +8,12 @@ export interface ModalProps {
 }
 
 /**
- * A centered glass dialog (real glassmorphism, via `GlassSurface`'s
- * default `tone="light"`) — `BottomSheet` is the one surface in the app
- * that stays solid instead; every other panel, including this one, is
- * glass — see docs/DECISIONS.md ("Glassmorphism Restored Outside
- * BottomSheet"). For a bottom-anchored sheet, use
+ * A centered dialog sharing the same solid surface as `BottomSheet`:
+ * absolute black (`colors.background`, #000000) with the glass *edge*
+ * recipe (`glass.border` + a brighter `glass.highlight` top edge). It no
+ * longer uses `GlassSurface` — non-overlay cards/panels stay real
+ * glassmorphism — see docs/DECISIONS.md ("BottomSheet & Modal Solid
+ * Black + Glass Border"). For a bottom-anchored sheet, use
  * `components/ui/BottomSheet` instead.
  */
 export function Modal({ visible, onClose, children }: ModalProps) {
@@ -24,7 +25,18 @@ export function Modal({ visible, onClose, children }: ModalProps) {
         accessibilityLabel="Close"
       >
         <Pressable className="w-full max-w-[420px]" onPress={(e) => e.stopPropagation()}>
-          <GlassSurface contentClassName="p-6">{children}</GlassSurface>
+          <View
+            className="p-6"
+            style={{
+              backgroundColor: colors.background,
+              borderRadius: 16,
+              borderWidth: 1,
+              borderColor: glass.border,
+              borderTopColor: glass.highlight,
+            }}
+          >
+            {children}
+          </View>
         </Pressable>
       </Pressable>
     </RNModal>

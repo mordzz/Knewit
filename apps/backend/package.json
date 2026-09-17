@@ -12,6 +12,7 @@
     "@polymarket/clob-client": "^5.8.1",
     "@privy-io/node": "^0.34.0",
     "@privy-io/react-auth": "^3.43.0",
+    "@solana-program/memo": "^0.10.0",
     "@stripe/stripe-js": "^9.16.0",
     "@supabase/supabase-js": "^2.116.0",
     "@tanstack/react-query": "^5.103.1",

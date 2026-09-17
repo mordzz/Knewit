@@ -18,6 +18,15 @@ export const env = {
   get privyAppSecret() {
     return required('PRIVY_APP_SECRET', process.env.PRIVY_APP_SECRET);
   },
+  /** P-256 authorization key (base64 PKCS8, no PEM headers) whose public
+   * half the Privy Dashboard registered as a signer on this app's user
+   * embedded wallets. Lets the backend sign L1/L2 auth and orders on a
+   * user's behalf (`privyClobSigner.ts`). Optional at boot — read-only
+   * browsing works without it; signing fails with a clear error instead
+   * (docs/WALLET.md, "Backend Signing"). */
+  get privyAuthorizationPrivateKey() {
+    return process.env.PRIVY_AUTHORIZATION_PRIVATE_KEY;
+  },
   get polymarketGammaBaseUrl() {
     return process.env.POLYMARKET_GAMMA_BASE_URL ?? 'https://gamma-api.polymarket.com';
   },

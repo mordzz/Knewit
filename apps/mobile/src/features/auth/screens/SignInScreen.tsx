@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { View, Image, KeyboardAvoidingView, Platform } from 'react-native';
+import { View, Image, KeyboardAvoidingView, Platform, Pressable } from 'react-native';
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
@@ -17,22 +17,25 @@ import { Screen } from '@/components/layout/Screen';
 import { Text } from '@/components/ui/Text';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
-import { GlassSurface } from '@/components/ui/GlassSurface';
+import { Icon } from '@/components/ui/Icon';
+import { CodeInput } from '@/components/ui/CodeInput';
 import { XLogo } from '@/components/ui/XLogo';
 import { isPrivyConfigured } from '@/app/config/env';
+import { colors, glass } from '@/theme';
 
 /**
  * Privy's embedded-wallet sign-in flow — email-OTP plus Google/X OAuth.
- * Layout: ambient corner glow → plain logo → one glass panel, styled
- * and anchored like a bottom sheet (edge-to-edge, rounded top corners
- * only, flush with the screen's bottom edge), holding *everything*
- * else on this screen — title, email/code step, "Or sign in with"
- * divider, Google/X, the error line, and the security footnote. Only
- * this screen uses `GlassSurface` this way (one shared full-bleed
- * panel for every login option, not a single floating card) — every
- * other use of `GlassSurface` in the app wraps a normal inset card, so
- * this composition is deliberately scoped to `SignInScreen`, not a
- * change to the component itself. `Screen`'s scroll content container
+ * Layout: ambient corner glow → plain logo → one panel, styled and
+ * anchored like a bottom sheet (edge-to-edge, rounded top corners only,
+ * flush with the screen's bottom edge), holding *everything* else on
+ * this screen — title, email/code step, "Or sign in with" divider,
+ * Google/X, the error line, and the security footnote. The panel uses
+ * the same solid-black + glass-edge treatment as `BottomSheet`/`Modal`
+ * (`colors.background` + `glass.border`/`glass.highlight`) rather than a
+ * `GlassSurface` fill — see docs/DECISIONS.md ("BottomSheet & Modal
+ * Solid Black + Glass Border"); this composition is deliberately scoped
+ * to `SignInScreen`, not a change to the component itself. `Screen`'s
+ * scroll content container
  * hardcodes `px-4` (see `components/layout/Screen`) — countered here
  * with an explicit `px-0` (via `cn`'s `tailwind-merge`, the last
  * conflicting utility wins) so this panel is genuinely edge-to-edge;
@@ -73,8 +76,15 @@ export function SignInScreen() {
   const navigation = useNavigation();
   const [email, setEmail] = useState('');
   const [code, setCode] = useState('');
+  const [resendSeconds, setResendSeconds] = useState(0);
   const [walletError, setWalletError] = useState<string | null>(null);
   const { create: createWallet } = useEmbeddedEthereumWallet();
+
+  useEffect(() => {
+    if (resendSeconds <= 0) return;
+    const timer = setTimeout(() => setResendSeconds((seconds) => seconds - 1), 1000);
+    return () => clearTimeout(timer);
+  }, [resendSeconds]);
 
   const logoProgress = useSharedValue(0);
   const bottomProgress = useSharedValue(0);
@@ -152,6 +162,19 @@ export function SignInScreen() {
   const handleSendCode = async () => {
     setWalletError(null);
     await sendCode({ email });
+    setResendSeconds(60);
+  };
+
+  const handleResendCode = async () => {
+    setWalletError(null);
+    setResendSeconds(60);
+    await sendCode({ email });
+  };
+
+  const handleChangeEmail = () => {
+    setCode('');
+    setWalletError(null);
+    setEmail('');
   };
 
   const handleVerifyCode = async () => {
@@ -205,124 +228,159 @@ export function SignInScreen() {
         </Animated.View>
 
         <Animated.View style={bottomAnimatedStyle} className="w-full">
-          <GlassSurface
-            tone="dark"
-            radius={24}
-            className="w-full"
-            contentClassName="gap-4 px-4 pb-8 pt-3"
-            style={{ borderBottomLeftRadius: 0, borderBottomRightRadius: 0 }}
+          <View
+            style={{
+              backgroundColor: colors.background,
+              borderTopLeftRadius: 24,
+              borderTopRightRadius: 24,
+              borderWidth: 1,
+              borderColor: glass.border,
+              borderTopColor: glass.highlight,
+              borderBottomWidth: 0,
+            }}
           >
-            {/* Drag-handle bar — same visual cue `BottomSheet` uses, so
-                this glass panel reads as a bottom sheet even though it
+            <View className="gap-4 px-4 pb-8 pt-3">
+              {/* Drag-handle bar — same visual cue `BottomSheet` uses, so
+                this panel reads as a bottom sheet even though it
                 doesn't reuse that component directly (this sheet never
                 closes/dismisses, so `BottomSheet`'s modal+backdrop
                 machinery isn't a fit here). */}
-            <View className="mb-1 h-1 w-9 self-center rounded-full bg-white/20" />
+              <View className="mb-1 h-1 w-9 self-center rounded-full bg-white/20" />
 
-            {!isAwaitingCode ? (
-              <>
-                <View className="items-center gap-1">
-                  <Text className="text-3xl font-bold text-center">
-                    Sign in
-                  </Text>
-                  <Text variant="caption" color="textSecondary" className="text-center">
-                    Enter your email to get started
-                  </Text>
+              {!isAwaitingCode ? (
+                <>
+                  <View className="items-center gap-1">
+                    <Text className="text-3xl font-bold text-center">Sign in</Text>
+                    <Text variant="caption" color="textSecondary" className="text-center">
+                      Enter your email to get started
+                    </Text>
+                  </View>
+
+                  <Input
+                    value={email}
+                    onChangeText={setEmail}
+                    placeholder="Enter your email"
+                    keyboardType="email-address"
+                    autoCapitalize="none"
+                    autoCorrect={false}
+                    editable={!isSendingCode}
+                    accessibilityLabel="Email address"
+                    className="border-white/15 bg-white/10"
+                  />
+                  <Button
+                    label="Continue"
+                    onPress={handleSendCode}
+                    loading={isSendingCode}
+                    disabled={email.trim().length === 0}
+                    className="w-full"
+                  />
+                </>
+              ) : (
+                <View className="gap-4">
+                  <View className="flex-row items-center gap-2">
+                    <Pressable
+                      onPress={handleChangeEmail}
+                      accessibilityRole="button"
+                      accessibilityLabel="Change email"
+                      hitSlop={8}
+                    >
+                      <Icon name="chevron-back" size={22} color="textSecondary" />
+                    </Pressable>
+                    <View className="flex-1">
+                      <Text className="text-2xl font-bold">Check your email</Text>
+                      <Text variant="caption" color="textSecondary">
+                        We sent a 6-digit code to {email}
+                      </Text>
+                    </View>
+                  </View>
+
+                  <CodeInput value={code} onChange={setCode} disabled={isSubmittingCode} />
+
+                  <Button
+                    label="Verify"
+                    onPress={handleVerifyCode}
+                    loading={isSubmittingCode}
+                    disabled={code.length !== 6}
+                    className="w-full"
+                  />
+
+                  <View className="flex-row items-center justify-center gap-4">
+                    {resendSeconds > 0 ? (
+                      <Text variant="caption" color="textTertiary">
+                        Resend in {resendSeconds}s
+                      </Text>
+                    ) : (
+                      <Pressable
+                        onPress={handleResendCode}
+                        disabled={isSendingCode}
+                        accessibilityRole="button"
+                        accessibilityLabel="Resend code"
+                        hitSlop={8}
+                      >
+                        <Text
+                          variant="caption"
+                          color={isSendingCode ? 'textTertiary' : 'textSecondary'}
+                          className="font-semibold"
+                        >
+                          Resend code
+                        </Text>
+                      </Pressable>
+                    )}
+                    <Pressable
+                      onPress={handleChangeEmail}
+                      accessibilityRole="button"
+                      accessibilityLabel="Change email"
+                      hitSlop={8}
+                    >
+                      <Text variant="caption" color="textSecondary" className="font-semibold">
+                        Change email
+                      </Text>
+                    </Pressable>
+                  </View>
                 </View>
+              )}
 
-                <Input
-                  value={email}
-                  onChangeText={setEmail}
-                  placeholder="Enter your email"
-                  keyboardType="email-address"
-                  autoCapitalize="none"
-                  autoCorrect={false}
-                  editable={!isSendingCode}
-                  accessibilityLabel="Email address"
-                  className="border-white/15 bg-white/10"
-                />
-                <Button
-                  label="Continue"
-                  onPress={handleSendCode}
-                  loading={isSendingCode}
-                  disabled={email.trim().length === 0}
-                  className="w-full"
-                />
-              </>
-            ) : (
-              <>
-                <Text variant="caption" color="textSecondary" className="text-center">
-                  Enter the code sent to {email}
+              <View className="w-full flex-row items-center gap-3">
+                <View className="h-px flex-1 bg-border" />
+                <Text variant="caption" color="textTertiary">
+                  Or sign in with
                 </Text>
-                <Input
-                  value={code}
-                  onChangeText={setCode}
-                  placeholder="123456"
-                  keyboardType="number-pad"
-                  editable={!isSubmittingCode}
-                  accessibilityLabel="Verification code"
-                  className="border-white/15 bg-white/10"
+                <View className="h-px flex-1 bg-border" />
+              </View>
+
+              <View className="w-full gap-3">
+                <Button
+                  label="Continue with Google"
+                  icon="logo-google"
+                  variant="secondary"
+                  onPress={() => handleOAuthLogin('google')}
+                  disabled={isOAuthLoading || isAwaitingCode}
+                  accessibilityLabel="Continue with Google"
+                  className="w-full bg-white/10"
                 />
                 <Button
-                  label="Verify"
-                  onPress={handleVerifyCode}
-                  loading={isSubmittingCode}
-                  disabled={code.trim().length === 0}
-                  className="w-full"
+                  label="Continue with X"
+                  iconElement={<XLogo size={16} color="textPrimary" />}
+                  variant="secondary"
+                  onPress={() => handleOAuthLogin('twitter')}
+                  disabled={isOAuthLoading || isAwaitingCode}
+                  accessibilityLabel="Continue with X"
+                  className="w-full bg-white/10"
                 />
-                <Button
-                  label="Use a different email"
-                  variant="ghost"
-                  onPress={() => {
-                    setCode('');
-                    setWalletError(null);
-                    setEmail('');
-                  }}
-                  className="w-full"
-                />
-              </>
-            )}
+              </View>
 
-            <View className="w-full flex-row items-center gap-3">
-              <View className="h-px flex-1 bg-border" />
-              <Text variant="caption" color="textTertiary">
-                Or sign in with
+              {errorMessage ? (
+                <Text variant="caption" color="danger" className="text-center">
+                  {errorMessage}
+                </Text>
+              ) : null}
+
+              <Text variant="micro" color="textTertiary" className="text-center">
+                Your wallet is securely managed through Privy. We never see or store your private
+                keys.
               </Text>
-              <View className="h-px flex-1 bg-border" />
             </View>
-
-            <View className="w-full gap-3">
-              <Button
-                label="Continue with Google"
-                icon="logo-google"
-                variant="secondary"
-                onPress={() => handleOAuthLogin('google')}
-                disabled={isOAuthLoading || isAwaitingCode}
-                accessibilityLabel="Continue with Google"
-                className="w-full bg-white/10"
-              />
-              <Button
-                label="Continue with X"
-                iconElement={<XLogo size={16} color="textPrimary" />}
-                variant="secondary"
-                onPress={() => handleOAuthLogin('twitter')}
-                disabled={isOAuthLoading || isAwaitingCode}
-                accessibilityLabel="Continue with X"
-                className="w-full bg-white/10"
-              />
-            </View>
-
-            {errorMessage ? (
-              <Text variant="caption" color="danger" className="text-center">
-                {errorMessage}
-              </Text>
-            ) : null}
-
-            <Text variant="micro" color="textTertiary" className="text-center">
-              Your wallet is securely managed through Privy. We never see or store your private
-              keys.
-            </Text>
-          </GlassSurface>
+          </View>
         </Animated.View>
       </Screen>
     </KeyboardAvoidingView>

@@ -13,6 +13,8 @@ import { CallCard } from '@/components/CallCard';
 import { useHomeFeed } from '@/hooks/useHomeFeed';
 import { useFollowingFeed } from '@/hooks/useFollowingFeed';
 import { useWalletBalance } from '@/hooks/useWalletBalance';
+import { useDeposit } from '@/hooks/useDeposit';
+import { isUserCancelledFunding } from '@/lib/privyErrors';
 import { formatUsd } from '@/lib/formatters';
 
 type FeedTabKey = 'forYou' | 'following';
@@ -196,18 +198,53 @@ function InfiniteScrollSentinel({
  * from the tabs below by a hairline bottom border. Balance is the real
  * USDC collateral read from Polymarket's CLOB (`useWalletBalance`) —
  * "—" when it's unavailable (no wallet, or signing not delegated yet),
- * never a fabricated `$0.00`.
+ * never a fabricated `$0.00`. Deposit opens Privy's funding flow once a
+ * wallet exists; before that it routes to sign-in like any gated action.
  */
 function Header() {
   const router = useRouter();
+  const { authenticated, user } = usePrivy();
   const balance = useWalletBalance();
+  const { deposit } = useDeposit();
+  const [isDepositing, setIsDepositing] = useState(false);
+  const [depositError, setDepositError] = useState<string | null>(null);
 
   const balanceLabel = balance.data?.usdc != null ? formatUsd(balance.data.usdc) : '—';
 
+  const handleDeposit = async () => {
+    if (!authenticated || !user?.wallet) {
+      router.push('/sign-in');
+      return;
+    }
+    setDepositError(null);
+    setIsDepositing(true);
+    try {
+      await deposit();
+    } catch (error) {
+      if (isUserCancelledFunding(error)) return; // closing Privy's modal is not a failure
+      console.error('Deposit flow failed:', error);
+      setDepositError("Couldn't open the deposit flow. Please try again.");
+    } finally {
+      setIsDepositing(false);
+    }
+  };
+
   return (
-    <div className="flex items-center justify-between border-b border-border px-4 pb-3 pt-4">
-      <Text className="text-4xl font-bold">{balanceLabel}</Text>
-      <Button label="Deposit" onClick={() => router.push('/sign-in')} className="h-12 min-h-0 rounded-full px-12 py-0" />
+    <div className="border-b border-border px-4 pb-3 pt-4">
+      <div className="flex items-center justify-between">
+        <Text className="text-4xl font-bold">{balanceLabel}</Text>
+        <Button
+          label="Deposit"
+          loading={isDepositing}
+          onClick={handleDeposit}
+          className="min-h-0 px-4 py-2"
+        />
+      </div>
+      {depositError ? (
+        <Text variant="caption" color="danger" className="mt-1 block">
+          {depositError}
+        </Text>
+      ) : null}
     </div>
   );
 }
