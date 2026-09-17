@@ -1,5 +1,5 @@
 import { Modal as RNModal, Pressable, View } from 'react-native';
-import { colors, glass } from '@/theme';
+import { solidPanel } from '@/theme';
 
 export interface ModalProps {
   visible: boolean;
@@ -25,16 +25,7 @@ export function Modal({ visible, onClose, children }: ModalProps) {
         accessibilityLabel="Close"
       >
         <Pressable className="w-full max-w-[420px]" onPress={(e) => e.stopPropagation()}>
-          <View
-            className="p-6"
-            style={{
-              backgroundColor: colors.background,
-              borderRadius: 16,
-              borderWidth: 1,
-              borderColor: glass.border,
-              borderTopColor: glass.highlight,
-            }}
-          >
+          <View className="p-6" style={[solidPanel, { borderRadius: 16 }]}>
             {children}
           </View>
         </Pressable>

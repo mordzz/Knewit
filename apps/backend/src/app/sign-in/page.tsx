@@ -7,6 +7,7 @@ import { useLoginWithEmail, useLoginWithOAuth } from '@privy-io/react-auth';
 import { FcGoogle } from 'react-icons/fc';
 import { FaXTwitter } from 'react-icons/fa6';
 import { CodeInput } from '@/components/ui/CodeInput';
+import { SOLID_PANEL_CLASS } from '@/components/ui/solidPanel';
 import { publicEnv } from '@/lib/publicEnv';
 
 /**
@@ -135,7 +136,9 @@ export default function SignInPage() {
         />
       </div>
 
-      <div className="relative z-10 w-full rounded-t-3xl border border-b-0 border-white/[0.14] border-t-white/30 bg-background px-4 pb-8 pt-3">
+      <div
+        className={`relative z-10 w-full rounded-t-3xl ${SOLID_PANEL_CLASS} border-b-0 px-4 pb-8 pt-3`}
+      >
         <div className="mb-1 h-1 w-9 self-center rounded-full bg-white/20" />
 
         {!isAwaitingCode ? (

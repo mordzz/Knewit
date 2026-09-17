@@ -5,13 +5,13 @@ import { Screen } from '@/components/layout/Screen';
 import { Text } from '@/components/ui/Text';
 import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
-import { Card } from '@/components/ui/Card';
 import { Icon } from '@/components/ui/Icon';
 import { Avatar } from '@/components/ui/Avatar';
-import { GlassSurface } from '@/components/ui/GlassSurface';
 import { PositionPickerSheet } from '@/features/home/components/PositionPickerSheet';
 import { useCreateCall } from '@/features/home/hooks/useCreateCall';
+import { useProfile } from '@/features/profile/hooks/useProfile';
 import { useAuth } from '@/hooks/useAuth';
+import { solidPanel } from '@/theme';
 import { formatPrice, formatUsd } from '@/utils/formatCurrency';
 import { choiceTextColor, choiceTone } from '@/utils/choiceTone';
 import type { UserPosition } from '@/types/social';
@@ -36,7 +36,8 @@ const MAX_POST_LENGTH = 280;
  */
 export function CreateCallScreen() {
   const navigation = useNavigation();
-  const { isAuthenticated, user } = useAuth();
+  const { isAuthenticated } = useAuth();
+  const profile = useProfile(undefined, isAuthenticated);
   const [content, setContent] = useState('');
   const [selectedPosition, setSelectedPosition] = useState<UserPosition | null>(null);
   const [pickerVisible, setPickerVisible] = useState(false);
@@ -64,14 +65,19 @@ export function CreateCallScreen() {
     >
       <Screen scroll contentContainerClassName="gap-3 px-4 pb-8 pt-4">
         <View className="flex-row items-center justify-between">
-          <Pressable
-            onPress={() => navigation.goBack()}
-            accessibilityRole="button"
-            accessibilityLabel="Cancel"
-            hitSlop={8}
-          >
-            <Icon name="close" size={24} />
-          </Pressable>
+          <View className="flex-1 flex-row items-center gap-2">
+            <Pressable
+              onPress={() => navigation.goBack()}
+              accessibilityRole="button"
+              accessibilityLabel="Cancel"
+              hitSlop={8}
+            >
+              <Icon name="close" size={24} />
+            </Pressable>
+            <Text variant="heading" className="text-2xl">
+              New Callout
+            </Text>
+          </View>
           <Button
             label={mutation.isPending ? 'Publishing...' : 'Publish Callout'}
             onPress={handlePublish}
@@ -83,7 +89,7 @@ export function CreateCallScreen() {
         </View>
 
         {!isAuthenticated ? (
-          <Card contentClassName="gap-1">
+          <View style={[solidPanel, { borderRadius: 16 }]} className="gap-1 p-3.5">
             <Text variant="bodyStrong">Sign in to publish</Text>
             <Text variant="caption" color="textSecondary">
               You need to be signed in to publish a Callout.
@@ -94,30 +100,39 @@ export function CreateCallScreen() {
               onPress={() => navigation.navigate('Auth')}
               className="mt-2"
             />
-          </Card>
+          </View>
         ) : null}
 
-        <View className="flex-row gap-3">
-          <Avatar uri={user?.avatarUrl} fallbackLabel={user?.displayName ?? '?'} size={44} />
-          <View className="flex-1 gap-1">
-            <Input
-              placeholder="What's your call?"
-              multiline
-              numberOfLines={4}
-              value={content}
-              onChangeText={setContent}
-              className="min-h-24 border-0 bg-transparent px-0"
-              style={{ textAlignVertical: 'top' }}
-              accessibilityLabel="Callout content"
+        <View style={[solidPanel, { borderRadius: 16 }]} className="gap-3 p-3.5">
+          <View className="flex-row items-center gap-3">
+            <Avatar
+              uri={profile.data?.avatarUrl ?? null}
+              fallbackLabel={profile.data?.displayName ?? '?'}
+              size={40}
             />
-            <Text
-              variant="micro"
-              color={content.length > MAX_POST_LENGTH ? 'danger' : 'textTertiary'}
-              className="text-right"
-            >
-              {content.length}/{MAX_POST_LENGTH}
-            </Text>
+            {profile.data?.displayName ? (
+              <Text variant="bodyStrong">{profile.data.displayName}</Text>
+            ) : null}
           </View>
+
+          <View className="border-b border-white/10" />
+
+          <Input
+            placeholder="What's your call?"
+            multiline
+            value={content}
+            onChangeText={setContent}
+            className="min-h-24 border-0 bg-transparent px-0"
+            style={{ textAlignVertical: 'top' }}
+            accessibilityLabel="Callout content"
+          />
+          <Text
+            variant="micro"
+            color={content.length > MAX_POST_LENGTH ? 'danger' : 'textTertiary'}
+            className="text-right"
+          >
+            {content.length}/{MAX_POST_LENGTH}
+          </Text>
         </View>
 
         {hasPosition && selectedPosition ? (
@@ -132,11 +147,9 @@ export function CreateCallScreen() {
             accessibilityRole="button"
             accessibilityLabel="Attach your market position"
           >
-            <GlassSurface
-              tone="dark"
-              blur={false}
-              radius={16}
-              contentClassName="flex-row items-center gap-3 p-3.5"
+            <View
+              style={[solidPanel, { borderRadius: 16 }]}
+              className="flex-row items-center gap-3 p-3.5"
             >
               <Icon name="trending-up-outline" color="accent" />
               <View className="flex-1 gap-0.5">
@@ -146,7 +159,7 @@ export function CreateCallScreen() {
                 </Text>
               </View>
               <Icon name="chevron-forward" size={18} color="textTertiary" />
-            </GlassSurface>
+            </View>
           </Pressable>
         )}
 
@@ -180,7 +193,9 @@ function SelectedPositionCard({
   onChange: () => void;
   onRemove: () => void;
 }) {
-  const outcomeColor = choiceTextColor(choiceTone({ index: position.choiceIndex, label: position.outcome }));
+  const outcomeColor = choiceTextColor(
+    choiceTone({ index: position.choiceIndex, label: position.outcome })
+  );
   const costBasis = (position.entryPrice / 100) * position.size;
 
   return (
@@ -189,7 +204,7 @@ function SelectedPositionCard({
       accessibilityRole="button"
       accessibilityLabel="Change attached position"
     >
-      <GlassSurface tone="dark" blur={false} radius={16} contentClassName="gap-2 p-3.5">
+      <View style={[solidPanel, { borderRadius: 16 }]} className="gap-2 p-3.5">
         <View className="flex-row items-center justify-between">
           <Text variant="bodyStrong" color={outcomeColor}>
             {position.outcome}
@@ -214,7 +229,7 @@ function SelectedPositionCard({
             Size {formatUsd(costBasis)}
           </Text>
         </View>
-      </GlassSurface>
+      </View>
     </Pressable>
   );
 }

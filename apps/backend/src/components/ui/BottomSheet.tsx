@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import { SOLID_PANEL_CLASS } from '@/components/ui/solidPanel';
 
 export interface BottomSheetProps {
   visible: boolean;
@@ -26,7 +27,7 @@ export function BottomSheet({ visible, onClose, children }: BottomSheetProps) {
       role="presentation"
     >
       <div
-        className={`w-full rounded-t-[20px] border border-b-0 border-white/[0.14] border-t-white/30 bg-background p-6 transition-transform duration-[250ms] ${
+        className={`w-full rounded-t-[20px] ${SOLID_PANEL_CLASS} border-b-0 p-6 transition-transform duration-[250ms] ${
           visible ? 'translate-y-0' : 'translate-y-full'
         }`}
         onClick={(e) => e.stopPropagation()}

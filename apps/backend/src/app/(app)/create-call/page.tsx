@@ -5,14 +5,13 @@ import { useRouter } from 'next/navigation';
 import { usePrivy } from '@privy-io/react-auth';
 import { Text } from '@/components/ui/Text';
 import { Icon } from '@/components/ui/Icon';
-import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
 import { choiceTextColor, choiceTone } from '@/lib/choiceTone';
-import { Card } from '@/components/ui/Card';
 import { Avatar } from '@/components/ui/Avatar';
-import { GlassSurface } from '@/components/ui/GlassSurface';
+import { SOLID_PANEL_CLASS } from '@/components/ui/solidPanel';
 import { PositionPickerSheet } from '@/components/PositionPickerSheet';
 import { useCreateCall } from '@/hooks/useCreateCall';
+import { useProfile } from '@/hooks/useProfile';
 import { formatPrice, formatUsd } from '@/lib/formatters';
 import type { UserPosition } from '@/types/social';
 
@@ -28,6 +27,7 @@ const MAX_POST_LENGTH = 280;
 export default function CreateCallPage() {
   const router = useRouter();
   const { authenticated } = usePrivy();
+  const profile = useProfile(undefined, authenticated);
   const [content, setContent] = useState('');
   const [selectedPosition, setSelectedPosition] = useState<UserPosition | null>(null);
   const [pickerVisible, setPickerVisible] = useState(false);
@@ -49,9 +49,14 @@ export default function CreateCallPage() {
   return (
     <main className="flex w-full flex-col gap-3 px-4 pb-8 pt-4">
       <div className="flex items-center justify-between">
-        <button type="button" onClick={() => router.back()} aria-label="Cancel">
-          <Icon name="close" size={24} />
-        </button>
+        <div className="flex flex-1 items-center gap-2">
+          <button type="button" onClick={() => router.back()} aria-label="Cancel">
+            <Icon name="close" size={24} />
+          </button>
+          <Text variant="heading" className="block text-2xl">
+            New Callout
+          </Text>
+        </div>
         <Button
           label={mutation.isPending ? 'Publishing...' : 'Publish Callout'}
           onClick={handlePublish}
@@ -62,35 +67,56 @@ export default function CreateCallPage() {
       </div>
 
       {!authenticated ? (
-        <Card contentClassName="gap-1">
-          <Text variant="bodyStrong">Sign in to post</Text>
+        <div className={`${SOLID_PANEL_CLASS} flex flex-col gap-1 rounded-2xl p-3.5`}>
+          <Text variant="bodyStrong">Sign in to publish</Text>
           <Text variant="caption" color="textSecondary">
             You need to be signed in to publish a Callout.
           </Text>
           <Button label="Connect Wallet" variant="secondary" onClick={() => router.push('/sign-in')} className="mt-2" />
-        </Card>
+        </div>
       ) : null}
 
-      <div className="flex gap-3">
-        <Avatar uri={null} fallbackLabel="?" size={44} />
-        <div className="flex-1">
-          <Input
-            placeholder="What's your call?"
-            value={content}
-            onChange={(e) => setContent(e.target.value)}
-            className="min-h-24 border-0 bg-transparent px-0"
+      <div className={`${SOLID_PANEL_CLASS} flex flex-col gap-3 rounded-2xl p-3.5`}>
+        <div className="flex items-center gap-3">
+          <Avatar
+            uri={profile.data?.avatarUrl ?? null}
+            fallbackLabel={profile.data?.displayName ?? '?'}
+            size={40}
           />
-          <Text variant="micro" color={content.length > MAX_POST_LENGTH ? 'danger' : 'textTertiary'} className="block text-right">
-            {content.length}/{MAX_POST_LENGTH}
-          </Text>
+          {profile.data?.displayName ? (
+            <Text variant="bodyStrong" className="block">
+              {profile.data.displayName}
+            </Text>
+          ) : null}
         </div>
+
+        <div className="border-b border-white/10" />
+
+        {/* Auto-growing textarea: content starts at the top edge and the
+            box keeps extending downward as the text grows (no internal
+            scroll) — the one card is split in two by the divider above. */}
+        <textarea
+          placeholder="What's your call?"
+          value={content}
+          rows={4}
+          onChange={(e) => setContent(e.target.value)}
+          onInput={(e) => {
+            const element = e.currentTarget;
+            element.style.height = 'auto';
+            element.style.height = `${element.scrollHeight}px`;
+          }}
+          className="min-h-24 w-full resize-none border-0 bg-transparent px-0 py-0 text-body text-text-primary placeholder:text-text-tertiary focus:outline-none"
+        />
+        <Text variant="micro" color={content.length > MAX_POST_LENGTH ? 'danger' : 'textTertiary'} className="block text-right">
+          {content.length}/{MAX_POST_LENGTH}
+        </Text>
       </div>
 
       {hasPosition && selectedPosition ? (
         <SelectedPositionCard position={selectedPosition} onChange={() => setPickerVisible(true)} onRemove={() => setSelectedPosition(null)} />
       ) : (
         <button type="button" onClick={() => setPickerVisible(true)} aria-label="Attach your market position" className="text-left">
-          <GlassSurface tone="dark" blur={false} radius={16} contentClassName="flex items-center gap-3 p-3.5">
+          <div className={`${SOLID_PANEL_CLASS} flex items-center gap-3 rounded-2xl p-3.5`}>
             <Icon name="trending-up-outline" color="accent" />
             <div className="flex-1">
               <Text variant="bodyStrong" className="block">
@@ -101,7 +127,7 @@ export default function CreateCallPage() {
               </Text>
             </div>
             <Icon name="chevron-forward" size={18} color="textTertiary" />
-          </GlassSurface>
+          </div>
         </button>
       )}
 
@@ -130,7 +156,7 @@ function SelectedPositionCard({
 
   return (
     <button type="button" onClick={onChange} aria-label="Change attached position" className="text-left">
-      <GlassSurface tone="dark" blur={false} radius={16} contentClassName="flex flex-col gap-2 p-3.5">
+      <div className={`${SOLID_PANEL_CLASS} flex flex-col gap-2 rounded-2xl p-3.5`}>
         <div className="flex items-center justify-between">
           <Text variant="bodyStrong" color={outcomeColor}>
             {position.outcome}
@@ -158,7 +184,7 @@ function SelectedPositionCard({
             Size {formatUsd(costBasis)}
           </Text>
         </div>
-      </GlassSurface>
+      </div>
     </button>
   );
 }

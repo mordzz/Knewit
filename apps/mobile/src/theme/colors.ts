@@ -50,3 +50,19 @@ export const glass = {
   border: 'rgba(255, 255, 255, 0.14)',
   highlight: 'rgba(255, 255, 255, 0.3)',
 } as const;
+
+/**
+ * The shared "solid panel" recipe: absolute black fill with only the
+ * *glass edge* — the treatment every overlay surface uses (`BottomSheet`,
+ * `Modal`, sign-in's panel) and now the Callout composer's cards too.
+ * Spread into a `style` next to the per-site radius/padding, e.g.
+ * `style={[solidPanel, { borderRadius: 16 }]}` — see docs/DECISIONS.md
+ * ("BottomSheet & Modal Solid Black + Glass Border" and "Create Callout
+ * Composer Polish") so the edge values never drift between surfaces.
+ */
+export const solidPanel = {
+  backgroundColor: colors.background,
+  borderWidth: 1,
+  borderColor: glass.border,
+  borderTopColor: glass.highlight,
+} as const;

@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Animated, Dimensions, Modal, Pressable, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { colors, glass } from '@/theme';
+import { solidPanel } from '@/theme';
 
 export interface BottomSheetProps {
   visible: boolean;
@@ -50,15 +50,10 @@ export function BottomSheet({ visible, onClose, children }: BottomSheetProps) {
           <Pressable onPress={(e) => e.stopPropagation()}>
             <View
               className="p-6"
-              style={{
-                backgroundColor: colors.background,
-                borderTopLeftRadius: 20,
-                borderTopRightRadius: 20,
-                borderWidth: 1,
-                borderColor: glass.border,
-                borderTopColor: glass.highlight,
-                borderBottomWidth: 0,
-              }}
+              style={[
+                solidPanel,
+                { borderTopLeftRadius: 20, borderTopRightRadius: 20, borderBottomWidth: 0 },
+              ]}
             >
               <SafeAreaView edges={['bottom']}>
                 <View className="mb-3 h-1 w-9 self-center rounded-full bg-white/20" />

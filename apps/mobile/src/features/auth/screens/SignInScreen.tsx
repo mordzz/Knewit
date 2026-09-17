@@ -21,7 +21,7 @@ import { Icon } from '@/components/ui/Icon';
 import { CodeInput } from '@/components/ui/CodeInput';
 import { XLogo } from '@/components/ui/XLogo';
 import { isPrivyConfigured } from '@/app/config/env';
-import { colors, glass } from '@/theme';
+import { solidPanel } from '@/theme';
 
 /**
  * Privy's embedded-wallet sign-in flow — email-OTP plus Google/X OAuth.
@@ -229,15 +229,10 @@ export function SignInScreen() {
 
         <Animated.View style={bottomAnimatedStyle} className="w-full">
           <View
-            style={{
-              backgroundColor: colors.background,
-              borderTopLeftRadius: 24,
-              borderTopRightRadius: 24,
-              borderWidth: 1,
-              borderColor: glass.border,
-              borderTopColor: glass.highlight,
-              borderBottomWidth: 0,
-            }}
+            style={[
+              solidPanel,
+              { borderTopLeftRadius: 24, borderTopRightRadius: 24, borderBottomWidth: 0 },
+            ]}
           >
             <View className="gap-4 px-4 pb-8 pt-3">
               {/* Drag-handle bar — same visual cue `BottomSheet` uses, so

@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import { SOLID_PANEL_CLASS } from '@/components/ui/solidPanel';
 
 export interface ModalProps {
   visible: boolean;
@@ -28,9 +29,7 @@ export function Modal({ visible, onClose, children }: ModalProps) {
       role="presentation"
     >
       <div className="w-full max-w-[420px]" onClick={(e) => e.stopPropagation()}>
-        <div className="rounded-2xl border border-white/[0.14] border-t-white/30 bg-background p-6">
-          {children}
-        </div>
+        <div className={`rounded-2xl ${SOLID_PANEL_CLASS} p-6`}>{children}</div>
       </div>
     </div>
   );
