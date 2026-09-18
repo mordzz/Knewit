@@ -19,7 +19,6 @@ import { EditProfileScreen } from '@/features/profile/screens/EditProfileScreen'
 import { FollowersScreen } from '@/features/profile/screens/FollowersScreen';
 import { FollowingScreen } from '@/features/profile/screens/FollowingScreen';
 import { WalletScreen } from '@/features/wallet/screens/WalletScreen';
-import { useAutoEnableSigner } from '@/features/wallet/hooks/useAutoEnableSigner';
 import type { AppParamList, MainTabParamList } from '@/types/navigation';
 
 const Tab = createBottomTabNavigator<MainTabParamList>();
@@ -158,10 +157,6 @@ export function MainTabNavigator() {
   const navigation = useNavigation();
   const insets = useSafeAreaInsets();
   const [activeTab, setActiveTab] = useState<keyof MainTabParamList>('HomeTab');
-
-  // Owner-consent for the backend's authorization key, once per session —
-  // see the hook's own doc comment (docs/WALLET.md, "Backend Signing").
-  useAutoEnableSigner();
 
   return (
     <View className="flex-1">

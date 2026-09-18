@@ -6,13 +6,7 @@ import Animated, {
   withDelay,
   withTiming,
 } from 'react-native-reanimated';
-import {
-  useLoginWithEmail,
-  useLoginWithOAuth,
-  useEmbeddedEthereumWallet,
-  type User as PrivyUser,
-} from '@privy-io/expo';
-import { useNavigation } from '@react-navigation/native';
+import { useLoginWithEmail, useLoginWithOAuth } from '@privy-io/expo';
 import { Screen } from '@/components/layout/Screen';
 import { Text } from '@/components/ui/Text';
 import { Button } from '@/components/ui/Button';
@@ -58,13 +52,12 @@ import { solidPanel } from '@/theme';
  * own launch gate when signed out (`RootNavigator` renders this with
  * nothing to go back to), and a modal presented on demand when already
  * signed in but not yet wallet-connected (e.g. taking a position).
- * `navigation.goBack()` below only does anything in the second case —
- * react-navigation's `goBack()` is a documented no-op with nothing to
- * go back to, and either way `isAuthenticated` flipping true is what
- * actually swaps `RootNavigator` off this screen in the launch-gate
- * case, not this call. No seed phrase is ever shown or collected;
- * Privy manages the embedded wallet's key material entirely — see
- * docs/WALLET.md.
+ * Either way this screen no longer navigates itself: `isAuthenticated`
+ * flipping true is what swaps `RootNavigator` — to the setup screen
+ * first, then the app once wallet creation and signing consent finish
+ * (docs/DECISIONS.md, "Automatic Wallet & Trading Setup — No Manual
+ * Buttons"). No seed phrase is ever shown or collected; Privy manages
+ * the embedded wallet's key material entirely — see docs/WALLET.md.
  *
  * **Google/X sign-in requires those providers to be enabled as login
  * methods in the Privy Dashboard** (Login Methods settings) — this is
@@ -73,12 +66,9 @@ import { solidPanel } from '@/theme';
  * the same way any other auth failure is, never silently.
  */
 export function SignInScreen() {
-  const navigation = useNavigation();
   const [email, setEmail] = useState('');
   const [code, setCode] = useState('');
   const [resendSeconds, setResendSeconds] = useState(0);
-  const [walletError, setWalletError] = useState<string | null>(null);
-  const { create: createWallet } = useEmbeddedEthereumWallet();
 
   useEffect(() => {
     if (resendSeconds <= 0) return;
@@ -103,29 +93,13 @@ export function SignInScreen() {
     transform: [{ translateY: (1 - bottomProgress.value) * 24 }],
   }));
 
-  /** Shared by every login path (email, Google, X) — a brand-new user
-   * has no embedded wallet yet, and creating one is a real, deliberate
-   * action tied to this specific login, not a silent background effect
-   * — see docs/DECISIONS.md. */
-  const ensureWalletThenClose = async (user: PrivyUser) => {
-    const hasEthereumWallet = user.linked_accounts.some(
-      (account) => account.type === 'wallet' && account.chain_type === 'ethereum'
-    );
-    if (!hasEthereumWallet) {
-      try {
-        await createWallet();
-      } catch (error) {
-        if (__DEV__) console.warn('[wallet] embedded wallet creation failed', error);
-        setWalletError("Signed in, but couldn't set up your wallet. Try again from Wallet.");
-        return;
-      }
-    }
-    navigation.goBack();
-  };
-
-  const { state, sendCode, loginWithCode } = useLoginWithEmail({
-    onLoginSuccess: ensureWalletThenClose,
-  });
+  // Wallet creation and signing consent are no longer part of this screen:
+  // `RootNavigator`'s setup gate (`useAutoWalletSetup`) runs them right
+  // after `isAuthenticated` flips, and renders the setup screen until both
+  // are done — so no login path here navigates anywhere itself
+  // (docs/DECISIONS.md, "Automatic Wallet & Trading Setup — No Manual
+  // Buttons"). This screen simply ends when the navigator swaps away.
+  const { state, sendCode, loginWithCode } = useLoginWithEmail();
 
   const { state: oAuthState, login: loginWithOAuth } = useLoginWithOAuth();
 
@@ -157,35 +131,29 @@ export function SignInScreen() {
       ? (state.error?.message ?? 'Something went wrong. Try again.')
       : oAuthState.status === 'error'
         ? (oAuthState.error?.message ?? 'Something went wrong. Try again.')
-        : walletError;
+        : null;
 
   const handleSendCode = async () => {
-    setWalletError(null);
     await sendCode({ email });
     setResendSeconds(60);
   };
 
   const handleResendCode = async () => {
-    setWalletError(null);
     setResendSeconds(60);
     await sendCode({ email });
   };
 
   const handleChangeEmail = () => {
     setCode('');
-    setWalletError(null);
     setEmail('');
   };
 
   const handleVerifyCode = async () => {
-    setWalletError(null);
     await loginWithCode({ code, email });
   };
 
   const handleOAuthLogin = async (provider: 'google' | 'twitter') => {
-    setWalletError(null);
-    const user = await loginWithOAuth({ provider });
-    if (user) await ensureWalletThenClose(user);
+    await loginWithOAuth({ provider });
   };
 
   return (

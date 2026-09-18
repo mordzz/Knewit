@@ -3,11 +3,10 @@ import { getLeaderboard } from '@/features/leaderboard/services/leaderboardServi
 
 /**
  * One query, one list: Polymarket's global ranking. No scope argument and
- * no auth gate — the ranking is a public, viewer-independent read, and the
- * only viewer-relative field (`currentUser`, the viewer's own standing) is
- * simply absent when the caller is signed out or unranked
- * (docs/DECISIONS.md, "Round 6: Leaderboard Is a Read-Only Polymarket
- * Ranking — No Follow, No Profile Links").
+ * no auth gate — the ranking is a public, viewer-independent read with no
+ * viewer-relative fields at all (the old `currentUser`/"Your Rank" self
+ * standing was removed; docs/DECISIONS.md, "Your Rank Removed From the
+ * Leaderboard").
  */
 export function useLeaderboard() {
   return useInfiniteQuery({

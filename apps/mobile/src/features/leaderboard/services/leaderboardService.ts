@@ -35,7 +35,7 @@ export async function getLeaderboard(cursor?: string): Promise<LeaderboardPage> 
         '[leaderboardService] backend unreachable — returning no ranking data (never fabricated) for development only.',
         error
       );
-      return { items: [], nextCursor: null, currentUser: null };
+      return { items: [], nextCursor: null };
     }
     throw error;
   }

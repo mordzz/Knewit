@@ -1,14 +1,12 @@
 'use client';
 
 import { useEffect, useMemo, useRef } from 'react';
-import { usePrivy } from '@privy-io/react-auth';
 import { Text } from '@/components/ui/Text';
 import { Divider } from '@/components/ui/Divider';
 import { LoadingState } from '@/components/feedback/LoadingState';
 import { EmptyState } from '@/components/feedback/EmptyState';
 import { ErrorState } from '@/components/feedback/ErrorState';
 import { LeaderboardUserCard } from '@/components/LeaderboardUserCard';
-import { YourRankCard } from '@/components/YourRankCard';
 import { TopPerformers } from '@/components/TopPerformers';
 import { useLeaderboard } from '@/hooks/useLeaderboard';
 import type { LeaderboardEntry } from '@/types/leaderboard';
@@ -18,16 +16,16 @@ import type { LeaderboardEntry } from '@/types/leaderboard';
  * own global ranking, read-only (docs/DECISIONS.md, "Round 6"): no
  * Follow button, no profile links, a row is a ranked Polymarket trader
  * identified by proxy wallet, never a Knewit account. Same Top
- * Performers podium for the first 3 real ranked entries, and the same
- * "Your Rank" line (only rendered when signed in and outside the
- * podium) mobile has.
+ * Performers podium for the first 3 real ranked entries.
+ *
+ * No viewer-relative row at all: the old "Your Rank" self-standing line
+ * was removed by request, UI and backend alike (docs/DECISIONS.md, "Your
+ * Rank Removed From the Leaderboard").
  */
 export default function LeaderboardPage() {
-  const { authenticated } = usePrivy();
   const leaderboard = useLeaderboard();
 
   const items = useMemo(() => leaderboard.data?.pages.flatMap((page) => page.items) ?? [], [leaderboard.data]);
-  const currentUser = leaderboard.data?.pages[0]?.currentUser;
   const topThree = items.length >= 3 ? (items.slice(0, 3) as [LeaderboardEntry, LeaderboardEntry, LeaderboardEntry]) : null;
   const rest = topThree ? items.slice(3) : items;
 
@@ -39,8 +37,6 @@ export default function LeaderboardPage() {
       <Divider />
     </div>
   );
-
-  const showYourRank = authenticated && (!currentUser || currentUser.rank > 3);
 
   if (leaderboard.status === 'pending') {
     return (
@@ -65,14 +61,11 @@ export default function LeaderboardPage() {
   return (
     <main className="w-full">
       {titleBlock}
-      <div className="flex flex-col gap-3 pt-3">
-        {showYourRank ? (
-          <div className="px-4">
-            <YourRankCard self={currentUser} />
-          </div>
-        ) : null}
-        {topThree ? <TopPerformers entries={topThree} /> : null}
-      </div>
+      {topThree ? (
+        <div className="pt-3">
+          <TopPerformers entries={topThree} />
+        </div>
+      ) : null}
 
       {rest.length === 0 && !topThree ? (
         <div className="px-4">
@@ -94,6 +87,10 @@ export default function LeaderboardPage() {
           />
         </>
       )}
+
+      {/* Bottom clearance so the last row never sits flush against the
+          tab bar. */}
+      <div className="h-6" />
     </main>
   );
 }

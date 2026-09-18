@@ -38,10 +38,9 @@ export interface LeaderboardEntry {
 }
 
 /** The authenticated viewer's own live standing in Polymarket's global
- * ranking — the one viewer-relative figure this read still carries, since
- * it describes the viewer's own wallet rather than another ranked trader.
- * `null` when signed out, or when the backend has no reliable rank for them
- * (never a client-computed guess). */
+ * ranking, used by the profile read's `tradingVolume` lookup — the
+ * leaderboard response itself carries no viewer-relative figure any more
+ * (docs/DECISIONS.md, "Your Rank Removed From the Leaderboard"). */
 export interface LeaderboardSelf {
   rank: number;
   metric: LeaderboardMetric;
@@ -50,6 +49,4 @@ export interface LeaderboardSelf {
 export interface LeaderboardPage {
   items: LeaderboardEntry[];
   nextCursor: string | null;
-  /** Only meaningful on the first page — see docs/API.md. */
-  currentUser: LeaderboardSelf | null;
 }

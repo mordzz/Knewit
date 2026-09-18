@@ -27,10 +27,10 @@ export interface LeaderboardEntry {
   metric: LeaderboardMetric;
 }
 
-/** The caller's own live standing in Polymarket's global ranking. The one
- * viewer-relative figure this read still carries — it describes *the
- * viewer's own wallet*, not another ranked trader — and it renders as the
- * separate "Your rank" line, never as a row of the ranking. */
+/** The caller's own live standing in Polymarket's global ranking, used by
+ * the profile read's `tradingVolume` lookup (`lib/leaderboard.ts`) — the
+ * leaderboard response itself carries no viewer-relative figure any more
+ * (docs/DECISIONS.md, "Your Rank Removed From the Leaderboard"). */
 export interface LeaderboardSelf {
   rank: number;
   metric: LeaderboardMetric;
@@ -39,5 +39,4 @@ export interface LeaderboardSelf {
 export interface LeaderboardPage {
   items: LeaderboardEntry[];
   nextCursor: string | null;
-  currentUser: LeaderboardSelf | null;
 }

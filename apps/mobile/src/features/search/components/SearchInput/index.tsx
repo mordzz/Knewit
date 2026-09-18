@@ -10,12 +10,13 @@ export interface SearchInputProps {
 }
 
 /**
- * A prominent, pill-shaped search field — leading search icon, trailing
- * clear button that only appears once there's text to clear (see
- * docs/DESIGN.md). Kept feature-local rather than promoted to
- * `components/ui`: nothing else in the app needs an icon+clear-button
- * text field today — see the project's "evidence before promoting to
- * global" convention (docs/DECISIONS.md).
+ * A search field matching the app's standard `Input` recipe — same
+ * `min-h-12 rounded-md border-border bg-surface-elevated` surface, not a
+ * one-off pill — with a leading search icon and a trailing clear button
+ * that only appears once there's text to clear. Kept feature-local rather
+ * than promoted to `components/ui`: nothing else in the app needs an
+ * icon+clear-button text field today — see the project's "evidence before
+ * promoting to global" convention (docs/DECISIONS.md).
  */
 export function SearchInput({
   value,
@@ -24,7 +25,7 @@ export function SearchInput({
   placeholder = 'Search markets or people',
 }: SearchInputProps) {
   return (
-    <View className="flex-row items-center gap-2 rounded-full border border-border bg-surface-elevated px-4 py-2">
+    <View className="min-h-12 flex-row items-center gap-2 rounded-md border border-border bg-surface-elevated px-3">
       <Icon name="search" size={18} color="textSecondary" />
       <TextInput
         value={value}

@@ -1,9 +1,7 @@
 import { badRequest, withErrorHandling } from '@/lib/apiError';
-import { optionalAuth } from '@/lib/privy';
-import { getOrCreateUser } from '@/lib/users';
 import { DEFAULT_PAGE_SIZE, parseCursor } from '@/lib/pagination';
-import { fetchLeaderboardPage, fetchLeaderboardRowForWallet } from '@/lib/polymarket/dataApiClient';
-import { toLeaderboardEntry, toLeaderboardSelf } from '@/lib/leaderboard';
+import { fetchLeaderboardPage } from '@/lib/polymarket/dataApiClient';
+import { toLeaderboardEntry } from '@/lib/leaderboard';
 import type { LeaderboardEntry, LeaderboardPage } from '@/types/leaderboard';
 
 /**
@@ -31,9 +29,10 @@ import type { LeaderboardEntry, LeaderboardPage } from '@/types/leaderboard';
  * Links"). `users` is not consulted here at all any more, so browsing the
  * leaderboard can neither resolve nor create a local account.
  *
- * The one viewer-relative figure left is `currentUser`: the authenticated
- * caller's own standing, read from their own `wallet_address`, and only on
- * the first page.
+ * By request there is **no viewer-relative figure at all** any more: the
+ * old `currentUser`/"Your Rank" self-standing row was removed (UI +
+ * backend), so this response is purely the ranking itself (docs/DECISIONS.md,
+ * "Your Rank Removed From the Leaderboard").
  *
  * `?scope=` is still parsed so a client built before this round is told
  * plainly that the following scope is gone, instead of silently being
@@ -56,20 +55,9 @@ export async function GET(request: Request) {
       .map(toLeaderboardEntry)
       .filter((entry): entry is LeaderboardEntry => entry !== null);
 
-    let currentUser: LeaderboardPage['currentUser'] = null;
-    if (offset === 0) {
-      const viewerAuth = await optionalAuth(request);
-      const viewer = viewerAuth ? await getOrCreateUser(viewerAuth.privyUserId) : null;
-      if (viewer?.wallet_address) {
-        const selfRow = await fetchLeaderboardRowForWallet(viewer.wallet_address);
-        currentUser = selfRow ? toLeaderboardSelf(selfRow) : null;
-      }
-    }
-
     const page: LeaderboardPage = {
       items,
       nextCursor: rows.length === DEFAULT_PAGE_SIZE ? String(offset + DEFAULT_PAGE_SIZE) : null,
-      currentUser,
     };
     return Response.json(page);
   });

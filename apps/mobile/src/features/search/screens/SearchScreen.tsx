@@ -14,7 +14,7 @@ import { useSearch, MIN_QUERY_LENGTH } from '@/features/search/hooks/useSearch';
 import { MarketCard } from '@/features/markets/components/MarketCard';
 import { useDebounce } from '@/hooks/useDebounce';
 import { useRecentSearchesStore } from '@/store/search/recentSearchesStore';
-import { spacing, typography } from '@/theme';
+import { typography } from '@/theme';
 import type { MarketListItem, User } from '@/types/social';
 
 const SEARCH_DEBOUNCE_MS = 400;
@@ -100,7 +100,7 @@ export function SearchScreen() {
     <Screen className="px-0 pt-4" edges={['top']}>
       <Text
         variant="heading"
-        className="px-4 pb-3 text-4xl"
+        className="px-4 pb-3 pt-2 text-4xl"
         style={{ fontFamily: typography.family.extrabold }}
       >
         Search
@@ -161,7 +161,7 @@ export function SearchScreen() {
             keyboardShouldPersistTaps="handled"
             showsVerticalScrollIndicator={false}
             stickySectionHeadersEnabled={false}
-            contentContainerStyle={{ paddingBottom: spacing.md }}
+            contentContainerStyle={{ paddingBottom: 24 }}
             renderSectionHeader={({ section }) => (
               <Text variant="title" className="mb-2 mt-4 px-4">
                 {section.title}

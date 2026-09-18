@@ -1,8 +1,7 @@
 import { useState } from 'react';
 import { ActivityIndicator, Pressable, View } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import { usePrivy, useEmbeddedEthereumWallet, useSigners } from '@privy-io/expo';
-import { useQueryClient } from '@tanstack/react-query';
+import { usePrivy } from '@privy-io/expo';
 import { Screen } from '@/components/layout/Screen';
 import { Text } from '@/components/ui/Text';
 import { typography } from '@/theme';
@@ -21,7 +20,7 @@ import { usePositions } from '@/features/portfolio/hooks/usePositions';
 import { useSellPosition } from '@/features/portfolio/hooks/useSellPosition';
 import { useWallet } from '@/hooks/useWallet';
 import { useAuth } from '@/hooks/useAuth';
-import { isPrivyConfigured, env } from '@/app/config/env';
+import { isPrivyConfigured } from '@/app/config/env';
 import { formatProbability, formatUsd } from '@/utils/formatCurrency';
 import { choiceTextColor, choiceTone } from '@/utils/choiceTone';
 import { ApiRequestError } from '@/services/api/client';
@@ -46,35 +45,25 @@ const STATUS_COPY: Record<
  * balance "—" until the CLOB read works (delegated signing), PnL "—"
  * when no current price is available.
  *
- * An authenticated visitor with no embedded wallet yet still creates one
- * directly from here via `useEmbeddedEthereumWallet().create()` — the
- * same call `SignInScreen`'s `ensureWalletThenClose` makes right after a
- * fresh login; this screen is the backstop for sessions that predate it
- * (see `PrivySessionBridge`'s doc comment for why the bridge itself
- * never mutates state).
+ * **No manual setup buttons any more**: wallet creation and the signing
+ * grant both run automatically through `useAutoWalletSetup`, and
+ * `RootNavigator`'s setup gate holds the app until they finish — see
+ * docs/DECISIONS.md, "Automatic Wallet & Trading Setup — No Manual
+ * Buttons". This screen only states what it's waiting for.
  */
 export function WalletScreen() {
   const navigation = useNavigation();
   const { isAuthenticated } = useAuth();
   const { status, address, error } = useWallet();
   const { logout, isReady } = usePrivy();
-  const { create: createWallet } = useEmbeddedEthereumWallet();
-  const { addSigners } = useSigners();
   const { deposit } = useDeposit();
-  const queryClient = useQueryClient();
   const sell = useSellPosition();
-  const [isCreatingWallet, setIsCreatingWallet] = useState(false);
-  const [createWalletError, setCreateWalletError] = useState<string | null>(null);
-  const [isEnablingSigning, setIsEnablingSigning] = useState(false);
-  const [enableSigningError, setEnableSigningError] = useState<string | null>(null);
   const [isDepositing, setIsDepositing] = useState(false);
   const [depositError, setDepositError] = useState<string | null>(null);
   const [sellTarget, setSellTarget] = useState<UserPosition | null>(null);
   const [sellNotice, setSellNotice] = useState<{ tone: 'yes' | 'danger'; message: string } | null>(
     null
   );
-
-  const signerId = env.privySignerId;
 
   const statusMeta = STATUS_COPY[status] ?? STATUS_COPY.disconnected;
 
@@ -105,23 +94,6 @@ export function WalletScreen() {
     }
   };
 
-  const handleConnectWallet = async () => {
-    if (!isAuthenticated) {
-      navigation.navigate('Auth');
-      return;
-    }
-    setCreateWalletError(null);
-    setIsCreatingWallet(true);
-    try {
-      await createWallet();
-    } catch (createError) {
-      if (__DEV__) console.warn('[wallet] embedded wallet creation failed', createError);
-      setCreateWalletError("Couldn't create your wallet. Try again.");
-    } finally {
-      setIsCreatingWallet(false);
-    }
-  };
-
   const handleDeposit = async () => {
     setDepositError(null);
     setIsDepositing(true);
@@ -133,24 +105,6 @@ export function WalletScreen() {
       setDepositError("Couldn't open the deposit flow. Please try again.");
     } finally {
       setIsDepositing(false);
-    }
-  };
-
-  const needsSignerSetup =
-    Boolean(address && signerId) && !balance.isPending && balance.data?.usdc == null;
-
-  const handleEnableSigning = async () => {
-    if (!address || !signerId) return;
-    setEnableSigningError(null);
-    setIsEnablingSigning(true);
-    try {
-      await addSigners({ address, signers: [{ signerId, policyIds: [] }] });
-      await queryClient.invalidateQueries({ queryKey: ['wallet-balance'] });
-    } catch (signingError) {
-      if (__DEV__) console.warn('[wallet] adding signer failed', signingError);
-      setEnableSigningError("Couldn't enable trading. Please try again.");
-    } finally {
-      setIsEnablingSigning(false);
     }
   };
 
@@ -219,7 +173,7 @@ export function WalletScreen() {
             <WalletAddress address={address} compact />
           ) : (
             <Text variant="caption" color="textSecondary">
-              Connect to take positions or create verified Calls.
+              Setting up automatically — no action needed.
             </Text>
           )}
         </View>
@@ -231,22 +185,8 @@ export function WalletScreen() {
             accessibilityLabel="Log Out"
             className="min-h-0 px-3 py-2"
           />
-        ) : (
-          <Button
-            label="Connect Wallet"
-            variant="secondary"
-            loading={isCreatingWallet}
-            onPress={handleConnectWallet}
-            accessibilityLabel="Connect Wallet"
-          />
-        )}
+        ) : null}
       </View>
-
-      {createWalletError ? (
-        <Text variant="caption" color="danger" className="px-4">
-          {createWalletError}
-        </Text>
-      ) : null}
 
       {status === 'error' && error ? (
         <Text variant="caption" color="danger" className="px-4">
@@ -268,22 +208,7 @@ export function WalletScreen() {
           </Text>
           {status === 'connected' && balance.data?.usdc == null && !balance.isPending ? (
             <Text variant="micro" color="textTertiary">
-              Shows once wallet signing is active.
-            </Text>
-          ) : null}
-          {needsSignerSetup ? (
-            <Button
-              label="Enable trading"
-              variant="secondary"
-              loading={isEnablingSigning}
-              onPress={handleEnableSigning}
-              accessibilityLabel="Enable trading"
-              className="mt-2 min-h-0 self-start px-4 py-2"
-            />
-          ) : null}
-          {enableSigningError ? (
-            <Text variant="caption" color="danger">
-              {enableSigningError}
+              Trading setup is still finishing — it completes automatically.
             </Text>
           ) : null}
         </View>

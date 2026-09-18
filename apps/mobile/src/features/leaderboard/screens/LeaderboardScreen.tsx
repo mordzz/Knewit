@@ -7,10 +7,8 @@ import { LoadingState } from '@/components/feedback/LoadingState';
 import { EmptyState } from '@/components/feedback/EmptyState';
 import { ErrorState } from '@/components/feedback/ErrorState';
 import { LeaderboardUserCard } from '@/features/leaderboard/components/LeaderboardUserCard';
-import { YourRankCard } from '@/features/leaderboard/components/YourRankCard';
 import { TopPerformers } from '@/features/leaderboard/components/TopPerformers';
 import { useLeaderboard } from '@/features/leaderboard/hooks/useLeaderboard';
-import { useAuth } from '@/hooks/useAuth';
 import { colors, typography } from '@/theme';
 import type { LeaderboardEntry } from '@/types/leaderboard';
 
@@ -30,24 +28,21 @@ import type { LeaderboardEntry } from '@/types/leaderboard';
  * to open a profile: a row is a ranked Polymarket trader identified by
  * proxy wallet, never a Knewit account (docs/DECISIONS.md, "Round 6:
  * Leaderboard Is a Read-Only Polymarket Ranking — No Follow, No Profile
- * Links"). The one personal element left is "Your Rank" — the viewer's own
- * live standing, read from their own wallet, rendered only when signed in
- * and only when their rank falls outside the podium.
+ * Links"). The old "Your Rank" self-standing row is gone too — removed by
+ * request, UI and backend alike (docs/DECISIONS.md, "Your Rank Removed
+ * From the Leaderboard"), so this screen has no viewer-relative content at
+ * all.
  *
  * Header is a bare page title (no subtitle) + a divider — see
- * docs/DECISIONS.md ("Decorated Top-3 Rank Numbers"). "Your Rank" doesn't
- * render at all when signed out (no sign-in prompt in its place) — see
- * `YourRankCard`.
+ * docs/DECISIONS.md ("Decorated Top-3 Rank Numbers").
  */
 export function LeaderboardScreen() {
-  const { isAuthenticated } = useAuth();
   const leaderboard = useLeaderboard();
 
   const items = useMemo(
     () => leaderboard.data?.pages.flatMap((page) => page.items) ?? [],
     [leaderboard.data]
   );
-  const currentUser = leaderboard.data?.pages[0]?.currentUser;
   const topThree =
     items.length >= 3
       ? (items.slice(0, 3) as [LeaderboardEntry, LeaderboardEntry, LeaderboardEntry])
@@ -72,23 +67,8 @@ export function LeaderboardScreen() {
     </View>
   );
 
-  // Rank #1-3 already have their own prominent slot in `TopPerformers`
-  // just below — showing the exact same rank number again in "Your
-  // Rank" right above it would be the same person's rank doubled on
-  // screen at once. "Your Rank" only renders once the viewer's rank
-  // falls outside the podium — see docs/DECISIONS.md ("Less
-  // Transparent Glass", which also covers this).
-  const showYourRank = isAuthenticated && (!currentUser || currentUser.rank > 3);
-
   const header = (
-    <View className="gap-3 pt-3">
-      {showYourRank ? (
-        <View className="px-4">
-          <YourRankCard self={currentUser} />
-        </View>
-      ) : null}
-      {topThree ? <TopPerformers entries={topThree} /> : null}
-    </View>
+    <View className="pt-3">{topThree ? <TopPerformers entries={topThree} /> : null}</View>
   );
 
   if (leaderboard.status === 'pending') {
@@ -120,6 +100,9 @@ export function LeaderboardScreen() {
         keyExtractor={(item) => item.user.id}
         renderItem={renderItem}
         ListHeaderComponent={header}
+        // Bottom clearance so the last row never sits flush against the
+        // tab bar.
+        contentContainerStyle={{ paddingBottom: 24 }}
         onEndReachedThreshold={0.4}
         onEndReached={() => {
           if (leaderboard.hasNextPage && !leaderboard.isFetchingNextPage) {

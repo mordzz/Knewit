@@ -79,7 +79,7 @@ export default function SearchPage() {
 
   return (
     <div className="flex h-full w-full flex-col">
-      <Text variant="heading" className="block px-4 pb-3 pt-4 text-4xl font-inter-extrabold">
+      <Text variant="heading" className="block px-4 pb-3 pt-2 text-4xl font-inter-extrabold">
         Search
       </Text>
       <Divider />

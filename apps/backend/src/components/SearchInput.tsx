@@ -9,12 +9,14 @@ export interface SearchInputProps {
 
 /**
  * Web equivalent of `apps/mobile/src/features/search/components/SearchInput`
- * — a prominent, pill-shaped search field, leading search icon,
- * trailing clear button that only appears once there's text to clear.
+ * — a search field matching the app's standard `Input` recipe (same
+ * `min-h-12 rounded-md border-border bg-surface-elevated` surface, not a
+ * one-off pill), with a leading search icon and a trailing clear button
+ * that only appears once there's text to clear.
  */
 export function SearchInput({ value, onChangeText, onSubmit, placeholder = 'Search markets or people' }: SearchInputProps) {
   return (
-    <div className="flex items-center gap-2 rounded-full border border-border bg-surface-elevated px-4 py-2">
+    <div className="flex min-h-12 items-center gap-2 rounded-md border border-border bg-surface-elevated px-3">
       <Icon name="search" size={18} color="textSecondary" />
       <input
         value={value}

@@ -1,11 +1,12 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { usePrivy, useCreateWallet } from '@privy-io/react-auth';
+import { usePrivy } from '@privy-io/react-auth';
 import { BottomTabBar } from '@/components/BottomTabBar';
 import { Fab } from '@/components/Fab';
-import { useAutoEnableSigner } from '@/hooks/useAutoEnableSigner';
+import { Text } from '@/components/ui/Text';
+import { useAutoWalletSetup } from '@/hooks/useAutoWalletSetup';
 
 /**
  * Shell for every authenticated page (Home, Markets, Search,
@@ -23,16 +24,18 @@ import { useAutoEnableSigner } from '@/hooks/useAutoEnableSigner';
  * bounced to `/sign-in`, which deliberately sits *outside* this route
  * group (`app/sign-in/`, not `app/(app)/sign-in/`) so it never gets
  * this chrome.
+ *
+ * **Setup gate**: `useAutoWalletSetup` creates the embedded wallet and
+ * grants the backend signing key automatically, and until it reports
+ * `ready` this renders a "Setting up your account" state instead of the
+ * tabs — the user never lands mid-setup, and no manual buttons exist
+ * for either step any more (docs/DECISIONS.md, "Automatic Wallet &
+ * Trading Setup — No Manual Buttons").
  */
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
-  const { ready, authenticated, user } = usePrivy();
-  const { createWallet } = useCreateWallet();
-  const attemptedWalletCreation = useRef(false);
-
-  // Owner-consent for the backend's authorization key, once per session —
-  // see the hook's own doc comment (docs/WALLET.md, "Backend Signing").
-  useAutoEnableSigner();
+  const { ready, authenticated } = usePrivy();
+  const setup = useAutoWalletSetup();
 
   useEffect(() => {
     if (ready && !authenticated) {
@@ -40,28 +43,35 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     }
   }, [ready, authenticated, router]);
 
-  // `providers.tsx`'s `embeddedWallets.ethereum.createOnLogin` only
-  // fires as part of the login flow itself — it does nothing for a
-  // visitor who is already authenticated from a previous session (e.g.
-  // one created before this config existed, or whose automatic
-  // creation silently failed) and still has no wallet. Every other
-  // authenticated page reads `user.wallet` (Wallet, trading)
-  // assuming one exists, so this backstops it exactly once per session
-  // here in the shared shell — the same "create the wallet manually"
-  // step `apps/mobile`'s sign-in screen already does explicitly (see
-  // `app/sign-in/page.tsx`'s doc comment on the difference). Guarded by
-  // a ref, not just the `!user?.wallet` dependency, so React's dev-mode
-  // double-invoke doesn't fire two concurrent create attempts.
-  useEffect(() => {
-    if (!ready || !authenticated || user?.wallet || attemptedWalletCreation.current) return;
-    attemptedWalletCreation.current = true;
-    createWallet().catch((error) => {
-      console.error('Embedded wallet creation failed:', error);
-    });
-  }, [ready, authenticated, user?.wallet, createWallet]);
-
   if (!ready || !authenticated) {
     return null;
+  }
+
+  if (setup.status !== 'ready') {
+    return (
+      <div className="relative mx-auto flex h-screen w-full max-w-2xl flex-col items-center justify-center gap-3 border-x border-border px-6 text-center">
+        {setup.status === 'error' ? (
+          <>
+            <Text variant="bodyStrong" className="block">
+              We couldn&apos;t finish setting up your account
+            </Text>
+            <Text variant="caption" color="textSecondary" className="block">
+              We&apos;ll try again next time you open the app — your wallet and funds are safe.
+            </Text>
+          </>
+        ) : (
+          <>
+            <div className="h-6 w-6 animate-spin rounded-full border-2 border-accent border-t-transparent" />
+            <Text variant="bodyStrong" className="block">
+              Setting up your account…
+            </Text>
+            <Text variant="caption" color="textSecondary" className="block">
+              Creating your wallet and enabling trading. Follow any prompt if one appears.
+            </Text>
+          </>
+        )}
+      </div>
+    );
   }
 
   return (

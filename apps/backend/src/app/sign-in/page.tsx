@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
-import { useLoginWithEmail, useLoginWithOAuth } from '@privy-io/react-auth';
+import { useLoginWithEmail, useLoginWithOAuth, usePrivy } from '@privy-io/react-auth';
 import { FcGoogle } from 'react-icons/fc';
 import { FaXTwitter } from 'react-icons/fa6';
 import { CodeInput } from '@/components/ui/CodeInput';
@@ -47,9 +47,11 @@ import { publicEnv } from '@/lib/publicEnv';
  */
 export default function SignInPage() {
   const router = useRouter();
+  const { user } = usePrivy();
   const [email, setEmail] = useState('');
   const [code, setCode] = useState('');
   const [resendSeconds, setResendSeconds] = useState(0);
+  const [isPreparing, setIsPreparing] = useState(false);
 
   useEffect(() => {
     if (resendSeconds <= 0) return;
@@ -57,13 +59,22 @@ export default function SignInPage() {
     return () => clearTimeout(timer);
   }, [resendSeconds]);
 
-  const goHome = () => router.push('/');
+  // Login succeeded but the wallet may still be being created (Privy's
+  // `createOnLogin` runs as part of the login) — stay on this screen and
+  // say so instead of redirecting into the app mid-setup (docs/DECISIONS.md,
+  // "Sign-In Waits for Account Setup Before Entering").
+  useEffect(() => {
+    if (!isPreparing) return;
+    if (user?.wallet?.address) router.replace('/');
+  }, [isPreparing, user?.wallet?.address, router]);
+
+  const beginSetup = () => setIsPreparing(true);
 
   const { state, sendCode, loginWithCode } = useLoginWithEmail({
-    onComplete: goHome,
+    onComplete: beginSetup,
   });
   const { state: oAuthState, initOAuth } = useLoginWithOAuth({
-    onComplete: goHome,
+    onComplete: beginSetup,
   });
 
   if (!publicEnv.privyAppId) {
@@ -141,7 +152,17 @@ export default function SignInPage() {
       >
         <div className="mb-1 h-1 w-9 self-center rounded-full bg-white/20" />
 
-        {!isAwaitingCode ? (
+        {isPreparing ? (
+          <div className="flex flex-col items-center gap-3 py-6 text-center">
+            <div className="h-6 w-6 animate-spin rounded-full border-2 border-accent border-t-transparent" />
+            <h1 className="text-2xl font-bold">Setting up your account…</h1>
+            <p className="text-sm text-text-secondary">
+              Creating your wallet and enabling trading. This only happens once.
+            </p>
+          </div>
+        ) : (
+          <>
+            {!isAwaitingCode ? (
           <div className="flex flex-col gap-4">
             <div className="flex flex-col items-center gap-1 text-center">
               <h1 className="text-3xl font-bold">Sign in</h1>
@@ -238,6 +259,8 @@ export default function SignInPage() {
         {errorMessage ? (
           <p className="mt-4 text-center text-sm text-danger">{errorMessage}</p>
         ) : null}
+          </>
+        )}
 
         <p className="mt-4 text-center text-xs text-text-tertiary">
           Your wallet is securely managed for you. We never see or store your private keys.

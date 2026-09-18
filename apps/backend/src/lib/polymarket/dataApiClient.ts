@@ -120,9 +120,8 @@ export async function fetchLeaderboardRowsForWallets(wallets: string[]): Promise
 }
 
 /** One trader's own row, or `null` when Polymarket has no ranked volume
- * for that address. Backs both `currentUser` (the viewer's own rank) and
- * `lib/leaderboard.ts::fetchPolymarketStanding` (the profile's
- * `tradingVolume`). */
+ * for that address. Backs `lib/leaderboard.ts::fetchPolymarketStanding`
+ * (the profile's `tradingVolume`). */
 export async function fetchLeaderboardRowForWallet(wallet: string): Promise<PolymarketLeaderboardRow | null> {
   const rows = await fetchLeaderboardRowsForWallets([wallet]);
   return rows[0] ?? null;
