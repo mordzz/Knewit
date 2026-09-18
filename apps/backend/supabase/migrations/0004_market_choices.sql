@@ -25,8 +25,12 @@ where position_snapshot_outcome is not null;
 
 -- Recreated from 0003 with the choice index added to each variant. The
 -- label itself keeps the `outcome` column name/shape the clients already
--- read.
-create or replace function user_activity(p_user_id uuid, p_limit int default 21, p_offset int default 0)
+-- read. The return type changes (a new column), so the old function must
+-- be dropped first — `create or replace` alone fails with
+-- `42P13 cannot change return type of existing function`.
+drop function if exists user_activity(uuid, integer, integer);
+
+create function user_activity(p_user_id uuid, p_limit int default 21, p_offset int default 0)
 returns table (
   id uuid,
   type text,

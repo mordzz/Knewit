@@ -20,9 +20,10 @@ request, rather than a separate `apps/web` project.
    referenced by code comments). Paste it into the Supabase SQL editor,
    or apply via the Supabase CLI once one is set up — not done in this
    pass. It also creates the public `profile-images` storage bucket
-   (`0008`). Run it once on a fresh database; on an existing project,
-   apply only the migrations you are missing (the later files are
-   `IF NOT EXISTS` / `DROP IF EXISTS` style).
+   (`0008`). The file is **re-runnable**: tables/indexes use
+   `IF NOT EXISTS` and functions are dropped before being recreated when
+   their return type changes, so a partially-applied run can simply be
+   executed again (no need to drop the database).
 3. `npm install && npm run dev`
 
 ## Implemented
@@ -164,10 +165,13 @@ A web port of the entire mobile app, sharing this project and its APIs
   `src/app/sign-in/page.tsx`'s doc comment.
 - `@privy-io/react-auth` pulls in a large wallet-connector dependency tree
   (wagmi, WalletConnect, MetaMask SDK, Reown AppKit, `@stripe/stripe-js` —
-  none of which this app's simple email/OAuth/embedded-wallet flow uses)
-  and required `--legacy-peer-deps` to install over an `ox`/`viem` version
-  conflict with `@polymarket/clob-client`'s dependencies — both optional
-  peers unrelated to what either package is actually used for here.
+  none of which this app's simple email/OAuth/embedded-wallet flow uses).
+  Its tree conflicts with `@polymarket/client`'s viem/ox versions, and the
+  SDK also declares a stale `peerOptional` range for `@privy-io/node`
+  (`^0.15.0` vs the verified `0.34.x` this app runs), so npm's strict peer
+  resolution fails with `ERESOLVE`. `.npmrc` in this directory sets
+  `legacy-peer-deps=true` — keep it next to `package.json`; Vercel reads it
+  from the project root automatically.
   `npm audit` reports vulnerabilities inside that same third-party
   wallet-connector tree; not run through `npm audit fix` since that can
   force breaking version changes — worth a deliberate look before a real
@@ -189,7 +193,9 @@ directly.
 1. **Import the repository** in Vercel → *New Project*.
 2. **Root Directory: `apps/backend`** (Edit next to the repo name).
    Framework preset: *Next.js* (auto-detected); install/build commands
-   stay the defaults (`npm install`, `next build`).
+   stay the defaults (`npm install`, `next build`). The directory's
+   `.npmrc` (`legacy-peer-deps=true`) is picked up automatically — it is
+   what keeps npm from failing on the SDK's stale peer range.
 3. **Node.js version**: 20.x or 22.x (`engines` requires `>=20.9.0`).
 4. **Environment Variables** — add every key from `.env.example` for the
    Production environment (and Preview if you use it):

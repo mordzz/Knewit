@@ -1,14 +1,20 @@
--- Knewit - complete Supabase setup (ll in one).
+-- Knewit - complete Supabase setup (all migrations in one file).
 --
--- One file to paste into the Supabase SQL editor (or run with the
--- Supabase CLI): every migration, in order, generated from the
--- numbered files in this folder (the canonical source, kept for
--- history and referenced by code comments).
+-- Paste the whole file into the Supabase SQL editor (or run it with the
+-- Supabase CLI). Generated from the numbered files in
+-- `supabase/migrations/` - the canonical source, kept for history and
+-- referenced by code comments.
 --
--- Run once on a FRESH database. The early tables use plain CREATE
--- TABLE, so re-running on an existing project fails on the first
--- duplicate object - apply only the migrations you are missing
--- instead (the later files are IF NOT EXISTS / DROP IF EXISTS style).
+-- Re-runnable: tables/indexes use IF NOT EXISTS, functions are dropped
+-- before being recreated when their return type changes, and the data
+-- backfills are idempotent. That means it is safe to run again after a
+-- partially-applied run (for example after the 42P13 error older copies
+-- of 0003/0004 could throw) - no need to drop the database.
+--
+-- Fresh project: run it once and you are done. Existing project with
+-- data: re-running never deletes or rewrites rows - the only DELETE is
+-- 0006's removal of the legacy position-less Posts, which is already done
+-- if you are on a current database.
 
 -- ============================================================
 -- 0001_init.sql
@@ -26,14 +32,14 @@ create extension if not exists pgcrypto;
 -- Event/Market: a cache of Polymarket data, not authored by our users
 -- (docs/DATABASE.md). Primary keys are Polymarket's own string ids, not
 -- generated uuids, since we're caching their records under their ids.
-create table events (
+create table if not exists events (
   id text primary key,
   title text not null,
   category text not null,
   updated_at timestamptz not null default now()
 );
 
-create table markets (
+create table if not exists markets (
   id text primary key,
   event_id text not null references events (id) on delete cascade,
   question text not null,
@@ -47,9 +53,9 @@ create table markets (
   updated_at timestamptz not null default now()
 );
 
-create index markets_event_id_idx on markets (event_id);
+create index if not exists markets_event_id_idx on markets (event_id);
 
-create table users (
+create table if not exists users (
   id uuid primary key default gen_random_uuid(),
   privy_user_id text not null unique,
   handle text not null unique,
@@ -60,7 +66,7 @@ create table users (
   created_at timestamptz not null default now()
 );
 
-create table positions (
+create table if not exists positions (
   id uuid primary key default gen_random_uuid(),
   user_id uuid not null references users (id) on delete cascade,
   market_id text not null references markets (id) on delete cascade,
@@ -70,10 +76,10 @@ create table positions (
   opened_at timestamptz not null default now()
 );
 
-create index positions_user_id_idx on positions (user_id);
-create index positions_market_id_idx on positions (market_id);
+create index if not exists positions_user_id_idx on positions (user_id);
+create index if not exists positions_market_id_idx on positions (market_id);
 
-create table orders (
+create table if not exists orders (
   id uuid primary key default gen_random_uuid(),
   user_id uuid not null references users (id) on delete cascade,
   market_id text not null references markets (id) on delete cascade,
@@ -84,14 +90,14 @@ create table orders (
   created_at timestamptz not null default now()
 );
 
-create index orders_user_id_idx on orders (user_id);
-create index orders_market_id_status_idx on orders (market_id, status);
+create index if not exists orders_user_id_idx on orders (user_id);
+create index if not exists orders_market_id_status_idx on orders (market_id, status);
 
 -- A "Call" is a Post whose position_snapshot_* fields are non-null —
 -- no separate Call table (docs/SOCIAL-FEATURE.md, docs/DATABASE.md).
 -- The snapshot is embedded and immutable: no UPDATE path should ever
 -- touch these columns after insert.
-create table posts (
+create table if not exists posts (
   id uuid primary key default gen_random_uuid(),
   author_id uuid not null references users (id) on delete cascade,
   body text not null,
@@ -106,14 +112,14 @@ create table posts (
   created_at timestamptz not null default now()
 );
 
-create index posts_author_id_idx on posts (author_id);
-create index posts_market_id_idx on posts (market_id);
-create index posts_created_at_idx on posts (created_at desc);
+create index if not exists posts_author_id_idx on posts (author_id);
+create index if not exists posts_market_id_idx on posts (market_id);
+create index if not exists posts_created_at_idx on posts (created_at desc);
 
 -- One level deep in MVP: parent_comment_id always points at a
 -- top-level comment, never another reply (docs/DATABASE.md, "One
 -- Reply Level").
-create table comments (
+create table if not exists comments (
   id uuid primary key default gen_random_uuid(),
   post_id uuid not null references posts (id) on delete cascade,
   author_id uuid not null references users (id) on delete cascade,
@@ -124,24 +130,24 @@ create table comments (
   created_at timestamptz not null default now()
 );
 
-create index comments_post_id_idx on comments (post_id);
-create index comments_parent_comment_id_idx on comments (parent_comment_id);
+create index if not exists comments_post_id_idx on comments (post_id);
+create index if not exists comments_parent_comment_id_idx on comments (parent_comment_id);
 
-create table likes (
+create table if not exists likes (
   user_id uuid not null references users (id) on delete cascade,
   post_id uuid not null references posts (id) on delete cascade,
   created_at timestamptz not null default now(),
   primary key (user_id, post_id)
 );
 
-create table comment_likes (
+create table if not exists comment_likes (
   user_id uuid not null references users (id) on delete cascade,
   comment_id uuid not null references comments (id) on delete cascade,
   created_at timestamptz not null default now(),
   primary key (user_id, comment_id)
 );
 
-create table follows (
+create table if not exists follows (
   follower_id uuid not null references users (id) on delete cascade,
   following_id uuid not null references users (id) on delete cascade,
   created_at timestamptz not null default now(),
@@ -149,7 +155,7 @@ create table follows (
   constraint follows_no_self_follow check (follower_id <> following_id)
 );
 
-create index follows_following_id_idx on follows (following_id);
+create index if not exists follows_following_id_idx on follows (following_id);
 
 -- ============================================================
 -- 0002_leaderboard.sql
@@ -198,8 +204,13 @@ $$;
 -- FOLLOW; see apps/frontend/src/types/activity.ts, "Activity Types
 -- Limited to What This App Can Actually Produce"). A SQL UNION ALL
 -- with ORDER BY/LIMIT/OFFSET rather than pulling all four tables into
--- the backend and merge-sorting in JS.
-create or replace function user_activity(p_user_id uuid, p_limit int default 21, p_offset int default 0)
+-- the backend and merge-sorting in JS. The function is dropped first:
+-- `create or replace` cannot change a return type, so re-running this
+-- file over a newer `user_activity` (0004 / 0010) would otherwise fail
+-- with `42P13`.
+drop function if exists user_activity(uuid, integer, integer);
+
+create function user_activity(p_user_id uuid, p_limit int default 21, p_offset int default 0)
 returns table (
   id uuid,
   type text,
@@ -311,8 +322,12 @@ where position_snapshot_outcome is not null;
 
 -- Recreated from 0003 with the choice index added to each variant. The
 -- label itself keeps the `outcome` column name/shape the clients already
--- read.
-create or replace function user_activity(p_user_id uuid, p_limit int default 21, p_offset int default 0)
+-- read. The return type changes (a new column), so the old function must
+-- be dropped first — `create or replace` alone fails with
+-- `42P13 cannot change return type of existing function`.
+drop function if exists user_activity(uuid, integer, integer);
+
+create function user_activity(p_user_id uuid, p_limit int default 21, p_offset int default 0)
 returns table (
   id uuid,
   type text,

@@ -3,8 +3,13 @@
 -- FOLLOW; see apps/frontend/src/types/activity.ts, "Activity Types
 -- Limited to What This App Can Actually Produce"). A SQL UNION ALL
 -- with ORDER BY/LIMIT/OFFSET rather than pulling all four tables into
--- the backend and merge-sorting in JS.
-create or replace function user_activity(p_user_id uuid, p_limit int default 21, p_offset int default 0)
+-- the backend and merge-sorting in JS. The function is dropped first:
+-- `create or replace` cannot change a return type, so re-running this
+-- file over a newer `user_activity` (0004 / 0010) would otherwise fail
+-- with `42P13`.
+drop function if exists user_activity(uuid, integer, integer);
+
+create function user_activity(p_user_id uuid, p_limit int default 21, p_offset int default 0)
 returns table (
   id uuid,
   type text,
