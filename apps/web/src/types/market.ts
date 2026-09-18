@@ -1,10 +1,10 @@
-import type { ID, ISODateString, Category } from "@/types/common";
+import type { ID, ISODateString, Category } from '@/types/common';
 
 /** Mirrors `apps/frontend/src/types/market.ts`. Settlement is binary —
  * Polymarket resolves each token as paid (1) or not (0) — but a market
  * may offer more than two tradeable **choices** (see `MarketChoice`);
  * this type is only used for settlement outcomes. */
-export type Outcome = "YES" | "NO";
+export type Outcome = 'YES' | 'NO';
 
 /**
  * One selectable choice of a market, exactly in Polymarket's own
@@ -62,6 +62,6 @@ export interface Order {
   choiceIndex: number;
   size: number;
   price: number; // cents
-  status: "pending" | "filled" | "failed";
+  status: 'pending' | 'filled' | 'failed';
   createdAt: ISODateString;
 }

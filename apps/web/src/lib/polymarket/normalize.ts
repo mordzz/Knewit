@@ -1,17 +1,12 @@
-import type { GammaEvent, GammaMarket, GammaTag } from "@/lib/polymarket/gammaTypes";
-import type {
-  Event as DomainEvent,
-  Market as DomainMarket,
-  MarketChoice,
-  Outcome,
-} from "@/types/market";
+import type { GammaEvent, GammaMarket, GammaTag } from '@/lib/polymarket/gammaTypes';
+import type { Event as DomainEvent, Market as DomainMarket, MarketChoice, Outcome } from '@/types/market';
 import type {
   MarketDetail,
   MarketGroupSummary,
   MarketListItem,
   MarketOutcomeRow,
   MarketSummary,
-} from "@/types/social";
+} from '@/types/social';
 
 /**
  * Categories follow the API's own data, never a hardcoded taxonomy.
@@ -28,9 +23,9 @@ import type {
  * - `'Other'` only when the event has no tags at all.
  */
 export function categoryFromTags(tags: GammaTag[], preferredSlug?: string): string {
-  if (tags.length === 0) return "Other";
+  if (tags.length === 0) return 'Other';
   const preferred = preferredSlug ? tags.find((tag) => tag.slug === preferredSlug) : undefined;
-  return (preferred ?? tags[0]!).label;
+  return (preferred ?? tags[0]).label;
 }
 
 /**
@@ -95,13 +90,13 @@ function summarizeChoices(choices: MarketChoice[]): {
   isBinary: boolean;
   outcomeCount: number;
 } {
-  const yesIndex = choices.findIndex((c) => c.label.toLowerCase() === "yes");
-  const noIndex = choices.findIndex((c) => c.label.toLowerCase() === "no");
+  const yesIndex = choices.findIndex((c) => c.label.toLowerCase() === 'yes');
+  const noIndex = choices.findIndex((c) => c.label.toLowerCase() === 'no');
   const isBinary = choices.length === 2 && yesIndex !== -1 && noIndex !== -1;
 
   return {
-    yesPrice: isBinary ? choices[yesIndex]!.price : (choices[0]?.price ?? 0),
-    noPrice: isBinary ? choices[noIndex]!.price : (choices[1]?.price ?? 0),
+    yesPrice: isBinary ? choices[yesIndex].price : (choices[0]?.price ?? 0),
+    noPrice: isBinary ? choices[noIndex].price : (choices[1]?.price ?? 0),
     isBinary,
     outcomeCount: choices.length,
   };
@@ -116,7 +111,7 @@ export function toMarketSummary(
   imageOverrides?: Map<string, string | null>,
   /** The parent event's id, passed only when that event has more than
    * one market (i.e. this market is a child). */
-  parentEventId?: string | null,
+  parentEventId?: string | null
 ): MarketSummary {
   const choices = parseChoices(market);
   const { yesPrice, noPrice, isBinary, outcomeCount } = summarizeChoices(choices);
@@ -141,16 +136,14 @@ export function toMarketSummary(
     // `resolved` is left `undefined` rather than guessed from `closed`.
     isBinary,
     outcomeCount,
-    imageUrl: imageOverrides
-      ? (imageOverrides.get(market.id) ?? null)
-      : (market.image ?? market.icon ?? null),
+    imageUrl: imageOverrides ? (imageOverrides.get(market.id) ?? null) : (market.image ?? market.icon ?? null),
     choices,
   };
 }
 
 function toMarketOutcomeRow(
   market: GammaMarket,
-  imageOverrides?: Map<string, string | null>,
+  imageOverrides?: Map<string, string | null>
 ): MarketOutcomeRow {
   const choices = parseChoices(market);
   const { yesPrice, noPrice } = summarizeChoices(choices);
@@ -159,9 +152,7 @@ function toMarketOutcomeRow(
     label: market.groupItemTitle || market.question,
     yesPrice,
     noPrice,
-    imageUrl: imageOverrides
-      ? (imageOverrides.get(market.id) ?? null)
-      : (market.image ?? market.icon ?? null),
+    imageUrl: imageOverrides ? (imageOverrides.get(market.id) ?? null) : (market.image ?? market.icon ?? null),
     choices,
   };
 }
@@ -170,7 +161,7 @@ function toMarketGroupSummary(
   event: GammaEvent,
   category: string,
   markets: GammaMarket[],
-  imageOverrides?: Map<string, string | null>,
+  imageOverrides?: Map<string, string | null>
 ): MarketGroupSummary {
   return {
     id: event.id,
@@ -211,7 +202,7 @@ export function isDiscoverable(market: GammaMarket): boolean {
  */
 export function childImageUrls(
   markets: GammaMarket[],
-  eventImageUrl: string | null,
+  eventImageUrl: string | null
 ): Map<string, string | null> {
   const overrides = new Map<string, string | null>();
   for (const market of markets) {
@@ -249,17 +240,17 @@ export function toMarketListItems(event: GammaEvent, filterTagSlug?: string): Ma
   // event's own art (which is already on the card header).
   const isChildEvent = event.markets.length > 1;
   const imageOverrides =
-    markets.length > 1 ? childImageUrls(markets, event.image ?? event.icon ?? null) : undefined;
+    markets.length > 1
+      ? childImageUrls(markets, event.image ?? event.icon ?? null)
+      : undefined;
   const parentEventId = isChildEvent ? event.id : null;
 
   if (isGroup) {
-    return [
-      { kind: "group", group: toMarketGroupSummary(event, category, markets, imageOverrides) },
-    ];
+    return [{ kind: 'group', group: toMarketGroupSummary(event, category, markets, imageOverrides) }];
   }
 
   return markets.map((market) => ({
-    kind: "market" as const,
+    kind: 'market' as const,
     market: toMarketSummary(market, category, event.liquidity, imageOverrides, parentEventId),
   }));
 }
@@ -268,7 +259,7 @@ export function toMarketDetail(
   market: GammaMarket,
   category: string,
   eventLiquidity: number | null,
-  parentEventId?: string | null,
+  parentEventId?: string | null
 ): MarketDetail {
   return {
     ...toMarketSummary(market, category, eventLiquidity, undefined, parentEventId),
@@ -294,11 +285,7 @@ export function toDomainEvent(event: GammaEvent): DomainEvent {
   };
 }
 
-function toDomainMarket(
-  market: GammaMarket,
-  eventId: string,
-  eventLiquidity: number | null,
-): DomainMarket {
+function toDomainMarket(market: GammaMarket, eventId: string, eventLiquidity: number | null): DomainMarket {
   const { yesPrice, noPrice } = summarizeChoices(parseChoices(market));
   return {
     id: market.id,
@@ -308,7 +295,7 @@ function toDomainMarket(
     noPrice,
     volume: market.volumeNum ?? 0,
     liquidity: market.liquidityNum ?? eventLiquidity ?? 0,
-    endDate: market.endDate ?? "",
+    endDate: market.endDate ?? '',
     resolved: false,
     resolvedOutcome: null satisfies Outcome | null,
   };

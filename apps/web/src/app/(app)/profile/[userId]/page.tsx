@@ -1,0 +1,10 @@
+import { ProfileView } from '@/components/ProfileView';
+
+export default async function UserProfilePage({
+  params,
+}: {
+  params: Promise<{ userId: string }>;
+}) {
+  const { userId } = await params;
+  return <ProfileView userId={userId} />;
+}

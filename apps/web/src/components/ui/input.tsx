@@ -1,22 +1,35 @@
-import * as React from "react";
+import type { InputHTMLAttributes } from 'react';
+import { cn } from '@/lib/cn';
+import { Text } from '@/components/ui/Text';
 
-import { cn } from "@/lib/utils";
+export interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
+  label?: string;
+  error?: string;
+}
 
-const Input = React.forwardRef<HTMLInputElement, React.ComponentProps<"input">>(
-  ({ className, type, ...props }, ref) => {
-    return (
+/** Web equivalent of `apps/mobile/src/components/ui/Input`. */
+export function Input({ label, error, className, ...rest }: InputProps) {
+  return (
+    <div className="flex flex-col gap-1">
+      {label ? (
+        <Text variant="caption" color="textSecondary" className="ml-1">
+          {label}
+        </Text>
+      ) : null}
       <input
-        type={type}
         className={cn(
-          "flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-base shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 md:text-sm",
-          className,
+          'min-h-12 rounded-md border border-border bg-surface-elevated px-3 py-3 text-body text-text-primary placeholder:text-text-tertiary focus:outline-none',
+          error && 'border-danger',
+          className
         )}
-        ref={ref}
-        {...props}
+        aria-label={label}
+        {...rest}
       />
-    );
-  },
-);
-Input.displayName = "Input";
-
-export { Input };
+      {error ? (
+        <Text variant="caption" color="danger" className="ml-1">
+          {error}
+        </Text>
+      ) : null}
+    </div>
+  );
+}

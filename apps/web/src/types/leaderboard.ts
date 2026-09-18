@@ -1,7 +1,7 @@
-import type { User } from "@/types/social";
+import type { User } from '@/types/social';
 
 /** Mirrors `apps/frontend/src/types/leaderboard.ts` exactly. */
-export type LeaderboardMetricName = "volume";
+export type LeaderboardMetricName = 'volume';
 
 export interface LeaderboardMetric {
   name: LeaderboardMetricName;
@@ -23,7 +23,7 @@ export interface LeaderboardMetric {
  */
 export interface LeaderboardEntry {
   rank: number;
-  user: Pick<User, "id" | "handle" | "displayName" | "avatarUrl">;
+  user: Pick<User, 'id' | 'handle' | 'displayName' | 'avatarUrl'>;
   metric: LeaderboardMetric;
 }
 

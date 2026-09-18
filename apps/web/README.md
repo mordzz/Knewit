@@ -1,241 +1,230 @@
-# Knew It Trading Hub
-
-design Knew It website into a polished, premium trading app with a strong crypto identity.
-
-Knew It combines prediction markets, crypto, memecoins, perpetual futures, and tokenized stocks in one application. Prediction markets are the flagship experience. The product will be available on the web and mobile.
-
-SCOPE
-Focus on UI/UX and visual design. Inspect the existing project first and preserve working authentication, routes, integrations, and trading logic. Update existing components instead of creating an unrelated website. Use clearly labeled demo data only where real data is unavailable.
-
-DESIGN DIRECTION
-Create a distinctive, production-quality crypto interface inspired by the simplicity of consumer trading apps and the clarity of prediction markets.
-
-Use:
-
-Deep charcoal background, not pure black.
-
-Slightly lighter cards and panels with subtle borders.
-
-Vibrant yellow as the signature accent for primary actions, active navigation, and selected states.
-
-Off-white primary text and muted gray secondary text.
-
-Green and red reserved for market movement, outcomes, and trading states.
-
-Clean typography such as Geist or Inter, with tabular numbers for prices.
-
-Consistent rounded corners, restrained shadows, and crisp icons.
-
-Keep the interface confident, compact, and easy to scan. Avoid excessive neon, gradients, glassmorphism, oversized headings, decorative crypto coins, and generic AI website styling. Use yellow selectively rather than making every element yellow.
-
-Preserve the existing Knew It logo if available. Display the brand name as “Knew It”.
-
-SIGN-IN PAGE
-Transform the existing /sign-in page into a memorable product entrance.
-
-Desktop:
-
-Split composition with a branded product preview on the left and a focused sign-in panel on the right.
-
-Headline: “Your next move starts here.”
-
-Supporting text: “Predictions, crypto, memecoins, perps, and tokenized stocks. One app.”
-
-Show a composed preview of a prediction market card, a small price chart, and a portfolio card.
-
-Make these previews feel like actual pieces of the application, not random floating decorations.
-
-Label illustrative prices and balances as demo content.
-
-Sign-in panel:
-
-Knew It branding.
-
-Heading: “Welcome to Knew It”.
-
-Clear hierarchy for existing sign-in methods.
-
-Preserve currently supported authentication options and behavior.
-
-Refine input fields, buttons, loading states, and validation messages.
-
-Include existing terms and privacy links.
-
-Mobile:
-
-Prioritize the sign-in form.
-
-Reduce the decorative preview to a small branded visual.
-
-Keep the main action visible without excessive scrolling.
-
-APPLICATION SHELL
-Build a cohesive responsive app layout.
-
-Desktop:
-
-Left sidebar: Discover, Markets, Watchlist, Portfolio, Activity.
-
-Brand at the top and account/settings at the bottom.
-
-Top bar with global search, available balance, and existing funding/account controls.
-
-Main content with a clear page title and market category tabs.
-
-Market tabs:
-Predictions / Crypto / Memecoins / Perps / Stocks
-
-Use the label “Tokenized stocks” in relevant descriptions and detail pages so the asset type is clear.
-
-Mobile:
-
-Native-app-inspired layout with a compact header.
-
-Bottom navigation: Discover, Markets, Watchlist, Portfolio.
-
-Horizontally scrollable market category tabs.
-
-Comfortable touch targets and safe-area spacing.
-
-Convert dense side panels into drawers or bottom sheets.
-
-This should be a responsive web application suitable for a future mobile product, not a static phone mockup.
-
-DISCOVER PAGE
-Make prediction markets the default focus.
-
-Content hierarchy:
-
-Compact featured prediction market.
-
-Trending predictions.
-
-Category filters: All, Crypto, Politics, Sports, Finance, Culture.
-
-Secondary discovery sections for crypto, memecoins, perps, and tokenized stocks.
-
-Prediction cards should include:
-
-Relevant thumbnail.
-
-Clear market question.
-
-Outcome probability.
-
-Small probability trend chart where appropriate.
-
-Trading volume and end date.
-
-Clearly labeled Yes / No buttons for binary markets.
-
-A different layout for markets with multiple outcomes.
-
-Watchlist action.
-
-Keep cards readable and information-rich without overcrowding them. Do not let secondary asset categories overpower the prediction market experience.
-
-MARKET VIEWS
-Use a shared visual system, but tailor the information to each market type.
-
-Crypto and memecoins:
-
-Asset icon, name, ticker, price, percentage change, volume, and sparkline.
-
-Memecoins may also show market cap and liquidity if available.
-
-Perps:
-
-Trading pair, price, daily change, funding rate, and open interest where supported.
-
-Clear Long / Short actions and an understandable leverage selector.
-
-Tokenized stocks:
-
-Underlying company name, token ticker, price, and daily change.
-
-Clearly identify the tokenized instrument.
-
-Show market or trading-session status only when supported by real data.
-
-MARKET DETAIL
-Prediction market detail:
-
-Question, category, closing date, and resolution information.
-
-Probability chart with functional time-range controls.
-
-Outcome selection and order panel.
-
-Clearly distinguish probability, share price, order amount, and potential payout.
-
-Explain potential payout as conditional on the selected outcome winning.
-
-Tabs for Overview, Activity, and Rules when content is available.
-
-Desktop order panel on the right; mobile order flow in a bottom sheet.
-
-Other asset details:
-
-Price chart, relevant statistics, and market-specific trading controls.
-
-Do not use a prediction-market order form for swaps or leveraged trades.
-
-PORTFOLIO
-Design a clean unified portfolio with:
-
-Total portfolio value.
-
-Available balance.
-
-Clearly labeled portfolio change over the selected period.
-
-Allocation across market categories.
-
-Holdings, prediction positions, and leveraged positions in appropriate separate views.
-
-Recent activity and existing funding actions.
-
-Use realistic formatting and distinguish open positions from completed trades.
-
-INTERACTION AND QUALITY
-
-Consistent hover, focus, pressed, and selected states.
-
-Subtle 150–200 ms transitions.
-
-Skeleton loaders, useful empty states, and clear error states.
-
-Accessible contrast and visible keyboard focus.
-
-Functional navigation, filters, tabs, and watchlist controls wherever supported.
-
-Never simulate a successful trade, deposit, or authentication.
-
-Do not add unsupported social proof, user counts, partner logos, or app-store availability claims.
-
-Build reusable components for navigation, market cards, asset rows, buttons, filters, charts, and trading panels. Adapt the existing chart library if present.
-
-Prioritize the sign-in page, application shell, and prediction-focused Discover page first, then extend the same design system to the remaining existing screens.
-
-The final result should feel like a real, desirable crypto trading product: distinctive yellow branding, polished dark surfaces, clear market information, and excellent mobile usability.
-
-This project was built with [Lovable](https://lovable.dev).
-
-## Build with Lovable
-
-Continue developing this project in the [Lovable editor](https://lovable.dev/projects/875dbd6c-fc03-47c7-b3a5-2f8b36858b62).
-
-- **Ship faster**: describe what you want to build and Lovable handles the code.
-- **Stay in sync**: every change made in Lovable is committed straight to this repository.
-- **Full ownership**: this code is yours. Push to `main` on GitHub and your changes sync back into Lovable, ready for your next prompt.
-
-## Development
-
-Prefer working locally? You need Node.js and npm — [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating).
-
-```sh
-git clone <this-repository-url>
-cd <repository-name>
-npm i
-npm run dev
-```
+# Knewit Web
+
+Next.js (App Router), deployed on Vercel — both the API/BFF the Knewit
+mobile app calls (see `../../docs/ARCHITECTURE.md` for the full system
+design and `../../docs/API.md` for the endpoint contract) **and** the
+web frontend for the same product (`src/app/sign-in`, `src/app/page.tsx`),
+sharing this one Next.js project and deploy. Copied from `apps/backend`
+(kept as the original source) so this app has its own place to run and
+deploy under `apps/web` — see `../backend/README.md` if the two drift.
+
+## Setup
+
+1. `cp .env.example .env.local` and fill in:
+   - `SUPABASE_URL` / `SUPABASE_SERVICE_ROLE_KEY` — from your Supabase project's Settings -> API.
+   - `PRIVY_APP_ID` / `PRIVY_APP_SECRET` — from the Privy dashboard's API Keys page (same app as the mobile client's `EXPO_PUBLIC_PRIVY_APP_ID`).
+   - `NEXT_PUBLIC_PRIVY_APP_ID` — same value as `PRIVY_APP_ID`, just re-exposed under Next.js's required `NEXT_PUBLIC_` prefix for the web app's client-side Privy provider.
+   - Optional, both defaulting to Polymarket's real public endpoints: `POLYMARKET_GAMMA_BASE_URL` (markets/events/categories) and `POLYMARKET_DATA_BASE_URL` (the leaderboard ranking — a different Polymarket service, `data-api.polymarket.com`).
+2. Run **one file**: `supabase/all_in_one.sql` — every migration
+   (`0001` … `0011`) in order, generated from the numbered files in
+   `supabase/migrations/` (the canonical source, kept for history and
+   referenced by code comments). Paste it into the Supabase SQL editor,
+   or apply via the Supabase CLI once one is set up — not done in this
+   pass. It also creates the public `profile-images` storage bucket
+   (`0008`). The file is **re-runnable**: tables/indexes use
+   `IF NOT EXISTS` and functions are dropped before being recreated when
+   their return type changes, so a partially-applied run can simply be
+   executed again (no need to drop the database).
+3. `npm install && npm run dev`
+
+## Implemented
+
+**Phase 1 (Foundation)** — `GET /categories`, `/events`, `/markets`,
+`/markets/:id`, `/markets/:id/activity`, `/markets/:id/holders` (the last one
+still a stub — empty until `Position` has rows). Live proxy to Polymarket's
+Gamma API (`src/lib/polymarket/`), no caching/write-through beyond what Phase
+2 needed for FK integrity (`src/lib/marketCache.ts`).
+
+**Phase 2 (Social core)** — users/profile (`GET/PATCH /users/:id`, follow,
+followers/following, posts, calls, activity), Calls/Posts (create, get, like,
+comments incl. replies/share), Feed (`/feed`, `/feed/following`), Search
+(`/search`, people from our DB + markets from Polymarket's `/public-search`).
+`/feed`'s ranking is recency-only, a deliberate subset of docs/API.md's full
+intended formula (see the route's doc comment).
+
+**Phase 3 (Positions & Trading)** — `GET /positions`, `GET /positions/:marketId`,
+`POST /trading/orders`, `GET /leaderboard`. Trading integrates the official
+`@polymarket/clob-client` with a custom signer (`src/lib/trading/privyClobSigner.ts`)
+that proxies EIP-712 signing to Privy's server-side wallet API
+(`eth_signTypedData_v4`), so this backend never touches a private key.
+
+`GET /leaderboard` is the one Phase 3 read that does **not** come from our
+own tables: since `orders` only gets rows once a trade fills (and trading
+is still unverified), its ranking is Polymarket's own live ranked
+leaderboard (`src/lib/polymarket/dataApiClient.ts`), volume-only/all-time —
+the same live-proxy pattern Phase 1 uses for Gamma. It is a **read-only
+table**: global only (no `scope=following`), no Follow button, and no
+profile link — a ranked row is a Polymarket trader identified by proxy
+wallet, not an account here, and the route touches no Supabase table at all
+except to fill `currentUser` from the caller's own `users.wallet_address`.
+See `src/app/api/leaderboard/route.ts` and docs/DECISIONS.md, "Round 6:
+Leaderboard Is a Read-Only Polymarket Ranking — No Follow, No Profile
+Links".
+
+### ⚠️ Trading is unverified end-to-end
+
+`POST /trading/orders` requires the user's Privy embedded wallet to have
+**delegated signing authority to this app** (Privy's session-signers /
+delegated-actions feature). The mobile app (Sprint 6, see `docs/WALLET.md`)
+only implemented wallet creation/connection — not delegation — so as it
+stands today, every real order attempt is expected to fail at the signing
+step with a clear error, not a fabricated success (docs/DECISIONS.md, "No
+Fake Trade Success"). Before this can place a real trade:
+
+1. The mobile app needs to add a one-time delegation step after wallet
+   creation (Privy client SDK).
+2. The wallet needs real USDC on Polygon and an Exchange-contract approval
+   (this backend trades as a plain EOA — `SignatureType.EOA` — not a
+   Polymarket-deployed proxy/Safe wallet, so funding/approval UX isn't
+   automatic).
+3. The whole flow needs a real test trade on a funded wallet to confirm the
+   signing/order-construction sequence actually works — nothing here has
+   been exercised against a real fill.
+
+## Not yet implemented
+
+Everything not covered above (`docs/API.md`'s full contract is the
+reference); notably: `GET /markets/trending`, `GET /markets/closing-soon`,
+`GET /feed/trending` (defined in docs but no current mobile consumer — see
+docs/DECISIONS.md, "Redesign Round 2").
+
+## Web (desktop/tablet)
+
+A web port of the entire mobile app, sharing this project and its APIs
+— see `docs/INTEGRATION.md` for the fuller status table.
+
+### Pages
+
+- `/sign-in` — email-OTP + Google/X OAuth, ported from `SignInScreen`.
+  No app chrome, same as the mobile screen it's a launch gate for.
+- `app/(app)/layout.tsx` — the shell every other page shares: a left
+  sidebar (`src/components/Sidebar.tsx`, the desktop equivalent of the
+  bottom tab bar — same five destinations, plus a "Post" button) and
+  the same "Hard Login Gate" `RootNavigator` enforces on mobile
+  (docs/DECISIONS.md) — signed-out visitors are redirected to
+  `/sign-in`.
+- `/` — Home feed (Trending/Following, real optimistic Like, links to
+  author profiles/market/Call detail). No infinite scroll (first page
+  only) and no Share action.
+- `/markets`, `/markets/[id]` — list (category tabs sourced live from
+  `GET /categories`, combo-market handling) and detail (rules,
+  Callouts/Top Holders tabs, and a **real** trade form — see the
+  trading caveat above; this calls the actual `POST /trading/orders`).
+  No price chart.
+- `/search` — People (this app's own accounts only) + Markets together,
+  `localStorage`-backed Recents.
+- `/leaderboard` — read-only: Polymarket's **global** ranking only (no scope
+  toggle, no Follow button, no profile link — its rows are Polymarket
+  traders, not accounts here). No `TopPerformers` podium — every rank is
+  the same row. "Your rank" is the one personal line: the signed-in
+  viewer's own standing, shown when it falls outside the loaded page.
+- `/profile`, `/profile/[userId]`, `.../followers`, `.../following`,
+  `/profile/edit` — one shared `ProfileView` component for self and
+  anyone else (mirrors the mobile app's "One Profile Route/Screen"
+  decision). Calls/Posts/Activity tabs, "Load more" instead of
+  infinite scroll. Edit Profile only exposes displayName/bio, same
+  scope limit as mobile.
+- `/wallet` — real Privy connection state (`usePrivy().user.wallet`),
+  never a fabricated balance.
+- `/portfolio` — **more real than the mobile screen**: mobile's
+  `PortfolioScreen` hardcodes "0 Open Positions" rather than calling
+  `useMarketPosition`'s sibling hook; this page calls the real
+  `GET /positions` endpoint. No PnL figure at all (not even `$0.00`) —
+  this app's data model has no realized/unrealized PnL computation
+  anywhere (docs/DECISIONS.md), so showing one here would be
+  fabricated precision.
+- `/calls/[id]` — Post/Call detail with real comments (create, delete
+  own). One level deep only — no reply-to-a-reply UI, though the
+  backend endpoint for it exists.
+- `/create-call` — plain Post creation only, no position-picker (no
+  positions exist yet in practice — Phase 3 trading is unverified — so
+  there's nothing real to attach).
+
+### Notable implementation details
+
+- **Data fetching**: `@tanstack/react-query` (now a dependency of this
+  project too, same library the mobile app uses) — this project's
+  ESLint config enforces `react-hooks/set-state-in-effect`, which flags
+  the plain `useEffect` + `setState` fetch pattern, so a query library
+  owning that internally is the fix, not a suppression.
+- **Styling**: Tailwind CSS v4 (`src/app/globals.css`'s `@theme` block),
+  colors copied 1:1 from `apps/frontend/src/theme/colors.ts` so the web app
+  reads as the same product. No shared package between the two — the
+  values are duplicated by hand; keep them in sync manually if the palette
+  changes.
+- **Icons**: `react-icons` (`react-icons/io5` mirrors Ionicons, which
+  `apps/frontend` uses, for anything ported later; `react-icons/fc` and
+  `react-icons/fa6` for the Google/X login buttons specifically).
+- **Auth**: `@privy-io/react-auth` (the web SDK, distinct from
+  `@privy-io/expo`) via `src/app/providers.tsx`. Its OAuth hook
+  (`useLoginWithOAuth`) works differently from the Expo one — it's a real
+  full-page redirect (`initOAuth`), not an in-app-browser session that
+  resolves with the user — so login completion (both email and OAuth) is
+  driven by one shared `onComplete` callback rather than an awaited return
+  value. Verified against the installed package's own type declarations
+  while building this, not assumed from the mobile SDK's shape — see
+  `src/app/sign-in/page.tsx`'s doc comment.
+- `@privy-io/react-auth` pulls in a large wallet-connector dependency tree
+  (wagmi, WalletConnect, MetaMask SDK, Reown AppKit, `@stripe/stripe-js` —
+  none of which this app's simple email/OAuth/embedded-wallet flow uses).
+  Its tree conflicts with `@polymarket/client`'s viem/ox versions, and the
+  SDK also declares a stale `peerOptional` range for `@privy-io/node`
+  (`^0.15.0` vs the verified `0.34.x` this app runs), so npm's strict peer
+  resolution fails with `ERESOLVE`. `.npmrc` in this directory sets
+  `legacy-peer-deps=true` — keep it next to `package.json`; Vercel reads it
+  from the project root automatically.
+  `npm audit` reports vulnerabilities inside that same third-party
+  wallet-connector tree; not run through `npm audit fix` since that can
+  force breaking version changes — worth a deliberate look before a real
+  deploy.
+
+### Not built
+
+Comment replies (the endpoint exists, no UI calls it), a Settings
+sheet (Log out lives in the sidebar instead), price charts, and the
+position-picker for attaching a verified position to a Call.
+
+## Deploying to Vercel
+
+The web frontend and the API deploy together as this one Next.js
+project. This repo is **not** an npm workspace — `apps/backend` has its
+own `package.json` and lockfile, so Vercel needs to be pointed at it
+directly.
+
+1. **Import the repository** in Vercel → *New Project*.
+2. **Root Directory: `apps/backend`** (Edit next to the repo name).
+   Framework preset: *Next.js* (auto-detected); install/build commands
+   stay the defaults (`npm install`, `next build`). The directory's
+   `.npmrc` (`legacy-peer-deps=true`) is picked up automatically — it is
+   what keeps npm from failing on the SDK's stale peer range.
+3. **Node.js version**: 20.x or 22.x (`engines` requires `>=20.9.0`).
+4. **Environment Variables** — add every key from `.env.example` for the
+   Production environment (and Preview if you use it):
+   `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `PRIVY_APP_ID`,
+   `PRIVY_APP_SECRET`, `PRIVY_AUTHORIZATION_PRIVATE_KEY`,
+   `NEXT_PUBLIC_PRIVY_APP_ID`, `NEXT_PUBLIC_PRIVY_CLIENT_ID`,
+   `NEXT_PUBLIC_PRIVY_SIGNER_ID`, and — required for trading —
+   `POLYMARKET_BUILDER_API_KEY` / `POLYMARKET_BUILDER_SECRET` /
+   `POLYMARKET_BUILDER_PASSPHRASE`. The `POLYMARKET_*_BASE_URL` keys are
+   optional (public defaults). `NEXT_PUBLIC_*` values are inlined at
+   **build time**, so set them before the first deploy; never commit
+   `.env` (`.env.example` is the tracked template).
+5. **Apply the Supabase SQL** — `supabase/all_in_one.sql` (migrations
+   `0001` … `0011`, see Setup above). The latest endpoints depend on the
+   SQL functions in `0009` / `0010` — without them, profile reads and
+   follow lists answer `internal_error`.
+6. **Privy dashboard**: add the production domain to *Allowed Origins*
+   so email/Google/X sign-in and the embedded-wallet consent step work
+   on the deployed URL (same app id as the mobile client).
+7. **Deploy, then smoke-test**: sign-in (email + Google/X), feed,
+   profile read, "Who to follow", wallet balance, and a deposit. Trading
+   additionally needs funded Deposit Wallets plus the Builder
+   credentials from step 4.
+8. **Timeouts**: routes that talk to Polymarket's SDK/relayer
+   (`/api/trading/*`, `/api/wallet/*`) declare `maxDuration = 60` — the
+   Hobby plan's maximum. A higher limit is available on Pro if order
+   placement ever needs it.
+
+The web app calls its own `/api/*` same-origin, so no API base URL needs
+to be configured here; the mobile app points at the deployed domain via
+its own `EXPO_PUBLIC_API_BASE_URL`.

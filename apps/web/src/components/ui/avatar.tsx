@@ -1,47 +1,40 @@
-"use client";
+import { Text } from '@/components/ui/Text';
 
-import * as React from "react";
-import * as AvatarPrimitive from "@radix-ui/react-avatar";
+export interface AvatarProps {
+  uri?: string | null;
+  fallbackLabel: string;
+  size?: number;
+}
 
-import { cn } from "@/lib/utils";
+/** Web equivalent of `apps/mobile/src/components/ui/Avatar`. */
+export function Avatar({ uri, fallbackLabel, size = 40 }: AvatarProps) {
+  const dimensionStyle = { width: size, height: size };
 
-const Avatar = React.forwardRef<
-  React.ElementRef<typeof AvatarPrimitive.Root>,
-  React.ComponentPropsWithoutRef<typeof AvatarPrimitive.Root>
->(({ className, ...props }, ref) => (
-  <AvatarPrimitive.Root
-    ref={ref}
-    className={cn("relative flex h-10 w-10 shrink-0 overflow-hidden rounded-full", className)}
-    {...props}
-  />
-));
-Avatar.displayName = AvatarPrimitive.Root.displayName;
+  if (uri) {
+    return (
+      // Arbitrary external avatar host — not worth a next.config
+      // remotePatterns entry for a URL this backend doesn't control.
+      // eslint-disable-next-line @next/next/no-img-element
+      <img
+        src={uri}
+        alt={fallbackLabel}
+        style={dimensionStyle}
+        className="overflow-hidden rounded-full object-cover"
+      />
+    );
+  }
 
-const AvatarImage = React.forwardRef<
-  React.ElementRef<typeof AvatarPrimitive.Image>,
-  React.ComponentPropsWithoutRef<typeof AvatarPrimitive.Image>
->(({ className, ...props }, ref) => (
-  <AvatarPrimitive.Image
-    ref={ref}
-    className={cn("aspect-square h-full w-full", className)}
-    {...props}
-  />
-));
-AvatarImage.displayName = AvatarPrimitive.Image.displayName;
+  const initial = fallbackLabel.trim().charAt(0).toUpperCase() || '?';
 
-const AvatarFallback = React.forwardRef<
-  React.ElementRef<typeof AvatarPrimitive.Fallback>,
-  React.ComponentPropsWithoutRef<typeof AvatarPrimitive.Fallback>
->(({ className, ...props }, ref) => (
-  <AvatarPrimitive.Fallback
-    ref={ref}
-    className={cn(
-      "flex h-full w-full items-center justify-center rounded-full bg-muted",
-      className,
-    )}
-    {...props}
-  />
-));
-AvatarFallback.displayName = AvatarPrimitive.Fallback.displayName;
-
-export { Avatar, AvatarImage, AvatarFallback };
+  return (
+    <div
+      style={dimensionStyle}
+      className="flex items-center justify-center overflow-hidden rounded-full bg-accent"
+      aria-label={fallbackLabel}
+    >
+      <Text variant="bodyStrong" color="textInverse">
+        {initial}
+      </Text>
+    </div>
+  );
+}

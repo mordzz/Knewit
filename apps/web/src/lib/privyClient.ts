@@ -1,5 +1,5 @@
-import { PrivyClient } from "@privy-io/node";
-import { env } from "@/lib/env";
+import { PrivyClient } from '@privy-io/node';
+import { env } from '@/lib/env';
 
 let client: PrivyClient | null = null;
 

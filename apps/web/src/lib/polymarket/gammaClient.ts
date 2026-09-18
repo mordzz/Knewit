@@ -1,11 +1,8 @@
-import { env } from "@/lib/env";
-import { upstreamError } from "@/lib/apiError";
-import type { GammaEvent, GammaMarket, GammaTag } from "@/lib/polymarket/gammaTypes";
+import { env } from '@/lib/env';
+import { upstreamError } from '@/lib/apiError';
+import type { GammaEvent, GammaMarket, GammaTag } from '@/lib/polymarket/gammaTypes';
 
-async function gammaGet<T>(
-  path: string,
-  params: Record<string, string | number | boolean | undefined>,
-): Promise<T> {
+async function gammaGet<T>(path: string, params: Record<string, string | number | boolean | undefined>): Promise<T> {
   const url = new URL(`${env.polymarketGammaBaseUrl}${path}`);
   for (const [key, value] of Object.entries(params)) {
     if (value !== undefined) url.searchParams.set(key, String(value));
@@ -13,9 +10,9 @@ async function gammaGet<T>(
 
   let response: Response;
   try {
-    response = await fetch(url, { headers: { Accept: "application/json" } });
+    response = await fetch(url, { headers: { Accept: 'application/json' } });
   } catch {
-    throw upstreamError("Unable to reach Polymarket.");
+    throw upstreamError('Unable to reach Polymarket.');
   }
 
   if (!response.ok) {
@@ -32,20 +29,17 @@ const PAGE_SIZE = 20;
  * category, which the plain `/markets` endpoint's nested `events` field
  * doesn't (verified live — see the Phase 1 design notes). `cursor` is
  * an opaque numeric offset. */
-export async function fetchEventsPage(
-  cursor: string | undefined,
-  categoryTagSlug?: string,
-): Promise<{
+export async function fetchEventsPage(cursor: string | undefined, categoryTagSlug?: string): Promise<{
   events: GammaEvent[];
   nextCursor: string | null;
 }> {
   const offset = cursor ? Number(cursor) : 0;
-  const page = await gammaGet<GammaEvent[]>("/events", {
+  const page = await gammaGet<GammaEvent[]>('/events', {
     limit: PAGE_SIZE,
     offset,
     active: true,
     closed: false,
-    order: "volume24hr",
+    order: 'volume24hr',
     ascending: false,
     tag_slug: categoryTagSlug,
   });
@@ -62,7 +56,7 @@ export async function fetchEventsPage(
  * field on Polymarket's side, so category is resolved via a second
  * call — `fetchEventForMarket` — rather than guessed. */
 export async function fetchMarketById(id: string): Promise<GammaMarket | null> {
-  const markets = await gammaGet<GammaMarket[]>("/markets", { id });
+  const markets = await gammaGet<GammaMarket[]>('/markets', { id });
   return markets[0] ?? null;
 }
 
@@ -71,12 +65,9 @@ export async function fetchMarketById(id: string): Promise<GammaMarket | null> {
  * `GET /markets/:id`. Returns `null` if the market has no discoverable
  * parent event (Gamma's `/markets?id=` list response nests one). */
 export async function fetchEventForMarket(marketId: string): Promise<GammaEvent | null> {
-  const markets = await gammaGet<Array<GammaMarket & { events?: Array<{ id: string }> }>>(
-    "/markets",
-    {
-      id: marketId,
-    },
-  );
+  const markets = await gammaGet<Array<GammaMarket & { events?: Array<{ id: string }> }>>('/markets', {
+    id: marketId,
+  });
   const eventId = markets[0]?.events?.[0]?.id;
   if (!eventId) return null;
   return gammaGet<GammaEvent>(`/events/${eventId}`, {});
@@ -88,7 +79,7 @@ export async function fetchEventForMarket(marketId: string): Promise<GammaEvent 
  * (`null` here) and a real upstream failure still propagates as an
  * upstream error, mirroring `fetchMarketById`. */
 export async function fetchEventById(eventId: string): Promise<GammaEvent | null> {
-  const events = await gammaGet<GammaEvent[]>("/events", { id: eventId });
+  const events = await gammaGet<GammaEvent[]>('/events', { id: eventId });
   return events[0] ?? null;
 }
 
@@ -113,18 +104,18 @@ export async function fetchEventById(eventId: string): Promise<GammaEvent | null
  * lookup below, not itself the source of truth.
  */
 const CATEGORY_SLUG_CANDIDATES = [
-  "politics",
-  "sports",
-  "crypto",
-  "esports",
-  "iran",
-  "finance",
-  "geopolitics",
-  "tech",
-  "pop-culture",
-  "economy",
-  "weather",
-  "elections",
+  'politics',
+  'sports',
+  'crypto',
+  'esports',
+  'iran',
+  'finance',
+  'geopolitics',
+  'tech',
+  'pop-culture',
+  'economy',
+  'weather',
+  'elections',
 ];
 
 export async function fetchCategoryTags(): Promise<GammaTag[]> {
@@ -135,7 +126,7 @@ export async function fetchCategoryTags(): Promise<GammaTag[]> {
       } catch {
         return null;
       }
-    }),
+    })
   );
   return results.filter((tag): tag is GammaTag => tag !== null);
 }
@@ -146,10 +137,10 @@ export async function fetchCategoryTags(): Promise<GammaTag[]> {
  * live). Response events carry `tags`/`markets` in the same shape as
  * `/events`, so `toMarketListItems` works unchanged. */
 export async function searchEvents(query: string, limitPerType = 10): Promise<GammaEvent[]> {
-  const response = await gammaGet<{ events: GammaEvent[] }>("/public-search", {
+  const response = await gammaGet<{ events: GammaEvent[] }>('/public-search', {
     q: query,
     limit_per_type: limitPerType,
-    events_status: "active",
+    events_status: 'active',
   });
   return response.events ?? [];
 }

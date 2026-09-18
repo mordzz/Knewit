@@ -1,6 +1,6 @@
-import { env } from "@/lib/env";
-import { upstreamError } from "@/lib/apiError";
-import { normalizeWalletAddress } from "@/lib/polymarket/address";
+import { env } from '@/lib/env';
+import { upstreamError } from '@/lib/apiError';
+import { normalizeWalletAddress } from '@/lib/polymarket/address';
 
 /**
  * Polymarket's **Data API** (`https://data-api.polymarket.com`) — a
@@ -42,19 +42,16 @@ export interface PolymarketLeaderboardRow {
  * (`orderBy=VOL` is Polymarket's own parameter name; it sorts descending
  * by `vol`.) */
 const LEADERBOARD_WINDOW = {
-  timePeriod: "ALL",
-  orderBy: "VOL",
-  category: "OVERALL",
+  timePeriod: 'ALL',
+  orderBy: 'VOL',
+  category: 'OVERALL',
 } as const;
 
 /** Polymarket's own `user=` filter takes a comma-separated list; chunks
  * keep the query string (and therefore the URL) a sane length. */
 const WALLETS_PER_LOOKUP = 25;
 
-async function dataGet<T>(
-  path: string,
-  params: Record<string, string | number | undefined>,
-): Promise<T> {
+async function dataGet<T>(path: string, params: Record<string, string | number | undefined>): Promise<T> {
   const url = new URL(`${env.polymarketDataBaseUrl}${path}`);
   for (const [key, value] of Object.entries(params)) {
     if (value !== undefined) url.searchParams.set(key, String(value));
@@ -62,9 +59,9 @@ async function dataGet<T>(
 
   let response: Response;
   try {
-    response = await fetch(url, { headers: { Accept: "application/json" } });
+    response = await fetch(url, { headers: { Accept: 'application/json' } });
   } catch {
-    throw upstreamError("Unable to reach Polymarket.");
+    throw upstreamError('Unable to reach Polymarket.');
   }
 
   if (!response.ok) {
@@ -80,18 +77,15 @@ async function dataGet<T>(
  * route. Anything else is treated as "no rows", never as a fake row. */
 function toRows(payload: unknown): PolymarketLeaderboardRow[] {
   if (Array.isArray(payload)) return payload as PolymarketLeaderboardRow[];
-  if (payload && typeof payload === "object" && "proxyWallet" in payload) {
+  if (payload && typeof payload === 'object' && 'proxyWallet' in payload) {
     return [payload as PolymarketLeaderboardRow];
   }
   return [];
 }
 
 /** One page of the global ranking, in rank order. */
-export async function fetchLeaderboardPage(
-  limit: number,
-  offset: number,
-): Promise<PolymarketLeaderboardRow[]> {
-  const payload = await dataGet<unknown>("/v1/leaderboard", {
+export async function fetchLeaderboardPage(limit: number, offset: number): Promise<PolymarketLeaderboardRow[]> {
+  const payload = await dataGet<unknown>('/v1/leaderboard', {
     ...LEADERBOARD_WINDOW,
     limit,
     offset,
@@ -103,9 +97,7 @@ export async function fetchLeaderboardPage(
  * `scope=following`. An address with no ranked volume is simply absent
  * from the result, which is what makes an unranked follow honestly
  * unranked rather than rank 0. */
-export async function fetchLeaderboardRowsForWallets(
-  wallets: string[],
-): Promise<PolymarketLeaderboardRow[]> {
+export async function fetchLeaderboardRowsForWallets(wallets: string[]): Promise<PolymarketLeaderboardRow[]> {
   const unique = Array.from(new Set(wallets.map(normalizeWalletAddress)));
   if (unique.length === 0) return [];
 
@@ -116,12 +108,12 @@ export async function fetchLeaderboardRowsForWallets(
 
   const pages = await Promise.all(
     chunks.map((chunk) =>
-      dataGet<unknown>("/v1/leaderboard", {
+      dataGet<unknown>('/v1/leaderboard', {
         ...LEADERBOARD_WINDOW,
         limit: chunk.length,
-        user: chunk.join(","),
-      }).then(toRows),
-    ),
+        user: chunk.join(','),
+      }).then(toRows)
+    )
   );
 
   return pages.flat();
@@ -130,9 +122,7 @@ export async function fetchLeaderboardRowsForWallets(
 /** One trader's own row, or `null` when Polymarket has no ranked volume
  * for that address. Backs `lib/leaderboard.ts::fetchPolymarketStanding`
  * (the profile's `tradingVolume`). */
-export async function fetchLeaderboardRowForWallet(
-  wallet: string,
-): Promise<PolymarketLeaderboardRow | null> {
+export async function fetchLeaderboardRowForWallet(wallet: string): Promise<PolymarketLeaderboardRow | null> {
   const rows = await fetchLeaderboardRowsForWallets([wallet]);
   return rows[0] ?? null;
 }
@@ -165,9 +155,9 @@ interface PolymarketHolderGroup {
 export async function fetchMarketHolders(
   conditionId: string,
   limit: number,
-  offset = 0,
+  offset = 0
 ): Promise<PolymarketHolder[]> {
-  const payload = await dataGet<unknown>("/holders", { market: conditionId, limit, offset });
+  const payload = await dataGet<unknown>('/holders', { market: conditionId, limit, offset });
   if (!Array.isArray(payload)) return [];
 
   const groups = payload as PolymarketHolderGroup[];

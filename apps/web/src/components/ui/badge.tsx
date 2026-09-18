@@ -1,32 +1,35 @@
-import * as React from "react";
-import { cva, type VariantProps } from "class-variance-authority";
+import { cn } from '@/lib/cn';
+import { Text } from '@/components/ui/Text';
 
-import { cn } from "@/lib/utils";
+export type BadgeVariant = 'yes' | 'no' | 'accent' | 'neutral';
 
-const badgeVariants = cva(
-  "inline-flex items-center rounded-md border px-2.5 py-0.5 text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2",
-  {
-    variants: {
-      variant: {
-        default: "border-transparent bg-primary text-primary-foreground shadow hover:bg-primary/80",
-        secondary:
-          "border-transparent bg-secondary text-secondary-foreground hover:bg-secondary/80",
-        destructive:
-          "border-transparent bg-destructive text-destructive-foreground shadow hover:bg-destructive/80",
-        outline: "text-foreground",
-      },
-    },
-    defaultVariants: {
-      variant: "default",
-    },
-  },
-);
+const containerClass: Record<BadgeVariant, string> = {
+  yes: 'bg-yes-muted',
+  no: 'bg-no-muted',
+  accent: 'bg-accent-muted',
+  neutral: 'bg-surface-elevated',
+};
 
-export interface BadgeProps
-  extends React.HTMLAttributes<HTMLDivElement>, VariantProps<typeof badgeVariants> {}
+const textColor: Record<BadgeVariant, 'yes' | 'no' | 'accent' | 'textSecondary'> = {
+  yes: 'yes',
+  no: 'no',
+  accent: 'accent',
+  neutral: 'textSecondary',
+};
 
-function Badge({ className, variant, ...props }: BadgeProps) {
-  return <div className={cn(badgeVariants({ variant }), className)} {...props} />;
+export interface BadgeProps {
+  label: string;
+  variant?: BadgeVariant;
+  className?: string;
 }
 
-export { Badge, badgeVariants };
+/** Web equivalent of `apps/mobile/src/components/ui/Badge`. */
+export function Badge({ label, variant = 'neutral', className }: BadgeProps) {
+  return (
+    <div className={cn('inline-block self-start rounded-full px-2 py-1', containerClass[variant], className)}>
+      <Text variant="micro" color={textColor[variant]}>
+        {label}
+      </Text>
+    </div>
+  );
+}

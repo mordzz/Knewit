@@ -1,5 +1,5 @@
-import type { ID } from "@/types/common";
-import type { Order } from "@/types/market";
+import type { ID } from '@/types/common';
+import type { Order } from '@/types/market';
 
 /** `choiceIndex` is the index into the market's own `outcomes` array —
  * the label is never sent by the client; the backend resolves it from
@@ -19,7 +19,7 @@ export type CreateTradeResult = Order;
 export interface SellPositionResponse {
   order: Order;
   cashOut: {
-    status: "sent" | "failed";
+    status: 'sent' | 'failed';
     amountUsd: number;
     error: string | null;
   };

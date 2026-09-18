@@ -16,7 +16,7 @@ interface QueryResult<T> {
  * order matters. */
 export async function selectInChunks<T>(
   ids: string[],
-  buildQuery: (batch: string[]) => PromiseLike<QueryResult<T>>,
+  buildQuery: (batch: string[]) => PromiseLike<QueryResult<T>>
 ): Promise<T[]> {
   const rows: T[] = [];
   for (let index = 0; index < ids.length; index += IN_BATCH_SIZE) {

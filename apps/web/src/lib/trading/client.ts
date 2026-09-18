@@ -1,9 +1,9 @@
-import { createSecureClient } from "@polymarket/client";
-import { signerFrom } from "@polymarket/client/privy";
-import { builderApiKey } from "@polymarket/client/node";
-import { ApiError } from "@/lib/apiError";
-import { env } from "@/lib/env";
-import { getPrivyClient } from "@/lib/privyClient";
+import { createSecureClient } from '@polymarket/client';
+import { signerFrom } from '@polymarket/client/privy';
+import { builderApiKey } from '@polymarket/client/node';
+import { ApiError } from '@/lib/apiError';
+import { env } from '@/lib/env';
+import { getPrivyClient } from '@/lib/privyClient';
 
 export type UserSecureClient = Awaited<ReturnType<typeof createSecureClient>>;
 
@@ -28,17 +28,19 @@ export async function buildSecureClientForUser(walletId: string): Promise<UserSe
   if (!key || !secret || !passphrase) {
     throw new ApiError(
       500,
-      "builder_keys_missing",
-      "Polymarket Builder API credentials are not configured (POLYMARKET_BUILDER_API_KEY/SECRET/PASSPHRASE) — see docs/WALLET.md.",
+      'builder_keys_missing',
+      'Polymarket Builder API credentials are not configured (POLYMARKET_BUILDER_API_KEY/SECRET/PASSPHRASE) — see docs/WALLET.md.'
     );
   }
+
+  const authorizationContext = env.privyAuthorizationPrivateKey
+    ? { authorization_private_keys: [env.privyAuthorizationPrivateKey] }
+    : undefined;
 
   const signer = signerFrom({
     privy: getPrivyClient(),
     walletId,
-    ...(env.privyAuthorizationPrivateKey
-      ? { authorizationContext: { authorization_private_keys: [env.privyAuthorizationPrivateKey] } }
-      : {}),
+    authorizationContext,
   });
 
   return createSecureClient({ signer, apiKey: builderApiKey({ key, secret, passphrase }) });

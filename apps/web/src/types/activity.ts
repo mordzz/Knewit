@@ -1,5 +1,5 @@
-import type { ID, ISODateString } from "@/types/common";
-import type { User } from "@/types/social";
+import type { ID, ISODateString } from '@/types/common';
+import type { User } from '@/types/social';
 
 /** Mirrors `apps/frontend/src/types/activity.ts` exactly. */
 interface ActivityItemBase {
@@ -8,7 +8,7 @@ interface ActivityItemBase {
 }
 
 export interface TradeActivityItem extends ActivityItemBase {
-  type: "TRADE";
+  type: 'TRADE';
   marketId: ID;
   marketQuestion: string;
   /** The chosen choice's label, as the market's API data had it. */
@@ -18,7 +18,7 @@ export interface TradeActivityItem extends ActivityItemBase {
 }
 
 export interface CallActivityItem extends ActivityItemBase {
-  type: "CALL";
+  type: 'CALL';
   postId: ID;
   marketQuestion: string;
   outcome: string;
@@ -26,8 +26,8 @@ export interface CallActivityItem extends ActivityItemBase {
 }
 
 export interface FollowActivityItem extends ActivityItemBase {
-  type: "FOLLOW";
-  followedUser: Pick<User, "id" | "displayName" | "handle">;
+  type: 'FOLLOW';
+  followedUser: Pick<User, 'id' | 'displayName' | 'handle'>;
 }
 
 export type ActivityItem = TradeActivityItem | CallActivityItem | FollowActivityItem;

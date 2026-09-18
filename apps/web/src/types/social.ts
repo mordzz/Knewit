@@ -1,5 +1,5 @@
-import type { Category, ID, ISODateString } from "@/types/common";
-import type { MarketChoice, Outcome } from "@/types/market";
+import type { Category, ID, ISODateString } from '@/types/common';
+import type { MarketChoice, Outcome } from '@/types/market';
 
 /** Mirrors `apps/frontend/src/types/social.ts` exactly — this backend is
  * a separate package so it can't import mobile's types directly, but
@@ -80,7 +80,8 @@ export interface MarketGroupSummary {
 }
 
 export type MarketListItem =
-  { kind: "market"; market: MarketSummary } | { kind: "group"; group: MarketGroupSummary };
+  | { kind: 'market'; market: MarketSummary }
+  | { kind: 'group'; group: MarketGroupSummary };
 
 export interface MarketDetail extends MarketSummary {
   rules: string | null;
@@ -121,7 +122,7 @@ export interface EventDetail {
  * lookup. Sourced from our own `positions` table (docs/API.md). */
 export interface EventHolderRow {
   id: ID;
-  user: Pick<User, "id" | "handle" | "displayName" | "avatarUrl">;
+  user: Pick<User, 'id' | 'handle' | 'displayName' | 'avatarUrl'>;
   marketId: ID;
   marketLabel: string;
   outcome: string;
@@ -129,7 +130,7 @@ export interface EventHolderRow {
 }
 
 /** Polymarket's own set of chart time windows. */
-export type PriceRange = "1H" | "6H" | "1D" | "1W" | "1M" | "ALL";
+export type PriceRange = '1H' | '6H' | '1D' | '1W' | '1M' | 'ALL';
 
 /** One point of a market's YES-price history — `price` is cents, the
  * same unit as `MarketSummary.yesPrice`. */
@@ -238,7 +239,7 @@ export interface UpdateProfileInput {
 }
 
 export interface FollowListItem {
-  user: Pick<User, "id" | "handle" | "displayName" | "avatarUrl">;
+  user: Pick<User, 'id' | 'handle' | 'displayName' | 'avatarUrl'>;
   isFollowing: boolean;
   isSelf: boolean;
 }

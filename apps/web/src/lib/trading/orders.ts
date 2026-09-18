@@ -1,19 +1,19 @@
-import { OrderSide } from "@polymarket/client";
-import { fetchBalanceAllowance } from "@polymarket/client/actions";
-import { AssetType } from "@polymarket/bindings/clob";
-import { ApiError, badRequest, notFound } from "@/lib/apiError";
-import { getOrCreateUser, getPrimaryEthereumWallet } from "@/lib/users";
-import { getSupabase } from "@/lib/supabase";
-import { fetchMarketById } from "@/lib/polymarket/gammaClient";
-import { getChoiceTokenId, parseChoices } from "@/lib/polymarket/normalize";
-import { buildSecureClientForUser } from "@/lib/trading/client";
+import { OrderSide } from '@polymarket/client';
+import { fetchBalanceAllowance } from '@polymarket/client/actions';
+import { AssetType } from '@polymarket/bindings/clob';
+import { ApiError, badRequest, notFound } from '@/lib/apiError';
+import { getOrCreateUser, getPrimaryEthereumWallet } from '@/lib/users';
+import { getSupabase } from '@/lib/supabase';
+import { fetchMarketById } from '@/lib/polymarket/gammaClient';
+import { getChoiceTokenId, parseChoices } from '@/lib/polymarket/normalize';
+import { buildSecureClientForUser } from '@/lib/trading/client';
 
 export interface PlaceOrderResult {
   tokenId: string;
   /** The chosen choice's label resolved from the live market — what the
    * persisted Order/Position rows store. */
   choiceLabel: string;
-  status: "filled" | "failed";
+  status: 'filled' | 'failed';
   filledSize: number; // shares
   filledPrice: number; // cents
   polymarketOrderId: string | null;
@@ -42,9 +42,7 @@ export async function placeMarketOrder(params: {
 }): Promise<PlaceOrderResult> {
   const wallet = await getPrimaryEthereumWallet(params.privyUserId);
   if (!wallet) {
-    throw badRequest(
-      "No embedded wallet found for this account — connect a wallet before trading.",
-    );
+    throw badRequest('No embedded wallet found for this account — connect a wallet before trading.');
   }
 
   if (!/^\d+$/.test(params.marketId)) throw notFound(`Market ${params.marketId} not found.`);
@@ -57,9 +55,7 @@ export async function placeMarketOrder(params: {
   }
   const tokenId = getChoiceTokenId(market, params.choiceIndex);
   if (!tokenId) {
-    throw badRequest(
-      `Market ${params.marketId} has no tradable token for choice "${choice.label}".`,
-    );
+    throw badRequest(`Market ${params.marketId} has no tradable token for choice "${choice.label}".`);
   }
 
   const client = await buildSecureClientForUser(wallet.id);
@@ -74,18 +70,18 @@ export async function placeMarketOrder(params: {
   if (Number(balance) < requiredRaw) {
     throw new ApiError(
       400,
-      "insufficient_balance",
-      "Your trading balance is too low for this trade — add funds to your wallet and try again.",
+      'insufficient_balance',
+      'Your trading balance is too low for this trade — add funds to your wallet and try again.'
     );
   }
   const unapprovedSpenders = Object.entries(allowances ?? {}).filter(
-    ([, amount]) => Number(amount) < requiredRaw,
+    ([, amount]) => Number(amount) < requiredRaw
   );
   if (unapprovedSpenders.length > 0) {
     throw new ApiError(
       400,
-      "insufficient_allowance",
-      "Your wallet is still finishing its one-time trading setup — try again in a moment.",
+      'insufficient_allowance',
+      'Your wallet is still finishing its one-time trading setup — try again in a moment.'
     );
   }
 
@@ -100,24 +96,24 @@ export async function placeMarketOrder(params: {
     // The upstream rejection reason is useful in server logs but never
     // sent to the client — it can carry venue internals. The client gets
     // an honest, stable message; the raw error stays here.
-    console.error("[trading/orders] buy rejected upstream:", error);
+    console.error('[trading/orders] buy rejected upstream:', error);
     throw new ApiError(
       502,
-      "trade_failed",
-      "The order could not be placed right now. Please try again.",
+      'trade_failed',
+      'The order could not be placed right now. Please try again.'
     );
   }
 
   if (!response.ok) {
-    console.error("[trading/orders] buy not accepted:", response.message);
+    console.error('[trading/orders] buy not accepted:', response.message);
     return {
       tokenId,
       choiceLabel: choice.label,
-      status: "failed",
+      status: 'failed',
       filledSize: 0,
       filledPrice: 0,
       polymarketOrderId: null,
-      errorMessage: "The order was not accepted. Please try again.",
+      errorMessage: 'The order was not accepted. Please try again.',
     };
   }
 
@@ -130,18 +126,18 @@ export async function placeMarketOrder(params: {
     return {
       tokenId,
       choiceLabel: choice.label,
-      status: "failed",
+      status: 'failed',
       filledSize: 0,
       filledPrice: 0,
       polymarketOrderId: response.orderId ?? null,
-      errorMessage: "Order was not filled (no matching liquidity).",
+      errorMessage: 'Order was not filled (no matching liquidity).',
     };
   }
 
   return {
     tokenId,
     choiceLabel: choice.label,
-    status: "filled",
+    status: 'filled',
     filledSize,
     // Decimal cents (up to 4 dp) — a sub-cent fill's entry price must not
     // be rounded to 0 (docs/DECISIONS.md, "Sub-Cent Prices").
@@ -152,7 +148,7 @@ export async function placeMarketOrder(params: {
 }
 
 export interface SellCashOut {
-  status: "sent" | "failed";
+  status: 'sent' | 'failed';
   amountUsd: number;
   error: string | null;
 }
@@ -161,14 +157,14 @@ export interface SellCashOut {
  * address both clients carry as their deposit fallback
  * (`lib/walletService.ts::POLYGON_USDC_E`); this SDK version's typed
  * `environment` no longer exposes contract addresses. */
-const COLLATERAL_TOKEN_ADDRESS = "0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174";
+const COLLATERAL_TOKEN_ADDRESS = '0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174';
 
 export interface SellPositionResult {
   marketId: string;
   choiceIndex: number;
   tokenId: string;
   choiceLabel: string;
-  status: "filled" | "failed";
+  status: 'filled' | 'failed';
   soldShares: number;
   /** Shares-weighted average fill price in decimal cents (4dp). */
   filledPrice: number;
@@ -211,17 +207,15 @@ export async function sellMarketPosition(params: {
   const viewer = await getOrCreateUser(params.privyUserId);
   const wallet = await getPrimaryEthereumWallet(params.privyUserId);
   if (!wallet) {
-    throw badRequest(
-      "No embedded wallet found for this account — connect a wallet before trading.",
-    );
+    throw badRequest('No embedded wallet found for this account — connect a wallet before trading.');
   }
 
   const supabase = getSupabase();
   const { data: position } = await supabase
-    .from("positions")
-    .select("id, market_id, outcome, choice_index, size")
-    .eq("id", params.positionId)
-    .eq("user_id", viewer.id)
+    .from('positions')
+    .select('id, market_id, outcome, choice_index, size')
+    .eq('id', params.positionId)
+    .eq('user_id', viewer.id)
     .maybeSingle();
   if (!position) {
     throw notFound(`Position ${params.positionId} not found.`);
@@ -233,20 +227,16 @@ export async function sellMarketPosition(params: {
 
   const choice = parseChoices(market)[position.choice_index];
   if (!choice) {
-    throw badRequest(
-      `Market ${position.market_id} has no choice at index ${position.choice_index}.`,
-    );
+    throw badRequest(`Market ${position.market_id} has no choice at index ${position.choice_index}.`);
   }
   const tokenId = getChoiceTokenId(market, position.choice_index);
   if (!tokenId) {
-    throw badRequest(
-      `Market ${position.market_id} has no tradable token for choice "${choice.label}".`,
-    );
+    throw badRequest(`Market ${position.market_id} has no tradable token for choice "${choice.label}".`);
   }
 
   const shares = Number(position.size);
   if (!Number.isFinite(shares) || shares <= 0) {
-    throw badRequest("This position has no shares left to sell.");
+    throw badRequest('This position has no shares left to sell.');
   }
 
   const client = await buildSecureClientForUser(wallet.id);
@@ -261,8 +251,8 @@ export async function sellMarketPosition(params: {
   } catch {
     throw new ApiError(
       502,
-      "approvals_failed",
-      "Your wallet couldn't finish its one-time selling setup — try again in a moment.",
+      'approvals_failed',
+      "Your wallet couldn't finish its one-time selling setup — try again in a moment."
     );
   }
 
@@ -276,8 +266,8 @@ export async function sellMarketPosition(params: {
   if (Number(balance) < requiredSharesRaw) {
     throw new ApiError(
       400,
-      "insufficient_shares",
-      "This position is no longer fully held in your trading wallet — refresh your positions and try again.",
+      'insufficient_shares',
+      'This position is no longer fully held in your trading wallet — refresh your positions and try again.'
     );
   }
 
@@ -291,27 +281,27 @@ export async function sellMarketPosition(params: {
   } catch (error) {
     // Raw upstream reason stays in the server log only — see the BUY
     // path's comment for why.
-    console.error("[trading/orders] sell rejected upstream:", error);
+    console.error('[trading/orders] sell rejected upstream:', error);
     throw new ApiError(
       502,
-      "trade_failed",
-      "The sell could not be placed right now. Please try again.",
+      'trade_failed',
+      'The sell could not be placed right now. Please try again.'
     );
   }
 
   if (!response.ok) {
-    console.error("[trading/orders] sell not accepted:", response.message);
+    console.error('[trading/orders] sell not accepted:', response.message);
     return {
       marketId: position.market_id,
       choiceIndex: position.choice_index,
       tokenId,
       choiceLabel: choice.label,
-      status: "failed",
+      status: 'failed',
       soldShares: 0,
       filledPrice: 0,
       proceedsUsd: 0,
       polymarketOrderId: null,
-      errorMessage: "The sell was not accepted. Please try again.",
+      errorMessage: 'The sell was not accepted. Please try again.',
       cashOut: null,
     };
   }
@@ -328,12 +318,12 @@ export async function sellMarketPosition(params: {
       choiceIndex: position.choice_index,
       tokenId,
       choiceLabel: choice.label,
-      status: "failed",
+      status: 'failed',
       soldShares: 0,
       filledPrice: 0,
       proceedsUsd: 0,
       polymarketOrderId: response.orderId ?? null,
-      errorMessage: "Sell was not filled (no matching liquidity).",
+      errorMessage: 'Sell was not filled (no matching liquidity).',
       cashOut: null,
     };
   }
@@ -350,13 +340,13 @@ export async function sellMarketPosition(params: {
       tokenAddress: COLLATERAL_TOKEN_ADDRESS,
     });
     await handle.wait();
-    cashOut = { status: "sent", amountUsd: proceedsUsd, error: null };
+    cashOut = { status: 'sent', amountUsd: proceedsUsd, error: null };
   } catch (error) {
     // `cashOut.error` is returned to the client, so it must not carry
     // the raw upstream reason; the log keeps it.
-    console.error("[trading/orders] cash-out transfer failed:", error);
+    console.error('[trading/orders] cash-out transfer failed:', error);
     cashOut = {
-      status: "failed",
+      status: 'failed',
       amountUsd: proceedsUsd,
       error: null,
     };
@@ -367,7 +357,7 @@ export async function sellMarketPosition(params: {
     choiceIndex: position.choice_index,
     tokenId,
     choiceLabel: choice.label,
-    status: "filled",
+    status: 'filled',
     soldShares,
     filledPrice: Number(((proceedsUsd / soldShares) * 100).toFixed(4)),
     proceedsUsd,

@@ -1,6 +1,6 @@
-import { fetchMarketHolders } from "@/lib/polymarket/dataApiClient";
-import { parseChoices } from "@/lib/polymarket/normalize";
-import type { GammaMarket } from "@/lib/polymarket/gammaTypes";
+import { fetchMarketHolders } from '@/lib/polymarket/dataApiClient';
+import { parseChoices } from '@/lib/polymarket/normalize';
+import type { GammaMarket } from '@/lib/polymarket/gammaTypes';
 
 /** A holder row resolved from Polymarket's public holder data, with the
  * market's own choice label instead of a raw token index. */
@@ -28,21 +28,21 @@ function shortAddress(wallet: string): string {
  */
 export async function resolveMarketHolders(
   market: GammaMarket,
-  limit: number,
+  limit: number
 ): Promise<ResolvedHolder[]> {
   const holders = await fetchMarketHolders(market.conditionId, limit);
   const choices = parseChoices(market);
 
   return holders.map((holder) => {
     const isPublic = holder.displayUsernamePublic;
-    const publicName = isPublic ? holder.name || holder.pseudonym : "";
-    const pseudonym = isPublic ? holder.pseudonym : "";
+    const publicName = isPublic ? holder.name || holder.pseudonym : '';
+    const pseudonym = isPublic ? holder.pseudonym : '';
     return {
       proxyWallet: holder.proxyWallet,
       displayName: publicName || shortAddress(holder.proxyWallet),
       handle: pseudonym || shortAddress(holder.proxyWallet),
       avatarUrl: holder.profileImage || holder.profileImageOptimized || null,
-      outcome: choices[holder.outcomeIndex]?.label ?? (holder.outcomeIndex === 0 ? "Yes" : "No"),
+      outcome: choices[holder.outcomeIndex]?.label ?? (holder.outcomeIndex === 0 ? 'Yes' : 'No'),
       shares: holder.amount,
     };
   });

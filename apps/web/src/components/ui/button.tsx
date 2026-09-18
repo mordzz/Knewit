@@ -1,52 +1,76 @@
-import * as React from "react";
-import { Slot } from "@radix-ui/react-slot";
-import { cva, type VariantProps } from "class-variance-authority";
+import type { ButtonHTMLAttributes, ReactNode } from 'react';
+import { cn } from '@/lib/cn';
+import { Text } from '@/components/ui/Text';
+import { Icon, type IconName } from '@/components/ui/Icon';
 
-import { cn } from "@/lib/utils";
+export type ButtonVariant = 'primary' | 'yes' | 'no' | 'secondary' | 'ghost';
 
-const buttonVariants = cva(
-  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium cursor-pointer transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 disabled:cursor-not-allowed [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0",
-  {
-    variants: {
-      variant: {
-        default:
-          "bg-primary text-primary-foreground shadow-sm hover:bg-primary/88 active:translate-y-px",
-        destructive: "bg-destructive text-destructive-foreground shadow-sm hover:bg-destructive/90",
-        outline:
-          "border border-input bg-background shadow-sm hover:bg-accent hover:text-accent-foreground",
-        secondary: "bg-secondary text-secondary-foreground shadow-sm hover:bg-secondary/80",
-        ghost: "hover:bg-accent hover:text-accent-foreground",
-        link: "text-primary underline-offset-4 hover:underline",
-        positive: "bg-positive text-positive-foreground shadow-sm hover:bg-positive/88",
-        negative: "bg-negative text-negative-foreground shadow-sm hover:bg-negative/88",
-      },
-      size: {
-        default: "h-9 px-4 py-2",
-        sm: "h-8 rounded-md px-3 text-xs",
-        lg: "h-10 rounded-md px-8",
-        icon: "h-9 w-9",
-      },
-    },
-    defaultVariants: {
-      variant: "default",
-      size: "default",
-    },
-  },
-);
-
-export interface ButtonProps
-  extends React.ButtonHTMLAttributes<HTMLButtonElement>, VariantProps<typeof buttonVariants> {
-  asChild?: boolean;
+export interface ButtonProps extends Omit<ButtonHTMLAttributes<HTMLButtonElement>, 'color'> {
+  label: string;
+  variant?: ButtonVariant;
+  loading?: boolean;
+  icon?: IconName;
+  iconElement?: ReactNode;
 }
 
-const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
-  ({ className, variant, size, asChild = false, ...props }, ref) => {
-    const Comp = asChild ? Slot : "button";
-    return (
-      <Comp className={cn(buttonVariants({ variant, size, className }))} ref={ref} {...props} />
-    );
-  },
-);
-Button.displayName = "Button";
+const containerClass: Record<ButtonVariant, string> = {
+  primary: 'bg-accent',
+  yes: 'bg-yes',
+  no: 'bg-no',
+  secondary: 'bg-surface-elevated',
+  ghost: 'bg-transparent border border-border',
+};
 
-export { Button, buttonVariants };
+// `accent` is the brand yellow — white text on it is a legibility
+// problem, so primary uses the same dark inverse label as yes/no's own
+// bright backgrounds, not the default light-on-dark text.
+const labelColor: Record<ButtonVariant, 'textPrimary' | 'textInverse' | 'textSecondary'> = {
+  primary: 'textInverse',
+  yes: 'textInverse',
+  no: 'textPrimary',
+  secondary: 'textPrimary',
+  ghost: 'textSecondary',
+};
+
+/**
+ * Web equivalent of `apps/mobile/src/components/ui/Button` — same five
+ * variants, same solid/glossy (not glass) fill, same border + shadow
+ * glow tinted with the variant's own identity color.
+ */
+export function Button({
+  label,
+  variant = 'primary',
+  loading,
+  disabled,
+  className,
+  icon,
+  iconElement,
+  ...rest
+}: ButtonProps) {
+  const isInactive = disabled || loading;
+
+  return (
+    <button
+      type="button"
+      disabled={isInactive}
+      className={cn(
+        'flex min-h-12 items-center justify-center gap-2 rounded-md border border-white/[0.16] px-6 py-3 shadow-md transition-opacity',
+        containerClass[variant],
+        isInactive ? 'opacity-50' : 'hover:opacity-85',
+        className
+      )}
+      {...rest}
+    >
+      {loading ? (
+        <span className="h-5 w-5 animate-spin rounded-full border-2 border-current border-t-transparent" />
+      ) : (
+        <>
+          {iconElement ?? (icon ? <Icon name={icon} size={18} color={labelColor[variant]} /> : null)}
+          <Text variant="bodyStrong" color={labelColor[variant]}>
+            {label}
+          </Text>
+        </>
+      )}
+    </button>
+  );
+}

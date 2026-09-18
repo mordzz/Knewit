@@ -10,11 +10,7 @@ export function parseCursor(cursor: string | null): number {
   return Number.isFinite(n) && n >= 0 ? n : 0;
 }
 
-export function nextCursor(
-  offset: number,
-  returned: number,
-  pageSize = DEFAULT_PAGE_SIZE,
-): string | null {
+export function nextCursor(offset: number, returned: number, pageSize = DEFAULT_PAGE_SIZE): string | null {
   return returned > pageSize ? String(offset + pageSize) : null;
 }
 
@@ -24,7 +20,7 @@ export function nextCursor(
 export async function fetchPage<T>(
   query: { range: (from: number, to: number) => PromiseLike<{ data: T[] | null; error: unknown }> },
   offset: number,
-  pageSize = DEFAULT_PAGE_SIZE,
+  pageSize = DEFAULT_PAGE_SIZE
 ): Promise<{ items: T[]; nextCursor: string | null }> {
   const { data, error } = await query.range(offset, offset + pageSize);
   if (error) throw error;

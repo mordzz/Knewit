@@ -1,6 +1,6 @@
-import { PrivyClient } from "@privy-io/node";
-import { env } from "@/lib/env";
-import { unauthorized } from "@/lib/apiError";
+import { PrivyClient } from '@privy-io/node';
+import { env } from '@/lib/env';
+import { unauthorized } from '@/lib/apiError';
 
 let client: PrivyClient | null = null;
 
@@ -23,17 +23,17 @@ function getPrivyClient(): PrivyClient {
  * @throws ApiError(401) if the header is missing or the token is invalid.
  */
 export async function requireAuth(request: Request): Promise<{ privyUserId: string }> {
-  const header = request.headers.get("authorization");
-  const token = header?.startsWith("Bearer ") ? header.slice("Bearer ".length) : null;
+  const header = request.headers.get('authorization');
+  const token = header?.startsWith('Bearer ') ? header.slice('Bearer '.length) : null;
   if (!token) {
-    throw unauthorized("Missing Authorization header.");
+    throw unauthorized('Missing Authorization header.');
   }
 
   try {
     const result = await getPrivyClient().utils().auth().verifyAccessToken(token);
     return { privyUserId: result.user_id };
   } catch {
-    throw unauthorized("Invalid or expired session token.");
+    throw unauthorized('Invalid or expired session token.');
   }
 }
 

@@ -1,55 +1,36 @@
-import * as React from "react";
+import type { HTMLAttributes } from 'react';
+import { cn } from '@/lib/cn';
 
-import { cn } from "@/lib/utils";
+export interface CardProps extends Omit<HTMLAttributes<HTMLDivElement>, 'onClick'> {
+  onPress?: () => void;
+  contentClassName?: string;
+}
 
-const Card = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement>>(
-  ({ className, ...props }, ref) => (
-    <div
-      ref={ref}
-      className={cn("rounded-xl border bg-card text-card-foreground shadow", className)}
-      {...props}
-    />
-  ),
-);
-Card.displayName = "Card";
+/**
+ * Web equivalent of `apps/mobile/src/components/ui/Card` — same flat
+ * `bg-surface-elevated` + 1px border panel, same split between the
+ * card's own sizing/positioning (`className`) and its content's
+ * internal arrangement (`contentClassName`).
+ */
+export function Card({ onPress, className, contentClassName, children, ...rest }: CardProps) {
+  const surface = (
+    <div className={cn('rounded-lg border border-border bg-surface-elevated', className)}>
+      <div className={cn('flex flex-col gap-4 p-4', contentClassName)}>{children}</div>
+    </div>
+  );
 
-const CardHeader = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement>>(
-  ({ className, ...props }, ref) => (
-    <div ref={ref} className={cn("flex flex-col space-y-1.5 p-6", className)} {...props} />
-  ),
-);
-CardHeader.displayName = "CardHeader";
+  if (onPress) {
+    return (
+      <button
+        type="button"
+        onClick={onPress}
+        className="w-full text-left transition-opacity hover:opacity-90"
+        {...(rest as HTMLAttributes<HTMLButtonElement>)}
+      >
+        {surface}
+      </button>
+    );
+  }
 
-const CardTitle = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement>>(
-  ({ className, ...props }, ref) => (
-    <div
-      ref={ref}
-      className={cn("font-semibold leading-none tracking-tight", className)}
-      {...props}
-    />
-  ),
-);
-CardTitle.displayName = "CardTitle";
-
-const CardDescription = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement>>(
-  ({ className, ...props }, ref) => (
-    <div ref={ref} className={cn("text-sm text-muted-foreground", className)} {...props} />
-  ),
-);
-CardDescription.displayName = "CardDescription";
-
-const CardContent = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement>>(
-  ({ className, ...props }, ref) => (
-    <div ref={ref} className={cn("p-6 pt-0", className)} {...props} />
-  ),
-);
-CardContent.displayName = "CardContent";
-
-const CardFooter = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement>>(
-  ({ className, ...props }, ref) => (
-    <div ref={ref} className={cn("flex items-center p-6 pt-0", className)} {...props} />
-  ),
-);
-CardFooter.displayName = "CardFooter";
-
-export { Card, CardHeader, CardFooter, CardTitle, CardDescription, CardContent };
+  return <div {...rest}>{surface}</div>;
+}

@@ -1,8 +1,8 @@
-import { getSupabase } from "@/lib/supabase";
-import { getCachedOrLiveMarketSummary } from "@/lib/marketCache";
-import { fetchPolymarketStanding } from "@/lib/leaderboard";
-import type { DbUser } from "@/lib/users";
-import type { CommentItem, FeedItem, PositionSnapshot, User, UserProfile } from "@/types/social";
+import { getSupabase } from '@/lib/supabase';
+import { getCachedOrLiveMarketSummary } from '@/lib/marketCache';
+import { fetchPolymarketStanding } from '@/lib/leaderboard';
+import type { DbUser } from '@/lib/users';
+import type { CommentItem, FeedItem, PositionSnapshot, User, UserProfile } from '@/types/social';
 
 export interface PostRow {
   id: string;
@@ -41,10 +41,7 @@ export function toPublicUser(user: DbUser): User {
   };
 }
 
-export async function buildUserProfile(
-  target: DbUser,
-  viewerUserId: string | null,
-): Promise<UserProfile> {
+export async function buildUserProfile(target: DbUser, viewerUserId: string | null): Promise<UserProfile> {
   const [stats, standing] = await Promise.all([
     fetchProfileStats(target.id, viewerUserId),
     // This account's live Polymarket standing — the *same* ranking the
@@ -89,9 +86,9 @@ interface ProfileStatsRow {
  * (docs/DECISIONS.md, "Single-Query Read Paths"). */
 export async function fetchProfileStats(
   userId: string,
-  viewerUserId: string | null,
+  viewerUserId: string | null
 ): Promise<ProfileStats> {
-  const { data, error } = await getSupabase().rpc("user_profile_stats", {
+  const { data, error } = await getSupabase().rpc('user_profile_stats', {
     p_user_id: userId,
     p_viewer_id: viewerUserId,
   });
@@ -121,9 +118,9 @@ interface ProfileOverviewRow extends DbUser {
  */
 export async function fetchUserProfile(
   targetId: string,
-  viewerUserId: string | null,
+  viewerUserId: string | null
 ): Promise<UserProfile | null> {
-  const { data, error } = await getSupabase().rpc("user_profile_overview", {
+  const { data, error } = await getSupabase().rpc('user_profile_overview', {
     p_user_id: targetId,
     p_viewer_id: viewerUserId,
   });
@@ -166,28 +163,23 @@ function toPositionSnapshot(post: PostRow): PositionSnapshot | null {
  * /calls/:id`) calls this with a one-element array; the batching still
  * pays off there since it's the same code path either way.
  */
-export async function buildFeedItems(
-  posts: PostRow[],
-  viewerUserId: string | null,
-): Promise<FeedItem[]> {
+export async function buildFeedItems(posts: PostRow[], viewerUserId: string | null): Promise<FeedItem[]> {
   if (posts.length === 0) return [];
   const supabase = getSupabase();
 
   const authorIds = Array.from(new Set(posts.map((p) => p.author_id)));
-  const marketIds = Array.from(
-    new Set(posts.map((p) => p.market_id).filter((id): id is string => id !== null)),
-  );
+  const marketIds = Array.from(new Set(posts.map((p) => p.market_id).filter((id): id is string => id !== null)));
 
   const [{ data: authorRows }, likedPostIds, marketSummaries] = await Promise.all([
-    supabase.from("users").select("*").in("id", authorIds),
+    supabase.from('users').select('*').in('id', authorIds),
     viewerUserId
       ? supabase
-          .from("likes")
-          .select("post_id")
-          .eq("user_id", viewerUserId)
+          .from('likes')
+          .select('post_id')
+          .eq('user_id', viewerUserId)
           .in(
-            "post_id",
-            posts.map((p) => p.id),
+            'post_id',
+            posts.map((p) => p.id)
           )
           .then(({ data }) => new Set((data ?? []).map((row) => row.post_id as string)))
       : Promise.resolve(new Set<string>()),
@@ -201,15 +193,7 @@ export async function buildFeedItems(
     const author = authorsById.get(post.author_id);
     return {
       id: post.id,
-      author: author
-        ? toPublicUser(author)
-        : {
-            id: post.author_id,
-            handle: "unknown",
-            displayName: "Unknown",
-            avatarUrl: null,
-            walletAddress: null,
-          },
+      author: author ? toPublicUser(author) : { id: post.author_id, handle: 'unknown', displayName: 'Unknown', avatarUrl: null, walletAddress: null },
       body: post.body,
       market: post.market_id ? (marketsById.get(post.market_id) ?? null) : null,
       positionSnapshot: toPositionSnapshot(post),
@@ -224,7 +208,7 @@ export async function buildFeedItems(
 
 export async function buildCommentItems(
   comments: CommentRow[],
-  viewerUserId: string | null,
+  viewerUserId: string | null
 ): Promise<CommentItem[]> {
   if (comments.length === 0) return [];
   const supabase = getSupabase();
@@ -233,20 +217,20 @@ export async function buildCommentItems(
   const topLevelIds = comments.filter((c) => !c.parent_comment_id).map((c) => c.id);
 
   const [{ data: authorRows }, likedCommentIds, { data: replyRows }] = await Promise.all([
-    supabase.from("users").select("*").in("id", authorIds),
+    supabase.from('users').select('*').in('id', authorIds),
     viewerUserId
       ? supabase
-          .from("comment_likes")
-          .select("comment_id")
-          .eq("user_id", viewerUserId)
+          .from('comment_likes')
+          .select('comment_id')
+          .eq('user_id', viewerUserId)
           .in(
-            "comment_id",
-            comments.map((c) => c.id),
+            'comment_id',
+            comments.map((c) => c.id)
           )
           .then(({ data }) => new Set((data ?? []).map((row) => row.comment_id as string)))
       : Promise.resolve(new Set<string>()),
     topLevelIds.length > 0
-      ? supabase.from("comments").select("parent_comment_id").in("parent_comment_id", topLevelIds)
+      ? supabase.from('comments').select('parent_comment_id').in('parent_comment_id', topLevelIds)
       : Promise.resolve({ data: [] as Array<{ parent_comment_id: string }> }),
   ]);
 
@@ -262,15 +246,7 @@ export async function buildCommentItems(
     return {
       id: comment.id,
       postId: comment.post_id,
-      author: author
-        ? toPublicUser(author)
-        : {
-            id: comment.author_id,
-            handle: "unknown",
-            displayName: "Unknown",
-            avatarUrl: null,
-            walletAddress: null,
-          },
+      author: author ? toPublicUser(author) : { id: comment.author_id, handle: 'unknown', displayName: 'Unknown', avatarUrl: null, walletAddress: null },
       body: comment.body,
       createdAt: comment.created_at,
       canDelete: viewerUserId === comment.author_id,

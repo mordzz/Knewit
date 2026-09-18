@@ -1,13 +1,6 @@
-import {
-  isWalletAddress,
-  normalizeWalletAddress,
-  shortenWalletAddress,
-} from "@/lib/polymarket/address";
-import {
-  fetchLeaderboardRowForWallet,
-  type PolymarketLeaderboardRow,
-} from "@/lib/polymarket/dataApiClient";
-import type { LeaderboardEntry, LeaderboardSelf } from "@/types/leaderboard";
+import { isWalletAddress, normalizeWalletAddress, shortenWalletAddress } from '@/lib/polymarket/address';
+import { fetchLeaderboardRowForWallet, type PolymarketLeaderboardRow } from '@/lib/polymarket/dataApiClient';
+import type { LeaderboardEntry, LeaderboardSelf } from '@/types/leaderboard';
 
 /**
  * Ranking → `LeaderboardEntry` mapping for `GET /leaderboard`, and the
@@ -41,10 +34,10 @@ export function toLeaderboardEntry(row: PolymarketLeaderboardRow): LeaderboardEn
   const rank = Number(row.rank);
   const volume = Number(row.vol);
   if (!Number.isFinite(rank) || !Number.isFinite(volume)) return null;
-  if (typeof row.proxyWallet !== "string" || !isWalletAddress(row.proxyWallet)) return null;
+  if (typeof row.proxyWallet !== 'string' || !isWalletAddress(row.proxyWallet)) return null;
 
   const walletAddress = normalizeWalletAddress(row.proxyWallet);
-  const userName = typeof row.userName === "string" ? row.userName.trim() : "";
+  const userName = typeof row.userName === 'string' ? row.userName.trim() : '';
   const name = userName || shortenWalletAddress(walletAddress);
 
   return {
@@ -55,7 +48,7 @@ export function toLeaderboardEntry(row: PolymarketLeaderboardRow): LeaderboardEn
       displayName: name,
       avatarUrl: row.profileImage || null,
     },
-    metric: { name: "volume", value: volume },
+    metric: { name: 'volume', value: volume },
   };
 }
 
@@ -65,7 +58,7 @@ export function toLeaderboardSelf(row: PolymarketLeaderboardRow): LeaderboardSel
   const rank = Number(row.rank);
   const volume = Number(row.vol);
   if (!Number.isFinite(rank) || !Number.isFinite(volume)) return null;
-  return { rank, metric: { name: "volume", value: volume } };
+  return { rank, metric: { name: 'volume', value: volume } };
 }
 
 /**
@@ -76,7 +69,7 @@ export function toLeaderboardSelf(row: PolymarketLeaderboardRow): LeaderboardSel
  * leaderboard actually shows (docs/DECISIONS.md).
  */
 export async function fetchPolymarketStanding(
-  walletAddress: string | null,
+  walletAddress: string | null
 ): Promise<{ volume: number; rank: number } | null> {
   if (!walletAddress) return null;
   try {
