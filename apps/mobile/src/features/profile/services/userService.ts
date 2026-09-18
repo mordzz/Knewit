@@ -104,9 +104,9 @@ export function getFollowing(userId: string, cursor?: string): Promise<Paginated
 }
 
 /**
- * Follow suggestions for the tablet "Who to follow" rail — Knewit
- * accounts the viewer doesn't follow yet, most-followed first
- * (`GET /users/suggestions`, five per page). Dev-mock fallback is an
+ * Follow suggestions — Knewit accounts the viewer doesn't follow yet,
+ * most-followed first (`GET /users/suggestions`, five per page). Dev-mock
+ * fallback is an
  * **empty page, never fabricated people**: a suggestion is a promise
  * that a real account exists to follow, so fixture users would be worse
  * than an honestly empty rail (same rule as `positionService.ts`).

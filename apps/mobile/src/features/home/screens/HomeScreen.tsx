@@ -18,8 +18,7 @@ import { isUserCancelledFunding } from '@/features/wallet/utils/privyErrors';
 import { navigateToMarketDetail } from '@/features/markets/utils/openMarketDetail';
 import { useAuth } from '@/hooks/useAuth';
 import { useWallet } from '@/hooks/useWallet';
-import { colors, FAB_CLEARANCE, TAB_BAR_HEIGHT } from '@/theme';
-import { useIsTablet } from '@/hooks/useIsTablet';
+import { colors, FAB_CLEARANCE } from '@/theme';
 import { formatUsd } from '@/utils/formatCurrency';
 import type { FeedItem, MarketSummary } from '@/types/social';
 
@@ -44,7 +43,6 @@ const FEED_TAB_OPTIONS: TabRowOption<FeedTabKey>[] = [
 export function HomeScreen() {
   const navigation = useNavigation();
   const insets = useSafeAreaInsets();
-  const isTablet = useIsTablet();
   const { canUseApp } = useAuth();
   const [activeTab, setActiveTab] = useState<FeedTabKey>('forYou');
   const feed = useHomeFeed();
@@ -53,9 +51,7 @@ export function HomeScreen() {
   // MainTabNavigator) — but that's always true while this screen is on
   // screen, regardless of which of *its own* internal tabs (Trending/
   // Following) is selected, so both lists below reserve this clearance.
-  // On tablets the tab bar is a left rail, so no bottom-bar height is
-  // reserved.
-  const fabClearance = insets.bottom + (isTablet ? FAB_CLEARANCE - TAB_BAR_HEIGHT : FAB_CLEARANCE);
+  const fabClearance = insets.bottom + FAB_CLEARANCE;
 
   const openMarket = useCallback(
     (market: MarketSummary) => navigateToMarketDetail(navigation, market),

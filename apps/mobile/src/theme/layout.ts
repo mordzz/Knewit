@@ -13,12 +13,6 @@
  * component). */
 export const TAB_BAR_HEIGHT = 49;
 
-/** Width from which the app switches to its tablet layout: the bottom
- * tab bar becomes a left rail and screen content is constrained to the
- * mobile-app column width, centered — see docs/DECISIONS.md, "Responsive
- * Shell: Rail on Tablet, Sidebar on Desktop". */
-export const TABLET_MIN_WIDTH = 768;
-
 /** `FAB`'s own fixed size (`h-14 w-14`, see `components/ui/FAB`). */
 export const FAB_SIZE = 56;
 

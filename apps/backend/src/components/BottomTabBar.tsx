@@ -24,14 +24,12 @@ export interface TabItem {
 }
 
 /**
- * The five destinations, shared by the phone-width bottom bar below and
- * the desktop sidebar (`SideNav`) — one definition, so the two
- * navigations can never drift apart. Icons follow the "modern navbar"
- * pass (docs/DECISIONS.md, "Navbar Icons Modernized"): Markets is a
- * chart (`stats-chart`), Leaderboard a podium, Profile a circled person;
- * Home and Search keep their existing glyphs.
+ * The five destinations shown in the bottom bar. Icons follow the
+ * "modern navbar" pass (docs/DECISIONS.md, "Navbar Icons Modernized"):
+ * Markets is a chart (`stats-chart`), Leaderboard a podium, Profile a
+ * circled person; Home and Search keep their existing glyphs.
  */
-export const TAB_ITEMS: TabItem[] = [
+const TAB_ITEMS: TabItem[] = [
   { href: '/', label: 'Home', icon: IoHomeOutline, activeIcon: IoHome },
   { href: '/markets', label: 'Markets', icon: IoStatsChartOutline, activeIcon: IoStatsChart },
   { href: '/search', label: 'Search', icon: IoSearchOutline, activeIcon: IoSearch },
@@ -42,15 +40,13 @@ export const TAB_ITEMS: TabItem[] = [
 /**
  * Direct conversion of `apps/mobile`'s `MainTabNavigator` bottom bar —
  * same five destinations, same icon-only style, same active/inactive
- * color split. Hidden from `lg` up, where `SideNav` takes over with the
- * X-style labeled rail (docs/DECISIONS.md, "Responsive Shell: Rail on
- * Tablet, Sidebar on Desktop").
+ * color split.
  */
 export function BottomTabBar() {
   const pathname = usePathname();
 
   return (
-    <nav className="flex flex-shrink-0 border-t border-border bg-background lg:hidden">
+    <nav className="flex flex-shrink-0 border-t border-border bg-background">
       {TAB_ITEMS.map((item) => {
         const isActive = pathname === item.href;
         const Icon = isActive ? item.activeIcon : item.icon;

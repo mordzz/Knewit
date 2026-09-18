@@ -8,7 +8,7 @@ import type { NavigatorScreenParams } from '@react-navigation/native';
  */
 /** The Profile tab's own stack routes, declared separately (and without
  * any reference back to `MainTabParamList`) so `ProfileTab` can accept
- * nested navigation params — e.g. the tablet right rail's
+ * nested navigation params — e.g.
  * `navigate('Main', { screen: 'ProfileTab', params: { screen: 'Profile', params: { userId } } })`
  * — without the circular type reference that `NavigatorScreenParams<AppParamList>`
  * would create. */

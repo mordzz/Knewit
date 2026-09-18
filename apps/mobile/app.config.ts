@@ -4,7 +4,7 @@ const config: ExpoConfig = {
   name: 'Knewit',
   slug: 'knewit',
   version: '1.0.0',
-  orientation: 'default',
+  orientation: 'portrait',
   icon: './assets/icon.png',
   userInterfaceStyle: 'light',
   // Required for Google/X OAuth sign-in (Privy's `useLoginWithOAuth`) to
@@ -16,7 +16,6 @@ const config: ExpoConfig = {
   // email-OTP flow, which never leaves the app.
   scheme: 'knewit',
   ios: {
-    supportsTablet: true,
     bundleIdentifier: 'com.dzakaal10.knewit', // Disarankan tambahkan juga untuk iOS
   },
   android: {
