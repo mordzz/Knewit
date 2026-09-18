@@ -26,9 +26,16 @@ const Stack = createNativeStackNavigator<AppParamList>();
  * available as on-demand modal routes (e.g. connecting an embedded
  * wallet specifically, distinct from being logged out entirely) exactly
  * as before.
+ *
+ * Guest mode (`isGuest`) is the one deliberate exception: it enters the
+ * app without a Privy session, so it skips both this gate and the
+ * wallet-setup gate — every request it makes is answered by the in-app
+ * sandbox (`services/guest/guestBackend.ts`). `hasHydrated` gates the
+ * persisted guest flag itself so a returning guest doesn't flash the
+ * login screen on cold start.
  */
 export function RootNavigator() {
-  const { isAuthenticated, isReady } = useAuth();
+  const { isAuthenticated, isGuest, isReady, hasHydrated } = useAuth();
   // Owns the whole automatic setup (wallet creation + signing consent) at
   // this level so it can gate the app: a fresh login sees the setup
   // screen until both steps are done, instead of landing mid-setup with
@@ -36,7 +43,7 @@ export function RootNavigator() {
   // & Trading Setup — No Manual Buttons".
   const setup = useAutoWalletSetup();
 
-  if (!isReady) {
+  if (!isGuest && (!isReady || !hasHydrated)) {
     return (
       <View className="flex-1 items-center justify-center bg-background">
         <ActivityIndicator color={colors.accent} />
@@ -44,14 +51,14 @@ export function RootNavigator() {
     );
   }
 
-  if (isAuthenticated && setup.status !== 'ready') {
+  if (isAuthenticated && !isGuest && setup.status !== 'ready') {
     return <AccountSetupScreen status={setup.status} />;
   }
 
   return (
     <NavigationContainer>
       <Stack.Navigator screenOptions={{ headerShown: false }}>
-        {isAuthenticated ? (
+        {isAuthenticated || isGuest ? (
           <>
             <Stack.Screen name="Main" component={MainTabNavigator} />
             <Stack.Screen

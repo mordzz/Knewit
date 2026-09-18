@@ -1,7 +1,6 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { usePrivy } from '@privy-io/react-auth';
 import { Text } from '@/components/ui/Text';
 import { Button } from '@/components/ui/Button';
 import { Icon } from '@/components/ui/Icon';
@@ -11,6 +10,7 @@ import { LoadingState } from '@/components/feedback/LoadingState';
 import { ErrorState } from '@/components/feedback/ErrorState';
 import { EmptyState } from '@/components/feedback/EmptyState';
 import { usePositions } from '@/hooks/usePositions';
+import { useSession } from '@/hooks/useSession';
 import { formatPrice, formatUsd } from '@/lib/formatters';
 import type { UserPosition } from '@/types/social';
 
@@ -30,8 +30,7 @@ export interface PositionPickerSheetProps {
  */
 export function PositionPickerSheet({ visible, onClose, onSelect }: PositionPickerSheetProps) {
   const router = useRouter();
-  const { user } = usePrivy();
-  const isConnected = !!user?.wallet?.address;
+  const { walletConnected: isConnected } = useSession();
   const positions = usePositions();
 
   if (!isConnected) {

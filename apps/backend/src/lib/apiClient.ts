@@ -1,6 +1,8 @@
 'use client';
 
 import { getAccessToken } from '@privy-io/react-auth';
+import { GuestApiError, guestRequest } from '@/lib/guest/guestBackend';
+import { isGuestSession } from '@/lib/guest/guestStore';
 
 /** The `{ code, message }` wire shape every API route error responds
  * with (`src/lib/apiError.ts::ApiError.toResponse()`, server-only —
@@ -30,6 +32,20 @@ export class ApiRequestError extends Error {
  * (`src/lib/privy.ts`) don't care which SDK issued the token.
  */
 export async function apiRequest<T>(path: string, init?: RequestInit): Promise<T> {
+  // Guest mode never touches the network — every request (reads and
+  // mutations) is answered by the in-app sandbox, so it works without
+  // Privy, Supabase, or a running backend.
+  if (isGuestSession()) {
+    try {
+      return await guestRequest<T>(path, init);
+    } catch (error) {
+      if (error instanceof GuestApiError) {
+        throw new ApiRequestError(error.status, error.body);
+      }
+      throw error;
+    }
+  }
+
   const token = await getAccessToken().catch(() => null);
   // `FormData` must set its own multipart boundary — forcing
   // `application/json` on it would corrupt the upload.

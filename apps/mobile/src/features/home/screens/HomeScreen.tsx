@@ -45,7 +45,7 @@ export function HomeScreen() {
   const navigation = useNavigation();
   const insets = useSafeAreaInsets();
   const isTablet = useIsTablet();
-  const { isAuthenticated } = useAuth();
+  const { canUseApp } = useAuth();
   const [activeTab, setActiveTab] = useState<FeedTabKey>('forYou');
   const feed = useHomeFeed();
   const followingFeed = useFollowingFeed();
@@ -89,7 +89,7 @@ export function HomeScreen() {
   const tabs = <TabRow options={FEED_TAB_OPTIONS} value={activeTab} onChange={setActiveTab} />;
 
   if (activeTab === 'following') {
-    if (!isAuthenticated) {
+    if (!canUseApp) {
       return (
         <Screen className="px-0" edges={['top']}>
           <Header />
@@ -266,7 +266,7 @@ export function HomeScreen() {
  */
 function Header() {
   const navigation = useNavigation();
-  const { isAuthenticated } = useAuth();
+  const { canUseApp } = useAuth();
   const { isConnected } = useWallet();
   const balance = useWalletBalance();
   const { deposit } = useDeposit();
@@ -276,7 +276,7 @@ function Header() {
   const balanceLabel = balance.data?.usdc != null ? formatUsd(balance.data.usdc) : '—';
 
   const handleDeposit = async () => {
-    if (!isAuthenticated || !isConnected) {
+    if (!canUseApp || !isConnected) {
       navigation.navigate('Auth');
       return;
     }

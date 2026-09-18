@@ -20,6 +20,7 @@ import { usePositions } from '@/features/portfolio/hooks/usePositions';
 import { useSellPosition } from '@/features/portfolio/hooks/useSellPosition';
 import { useWallet } from '@/hooks/useWallet';
 import { useAuth } from '@/hooks/useAuth';
+import { useGuestStore } from '@/store/guest/guestStore';
 import { isPrivyConfigured } from '@/app/config/env';
 import { formatProbability, formatUsd } from '@/utils/formatCurrency';
 import { choiceTextColor, choiceTone } from '@/utils/choiceTone';
@@ -53,7 +54,8 @@ const STATUS_COPY: Record<
  */
 export function WalletScreen() {
   const navigation = useNavigation();
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, isGuest } = useAuth();
+  const exitGuest = useGuestStore((state) => state.exitGuest);
   const { status, address, error } = useWallet();
   const { logout, isReady } = usePrivy();
   const { deposit } = useDeposit();
@@ -87,6 +89,12 @@ export function WalletScreen() {
         : null;
 
   const handleLogout = async () => {
+    // A guest session has no Privy session to end — leaving guest mode is
+    // the logout, and returns to the sign-in screen via `RootNavigator`.
+    if (isGuest) {
+      exitGuest();
+      return;
+    }
     try {
       await logout();
     } catch (logoutError) {
@@ -108,7 +116,7 @@ export function WalletScreen() {
     }
   };
 
-  if (!isPrivyConfigured) {
+  if (!isPrivyConfigured && !isGuest) {
     return (
       <Screen className="gap-3 pt-4">
         <Text
@@ -128,7 +136,7 @@ export function WalletScreen() {
     );
   }
 
-  if (!isReady) {
+  if (!isReady && !isGuest) {
     return (
       <Screen className="items-center justify-center gap-2">
         <ActivityIndicator accessibilityLabel="Loading wallet" />
@@ -167,7 +175,9 @@ export function WalletScreen() {
         />
         <View className="flex-1 gap-0.5">
           <Text variant="bodyStrong" color={statusMeta.color} accessibilityLiveRegion="polite">
-            {isAuthenticated && status === 'connected' ? 'Wallet Connected' : statusMeta.label}
+            {(isAuthenticated || isGuest) && status === 'connected'
+              ? 'Wallet Connected'
+              : statusMeta.label}
           </Text>
           {status === 'connected' && address ? (
             <WalletAddress address={address} compact />
@@ -303,7 +313,12 @@ export function WalletScreen() {
         </>
       )}
 
-      {isAuthenticated ? (
+      {isGuest ? (
+        <Text variant="micro" color="textTertiary" className="px-4 text-center">
+          Guest demo mode — this wallet address, balance, and every trade here are simulated locally
+          and are not tied to a real account.
+        </Text>
+      ) : isAuthenticated ? (
         <Text variant="micro" color="textTertiary" className="px-4 text-center">
           Logging out ends your app session only — it doesn&apos;t delete your embedded wallet.
         </Text>

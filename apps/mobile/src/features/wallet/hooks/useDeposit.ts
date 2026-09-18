@@ -4,6 +4,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useWallet } from '@/hooks/useWallet';
 import { useWalletBalance } from '@/features/wallet/hooks/useWalletBalance';
 import { POLYGON_USDC_E } from '@/features/wallet/services/walletService';
+import { creditGuestFunds, isGuestSession } from '@/services/guest/guestBackend';
 
 /**
  * Opens Privy's own funding flow (`useFundWallet` from
@@ -28,6 +29,14 @@ export function useDeposit() {
   const canDeposit = isConnected && Boolean(address);
 
   const deposit = async () => {
+    // No Privy funding flow exists for a guest account — Deposit credits
+    // demo funds so the trade → position → callout loop stays testable.
+    if (isGuestSession()) {
+      creditGuestFunds(500);
+      await queryClient.invalidateQueries({ queryKey: ['wallet-balance'] });
+      await queryClient.invalidateQueries({ queryKey: ['positions'] });
+      return;
+    }
     if (!address) throw new Error('Connect a wallet before depositing.');
     await fundWallet({
       address,

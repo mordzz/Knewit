@@ -2,7 +2,6 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { usePrivy } from '@privy-io/react-auth';
 import { Text } from '@/components/ui/Text';
 import { Icon } from '@/components/ui/Icon';
 import { Button } from '@/components/ui/Button';
@@ -12,6 +11,7 @@ import { SOLID_PANEL_CLASS } from '@/components/ui/solidPanel';
 import { PositionPickerSheet } from '@/components/PositionPickerSheet';
 import { useCreateCall } from '@/hooks/useCreateCall';
 import { useProfile } from '@/hooks/useProfile';
+import { useSession } from '@/hooks/useSession';
 import { formatPrice, formatUsd } from '@/lib/formatters';
 import type { UserPosition } from '@/types/social';
 
@@ -26,8 +26,8 @@ const MAX_POST_LENGTH = 280;
  */
 export default function CreateCallPage() {
   const router = useRouter();
-  const { authenticated } = usePrivy();
-  const profile = useProfile(undefined, authenticated);
+  const { canUseApp } = useSession();
+  const profile = useProfile(undefined, canUseApp);
   const [content, setContent] = useState('');
   const [selectedPosition, setSelectedPosition] = useState<UserPosition | null>(null);
   const [pickerVisible, setPickerVisible] = useState(false);
@@ -36,7 +36,7 @@ export default function CreateCallPage() {
   const trimmed = content.trim();
   const isContentValid = trimmed.length > 0 && content.length <= MAX_POST_LENGTH;
   const hasPosition = selectedPosition !== null;
-  const canPublish = isContentValid && authenticated && hasPosition && !mutation.isPending;
+  const canPublish = isContentValid && canUseApp && hasPosition && !mutation.isPending;
 
   function handlePublish() {
     if (!canPublish || !selectedPosition) return;
@@ -66,7 +66,7 @@ export default function CreateCallPage() {
         />
       </div>
 
-      {!authenticated ? (
+      {!canUseApp ? (
         <div className={`${SOLID_PANEL_CLASS} flex flex-col gap-1 rounded-2xl p-3.5`}>
           <Text variant="bodyStrong">Sign in to publish</Text>
           <Text variant="caption" color="textSecondary">

@@ -36,8 +36,8 @@ const MAX_POST_LENGTH = 280;
  */
 export function CreateCallScreen() {
   const navigation = useNavigation();
-  const { isAuthenticated } = useAuth();
-  const profile = useProfile(undefined, isAuthenticated);
+  const { canUseApp } = useAuth();
+  const profile = useProfile(undefined, canUseApp);
   const [content, setContent] = useState('');
   const [selectedPosition, setSelectedPosition] = useState<UserPosition | null>(null);
   const [pickerVisible, setPickerVisible] = useState(false);
@@ -46,7 +46,7 @@ export function CreateCallScreen() {
   const trimmed = content.trim();
   const isContentValid = trimmed.length > 0 && content.length <= MAX_POST_LENGTH;
   const hasPosition = selectedPosition !== null;
-  const canPublish = isContentValid && isAuthenticated && hasPosition && !mutation.isPending;
+  const canPublish = isContentValid && canUseApp && hasPosition && !mutation.isPending;
 
   async function handlePublish() {
     if (!canPublish || !selectedPosition) return;
@@ -88,7 +88,7 @@ export function CreateCallScreen() {
           />
         </View>
 
-        {!isAuthenticated ? (
+        {!canUseApp ? (
           <View style={[solidPanel, { borderRadius: 16 }]} className="gap-1 p-3.5">
             <Text variant="bodyStrong">Sign in to publish</Text>
             <Text variant="caption" color="textSecondary">

@@ -22,7 +22,7 @@ import { useUserCalls } from '@/hooks/useUserCalls';
 import { useUserReplies } from '@/hooks/useUserReplies';
 import { useUserActivity } from '@/hooks/useUserActivity';
 import { usePositions } from '@/hooks/usePositions';
-import { usePrivy } from '@privy-io/react-auth';
+import { useSession } from '@/hooks/useSession';
 import { ApiRequestError } from '@/lib/apiClient';
 import { formatCompactNumber, formatUsd, formatPrice, formatRelativeTime } from '@/lib/formatters';
 import type { CommentItem, FeedItem } from '@/types/social';
@@ -46,8 +46,7 @@ const PROFILE_TAB_OPTIONS: TabRowOption<ProfileTab>[] = [
  */
 export function ProfileView({ userId }: { userId?: string }) {
   const router = useRouter();
-  const { user: privyUser } = usePrivy();
-  const walletConnected = !!privyUser?.wallet?.address;
+  const { walletConnected } = useSession();
   const [tab, setTab] = useState<ProfileTab>('calls');
 
   const profile = useProfile(userId);

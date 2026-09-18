@@ -2,6 +2,7 @@ import { useEffect, useRef } from 'react';
 import { usePrivy, useEmbeddedEthereumWallet } from '@privy-io/expo';
 import { useQueryClient } from '@tanstack/react-query';
 import { useAuthStore } from '@/store/auth/authStore';
+import { useGuestStore } from '@/store/guest/guestStore';
 import { useWalletStore } from '@/store/wallet/walletStore';
 import { isPrivyConfigured } from '@/app/config/env';
 
@@ -38,9 +39,22 @@ export function PrivySessionBridge() {
   const setConnected = useWalletStore((state) => state.setConnected);
   const setDisconnected = useWalletStore((state) => state.setDisconnected);
   const setWalletError = useWalletStore((state) => state.setError);
+  const isGuest = useGuestStore((state) => state.isGuest);
+  const exitGuest = useGuestStore((state) => state.exitGuest);
   const previousAddress = useRef<string | null>(null);
 
+  // A real Privy session appearing while guest mode is active (e.g. the
+  // person signed in from the guest session) takes over: drop the guest
+  // sandbox so the bridge below starts mirroring Privy's real state.
   useEffect(() => {
+    if (user && isGuest) exitGuest();
+  }, [user, isGuest, exitGuest]);
+
+  useEffect(() => {
+    // Guest mode owns session/wallet state entirely (a fixed demo
+    // identity, never a Privy session) — mirroring Privy's real,
+    // signed-out state on top of it would sign the guest out.
+    if (isGuest) return;
     // Gated on Privy's own `isReady`: before Privy has finished checking
     // for an existing session, `user` is just falsy-by-default, not
     // "confirmed logged out" — syncing `clearSession()` from that would
@@ -64,9 +78,10 @@ export function PrivySessionBridge() {
       clearSession();
     }
     setReady();
-  }, [isReady, user, setSession, clearSession, setReady]);
+  }, [isReady, user, isGuest, setSession, clearSession, setReady]);
 
   useEffect(() => {
+    if (isGuest) return;
     if (!isReady) return;
     if (error) {
       setWalletError(error.message);
@@ -101,6 +116,7 @@ export function PrivySessionBridge() {
     }
   }, [
     isReady,
+    isGuest,
     error,
     user,
     wallets,

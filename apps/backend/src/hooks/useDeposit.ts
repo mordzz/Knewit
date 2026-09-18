@@ -1,9 +1,11 @@
 'use client';
 
-import { usePrivy, useAddFunds } from '@privy-io/react-auth';
+import { useAddFunds } from '@privy-io/react-auth';
 import { useQueryClient } from '@tanstack/react-query';
 import { useWalletBalance } from '@/hooks/useWalletBalance';
+import { useSession } from '@/hooks/useSession';
 import { POLYGON_CAIP2, POLYGON_USDC_E } from '@/lib/walletService';
+import { creditGuestFunds } from '@/lib/guest/guestBackend';
 
 /**
  * Opens Privy's own funding flow (`useAddFunds` — fiat card on-ramp and
@@ -17,18 +19,26 @@ import { POLYGON_CAIP2, POLYGON_USDC_E } from '@/lib/walletService';
  * Requires the funding feature + payment methods to be enabled in the
  * Privy Dashboard; without that, `addFunds` rejects with Privy's real
  * error — surfaced to the user, never faked as success.
+ *
+ * Guest mode has no Privy funding flow to open, so Deposit credits demo
+ * funds in the sandbox instead (see docs/DECISIONS.md, "Guest Mode").
  */
 export function useDeposit() {
-  const { user } = usePrivy();
+  const { address, isGuest } = useSession();
   const { addFunds } = useAddFunds();
   const balance = useWalletBalance();
   const queryClient = useQueryClient();
 
-  const address = user?.wallet?.address ?? null;
   const collateral = balance.data?.collateral ?? POLYGON_USDC_E;
   const canDeposit = Boolean(address);
 
   const deposit = async () => {
+    if (isGuest) {
+      creditGuestFunds(500);
+      await queryClient.invalidateQueries({ queryKey: ['wallet-balance'] });
+      await queryClient.invalidateQueries({ queryKey: ['positions'] });
+      return;
+    }
     if (!address) throw new Error('Connect a wallet before depositing.');
     await addFunds({
       destination: { address, chain: POLYGON_CAIP2, asset: collateral },

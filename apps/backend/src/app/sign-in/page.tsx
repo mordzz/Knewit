@@ -9,6 +9,7 @@ import { FaXTwitter } from 'react-icons/fa6';
 import { CodeInput } from '@/components/ui/CodeInput';
 import { SOLID_PANEL_CLASS } from '@/components/ui/solidPanel';
 import { publicEnv } from '@/lib/publicEnv';
+import { useGuestStore } from '@/lib/guest/guestStore';
 
 /**
  * Direct conversion of `apps/mobile/src/features/auth/screens/SignInScreen.tsx`
@@ -48,6 +49,8 @@ import { publicEnv } from '@/lib/publicEnv';
 export default function SignInPage() {
   const router = useRouter();
   const { user } = usePrivy();
+  const enterGuest = useGuestStore((state) => state.enterGuest);
+  const isGuest = useGuestStore((state) => state.isGuest);
   const [email, setEmail] = useState('');
   const [code, setCode] = useState('');
   const [resendSeconds, setResendSeconds] = useState(0);
@@ -68,6 +71,12 @@ export default function SignInPage() {
     if (user?.wallet?.address) router.replace('/');
   }, [isPreparing, user?.wallet?.address, router]);
 
+  // Guest mode is a session too — leave this screen as soon as it starts,
+  // the same way a completed Privy login does.
+  useEffect(() => {
+    if (isGuest) router.replace('/');
+  }, [isGuest, router]);
+
   const beginSetup = () => setIsPreparing(true);
 
   const { state, sendCode, loginWithCode } = useLoginWithEmail({
@@ -83,6 +92,16 @@ export default function SignInPage() {
         <h1 className="text-2xl font-bold">Wallet sign-in isn&apos;t configured yet</h1>
         <p className="text-text-secondary">
           This deployment is missing its wallet credentials — see docs/WALLET.md.
+        </p>
+        <button
+          type="button"
+          onClick={enterGuest}
+          className="mt-4 min-h-12 rounded-md border border-white/15 bg-white/10 px-8 py-3 font-semibold text-text-primary transition-opacity hover:opacity-90"
+        >
+          Sign in as guest
+        </button>
+        <p className="text-xs text-text-tertiary">
+          Guest mode runs a local demo — no wallet, database, or sign-in needed.
         </p>
       </main>
     );
@@ -254,7 +273,20 @@ export default function SignInPage() {
             <FaXTwitter size={16} />
             Continue with X
           </button>
+          <button
+            type="button"
+            onClick={enterGuest}
+            disabled={isOAuthLoading}
+            className="flex min-h-12 items-center justify-center gap-2 rounded-md border border-white/15 bg-white/10 px-6 py-3 font-semibold text-text-primary transition-opacity hover:opacity-90 disabled:opacity-50"
+          >
+            Sign in as guest
+          </button>
         </div>
+
+        <p className="mt-3 text-center text-xs text-text-tertiary">
+          Guest mode runs a local demo — trades and posts are simulated and nothing is saved to a
+          real account.
+        </p>
 
         {errorMessage ? (
           <p className="mt-4 text-center text-sm text-danger">{errorMessage}</p>

@@ -15,6 +15,7 @@ import { Icon } from '@/components/ui/Icon';
 import { CodeInput } from '@/components/ui/CodeInput';
 import { XLogo } from '@/components/ui/XLogo';
 import { isPrivyConfigured } from '@/app/config/env';
+import { useGuestStore } from '@/store/guest/guestStore';
 import { useIsTablet } from '@/hooks/useIsTablet';
 import { cn } from '@/utils/cn';
 import { solidPanel } from '@/theme';
@@ -69,6 +70,7 @@ import { solidPanel } from '@/theme';
  */
 export function SignInScreen() {
   const isTablet = useIsTablet();
+  const enterGuest = useGuestStore((state) => state.enterGuest);
   const [email, setEmail] = useState('');
   const [code, setCode] = useState('');
   const [resendSeconds, setResendSeconds] = useState(0);
@@ -119,6 +121,16 @@ export function SignInScreen() {
         </Text>
         <Text variant="body" color="textSecondary" className="text-center">
           This build is missing its wallet credentials — see docs/WALLET.md.
+        </Text>
+        <Button
+          label="Sign in as guest"
+          variant="secondary"
+          onPress={enterGuest}
+          accessibilityLabel="Sign in as guest"
+          className="mt-4 px-8"
+        />
+        <Text variant="micro" color="textTertiary" className="text-center">
+          Guest mode runs a local demo — no wallet, backend, or sign-in needed.
         </Text>
       </Screen>
     );
@@ -341,7 +353,20 @@ export function SignInScreen() {
                   accessibilityLabel="Continue with X"
                   className="w-full bg-white/10"
                 />
+                <Button
+                  label="Sign in as guest"
+                  variant="secondary"
+                  onPress={enterGuest}
+                  disabled={isOAuthLoading}
+                  accessibilityLabel="Sign in as guest"
+                  className="w-full bg-white/10"
+                />
               </View>
+
+              <Text variant="micro" color="textTertiary" className="text-center">
+                Guest mode runs a local demo — trades and posts are simulated and nothing is saved
+                to a real account.
+              </Text>
 
               {errorMessage ? (
                 <Text variant="caption" color="danger" className="text-center">

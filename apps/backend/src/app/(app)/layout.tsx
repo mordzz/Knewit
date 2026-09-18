@@ -2,13 +2,14 @@
 
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { usePrivy } from '@privy-io/react-auth';
 import { BottomTabBar } from '@/components/BottomTabBar';
 import { SideNav } from '@/components/SideNav';
 import { RightRail } from '@/components/RightRail';
 import { Fab } from '@/components/Fab';
 import { Text } from '@/components/ui/Text';
 import { useAutoWalletSetup } from '@/hooks/useAutoWalletSetup';
+import { useSession } from '@/hooks/useSession';
+import { useGuestStore } from '@/lib/guest/guestStore';
 
 /**
  * Shell for every authenticated page (Home, Markets, Search,
@@ -36,20 +37,28 @@ import { useAutoWalletSetup } from '@/hooks/useAutoWalletSetup';
  */
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
-  const { ready, authenticated } = usePrivy();
+  const { ready, canUseApp, isGuest, privyUser } = useSession();
+  const exitGuest = useGuestStore((state) => state.exitGuest);
   const setup = useAutoWalletSetup();
 
   useEffect(() => {
-    if (ready && !authenticated) {
+    if (ready && !canUseApp) {
       router.replace('/sign-in');
     }
-  }, [ready, authenticated, router]);
+  }, [ready, canUseApp, router]);
 
-  if (!ready || !authenticated) {
+  // A real Privy login while guest mode is active (e.g. signing in from
+  // the guest session) takes over — drop the sandbox and render the real
+  // session, same rule as mobile's `PrivySessionBridge`.
+  useEffect(() => {
+    if (privyUser && isGuest) exitGuest();
+  }, [privyUser, isGuest, exitGuest]);
+
+  if (!ready || !canUseApp) {
     return null;
   }
 
-  if (setup.status !== 'ready') {
+  if (!isGuest && setup.status !== 'ready') {
     return (
       <div className="relative mx-auto flex h-screen w-full max-w-2xl flex-col items-center justify-center gap-3 border-x border-border px-6 text-center">
         {setup.status === 'error' ? (

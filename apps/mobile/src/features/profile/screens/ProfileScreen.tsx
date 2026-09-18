@@ -54,12 +54,12 @@ export function ProfileScreen() {
   const route = useRoute<RouteProp<AppParamList, 'Profile'>>();
   const userId = route.params?.userId;
   const targetId = userId ?? 'me';
-  const { isAuthenticated } = useAuth();
+  const { canUseApp } = useAuth();
   const { isConnected: walletConnected } = useWallet();
   const [tab, setTab] = useState<ProfileTab>('calls');
 
   const isOwnProfileRoute = userId === undefined;
-  const needsSignIn = isOwnProfileRoute && !isAuthenticated;
+  const needsSignIn = isOwnProfileRoute && !canUseApp;
 
   const profile = useProfile(userId, !needsSignIn);
   const toggleFollow = useFollowToggle();

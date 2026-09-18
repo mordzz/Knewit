@@ -2,7 +2,6 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { usePrivy } from '@privy-io/react-auth';
 import { Text } from '@/components/ui/Text';
 import { Button, type ButtonVariant } from '@/components/ui/Button';
 import { Icon } from '@/components/ui/Icon';
@@ -12,6 +11,7 @@ import { BottomSheet } from '@/components/ui/BottomSheet';
 import { LoadingState } from '@/components/feedback/LoadingState';
 import { WalletAddress } from '@/components/WalletAddress';
 import { useCreateTrade } from '@/hooks/useCreateTrade';
+import { useSession } from '@/hooks/useSession';
 import { useTradeEstimate } from '@/hooks/useTradeEstimate';
 import { formatPrice, formatProbability, formatUsd } from '@/lib/formatters';
 import { choiceTextColor, choiceTone, type ChoiceTone } from '@/lib/choiceTone';
@@ -43,8 +43,7 @@ function validateAmount(amount: number): string | null {
  */
 export function TradingPanel({ market }: { market: MarketDetail }) {
   const router = useRouter();
-  const { user } = usePrivy();
-  const isConnected = !!user?.wallet?.address;
+  const { walletConnected: isConnected } = useSession();
   const [sheetVisible, setSheetVisible] = useState(false);
 
   if (market.resolved) {
@@ -89,9 +88,7 @@ export function TradeSheet({
   visible: boolean;
   onClose: () => void;
 }) {
-  const { user } = usePrivy();
-  const address = user?.wallet?.address ?? null;
-  const isConnected = !!address;
+  const { address, walletConnected: isConnected } = useSession();
   const [choiceIndex, setChoiceIndex] = useState(0);
   const [amountText, setAmountText] = useState('');
   const [step, setStep] = useState<'pick' | 'confirm'>('pick');

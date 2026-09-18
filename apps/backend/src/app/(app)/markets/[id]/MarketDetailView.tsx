@@ -27,7 +27,7 @@ import { useMarketPosition } from '@/hooks/useMarketPosition';
 import { useEvent } from '@/hooks/useEvent';
 import { useEventActivity } from '@/hooks/useEventActivity';
 import { useEventHolders } from '@/hooks/useEventHolders';
-import { usePrivy } from '@privy-io/react-auth';
+import { useSession } from '@/hooks/useSession';
 import { ApiRequestError } from '@/lib/apiClient';
 import { formatCompactUsd, formatRelativeTime, formatUsd } from '@/lib/formatters';
 import type { EventDetail, EventHolderRow, FeedItem, MarketDetail, MarketHolder, MarketSummary } from '@/types/social';
@@ -66,8 +66,7 @@ function formatShortDate(iso: string): string {
  */
 export function MarketDetailView({ id }: { id: string }) {
   const router = useRouter();
-  const { user } = usePrivy();
-  const isConnected = !!user?.wallet?.address;
+  const { walletConnected: isConnected } = useSession();
   const [tab, setTab] = useState<DetailTab>('about');
   const [tradeMarketId, setTradeMarketId] = useState<string | null>(null);
 

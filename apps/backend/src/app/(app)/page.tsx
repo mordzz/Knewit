@@ -2,7 +2,6 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { usePrivy } from '@privy-io/react-auth';
 import { Text } from '@/components/ui/Text';
 import { Button } from '@/components/ui/Button';
 import { TabRow, type TabRowOption } from '@/components/ui/TabRow';
@@ -14,6 +13,7 @@ import { useHomeFeed } from '@/hooks/useHomeFeed';
 import { useFollowingFeed } from '@/hooks/useFollowingFeed';
 import { useWalletBalance } from '@/hooks/useWalletBalance';
 import { useDeposit } from '@/hooks/useDeposit';
+import { useSession } from '@/hooks/useSession';
 import { isUserCancelledFunding } from '@/lib/privyErrors';
 import { formatUsd } from '@/lib/formatters';
 
@@ -33,7 +33,7 @@ const FEED_TAB_OPTIONS: TabRowOption<FeedTabKey>[] = [
  */
 export default function HomePage() {
   const router = useRouter();
-  const { authenticated } = usePrivy();
+  const { canUseApp } = useSession();
   const [tab, setTab] = useState<FeedTabKey>('forYou');
   const feed = useHomeFeed();
   const followingFeed = useFollowingFeed();
@@ -41,7 +41,7 @@ export default function HomePage() {
   const tabs = <TabRow options={FEED_TAB_OPTIONS} value={tab} onChange={setTab} />;
 
   if (tab === 'following') {
-    if (!authenticated) {
+    if (!canUseApp) {
       return (
         <main className="w-full">
           <Header />
@@ -203,7 +203,7 @@ function InfiniteScrollSentinel({
  */
 function Header() {
   const router = useRouter();
-  const { authenticated, user } = usePrivy();
+  const { canUseApp, walletConnected } = useSession();
   const balance = useWalletBalance();
   const { deposit } = useDeposit();
   const [isDepositing, setIsDepositing] = useState(false);
@@ -212,7 +212,7 @@ function Header() {
   const balanceLabel = balance.data?.usdc != null ? formatUsd(balance.data.usdc) : '—';
 
   const handleDeposit = async () => {
-    if (!authenticated || !user?.wallet) {
+    if (!canUseApp || !walletConnected) {
       router.push('/sign-in');
       return;
     }

@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { usePrivy, useLogout } from '@privy-io/react-auth';
+import { useLogout } from '@privy-io/react-auth';
 import { Text } from '@/components/ui/Text';
 import { Icon } from '@/components/ui/Icon';
 import { Button } from '@/components/ui/Button';
@@ -19,6 +19,8 @@ import { usePositions } from '@/hooks/usePositions';
 import { useWalletBalance } from '@/hooks/useWalletBalance';
 import { useDeposit } from '@/hooks/useDeposit';
 import { useSellPosition } from '@/hooks/useSellPosition';
+import { useSession } from '@/hooks/useSession';
+import { useGuestStore } from '@/lib/guest/guestStore';
 import type { UserPosition } from '@/types/social';
 
 /**
@@ -42,8 +44,9 @@ import type { UserPosition } from '@/types/social';
  * request — see docs/WALLET.md, "Approve USDC for Trading".
  */
 export default function WalletPage() {
-  const { user, authenticated } = usePrivy();
+  const { address, authenticated, isGuest, walletConnected } = useSession();
   const { logout } = useLogout();
+  const exitGuest = useGuestStore((state) => state.exitGuest);
   const { deposit } = useDeposit();
   const router = useRouter();
   const sell = useSellPosition();
@@ -54,11 +57,19 @@ export default function WalletPage() {
     null
   );
 
-  const address = user?.wallet?.address ?? null;
-
   const balance = useWalletBalance();
   const positionsQuery = usePositions();
   const positions = positionsQuery.data ?? [];
+
+  const handleLogout = () => {
+    // A guest session has no Privy session to end — leaving guest mode is
+    // the logout, and the app shell routes back to `/sign-in`.
+    if (isGuest) {
+      exitGuest();
+      return;
+    }
+    logout();
+  };
 
   // Unrealized PnL per position: (current − entry) cents × shares. No
   // positions is a real $0.00; positions whose live price is missing make
@@ -111,7 +122,7 @@ export default function WalletPage() {
           </Text>
         </div>
         {address ? (
-          <Button label="Log Out" variant="no" onClick={() => logout()} className="min-h-0 px-3 py-2" />
+          <Button label="Log Out" variant="no" onClick={handleLogout} className="min-h-0 px-3 py-2" />
         ) : null}
       </div>
 
@@ -176,7 +187,7 @@ export default function WalletPage() {
         </Text>
       ) : null}
 
-      {!authenticated || !address ? (
+      {!walletConnected ? (
         <EmptyState
           icon="wallet-outline"
           title="Connect your wallet"
@@ -304,7 +315,12 @@ export default function WalletPage() {
         ) : null}
       </Modal>
 
-      {authenticated ? (
+      {isGuest ? (
+        <Text variant="micro" color="textTertiary" className="block px-4 text-center">
+          Guest demo mode — this wallet address, balance, and every trade here are simulated
+          locally and are not tied to a real account.
+        </Text>
+      ) : authenticated ? (
         <Text variant="micro" color="textTertiary" className="block px-4 text-center">
           Logging out ends your app session only — it doesn&apos;t delete your embedded wallet.
         </Text>
