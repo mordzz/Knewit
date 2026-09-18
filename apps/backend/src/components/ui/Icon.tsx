@@ -37,7 +37,6 @@ import {
   IoEllipsisHorizontal,
   IoShareOutline,
   IoOptionsOutline,
-  IoSettingsOutline,
 } from 'react-icons/io5';
 import type { IconType } from 'react-icons';
 
@@ -87,8 +86,7 @@ export type IconName =
   | 'time-outline'
   | 'ellipsis-horizontal'
   | 'share-outline'
-  | 'options-outline'
-  | 'settings-outline';
+  | 'options-outline';
 
 export type ColorToken =
   | 'background'
@@ -168,7 +166,6 @@ const ICONS: Record<IconName, IconType> = {
   'ellipsis-horizontal': IoEllipsisHorizontal,
   'share-outline': IoShareOutline,
   'options-outline': IoOptionsOutline,
-  'settings-outline': IoSettingsOutline,
 };
 
 export interface IconProps {

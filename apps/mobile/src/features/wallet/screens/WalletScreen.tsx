@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ActivityIndicator, View } from 'react-native';
+import { ActivityIndicator, Pressable, View } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { usePrivy, useEmbeddedEthereumWallet, useSigners } from '@privy-io/expo';
 import { useQueryClient } from '@tanstack/react-query';
@@ -8,6 +8,7 @@ import { Text } from '@/components/ui/Text';
 import { typography } from '@/theme';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
+import { BottomSheet } from '@/components/ui/BottomSheet';
 import { Icon } from '@/components/ui/Icon';
 import { Divider } from '@/components/ui/Divider';
 import { EmptyState } from '@/components/feedback/EmptyState';
@@ -17,11 +18,13 @@ import { useWalletBalance } from '@/features/wallet/hooks/useWalletBalance';
 import { useDeposit } from '@/features/wallet/hooks/useDeposit';
 import { isUserCancelledFunding } from '@/features/wallet/utils/privyErrors';
 import { usePositions } from '@/features/portfolio/hooks/usePositions';
+import { useSellPosition } from '@/features/portfolio/hooks/useSellPosition';
 import { useWallet } from '@/hooks/useWallet';
 import { useAuth } from '@/hooks/useAuth';
 import { isPrivyConfigured, env } from '@/app/config/env';
 import { formatProbability, formatUsd } from '@/utils/formatCurrency';
 import { choiceTextColor, choiceTone } from '@/utils/choiceTone';
+import { ApiRequestError } from '@/services/api/client';
 import type { UserPosition } from '@/types/social';
 
 const STATUS_COPY: Record<
@@ -59,12 +62,17 @@ export function WalletScreen() {
   const { addSigners } = useSigners();
   const { deposit } = useDeposit();
   const queryClient = useQueryClient();
+  const sell = useSellPosition();
   const [isCreatingWallet, setIsCreatingWallet] = useState(false);
   const [createWalletError, setCreateWalletError] = useState<string | null>(null);
   const [isEnablingSigning, setIsEnablingSigning] = useState(false);
   const [enableSigningError, setEnableSigningError] = useState<string | null>(null);
   const [isDepositing, setIsDepositing] = useState(false);
   const [depositError, setDepositError] = useState<string | null>(null);
+  const [sellTarget, setSellTarget] = useState<UserPosition | null>(null);
+  const [sellNotice, setSellNotice] = useState<{ tone: 'yes' | 'danger'; message: string } | null>(
+    null
+  );
 
   const signerId = env.privySignerId;
 
@@ -179,13 +187,23 @@ export function WalletScreen() {
 
   return (
     <Screen scroll className="gap-3 px-0 pt-4">
-      <Text
-        variant="heading"
-        className="px-4 pb-3 text-4xl"
-        style={{ fontFamily: typography.family.extrabold }}
-      >
-        Wallet
-      </Text>
+      <View className="flex-row items-center gap-2 px-4 pb-3">
+        <Pressable
+          onPress={() => navigation.goBack()}
+          accessibilityRole="button"
+          accessibilityLabel="Go back"
+          hitSlop={8}
+        >
+          <Icon name="chevron-back" size={24} />
+        </Pressable>
+        <Text
+          variant="heading"
+          className="text-4xl"
+          style={{ fontFamily: typography.family.extrabold }}
+        >
+          Wallet
+        </Text>
+      </View>
 
       <View className="flex-row items-center gap-3 border-b border-border px-4 py-3">
         <Icon
@@ -287,6 +305,12 @@ export function WalletScreen() {
         </Text>
       ) : null}
 
+      {sellNotice ? (
+        <Text variant="caption" color={sellNotice.tone} className="px-4">
+          {sellNotice.message}
+        </Text>
+      ) : null}
+
       {status !== 'connected' ? (
         <EmptyState
           icon="wallet-outline"
@@ -339,7 +363,14 @@ export function WalletScreen() {
           ) : (
             positions.map((position, index) => (
               <View key={position.id}>
-                <PositionRow position={position} />
+                <PositionRow
+                  position={position}
+                  onSell={() => {
+                    setSellNotice(null);
+                    sell.reset();
+                    setSellTarget(position);
+                  }}
+                />
                 {index < positions.length - 1 ? <Divider /> : null}
               </View>
             ))
@@ -352,11 +383,103 @@ export function WalletScreen() {
           Logging out ends your app session only — it doesn&apos;t delete your embedded wallet.
         </Text>
       ) : null}
+
+      <BottomSheet
+        visible={sellTarget != null}
+        onClose={() => {
+          if (sell.isPending) return;
+          setSellTarget(null);
+        }}
+      >
+        {sellTarget ? (
+          <View className="gap-3">
+            <Text variant="heading">Sell position</Text>
+            <Text variant="body" numberOfLines={3}>
+              {sellTarget.marketQuestion}
+            </Text>
+            <View className="flex-row gap-6">
+              <View className="gap-0.5">
+                <Text variant="caption" color="textTertiary">
+                  Position
+                </Text>
+                <Text
+                  variant="bodyStrong"
+                  color={choiceTextColor(
+                    choiceTone({ index: sellTarget.choiceIndex, label: sellTarget.outcome })
+                  )}
+                >
+                  {sellTarget.outcome}
+                </Text>
+              </View>
+              <View className="gap-0.5">
+                <Text variant="caption" color="textTertiary">
+                  Shares
+                </Text>
+                <Text variant="bodyStrong">{sellTarget.size}</Text>
+              </View>
+              <View className="gap-0.5">
+                <Text variant="caption" color="textTertiary">
+                  Current
+                </Text>
+                <Text variant="bodyStrong">
+                  {sellTarget.currentPrice != null
+                    ? formatProbability(sellTarget.currentPrice)
+                    : '—'}
+                </Text>
+              </View>
+            </View>
+            <Text variant="caption" color="textSecondary">
+              Sells the whole position at market — the final price is set when it fills. Proceeds
+              are sent to your Privy wallet, so they won&apos;t appear in this screen&apos;s trading
+              balance.
+            </Text>
+            {sell.isError ? (
+              <Text variant="caption" color="danger">
+                {friendlySellError(sell.error)}
+              </Text>
+            ) : null}
+            <View className="flex-row justify-end gap-2">
+              <Button
+                label="Cancel"
+                variant="ghost"
+                onPress={() => setSellTarget(null)}
+                disabled={sell.isPending}
+                className="min-h-0 px-4 py-2"
+              />
+              <Button
+                label={sell.isPending ? 'Selling...' : 'Sell'}
+                variant="no"
+                loading={sell.isPending}
+                onPress={() =>
+                  sell.mutate(sellTarget.id, {
+                    onSuccess: (result) => {
+                      setSellNotice(
+                        result.cashOut.status === 'sent'
+                          ? {
+                              tone: 'yes',
+                              message: `Position sold — ${formatUsd(result.cashOut.amountUsd)} is on its way to your Privy wallet.`,
+                            }
+                          : {
+                              tone: 'danger',
+                              message:
+                                'Position sold, but sending the proceeds to your wallet failed — the money is still in your trading balance.',
+                            }
+                      );
+                      setSellTarget(null);
+                    },
+                  })
+                }
+                className="min-h-0 px-4 py-2"
+              />
+            </View>
+          </View>
+        ) : null}
+      </BottomSheet>
     </Screen>
   );
 }
 
-function PositionRow({ position }: { position: UserPosition }) {
+function PositionRow({ position, onSell }: { position: UserPosition; onSell: () => void }) {
   const pnl =
     position.currentPrice != null
       ? ((position.currentPrice - position.entryPrice) / 100) * position.size
@@ -415,6 +538,34 @@ function PositionRow({ position }: { position: UserPosition }) {
           </Text>
         </View>
       </View>
+      <View className="flex-row justify-end">
+        <Button
+          label="Sell"
+          variant="secondary"
+          onPress={onSell}
+          className="min-h-0 px-4 py-2"
+          accessibilityLabel={`Sell ${position.outcome} position`}
+        />
+      </View>
     </View>
   );
+}
+
+/** Never surfaces a raw backend error — the backend's own sell messages
+ * are already user-facing, so known codes pass through and anything else
+ * becomes one generic message. */
+function friendlySellError(error: unknown): string {
+  if (error instanceof ApiRequestError) {
+    if (
+      ['insufficient_shares', 'trade_failed', 'approvals_failed', 'no_liquidity'].includes(
+        error.body.code
+      )
+    ) {
+      return error.body.message;
+    }
+  }
+  if (error instanceof Error && /network/i.test(error.message)) {
+    return 'Network error — check your connection and try again.';
+  }
+  return "Couldn't sell this position right now. Please try again.";
 }

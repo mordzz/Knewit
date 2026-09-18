@@ -32,15 +32,40 @@ export async function getUserProfile(id: string): Promise<UserProfile> {
 
 /**
  * **No dev-mock fallback** — editing is a real, user-visible mutating
- * action. The backend must independently validate `displayName`/`bio`
- * (length, emptiness) — client-side validation in `EditProfileScreen`
- * is UX only, never the actual integrity boundary — see
- * docs/DECISIONS.md.
+ * action. The backend must independently validate `displayName`/
+ * `handle`/`bio` (length, format, uniqueness) — client-side validation
+ * in `EditProfileScreen` is UX only, never the actual integrity boundary
+ * — see docs/DECISIONS.md.
  */
 export async function updateMyProfile(input: UpdateProfileInput): Promise<UserProfile> {
   return apiRequest<UserProfile>(endpoints.users('me'), {
     method: 'PATCH',
     body: JSON.stringify(input),
+  });
+}
+
+/** React Native's multipart file shape: `FormData` uploads a local file
+ * by reference, not by value (no `Blob` in RN). */
+export interface ProfileImageFile {
+  uri: string;
+  name: string;
+  type: string;
+}
+
+/**
+ * Uploads a profile avatar/banner (multipart) — the backend stores it in
+ * the public `profile-images` bucket and returns the updated profile.
+ * **No dev-mock fallback**, same reasoning as `updateMyProfile`.
+ */
+export async function uploadProfileImage(
+  kind: 'avatar' | 'banner',
+  file: ProfileImageFile
+): Promise<UserProfile> {
+  const form = new FormData();
+  form.append('file', file as unknown as Blob);
+  return apiRequest<UserProfile>(endpoints.userImages(kind), {
+    method: 'POST',
+    body: form,
   });
 }
 

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ActivityIndicator, FlatList, Pressable, View } from 'react-native';
+import { ActivityIndicator, FlatList, Image, Pressable, View } from 'react-native';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { Screen } from '@/components/layout/Screen';
 import { Text } from '@/components/ui/Text';
@@ -7,7 +7,6 @@ import { Icon } from '@/components/ui/Icon';
 import { Avatar } from '@/components/ui/Avatar';
 import { Button } from '@/components/ui/Button';
 import { Divider } from '@/components/ui/Divider';
-import { BottomSheet } from '@/components/ui/BottomSheet';
 import { TabRow, TabRowOption } from '@/components/ui/TabRow';
 import { LoadingState } from '@/components/feedback/LoadingState';
 import { EmptyState } from '@/components/feedback/EmptyState';
@@ -61,7 +60,6 @@ export function ProfileScreen() {
 
   const isOwnProfileRoute = userId === undefined;
   const needsSignIn = isOwnProfileRoute && !isAuthenticated;
-  const [settingsVisible, setSettingsVisible] = useState(false);
 
   const profile = useProfile(userId, !needsSignIn);
   const toggleFollow = useFollowToggle();
@@ -167,42 +165,68 @@ export function ProfileScreen() {
   };
 
   const header = (
-    <View className="gap-3 px-4 pb-3 pt-4">
-      <View className="flex-row items-start justify-between">
-        <Avatar uri={user.avatarUrl} fallbackLabel={user.displayName} size={64} />
-        {user.isSelf ? (
-          <Pressable
-            onPress={() => setSettingsVisible(true)}
-            className="mt-1 h-10 w-10 items-center justify-center rounded-full border border-border"
-            accessibilityRole="button"
-            accessibilityLabel="Settings"
-          >
-            <Icon name="settings-outline" size={20} color="textSecondary" />
-          </Pressable>
+    <View className="gap-3 px-4 pb-3">
+      <View className="z-0 -mx-4 h-32 overflow-hidden bg-surface">
+        {user.bannerUrl ? (
+          <Image
+            source={{ uri: user.bannerUrl }}
+            className="h-full w-full"
+            resizeMode="cover"
+            accessibilityLabel="Profile banner"
+          />
         ) : (
+          <>
+            <View
+              className="absolute -left-10 -top-10 h-40 w-40 rounded-full bg-accent"
+              style={{ opacity: 0.12 }}
+            />
+            <View
+              className="absolute -bottom-12 right-0 h-44 w-44 rounded-full bg-accent"
+              style={{ opacity: 0.08 }}
+            />
+          </>
+        )}
+      </View>
+
+      <View className="flex-row items-start justify-between">
+        <View className="z-10 -mt-12 rounded-full border-4 border-background bg-background">
+          <Avatar uri={user.avatarUrl} fallbackLabel={user.displayName} size={96} />
+        </View>
+        {!user.isSelf ? (
           <Button
             label={user.isFollowing ? 'Following' : 'Follow'}
             variant={user.isFollowing ? 'secondary' : 'primary'}
             loading={toggleFollow.isPending}
             onPress={() => toggleFollow.mutate({ userId: user.id, following: user.isFollowing })}
-            className="mt-1"
+            className="mt-12"
             accessibilityLabel={user.isFollowing ? 'Unfollow' : 'Follow'}
           />
-        )}
+        ) : null}
       </View>
 
-      <View className="gap-0.5">
-        <Text variant="title">{user.displayName}</Text>
-        <Text variant="caption" color="textSecondary">
-          @{user.handle}
-        </Text>
+      <View className="flex-row items-start justify-between gap-3">
+        <View className="flex-1 gap-0.5">
+          <Text variant="title">{user.displayName}</Text>
+          <Text variant="caption" color="textSecondary">
+            @{user.handle}
+          </Text>
+        </View>
+        {user.isSelf ? (
+          <Button
+            label="Edit Profile"
+            variant="secondary"
+            onPress={() => navigation.navigate('EditProfile')}
+            className="mt-0.5 min-h-0 shrink-0 px-4 py-2"
+            accessibilityLabel="Edit Profile"
+          />
+        ) : null}
       </View>
 
       <Text variant="body" color="textSecondary">
         {user.bio ?? 'No bio yet.'}
       </Text>
 
-      <View className="flex-row gap-4">
+      <View className="flex-row gap-4 pb-4">
         <Pressable
           onPress={() => navigation.navigate('Following', { userId: user.id })}
           className="flex-row items-baseline gap-1"
@@ -230,21 +254,21 @@ export function ProfileScreen() {
       {user.isSelf ? (
         <Pressable
           onPress={() => navigation.navigate('Wallet')}
-          className="flex-row items-center gap-3 border-b border-border py-3 active:opacity-90"
+          className="flex-row items-center gap-3 border-y border-border py-3 active:opacity-90"
           accessibilityRole="button"
-          accessibilityLabel="Open Wallet"
+          accessibilityLabel="Open Wallet & Portfolio"
         >
           <Icon name="wallet-outline" color="accent" />
           <View className="flex-1">
-            <Text variant="bodyStrong">Wallet</Text>
+            <Text variant="bodyStrong">Wallet &amp; Portfolio</Text>
             <Text variant="caption" color="textSecondary">
-              Address, positions, and PnL
+              Positions and PnL
             </Text>
           </View>
           <Icon name="chevron-forward" size={18} color="textTertiary" />
         </Pressable>
       ) : user.walletAddress ? (
-        <View className="gap-1 border-b border-border py-3">
+        <View className="gap-1 border-y border-border py-3">
           <Text variant="caption" color="textSecondary">
             Wallet
           </Text>
@@ -262,20 +286,6 @@ export function ProfileScreen() {
         </View>
       ) : null}
 
-      {user.leaderboardRank != null ? (
-        <Pressable
-          onPress={() => navigation.navigate('Main', { screen: 'LeaderboardTab' })}
-          className="flex-row items-center justify-between border-b border-border py-3 active:opacity-90"
-          accessibilityRole="button"
-          accessibilityLabel={`Leaderboard rank ${user.leaderboardRank}`}
-        >
-          <Text variant="bodyStrong">Leaderboard Rank</Text>
-          <Text variant="bodyStrong" color="accent">
-            #{user.leaderboardRank}
-          </Text>
-        </Pressable>
-      ) : null}
-
       {user.isSelf &&
       walletConnected &&
       positions.status === 'success' &&
@@ -287,7 +297,9 @@ export function ProfileScreen() {
               <View className="flex-1">
                 <Text
                   variant="caption"
-                  color={choiceTextColor(choiceTone({ index: position.choiceIndex, label: position.outcome }))}
+                  color={choiceTextColor(
+                    choiceTone({ index: position.choiceIndex, label: position.outcome })
+                  )}
                   className="mb-0.5"
                 >
                   {position.outcome}
@@ -383,62 +395,7 @@ export function ProfileScreen() {
           ) : null
         }
       />
-
-      <BottomSheet visible={settingsVisible} onClose={() => setSettingsVisible(false)}>
-        <View className="gap-3">
-          <Text variant="heading">Settings</Text>
-          <SettingsRow
-            icon="person-outline"
-            label="Edit Profile"
-            onPress={() => {
-              setSettingsVisible(false);
-              navigation.navigate('EditProfile');
-            }}
-          />
-          <SettingsRow
-            icon="wallet-outline"
-            label="Wallet"
-            onPress={() => {
-              setSettingsVisible(false);
-              navigation.navigate('Wallet');
-            }}
-          />
-        </View>
-      </BottomSheet>
     </Screen>
-  );
-}
-
-/**
- * Deliberately minimal — "Edit Profile" and "Wallet" are the only real
- * destinations this app has today. Adding more rows here just to make
- * the sheet look fuller would be inventing settings that don't exist
- * yet — same "don't invent infrastructure a sprint doesn't need"
- * principle as `EditProfileScreen`'s own scope (display name/bio only)
- * — see docs/DECISIONS.md.
- */
-function SettingsRow({
-  icon,
-  label,
-  onPress,
-}: {
-  icon: 'person-outline' | 'wallet-outline';
-  label: string;
-  onPress: () => void;
-}) {
-  return (
-    <Pressable
-      onPress={onPress}
-      className="flex-row items-center gap-3 rounded-xl border border-border p-3 active:opacity-90"
-      accessibilityRole="button"
-      accessibilityLabel={label}
-    >
-      <Icon name={icon} color="accent" />
-      <Text variant="bodyStrong" className="flex-1">
-        {label}
-      </Text>
-      <Icon name="chevron-forward" size={18} color="textTertiary" />
-    </Pressable>
   );
 }
 

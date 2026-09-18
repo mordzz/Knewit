@@ -63,9 +63,9 @@ export function toLeaderboardSelf(row: PolymarketLeaderboardRow): LeaderboardSel
 
 /**
  * A single wallet's live standing, for the profile read's
- * `tradingVolume`/`leaderboardRank`. `null` when this account has no
+ * `tradingVolume`. `null` when this account has no
  * wallet, Polymarket has no ranked volume for that wallet, or the upstream
- * call fails — never a local `orders` sum standing in for the metric the
+ * call fails �?" never a local `orders` sum standing in for the metric the
  * leaderboard actually shows (docs/DECISIONS.md).
  */
 export async function fetchPolymarketStanding(

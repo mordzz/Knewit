@@ -213,18 +213,29 @@ export interface FollowResult {
 
 export interface UserProfile extends User {
   bio: string | null;
+  /** Public URL of the profile banner (Supabase Storage), or `null` when
+   * the user hasn't uploaded one — the UI renders a soft gradient
+   * placeholder in that case. */
+  bannerUrl: string | null;
   followerCount: number;
   followingCount: number;
   callCount: number;
   isFollowing: boolean;
   isSelf: boolean;
   tradingVolume: number | null;
-  leaderboardRank: number | null;
 }
 
 export interface UpdateProfileInput {
   displayName: string;
+  /** Lowercase, 3-20 chars, `a-z0-9_` only; the backend enforces
+   * uniqueness (409 `handle_taken`). */
+  handle: string;
   bio: string;
+  /** Optional: omit to keep the current image, `null`/`''` to clear it.
+   * Only URLs inside this app's public `profile-images` bucket are
+   * accepted (never an arbitrary remote URL). */
+  avatarUrl?: string | null;
+  bannerUrl?: string | null;
 }
 
 export interface FollowListItem {

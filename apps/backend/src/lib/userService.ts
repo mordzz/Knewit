@@ -16,6 +16,22 @@ export async function updateMyProfile(input: UpdateProfileInput): Promise<UserPr
   });
 }
 
+export type ProfileImageKind = 'avatar' | 'banner';
+
+/** Uploads a profile image (multipart) — the backend stores it in the
+ * public `profile-images` bucket and returns the updated profile. */
+export async function uploadProfileImage(
+  kind: ProfileImageKind,
+  file: File
+): Promise<UserProfile> {
+  const form = new FormData();
+  form.append('file', file);
+  return apiRequest<UserProfile>(`/api/users/me/images?kind=${kind}`, {
+    method: 'POST',
+    body: form,
+  });
+}
+
 export function getFollowers(userId: string, cursor?: string): Promise<Paginated<FollowListItem>> {
   const query = cursor ? `?cursor=${encodeURIComponent(cursor)}` : '';
   return apiRequest<Paginated<FollowListItem>>(`/api/users/${userId}/followers${query}`);

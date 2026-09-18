@@ -1,6 +1,6 @@
 import { apiRequest } from '@/services/api/client';
 import { endpoints } from '@/services/api/endpoints';
-import type { CreateTradeInput, CreateTradeResult } from '@/types/trading';
+import type { CreateTradeInput, CreateTradeResult, SellPositionResponse } from '@/types/trading';
 
 /**
  * Places a real trade against our backend — deliberately **no dev-mock
@@ -25,5 +25,18 @@ export async function createTrade(input: CreateTradeInput): Promise<CreateTradeR
   return apiRequest<CreateTradeResult>(endpoints.tradingOrders, {
     method: 'POST',
     body: JSON.stringify(input),
+  });
+}
+
+/**
+ * Closes one whole position at market; the backend also sends the
+ * proceeds to this account's Privy wallet. **No dev-mock fallback**,
+ * same reasoning as `createTrade` — a sell that never happened must
+ * never look like it did.
+ */
+export async function sellPosition(positionId: string): Promise<SellPositionResponse> {
+  return apiRequest<SellPositionResponse>(endpoints.tradingSell, {
+    method: 'POST',
+    body: JSON.stringify({ positionId }),
   });
 }

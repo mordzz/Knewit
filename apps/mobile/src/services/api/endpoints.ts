@@ -37,6 +37,8 @@ export const endpoints = {
    * caller — see docs/API.md. Used identically for all the
    * `users/:id/...` sub-resources below. */
   users: (id: string) => `/users/${id}`,
+  userImages: (kind: 'avatar' | 'banner') => `/users/me/images?kind=${kind}`,
+  tradingSell: '/trading/sell',
   userCalls: (id: string) => `/users/${id}/calls`,
   userReplies: (id: string) => `/users/${id}/replies`,
   userActivity: (id: string) => `/users/${id}/activity`,

@@ -32,7 +32,20 @@ const config: ExpoConfig = {
   web: {
     favicon: './assets/favicon.png',
   },
-  plugins: ['expo-font', 'expo-secure-store', 'expo-web-browser'],
+  plugins: [
+    'expo-font',
+    'expo-secure-store',
+    'expo-web-browser',
+    // Profile avatar/banner picking — the config plugin supplies the iOS
+    // photo/camera usage strings on the next `expo prebuild`.
+    [
+      'expo-image-picker',
+      {
+        photosPermission: 'Allow Knewit to choose a profile photo or banner from your library.',
+        cameraPermission: 'Allow Knewit to take a profile photo or banner with the camera.',
+      },
+    ],
+  ],
   extra: {
     eas: {
       projectId: 'd3336eb9-d7c1-4503-bdd6-3a424c3652d4',

@@ -1,12 +1,14 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { usePrivy, useLogout, useCreateWallet, useSigners } from '@privy-io/react-auth';
 import { useQueryClient } from '@tanstack/react-query';
 import { Text } from '@/components/ui/Text';
 import { Icon } from '@/components/ui/Icon';
 import { Button } from '@/components/ui/Button';
 import { Divider } from '@/components/ui/Divider';
+import { Modal } from '@/components/ui/Modal';
 import { WalletAddress } from '@/components/WalletAddress';
 import { choiceTextColor, choiceTone } from '@/lib/choiceTone';
 import { EmptyState } from '@/components/feedback/EmptyState';
@@ -14,9 +16,11 @@ import { ErrorState } from '@/components/feedback/ErrorState';
 import { formatProbability, formatUsd } from '@/lib/formatters';
 import { publicEnv } from '@/lib/publicEnv';
 import { isUserCancelledFunding } from '@/lib/privyErrors';
+import { ApiRequestError } from '@/lib/apiClient';
 import { usePositions } from '@/hooks/usePositions';
 import { useWalletBalance } from '@/hooks/useWalletBalance';
 import { useDeposit } from '@/hooks/useDeposit';
+import { useSellPosition } from '@/hooks/useSellPosition';
 import type { UserPosition } from '@/types/social';
 
 /**
@@ -47,12 +51,18 @@ export default function WalletPage() {
   const { addSigners } = useSigners();
   const { deposit } = useDeposit();
   const queryClient = useQueryClient();
+  const router = useRouter();
+  const sell = useSellPosition();
   const [isCreatingWallet, setIsCreatingWallet] = useState(false);
   const [createWalletError, setCreateWalletError] = useState<string | null>(null);
   const [isEnablingSigning, setIsEnablingSigning] = useState(false);
   const [enableSigningError, setEnableSigningError] = useState<string | null>(null);
   const [isDepositing, setIsDepositing] = useState(false);
   const [depositError, setDepositError] = useState<string | null>(null);
+  const [sellTarget, setSellTarget] = useState<UserPosition | null>(null);
+  const [sellNotice, setSellNotice] = useState<{ tone: 'yes' | 'danger'; message: string } | null>(
+    null
+  );
 
   const address = user?.wallet?.address ?? null;
   const signerId = publicEnv.privySignerId;
@@ -119,9 +129,14 @@ export default function WalletPage() {
 
   return (
     <main className="flex w-full flex-col gap-3 px-0 pt-4">
-      <Text variant="heading" className="block px-4 pb-3 text-4xl font-inter-extrabold">
-        Wallet
-      </Text>
+      <div className="flex items-center gap-2 px-4 pb-3">
+        <button type="button" onClick={() => router.back()} aria-label="Go back">
+          <Icon name="chevron-back" size={24} />
+        </button>
+        <Text variant="heading" className="block text-4xl font-inter-extrabold">
+          Wallet
+        </Text>
+      </div>
 
       <div className="flex items-center gap-3 border-b border-border px-4 py-3">
         <Icon name="wallet-outline" color={address ? 'yes' : 'textTertiary'} />
@@ -226,6 +241,12 @@ export default function WalletPage() {
         </div>
       </div>
 
+      {sellNotice ? (
+        <Text variant="caption" color={sellNotice.tone} className="block px-4">
+          {sellNotice.message}
+        </Text>
+      ) : null}
+
       {!authenticated || !address ? (
         <EmptyState
           icon="wallet-outline"
@@ -247,11 +268,112 @@ export default function WalletPage() {
       ) : (
         positions.map((position, index) => (
           <div key={position.id}>
-            <PositionRow position={position} />
+            <PositionRow
+              position={position}
+              onSell={() => {
+                setSellNotice(null);
+                sell.reset();
+                setSellTarget(position);
+              }}
+            />
             {index < positions.length - 1 ? <Divider /> : null}
           </div>
         ))
       )}
+
+      <Modal
+        visible={sellTarget != null}
+        onClose={() => {
+          if (sell.isPending) return;
+          setSellTarget(null);
+        }}
+      >
+        {sellTarget ? (
+          <div className="flex flex-col gap-3">
+            <Text variant="heading" className="block">
+              Sell position
+            </Text>
+            <Text variant="body" className="block">
+              {sellTarget.marketQuestion}
+            </Text>
+            <div className="flex gap-6">
+              <div>
+                <Text variant="caption" color="textTertiary" className="block">
+                  Position
+                </Text>
+                <Text
+                  variant="bodyStrong"
+                  color={choiceTextColor(
+                    choiceTone({ index: sellTarget.choiceIndex, label: sellTarget.outcome })
+                  )}
+                >
+                  {sellTarget.outcome}
+                </Text>
+              </div>
+              <div>
+                <Text variant="caption" color="textTertiary" className="block">
+                  Shares
+                </Text>
+                <Text variant="bodyStrong">{sellTarget.size}</Text>
+              </div>
+              <div>
+                <Text variant="caption" color="textTertiary" className="block">
+                  Current
+                </Text>
+                <Text variant="bodyStrong">
+                  {sellTarget.currentPrice != null
+                    ? formatProbability(sellTarget.currentPrice)
+                    : '—'}
+                </Text>
+              </div>
+            </div>
+            <Text variant="caption" color="textSecondary" className="block">
+              Sells the whole position at market — the final price is set when it fills. Proceeds
+              are sent to your Privy wallet, so they won&apos;t appear in this screen&apos;s trading
+              balance.
+            </Text>
+            {sell.isError ? (
+              <Text variant="caption" color="danger" className="block">
+                {friendlySellError(sell.error)}
+              </Text>
+            ) : null}
+            <div className="flex justify-end gap-2">
+              <Button
+                label="Cancel"
+                variant="ghost"
+                onClick={() => setSellTarget(null)}
+                disabled={sell.isPending}
+                className="min-h-0 px-4 py-2"
+              />
+              <Button
+                label={sell.isPending ? 'Selling...' : 'Sell'}
+                variant="no"
+                loading={sell.isPending}
+                onClick={() =>
+                  sell.mutate(sellTarget.id, {
+                    onSuccess: (result) => {
+                      setSellNotice(
+                        result.cashOut.status === 'sent'
+                          ? {
+                              tone: 'yes',
+                              message: `Position sold — ${formatUsd(result.cashOut.amountUsd)} is on its way to your Privy wallet.`,
+                            }
+                          : {
+                              tone: 'danger',
+                              message:
+                                'Position sold, but sending the proceeds to your wallet failed — the money is still in your trading balance.',
+                            }
+                      );
+                      setSellTarget(null);
+                    },
+                  })
+                }
+                className="min-h-0 px-4 py-2"
+              />
+            </div>
+          </div>
+        ) : null}
+      </Modal>
 
       {authenticated ? (
         <Text variant="micro" color="textTertiary" className="block px-4 text-center">
@@ -262,7 +384,7 @@ export default function WalletPage() {
   );
 }
 
-function PositionRow({ position }: { position: UserPosition }) {
+function PositionRow({ position, onSell }: { position: UserPosition; onSell: () => void }) {
   const pnl =
     position.currentPrice != null ? ((position.currentPrice - position.entryPrice) / 100) * position.size : null;
 
@@ -314,6 +436,29 @@ function PositionRow({ position }: { position: UserPosition }) {
           </Text>
         </div>
       </div>
+      <div className="mt-3 flex justify-end">
+        <Button
+          label="Sell"
+          variant="secondary"
+          onClick={onSell}
+          className="min-h-0 px-4 py-2"
+        />
+      </div>
     </article>
   );
+}
+
+/** Never surfaces a raw backend error — the backend's own sell messages
+ * are already user-facing, so known codes pass through and anything else
+ * becomes one generic message. */
+function friendlySellError(error: unknown): string {
+  if (error instanceof ApiRequestError) {
+    if (['insufficient_shares', 'trade_failed', 'approvals_failed', 'no_liquidity'].includes(error.body.code)) {
+      return error.body.message;
+    }
+  }
+  if (error instanceof Error && /network/i.test(error.message)) {
+    return 'Network error - check your connection and try again.';
+  }
+  return "Couldn't sell this position right now. Please try again.";
 }

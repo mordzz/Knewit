@@ -9,6 +9,12 @@ export const env = {
   get supabaseUrl() {
     return required('SUPABASE_URL', process.env.SUPABASE_URL);
   },
+  /** Public object URL base, normalized (supabase-js itself strips the
+   * trailing slash when it builds `getPublicUrl`, so every comparison
+   * against a stored image URL must use this shape, not `supabaseUrl`). */
+  get supabaseStoragePublicUrlBase() {
+    return `${this.supabaseUrl.replace(/\/+$/, '')}/storage/v1/object/public/`;
+  },
   get supabaseServiceRoleKey() {
     return required('SUPABASE_SERVICE_ROLE_KEY', process.env.SUPABASE_SERVICE_ROLE_KEY);
   },

@@ -44,8 +44,7 @@ export type IconName =
   | 'time-outline'
   | 'ellipsis-horizontal'
   | 'share-outline'
-  | 'options-outline'
-  | 'settings-outline';
+  | 'options-outline';
 
 export interface IconProps {
   name: IconName;

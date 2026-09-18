@@ -165,21 +165,23 @@ export interface UserProfile extends User {
    * docs/DECISIONS.md ("Profile Trading Metric Matches Leaderboard's
    * Definition Exactly"). `null` when unavailable — never estimated. */
   tradingVolume: number | null;
-  /** This user's Sprint 10 leaderboard rank, or `null` if unranked.
-   * Never computed client-side from a partial leaderboard page. */
-  leaderboardRank: number | null;
+  /** Public URL of the profile banner (Supabase Storage), or `null` when
+   * the user hasn't uploaded one — the UI renders a soft gradient
+   * placeholder in that case. */
+  bannerUrl: string | null;
 }
 
-/** Sprint 11: only `displayName`/`bio` are editable. Username (`handle`)
- * has no established rename flow anywhere in this codebase and no
- * backend to validate format/uniqueness against, and avatar upload has
- * no storage mechanism installed — both are left unimplemented rather
- * than half-built, per this project's standing "don't invent
- * infrastructure a sprint doesn't need" principle — see
- * docs/DECISIONS.md. */
+/** Editable profile fields. `handle` must be lowercase, 3-20 chars,
+ * `a-z0-9_` only; the backend enforces uniqueness (`409 handle_taken`).
+ * `avatarUrl`/`bannerUrl` are optional: omit to keep the current image,
+ * `null` to clear it — only URLs from this app's own profile-image
+ * storage are accepted (docs/API.md). */
 export interface UpdateProfileInput {
   displayName: string;
+  handle: string;
   bio: string;
+  avatarUrl?: string | null;
+  bannerUrl?: string | null;
 }
 
 /**

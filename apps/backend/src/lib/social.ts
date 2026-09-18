@@ -69,6 +69,7 @@ export async function buildUserProfile(target: DbUser, viewerUserId: string | nu
   return {
     ...toPublicUser(target),
     bio: target.bio,
+    bannerUrl: target.banner_url,
     followerCount: followerCount.count ?? 0,
     followingCount: followingCount.count ?? 0,
     callCount: callCount.count ?? 0,
@@ -81,7 +82,6 @@ export async function buildUserProfile(target: DbUser, viewerUserId: string | nu
     // have none). `null` when there's no wallet, no ranked volume, or the
     // lookup fails — never guessed.
     tradingVolume: standing?.volume ?? null,
-    leaderboardRank: standing?.rank ?? null,
   };
 }
 

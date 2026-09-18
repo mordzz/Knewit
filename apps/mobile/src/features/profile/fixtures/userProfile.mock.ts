@@ -6,8 +6,8 @@ import type { UserProfile } from '@/types/social';
  * compute it against in mock mode). `isSelf` is `true` only for the
  * literal `"me"` id — the one case mock mode *can* honestly answer,
  * since `"me"` always means "the caller," by definition, with no
- * session needed to know it. `tradingVolume`/`leaderboardRank` are
- * always `null` — no fabricated performance data, same rule as
+ * session needed to know it. `tradingVolume` is always `null` — no
+ * fabricated performance data, same rule as
  * Sprint 10's leaderboard mock fallback.
  */
 export function buildMockUserProfile(userId: string): UserProfile {
@@ -19,12 +19,12 @@ export function buildMockUserProfile(userId: string): UserProfile {
     avatarUrl: null,
     walletAddress: null,
     bio: null,
+    bannerUrl: null,
     followerCount: 0,
     followingCount: 0,
     callCount: 0,
     isFollowing: false,
     isSelf,
     tradingVolume: null,
-    leaderboardRank: null,
   };
 }
