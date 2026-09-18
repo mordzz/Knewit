@@ -9,7 +9,8 @@
     "lint": "eslint"
   },
   "dependencies": {
-    "@polymarket/clob-client": "^5.8.1",
+    "@polymarket/bindings": "^0.10.0",
+    "@polymarket/client": "^0.10.0",
     "@privy-io/node": "^0.34.0",
     "@privy-io/react-auth": "^3.43.0",
     "@solana-program/memo": "^0.10.0",
@@ -21,6 +22,7 @@
     "react-dom": "19.2.8",
     "react-icons": "^5.7.0",
     "tailwind-merge": "^3.7.0",
+    "viem": "^2.56.0",
     "zustand": "^5.0.15"
   },
   "devDependencies": {

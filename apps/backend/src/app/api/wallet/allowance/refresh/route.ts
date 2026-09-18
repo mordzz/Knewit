@@ -1,18 +1,15 @@
+import { updateBalanceAllowance } from '@polymarket/client/actions';
+import { AssetType } from '@polymarket/bindings/clob';
 import { withErrorHandling } from '@/lib/apiError';
 import { requireAuth } from '@/lib/privy';
 import { getPrimaryEthereumWallet } from '@/lib/users';
-import { AssetType } from '@polymarket/clob-client';
-import { buildClobClientForUser } from '@/lib/trading/clobClient';
+import { buildSecureClientForUser } from '@/lib/trading/client';
 
 /**
- * `POST /wallet/allowance/refresh` — tells Polymarket's CLOB to re-read
- * the wallet's on-chain collateral allowance (`updateBalanceAllowance`)
- * after the client sent an `approve` transaction. `GET /wallet/balance`
- * reads the CLOB's cache, so without this the new allowance wouldn't show
- * up until the cache expires (docs/API.md, "Approve USDC for Trading").
- *
- * Auth-required; failures surface Polymarket's real error, never a
- * fabricated success.
+ * `POST /wallet/allowance/refresh` — asks Polymarket's CLOB to re-read
+ * the deposit wallet's on-chain collateral allowance
+ * (`updateBalanceAllowance`), since `GET /wallet/balance` serves the
+ * CLOB's cached value. Auth-required; failures surface the real error.
  */
 export async function POST(request: Request) {
   return withErrorHandling(async () => {
@@ -20,8 +17,8 @@ export async function POST(request: Request) {
     const wallet = await getPrimaryEthereumWallet(privyUserId);
     if (!wallet) return Response.json({ refreshed: false });
 
-    const clobClient = await buildClobClientForUser(wallet.id, wallet.address);
-    await clobClient.updateBalanceAllowance({ asset_type: AssetType.COLLATERAL });
+    const client = await buildSecureClientForUser(wallet.id);
+    await updateBalanceAllowance(client, { assetType: AssetType.COLLATERAL });
 
     return Response.json({ refreshed: true });
   });

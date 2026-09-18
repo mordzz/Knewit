@@ -51,9 +51,10 @@ export interface PrimaryEthereumWallet {
  * (docs/API.md has no "connect wallet" endpoint) ever tells the
  * backend when a wallet is created/changed after account creation;
  * only Privy itself is the live source of truth. Used by the trading
- * flow, which needs the Privy wallet **id** (not just the address) to
- * request a signature — see `lib/trading/privyClobSigner.ts`. Returns
- * `null` if the user has no embedded Ethereum wallet yet.
+ * flow, which needs the Privy wallet **id** (not just the address) for
+ * the Polymarket client's Privy signer adapter — see
+ * `lib/trading/client.ts`. Returns `null` if the user has no embedded
+ * Ethereum wallet yet.
  */
 export async function getPrimaryEthereumWallet(privyUserId: string): Promise<PrimaryEthereumWallet | null> {
   const user = await getPrivyClient().users()._get(privyUserId);

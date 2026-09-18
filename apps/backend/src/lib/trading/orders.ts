@@ -1,9 +1,11 @@
-import { OrderType, Side } from '@polymarket/clob-client';
+import { OrderSide } from '@polymarket/client';
+import { fetchBalanceAllowance } from '@polymarket/client/actions';
+import { AssetType } from '@polymarket/bindings/clob';
 import { ApiError, badRequest, notFound } from '@/lib/apiError';
 import { getPrimaryEthereumWallet } from '@/lib/users';
 import { fetchMarketById } from '@/lib/polymarket/gammaClient';
 import { getChoiceTokenId, parseChoices } from '@/lib/polymarket/normalize';
-import { buildClobClientForUser } from '@/lib/trading/clobClient';
+import { buildSecureClientForUser } from '@/lib/trading/client';
 
 export interface PlaceOrderResult {
   tokenId: string;
@@ -19,18 +21,17 @@ export interface PlaceOrderResult {
 
 /**
  * Market-price BUY only, MVP scope (docs/PRD.md — no limit orders, no
- * SELL yet). Uses `OrderType.FAK` (Fill-And-Kill) — fills against
- * whatever liquidity exists immediately and cancels the rest, the
- * correct CLOB order type for "market order" semantics (verified
- * against docs.polymarket.com; there is no literal "market order"
- * type on the CLOB itself).
+ * SELL yet). Uses the official `@polymarket/client` (`placeMarketOrder`,
+ * FAK semantics via its market-order action), which resolves the user's
+ * Deposit Wallet, handles the POLY_1271 CLOB auth/order binding, and
+ * signs with the Privy embedded EOA. Verified live: with $0 balance the
+ * venue answers `not enough balance / allowance` — an accepted order
+ * path, not a rejected signer (docs/DECISIONS.md).
  *
- * **Unverified end-to-end**: this has not been exercised against a
- * funded wallet or a real fill — see `privyClobSigner.ts`'s doc
- * comment for the missing delegated-signing prerequisite. Every
- * failure here (signing rejected, CLOB rejects the order, no
- * liquidity) surfaces as a real error / `status: 'failed'`, never a
- * fabricated fill — docs/DECISIONS.md, "No Fake Trade Success."
+ * A preflight reads the same `fetchBalanceAllowance` the SDK uses and
+ * fails with an actionable 400 before submitting, so the no-funds case
+ * is deterministic. Every failure is a real error or `status: 'failed'`
+ * — never a fabricated fill.
  */
 export async function placeMarketOrder(params: {
   privyUserId: string;
@@ -56,41 +57,49 @@ export async function placeMarketOrder(params: {
     throw badRequest(`Market ${params.marketId} has no tradable token for choice "${choice.label}".`);
   }
 
-  const clobClient = await buildClobClientForUser(wallet.id, wallet.address);
+  const client = await buildSecureClientForUser(wallet.id);
 
-  let signedOrder;
+  // Preflight: the CLOB rejects an underfunded order with a raw
+  // balance/allowance error once submitted; check the same numbers first
+  // and fail with an actionable 400 (docs/API.md, "Trade Preflight").
+  const { balance, allowances } = await fetchBalanceAllowance(client, {
+    assetType: AssetType.COLLATERAL,
+  });
+  const requiredRaw = Math.round(params.usdAmount * 1e6); // pUSD has 6 decimals
+  if (Number(balance) < requiredRaw) {
+    throw new ApiError(
+      400,
+      'insufficient_balance',
+      'Your trading balance is too low for this trade — add funds to your wallet and try again.'
+    );
+  }
+  const unapprovedSpenders = Object.entries(allowances ?? {}).filter(
+    ([, amount]) => Number(amount) < requiredRaw
+  );
+  if (unapprovedSpenders.length > 0) {
+    throw new ApiError(
+      400,
+      'insufficient_allowance',
+      'Your wallet is still finishing its one-time trading setup — try again in a moment.'
+    );
+  }
+
+  let response;
   try {
-    signedOrder = await clobClient.createMarketOrder({
-      tokenID: tokenId,
+    response = await client.placeMarketOrder({
+      assetId: tokenId,
       amount: params.usdAmount,
-      side: Side.BUY,
-      orderType: OrderType.FAK,
+      side: OrderSide.BUY,
     });
   } catch (error) {
     throw new ApiError(
       502,
-      'signing_failed',
-      'Failed to sign the order with this wallet. This most likely means the wallet has not delegated ' +
-        'signing authority to the app yet (see apps/backend/src/lib/trading/privyClobSigner.ts). ' +
-        `Upstream error: ${error instanceof Error ? error.message : String(error)}`
+      'trade_failed',
+      `The order was rejected: ${error instanceof Error ? error.message : String(error)}`
     );
   }
 
-  const response = (await clobClient.postOrder(signedOrder, OrderType.FAK)) as {
-    success?: boolean;
-    errorMsg?: string;
-    orderID?: string;
-    makingAmount?: string | number;
-    takingAmount?: string | number;
-  };
-
-  // BUY: makerAmount/makingAmount is the USD actually spent,
-  // takerAmount/takingAmount is the shares actually received
-  // (verified against docs.polymarket.com's order field table).
-  const filledUsd = Number(response.makingAmount ?? 0);
-  const filledSize = Number(response.takingAmount ?? 0);
-
-  if (!response.success || filledSize <= 0) {
+  if (!response.ok) {
     return {
       tokenId,
       choiceLabel: choice.label,
@@ -98,7 +107,24 @@ export async function placeMarketOrder(params: {
       filledSize: 0,
       filledPrice: 0,
       polymarketOrderId: null,
-      errorMessage: response.errorMsg || 'Order was not filled (no matching liquidity).',
+      errorMessage: response.message || 'Order was not accepted by Polymarket.',
+    };
+  }
+
+  // BUY: `makingAmount` is the pUSD actually spent, `takingAmount` is
+  // the shares actually received (same convention the old client used).
+  const filledUsd = Number(response.makingAmount ?? 0);
+  const filledSize = Number(response.takingAmount ?? 0);
+
+  if (filledSize <= 0) {
+    return {
+      tokenId,
+      choiceLabel: choice.label,
+      status: 'failed',
+      filledSize: 0,
+      filledPrice: 0,
+      polymarketOrderId: response.orderId ?? null,
+      errorMessage: 'Order was not filled (no matching liquidity).',
     };
   }
 
@@ -107,8 +133,10 @@ export async function placeMarketOrder(params: {
     choiceLabel: choice.label,
     status: 'filled',
     filledSize,
-    filledPrice: Math.round((filledUsd / filledSize) * 100),
-    polymarketOrderId: response.orderID ?? null,
+    // Decimal cents (up to 4 dp) — a sub-cent fill's entry price must not
+    // be rounded to 0 (docs/DECISIONS.md, "Sub-Cent Prices").
+    filledPrice: Number(((filledUsd / filledSize) * 100).toFixed(4)),
+    polymarketOrderId: response.orderId ?? null,
     errorMessage: null,
   };
 }

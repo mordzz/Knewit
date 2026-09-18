@@ -34,7 +34,7 @@ export function formatCompactNumber(value: number): string {
 /** A market's `yesPrice`/`noPrice` (cents, 1-99) doubles as an implied
  * probability — displayed as a percentage, e.g. 68 -> "68%". */
 export function formatProbability(cents: number): string {
-  return `${Math.round(cents)}%`;
+  return `${cents.toFixed(4)}%`;
 }
 
 /** e.g. 12400 -> "$12.4K". */
@@ -47,10 +47,11 @@ export function formatUsd(amount: number): string {
   return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(amount);
 }
 
-/** Market prices are probabilities in cents, e.g. 42 -> "42¢" — used for
- * trade-economics contexts (entry price, current price). */
+/** Market prices are decimal cents (up to 4 dp — Polymarket ticks go to
+ * 0.001/0.0001), rendered with full precision so a sub-cent price shows
+ * as `0.1000¢` instead of rounding to `0¢`. */
 export function formatPrice(cents: number): string {
-  return `${Math.round(cents)}¢`;
+  return `${cents.toFixed(4)}¢`;
 }
 
 /** Compact countdown for a market's end date, e.g. "24d left", "6h left",

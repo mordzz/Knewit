@@ -32,8 +32,8 @@ export interface Market {
   id: ID;
   eventId: ID;
   question: string;
-  yesPrice: number; // cents, 1-99
-  noPrice: number; // cents, 1-99
+  yesPrice: number; // decimal cents, up to 4 dp (Polymarket ticks to 0.0001)
+  noPrice: number; // decimal cents, up to 4 dp (Polymarket ticks to 0.0001)
   volume: number;
   liquidity: number;
   endDate: ISODateString;

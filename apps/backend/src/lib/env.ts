@@ -20,10 +20,10 @@ export const env = {
   },
   /** P-256 authorization key (base64 PKCS8, no PEM headers) whose public
    * half the Privy Dashboard registered as a signer on this app's user
-   * embedded wallets. Lets the backend sign L1/L2 auth and orders on a
-   * user's behalf (`privyClobSigner.ts`). Optional at boot — read-only
-   * browsing works without it; signing fails with a clear error instead
-   * (docs/WALLET.md, "Backend Signing"). */
+   * embedded wallets. Lets the backend sign on a user's behalf through
+   * the Polymarket client's Privy signer adapter (`lib/trading/client.ts`).
+   * Optional at boot — read-only browsing works without it; signing fails
+   * with a clear error instead (docs/WALLET.md, "Backend Signing"). */
   get privyAuthorizationPrivateKey() {
     return process.env.PRIVY_AUTHORIZATION_PRIVATE_KEY;
   },
@@ -35,5 +35,19 @@ export const env = {
   },
   get polymarketClobBaseUrl() {
     return process.env.POLYMARKET_CLOB_BASE_URL ?? 'https://clob.polymarket.com';
+  },
+  /** Polymarket **Builder API credentials** (`polymarket.com/settings →
+   * Builder`). Required for the official `@polymarket/client`: it
+   * authorizes the account setup (deposit-wallet deploy, trading
+   * approvals) and order placement. Without them, trading endpoints fail
+   * with `builder_keys_missing` (docs/WALLET.md). */
+  get polymarketBuilderApiKey() {
+    return process.env.POLYMARKET_BUILDER_API_KEY;
+  },
+  get polymarketBuilderSecret() {
+    return process.env.POLYMARKET_BUILDER_SECRET;
+  },
+  get polymarketBuilderPassphrase() {
+    return process.env.POLYMARKET_BUILDER_PASSPHRASE;
   },
 };

@@ -14,3 +14,11 @@ export interface CreateTradeInput {
 }
 
 export type CreateTradeResult = Order;
+
+/** Live order-book estimate for a market BUY of `usdAmount` —
+ * `GET /markets/:id/trade-estimate`. `estimatedPrice` is cents,
+ * `estimatedShares` is shares (both 2dp). */
+export interface TradeEstimate {
+  estimatedPrice: number;
+  estimatedShares: number;
+}

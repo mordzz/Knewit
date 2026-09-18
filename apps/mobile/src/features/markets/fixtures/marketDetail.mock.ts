@@ -136,7 +136,8 @@ export function buildMockPriceHistory(
   const now = Date.now();
   return prices.map((value, index) => ({
     timestamp: new Date(now - (points - 1 - index) * stepMs).toISOString(),
-    price: Math.round(value),
+    // Decimal cents (up to 4 dp) — matches the real API/service unit.
+    price: Number(value.toFixed(4)),
   }));
 }
 

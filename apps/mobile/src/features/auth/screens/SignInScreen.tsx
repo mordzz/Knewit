@@ -141,7 +141,7 @@ export function SignInScreen() {
           Wallet sign-in isn&apos;t configured yet
         </Text>
         <Text variant="body" color="textSecondary" className="text-center">
-          This build is missing its Privy app credentials — see docs/WALLET.md.
+          This build is missing its wallet credentials — see docs/WALLET.md.
         </Text>
       </Screen>
     );
@@ -371,8 +371,7 @@ export function SignInScreen() {
               ) : null}
 
               <Text variant="micro" color="textTertiary" className="text-center">
-                Your wallet is securely managed through Privy. We never see or store your private
-                keys.
+                Your wallet is securely managed for you. We never see or store your private keys.
               </Text>
             </View>
           </View>

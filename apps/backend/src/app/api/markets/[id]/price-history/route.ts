@@ -68,7 +68,9 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
 
     const points: PricePoint[] = history.map((point) => ({
       timestamp: new Date(point.t * 1000).toISOString(),
-      price: Math.round(point.p * 100),
+      // Decimal cents (up to 4 dp) — same unit as `MarketChoice.price`;
+      // rounding to whole cents flattens sub-cent markets to 0.
+      price: Number((point.p * 100).toFixed(4)),
     }));
     return Response.json(points);
   });

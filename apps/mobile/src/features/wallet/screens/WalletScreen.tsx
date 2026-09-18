@@ -159,7 +159,7 @@ export function WalletScreen() {
         <Card contentClassName="gap-2">
           <Text variant="bodyStrong">Wallet isn&apos;t configured in this build</Text>
           <Text variant="caption" color="textSecondary">
-            This environment is missing its Privy app credentials — see docs/WALLET.md.
+            This environment is missing its wallet credentials — see docs/WALLET.md.
           </Text>
         </Card>
       </Screen>
@@ -294,7 +294,10 @@ export function WalletScreen() {
           message="Your balance and positions appear here once a wallet is connected."
         />
       ) : positionsQuery.isError ? (
-        <ErrorState message="Couldn't load your positions." onRetry={() => positionsQuery.refetch()} />
+        <ErrorState
+          message="Couldn't load your positions."
+          onRetry={() => positionsQuery.refetch()}
+        />
       ) : (
         <>
           <View className="flex-row border-b border-border px-4 py-3">
@@ -310,7 +313,9 @@ export function WalletScreen() {
               </Text>
               <Text
                 variant="title"
-                color={totalPnl == null || totalPnl === 0 ? 'textSecondary' : totalPnl > 0 ? 'yes' : 'no'}
+                color={
+                  totalPnl == null || totalPnl === 0 ? 'textSecondary' : totalPnl > 0 ? 'yes' : 'no'
+                }
               >
                 {totalPnl == null
                   ? '—'
@@ -370,7 +375,9 @@ function PositionRow({ position }: { position: UserPosition }) {
             </Text>
             <Text
               variant="bodyStrong"
-              color={choiceTextColor(choiceTone({ index: position.choiceIndex, label: position.outcome }))}
+              color={choiceTextColor(
+                choiceTone({ index: position.choiceIndex, label: position.outcome })
+              )}
             >
               {position.outcome}
             </Text>
@@ -400,7 +407,10 @@ function PositionRow({ position }: { position: UserPosition }) {
           <Text variant="caption" color="textTertiary">
             P/L
           </Text>
-          <Text variant="bodyStrong" color={pnl == null ? 'textSecondary' : pnl >= 0 ? 'yes' : 'no'}>
+          <Text
+            variant="bodyStrong"
+            color={pnl == null ? 'textSecondary' : pnl >= 0 ? 'yes' : 'no'}
+          >
             {pnl == null ? '—' : `${pnl >= 0 ? '+' : '−'}${formatUsd(Math.abs(pnl))}`}
           </Text>
         </View>

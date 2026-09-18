@@ -20,6 +20,7 @@ import type {
   PricePoint,
   PriceRange,
 } from '@/types/social';
+import type { TradeEstimate } from '@/types/trading';
 
 function delay(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
@@ -178,4 +179,24 @@ export async function getMarkets(
     }
     throw error;
   }
+}
+
+/**
+ * What a FAK BUY of `usdAmount` would fill at right now, from
+ * Polymarket's own order book (`GET /markets/:id/trade-estimate`).
+ * **No dev-mock fallback**: a fabricated fill price would be exactly the
+ * kind of invented money math this project forbids (docs/DECISIONS.md,
+ * "No Fake Trade Success") — the trade UI just omits the estimate when
+ * this fails.
+ */
+export async function getTradeEstimate(
+  marketId: string,
+  choiceIndex: number,
+  usdAmount: number
+): Promise<TradeEstimate> {
+  const params = new URLSearchParams({
+    choiceIndex: String(choiceIndex),
+    usdAmount: String(usdAmount),
+  });
+  return apiRequest<TradeEstimate>(`${endpoints.marketTradeEstimate(marketId)}?${params.toString()}`);
 }

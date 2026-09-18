@@ -1,6 +1,7 @@
 import { apiRequest } from '@/lib/apiClient';
 import type { Paginated, CategoryOption } from '@/types/common';
 import type { FeedItem, MarketDetail, MarketHolder, MarketListItem, PriceRange, PricePoint } from '@/types/social';
+import type { TradeEstimate } from '@/types/trading';
 
 /** Web equivalent of `apps/mobile/src/features/markets/services/marketService.ts`
  * — real endpoint only, no dev-mock fallback (this backend is always
@@ -43,4 +44,18 @@ export async function getMarketPriceHistory(
   return apiRequest<PricePoint[]>(
     `/api/markets/${marketId}/price-history?range=${range}&choice=${choiceIndex}`
   );
+}
+
+/** What a FAK BUY of `usdAmount` would fill at right now, from
+ * Polymarket's own order book (`GET /markets/:id/trade-estimate`). */
+export async function getTradeEstimate(
+  marketId: string,
+  choiceIndex: number,
+  usdAmount: number
+): Promise<TradeEstimate> {
+  const params = new URLSearchParams({
+    choiceIndex: String(choiceIndex),
+    usdAmount: String(usdAmount),
+  });
+  return apiRequest<TradeEstimate>(`/api/markets/${marketId}/trade-estimate?${params.toString()}`);
 }

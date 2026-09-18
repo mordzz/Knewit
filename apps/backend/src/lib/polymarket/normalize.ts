@@ -63,8 +63,11 @@ export function parseChoices(market: GammaMarket): MarketChoice[] {
   const outcomes = parseJsonArray(market.outcomes);
   const prices = parseJsonArray(market.outcomePrices).map((p) => Number(p));
 
+  // Polymarket's tick sizes go down to 0.001/0.0001, so prices are kept
+  // as decimal cents (up to 4 dp) — rounding to whole cents would turn a
+  // real 0.1c price into 0 (docs/DECISIONS.md, "Sub-Cent Prices").
   const toCents = (fraction: number | undefined) =>
-    Number.isFinite(fraction) ? Math.round((fraction as number) * 100) : 0;
+    Number.isFinite(fraction) ? Number(((fraction as number) * 100).toFixed(4)) : 0;
 
   return outcomes.map((label, index) => ({
     index,

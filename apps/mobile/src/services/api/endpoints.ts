@@ -9,6 +9,7 @@ export const endpoints = {
   marketActivity: (id: string) => `/markets/${id}/activity`,
   marketHolders: (id: string) => `/markets/${id}/holders`,
   marketPriceHistory: (id: string) => `/markets/${id}/price-history`,
+  marketTradeEstimate: (id: string) => `/markets/${id}/trade-estimate`,
   marketsTrending: '/markets/trending',
   marketsClosingSoon: '/markets/closing-soon',
   events: '/events',

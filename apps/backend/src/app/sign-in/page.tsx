@@ -71,7 +71,7 @@ export default function SignInPage() {
       <main className="mx-auto flex h-screen w-full max-w-2xl flex-col items-center justify-center gap-2 border-x border-border px-4 text-center">
         <h1 className="text-2xl font-bold">Wallet sign-in isn&apos;t configured yet</h1>
         <p className="text-text-secondary">
-          This deployment is missing its Privy app credentials — see docs/WALLET.md.
+          This deployment is missing its wallet credentials — see docs/WALLET.md.
         </p>
       </main>
     );
@@ -240,7 +240,7 @@ export default function SignInPage() {
         ) : null}
 
         <p className="mt-4 text-center text-xs text-text-tertiary">
-          Your wallet is securely managed through Privy. We never see or store your private keys.
+          Your wallet is securely managed for you. We never see or store your private keys.
         </p>
       </div>
     </main>

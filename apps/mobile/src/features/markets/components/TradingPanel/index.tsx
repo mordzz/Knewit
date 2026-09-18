@@ -11,7 +11,8 @@ import { LoadingState } from '@/components/feedback/LoadingState';
 import { WalletAddress } from '@/features/wallet/components/WalletAddress';
 import { useWallet } from '@/hooks/useWallet';
 import { useCreateTrade } from '@/features/markets/hooks/useCreateTrade';
-import { formatPrice, formatUsd } from '@/utils/formatCurrency';
+import { useTradeEstimate } from '@/features/markets/hooks/useTradeEstimate';
+import { formatPrice, formatProbability, formatUsd } from '@/utils/formatCurrency';
 import { choiceTextColor, choiceTone, type ChoiceTone } from '@/utils/choiceTone';
 import type { MarketChoice } from '@/types/market';
 import type { MarketDetail } from '@/types/social';
@@ -65,11 +66,7 @@ export function TradingPanel({ market }: { market: MarketDetail }) {
         }}
         accessibilityLabel="Trade this market"
       />
-      <TradeSheet
-        market={market}
-        visible={sheetVisible}
-        onClose={() => setSheetVisible(false)}
-      />
+      <TradeSheet market={market} visible={sheetVisible} onClose={() => setSheetVisible(false)} />
     </>
   );
 }
@@ -101,7 +98,15 @@ export function TradeSheet({
   const choice = market?.choices[choiceIndex] ?? market?.choices[0];
   const amount = Number(amountText) || 0;
   const price = choice?.price ?? 0;
-  const shares = amount > 0 && price > 0 ? (amount * 100) / price : 0;
+  // Order-book-aware estimate (depth included) for the amount being
+  // typed; the plain `amount / price` math is only the fallback while
+  // the estimate loads or if it's unavailable.
+  const fallbackShares = amount > 0 && price > 0 ? (amount * 100) / price : 0;
+  const estimate = useTradeEstimate(market?.id ?? '', choice?.index ?? null, amount);
+  const shares = estimate.data?.estimatedShares ?? fallbackShares;
+  // What the venue would actually fill at (order-book average); the
+  // market's rounded summary price is only the pre-response fallback.
+  const displayPrice = estimate.data?.estimatedPrice ?? price;
   const canSubmit = amount > 0 && price > 0 && choice != null;
 
   function handleChangeAmount(text: string) {
@@ -159,7 +164,7 @@ export function TradeSheet({
           amountText={amountText}
           onChangeAmount={handleChangeAmount}
           amount={amount}
-          price={price}
+          price={displayPrice}
           shares={shares}
           canSubmit={canSubmit}
           onContinue={goToConfirm}
@@ -170,7 +175,7 @@ export function TradeSheet({
           choice={choice}
           amount={amount}
           shares={shares}
-          price={price}
+          price={displayPrice}
           address={address}
           isValidating={isValidating}
           mutationStatus={mutation.status}
@@ -260,11 +265,20 @@ function PickStep({
       </View>
 
       {amount > 0 ? (
-        <View className="gap-1 rounded-lg bg-surface-elevated p-3">
-          <EstimateRow label="Estimated shares" value={shares.toFixed(2)} />
-          <EstimateRow label="Estimated price" value={formatPrice(price)} />
-          <EstimateRow label="Estimated cost" value={formatUsd(amount)} />
-          <EstimateRow label="Payout if correct" value={formatUsd(shares)} />
+        <View className="gap-1.5 rounded-lg bg-surface-elevated p-3">
+          <EstimateRow label="You pay" value={formatUsd(amount)} />
+          <EstimateRow label="Shares if filled" value={shares.toFixed(2)} />
+          <EstimateRow label="Average price" value={formatPrice(price)} />
+          <EstimateRow label="Market-implied chance" value={formatProbability(price)} />
+          <EstimateRow label="Potential payout" value={formatUsd(shares)} />
+          <EstimateRow
+            label="Potential profit"
+            value={`+${formatUsd(Math.max(0, shares - amount))}`}
+          />
+          <Text variant="micro" color="textTertiary" className="mt-0.5">
+            Each share pays $1 if this call wins — a cheaper share means a bigger payout, but a
+            lower chance.
+          </Text>
         </View>
       ) : null}
 
@@ -437,9 +451,12 @@ function ConfirmTradeContent({
         value={choice?.label ?? ''}
         valueColor={choice ? choiceTextColor(choiceTone(choice)) : 'textPrimary'}
       />
-      <ConfirmRow label="Amount" value={formatUsd(amount)} />
-      <ConfirmRow label="Estimated price" value={formatPrice(price)} />
-      <ConfirmRow label="Estimated shares" value={shares.toFixed(2)} />
+      <ConfirmRow label="You pay" value={formatUsd(amount)} />
+      <ConfirmRow label="Average price" value={formatPrice(price)} />
+      <ConfirmRow label="Market-implied chance" value={formatProbability(price)} />
+      <ConfirmRow label="Shares if filled" value={shares.toFixed(2)} />
+      <ConfirmRow label="Potential payout" value={formatUsd(shares)} />
+      <ConfirmRow label="Potential profit" value={`+${formatUsd(Math.max(0, shares - amount))}`} />
       <View className="flex-row items-center justify-between">
         <Text variant="caption" color="textSecondary">
           Wallet
@@ -484,8 +501,12 @@ function ConfirmRow({
 function friendlyTradeError(message: string | null): string {
   if (!message) return "Couldn't complete this trade right now. Please try again.";
   if (/network/i.test(message)) {
-    return 'Network error — check your connection and try again.';
+    return 'Network error - check your connection and try again.';
   }
+  // Our own preflight 400s are already actionable sentences (balance /
+  // one-time setup) — surface them as-is instead of flattening to a
+  // generic failure (docs/DECISIONS.md, "Trade Preflight").
+  if (/balance is too low|one-time trading setup|no resting orders/i.test(message)) return message;
   return "Couldn't complete this trade right now. Please try again.";
 }
 
