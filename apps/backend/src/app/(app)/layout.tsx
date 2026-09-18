@@ -4,6 +4,8 @@ import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { usePrivy } from '@privy-io/react-auth';
 import { BottomTabBar } from '@/components/BottomTabBar';
+import { SideNav } from '@/components/SideNav';
+import { RightRail } from '@/components/RightRail';
 import { Fab } from '@/components/Fab';
 import { Text } from '@/components/ui/Text';
 import { useAutoWalletSetup } from '@/hooks/useAutoWalletSetup';
@@ -66,7 +68,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
               Setting up your account…
             </Text>
             <Text variant="caption" color="textSecondary" className="block">
-              Creating your wallet and enabling trading. Follow any prompt if one appears.
+              Creating your wallet and enabling trading. This only happens once.
             </Text>
           </>
         )}
@@ -75,10 +77,24 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <div className="relative mx-auto flex h-screen w-full max-w-2xl flex-col overflow-hidden border-x border-border">
-      <div className="min-h-0 flex-1 overflow-y-auto">{children}</div>
-      <BottomTabBar />
-      <Fab />
+    <div className="relative mx-auto flex h-screen w-full max-w-[1265px]">
+      {/* Desktop rail (lg+); the phone-width bottom bar below hides at the
+          same breakpoint — one navigation at a time. */}
+      <SideNav />
+
+      <div className="relative flex min-h-0 min-w-0 flex-1 justify-center">
+        {/* The content column keeps the mobile app's own width and chrome
+            (`max-w-2xl`, bordered) — the desktop layout only adds the
+            rail beside it; every page's mobile UI is untouched. */}
+        <div className="relative flex min-h-0 w-full flex-col lg:max-w-2xl lg:border-x lg:border-border">
+          <div className="min-h-0 flex-1 overflow-y-auto">{children}</div>
+          <BottomTabBar />
+          <Fab />
+        </div>
+      </div>
+
+      {/* Desktop-only "Who to follow" column (xl+). */}
+      <RightRail />
     </div>
   );
 }

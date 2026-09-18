@@ -14,7 +14,5 @@ export const theme = {
   layout,
 } as const;
 
-export type Theme = typeof theme;
-
 export { colors, glass, solidPanel, typography, spacing, radius };
 export * from './layout';

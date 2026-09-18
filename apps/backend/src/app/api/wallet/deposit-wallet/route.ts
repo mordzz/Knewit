@@ -3,6 +3,10 @@ import { requireAuth } from '@/lib/privy';
 import { getPrimaryEthereumWallet } from '@/lib/users';
 import { buildSecureClientForUser } from '@/lib/trading/client';
 
+// Deploying a missing Deposit Wallet goes through Polymarket's gasless
+// relayer, which can take well over the default function timeout.
+export const maxDuration = 60;
+
 /**
  * `GET /wallet/deposit-wallet` — ensures the authenticated wallet's
  * Polymarket **Deposit Wallet** exists (the official client derives it

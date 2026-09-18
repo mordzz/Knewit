@@ -13,6 +13,29 @@ const EXT_BY_MIME: Record<string, string> = {
   'image/webp': 'webp',
 };
 
+/** Real file signatures — the upload's declared Content-Type is not
+ * trusted (docs/DECISIONS.md, "Profile Image Upload Hardened"). */
+function hasImageSignature(buffer: ArrayBuffer, mime: string): boolean {
+  const bytes = new Uint8Array(buffer);
+  const startsWith = (signature: number[]) =>
+    signature.length <= bytes.length && signature.every((byte, i) => bytes[i] === byte);
+
+  if (mime === 'image/png') {
+    return startsWith([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
+  }
+  if (mime === 'image/jpeg') {
+    return startsWith([0xff, 0xd8, 0xff]);
+  }
+  if (mime === 'image/webp') {
+    // RIFF....WEBP
+    return (
+      startsWith([0x52, 0x49, 0x46, 0x46]) &&
+      String.fromCharCode(bytes[8], bytes[9], bytes[10], bytes[11]) === 'WEBP'
+    );
+  }
+  return false;
+}
+
 /**
  * `POST /users/me/images?kind=avatar|banner` — uploads a profile image
  * (multipart `file`) into this app's public `profile-images` bucket via
@@ -50,10 +73,19 @@ export async function POST(request: Request) {
     const previous = kind === 'avatar' ? viewer.avatar_url : viewer.banner_url;
     const path = `${viewer.id}/${kind}-${Date.now()}.${extension}`;
 
+    // Read once, then validate the actual bytes: `file.type` is
+    // attacker-controlled (it's just the multipart Content-Type), so a
+    // renamed executable would otherwise be stored under an image
+    // extension. The magic-byte check is the real gate.
+    const bytes = await file.arrayBuffer();
+    if (!hasImageSignature(bytes, file.type)) {
+      throw badRequest("That file doesn't look like a valid PNG, JPEG, or WebP image.");
+    }
+
     const supabase = getSupabase();
     const { error: uploadError } = await supabase.storage
       .from(BUCKET)
-      .upload(path, await file.arrayBuffer(), { contentType: file.type, upsert: true });
+      .upload(path, bytes, { contentType: file.type, upsert: true });
     if (uploadError) throw uploadError;
 
     const { data: publicUrlData } = supabase.storage.from(BUCKET).getPublicUrl(path);

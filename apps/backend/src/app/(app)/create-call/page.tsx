@@ -58,7 +58,7 @@ export default function CreateCallPage() {
           </Text>
         </div>
         <Button
-          label={mutation.isPending ? 'Publishing...' : 'Publish Callout'}
+          label={mutation.isPending ? 'Publishing…' : 'Publish Callout'}
           onClick={handlePublish}
           disabled={!canPublish}
           loading={mutation.isPending}

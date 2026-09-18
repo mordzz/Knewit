@@ -1,12 +1,7 @@
 import { apiRequest } from '@/services/api/client';
 import { endpoints } from '@/services/api/endpoints';
-import type { Event } from '@/types/market';
 import type { CategoryOption } from '@/types/common';
 import type { EventDetail, EventHolderRow, FeedItem } from '@/types/social';
-
-export function getEvents() {
-  return apiRequest<Event[]>(endpoints.events);
-}
 
 /** Grouped-event detail ("Event Detail") — header + every child market.
  * Real endpoint only; no dev-mock fallback (an event page with invented

@@ -1,12 +1,24 @@
 import { notFound, withErrorHandling } from '@/lib/apiError';
 import { optionalAuth } from '@/lib/privy';
-import { getOrCreateUser, resolveTargetUserId, type DbUser } from '@/lib/users';
+import { getOrCreateUser, resolveTargetUserId } from '@/lib/users';
 import { getSupabase } from '@/lib/supabase';
-import { fetchPage, parseCursor } from '@/lib/pagination';
+import { DEFAULT_PAGE_SIZE, nextCursor, parseCursor } from '@/lib/pagination';
 import type { Paginated } from '@/types/common';
 import type { FollowListItem } from '@/types/social';
 
-/** `GET /users/:id/followers` — accounts following this user. */
+interface FollowListRow {
+  id: string;
+  handle: string;
+  display_name: string;
+  avatar_url: string | null;
+  is_following: boolean;
+  is_self: boolean;
+}
+
+/** `GET /users/:id/followers` — accounts following this user. The page,
+ * the users, and the viewer's own follow state come from one
+ * `user_follow_list` query (migration `0010_single_query_reads.sql`;
+ * docs/DECISIONS.md, "Single-Query Read Paths"). */
 export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
   return withErrorHandling(async () => {
     const { id } = await params;
@@ -20,37 +32,32 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
     if (!target) throw notFound(`User ${id} not found.`);
 
     const offset = parseCursor(url.searchParams.get('cursor'));
-    const { items: followRows, nextCursor: pageCursor } = await fetchPage<{ follower_id: string }>(
-      supabase.from('follows').select('follower_id').eq('following_id', targetId).order('created_at', { ascending: false }),
-      offset
-    );
+    const { data, error } = await supabase.rpc('user_follow_list', {
+      p_target_id: targetId,
+      p_viewer_id: viewerUserRow?.id ?? null,
+      p_direction: 'followers',
+      // One extra row: `nextCursor` needs to know whether more exist.
+      p_limit: DEFAULT_PAGE_SIZE + 1,
+      p_offset: offset,
+    });
+    if (error) throw error;
 
-    const followerIds = followRows.map((r) => r.follower_id);
-    const { data: users } = followerIds.length
-      ? await supabase.from('users').select('*').in('id', followerIds)
-      : { data: [] as DbUser[] };
-    const usersById = new Map((users ?? []).map((u) => [u.id as string, u as DbUser]));
+    const rows = (data ?? []) as FollowListRow[];
+    const items: FollowListItem[] = rows.slice(0, DEFAULT_PAGE_SIZE).map((row) => ({
+      user: {
+        id: row.id,
+        handle: row.handle,
+        displayName: row.display_name,
+        avatarUrl: row.avatar_url,
+      },
+      isFollowing: row.is_following,
+      isSelf: row.is_self,
+    }));
 
-    let followingSet = new Set<string>();
-    if (viewerUserRow && followerIds.length) {
-      const { data } = await supabase
-        .from('follows')
-        .select('following_id')
-        .eq('follower_id', viewerUserRow.id)
-        .in('following_id', followerIds);
-      followingSet = new Set((data ?? []).map((r) => r.following_id as string));
-    }
-
-    const items: FollowListItem[] = followerIds
-      .map((followerId) => usersById.get(followerId))
-      .filter((u): u is DbUser => Boolean(u))
-      .map((u) => ({
-        user: { id: u.id, handle: u.handle, displayName: u.display_name, avatarUrl: u.avatar_url },
-        isFollowing: followingSet.has(u.id),
-        isSelf: viewerUserRow?.id === u.id,
-      }));
-
-    const page: Paginated<FollowListItem> = { items, nextCursor: pageCursor };
+    const page: Paginated<FollowListItem> = {
+      items,
+      nextCursor: nextCursor(offset, rows.length, DEFAULT_PAGE_SIZE),
+    };
     return Response.json(page);
   });
 }

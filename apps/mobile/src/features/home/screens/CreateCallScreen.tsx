@@ -79,7 +79,7 @@ export function CreateCallScreen() {
             </Text>
           </View>
           <Button
-            label={mutation.isPending ? 'Publishing...' : 'Publish Callout'}
+            label={mutation.isPending ? 'Publishing…' : 'Publish Callout'}
             onPress={handlePublish}
             disabled={!canPublish}
             loading={mutation.isPending}

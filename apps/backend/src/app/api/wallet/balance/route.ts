@@ -5,6 +5,9 @@ import { requireAuth } from '@/lib/privy';
 import { getPrimaryEthereumWallet } from '@/lib/users';
 import { buildSecureClientForUser } from '@/lib/trading/client';
 
+// Authenticated CLOB read (account resolution + balance/allowance).
+export const maxDuration = 60;
+
 /**
  * `GET /wallet/balance` — the authenticated user's real collateral
  * balance **and allowances**, read from Polymarket's own CLOB through the

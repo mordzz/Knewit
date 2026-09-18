@@ -6,6 +6,9 @@ import { fetchMarketById } from '@/lib/polymarket/gammaClient';
 import { getChoiceTokenId, parseChoices } from '@/lib/polymarket/normalize';
 import { buildSecureClientForUser } from '@/lib/trading/client';
 
+// Live order-book read through the authenticated client.
+export const maxDuration = 60;
+
 interface TradeEstimate {
   /** Depth-aware average fill price for a market BUY, in cents (2dp). */
   estimatedPrice: number;

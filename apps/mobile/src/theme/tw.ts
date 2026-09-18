@@ -28,46 +28,6 @@ export const textColorClass: Record<ColorToken, string> = {
   overlay: 'text-overlay',
 };
 
-export const bgColorClass: Record<ColorToken, string> = {
-  background: 'bg-background',
-  surface: 'bg-surface',
-  surfaceElevated: 'bg-surface-elevated',
-  border: 'bg-border',
-  textPrimary: 'bg-text-primary',
-  textSecondary: 'bg-text-secondary',
-  textTertiary: 'bg-text-tertiary',
-  textInverse: 'bg-text-inverse',
-  yes: 'bg-yes',
-  yesMuted: 'bg-yes-muted',
-  no: 'bg-no',
-  noMuted: 'bg-no-muted',
-  accent: 'bg-accent',
-  accentMuted: 'bg-accent-muted',
-  warning: 'bg-warning',
-  danger: 'bg-danger',
-  overlay: 'bg-overlay',
-};
-
-export const borderColorClass: Record<ColorToken, string> = {
-  background: 'border-background',
-  surface: 'border-surface',
-  surfaceElevated: 'border-surface-elevated',
-  border: 'border-border',
-  textPrimary: 'border-text-primary',
-  textSecondary: 'border-text-secondary',
-  textTertiary: 'border-text-tertiary',
-  textInverse: 'border-text-inverse',
-  yes: 'border-yes',
-  yesMuted: 'border-yes-muted',
-  no: 'border-no',
-  noMuted: 'border-no-muted',
-  accent: 'border-accent',
-  accentMuted: 'border-accent-muted',
-  warning: 'border-warning',
-  danger: 'border-danger',
-  overlay: 'border-overlay',
-};
-
 /**
  * Each entry pairs the size/line-height class with the matching Inter
  * weight class — one string, not two separately-mergeable classes, so

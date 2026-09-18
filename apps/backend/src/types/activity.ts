@@ -2,8 +2,6 @@ import type { ID, ISODateString } from '@/types/common';
 import type { User } from '@/types/social';
 
 /** Mirrors `apps/frontend/src/types/activity.ts` exactly. */
-export type ActivityType = 'TRADE' | 'CALL' | 'FOLLOW';
-
 interface ActivityItemBase {
   id: ID;
   createdAt: ISODateString;

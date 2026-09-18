@@ -401,7 +401,7 @@ function ConfirmTradeContent({
   if (status === 'preparing' || status === 'pending') {
     return (
       <div className="flex flex-col items-center gap-2 py-6">
-        <Text variant="bodyStrong">{status === 'preparing' ? 'Preparing trade...' : 'Transaction pending...'}</Text>
+          <Text variant="bodyStrong">{status === 'preparing' ? 'Preparing trade…' : 'Transaction pending…'}</Text>
         <Text variant="caption" color="textSecondary">
           This won&apos;t take long.
         </Text>

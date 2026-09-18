@@ -5,6 +5,9 @@ import { requireAuth } from '@/lib/privy';
 import { getPrimaryEthereumWallet } from '@/lib/users';
 import { buildSecureClientForUser } from '@/lib/trading/client';
 
+// Asks the CLOB to re-read on-chain state; same timeout as the balance read.
+export const maxDuration = 60;
+
 /**
  * `POST /wallet/allowance/refresh` — asks Polymarket's CLOB to re-read
  * the deposit wallet's on-chain collateral allowance

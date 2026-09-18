@@ -61,6 +61,11 @@ export function useFollowToggle() {
         { queryKey: ['following'] },
         patchList
       );
+
+      // The right rail's suggestions are "accounts you don't follow yet"
+      // — refetch so a newly followed account leaves the list (and the
+      // next ones fill in).
+      queryClient.invalidateQueries({ queryKey: ['follow-suggestions'] });
     },
   });
 }

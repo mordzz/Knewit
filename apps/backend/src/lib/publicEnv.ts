@@ -22,5 +22,3 @@ export const publicEnv = {
    * backend. */
   privySignerId: process.env.NEXT_PUBLIC_PRIVY_SIGNER_ID ?? '',
 };
-
-export const isPrivyConfigured = publicEnv.privyAppId.length > 0;

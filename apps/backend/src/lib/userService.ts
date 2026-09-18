@@ -42,6 +42,14 @@ export function getFollowing(userId: string, cursor?: string): Promise<Paginated
   return apiRequest<Paginated<FollowListItem>>(`/api/users/${userId}/following${query}`);
 }
 
+/** Follow suggestions for the desktop/tablet "Who to follow" rail —
+ * Knewit accounts the viewer doesn't follow yet, most-followed first
+ * (`GET /users/suggestions`, five per page). */
+export function getFollowSuggestions(cursor?: string): Promise<Paginated<FollowListItem>> {
+  const query = cursor ? `?cursor=${encodeURIComponent(cursor)}` : '';
+  return apiRequest<Paginated<FollowListItem>>(`/api/users/suggestions${query}`);
+}
+
 export async function followUser(userId: string): Promise<FollowResult> {
   return apiRequest<FollowResult>(`/api/users/${userId}/follow`, { method: 'POST' });
 }

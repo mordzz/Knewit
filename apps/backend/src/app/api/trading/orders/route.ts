@@ -6,6 +6,10 @@ import { getAndCacheMarketSummary } from '@/lib/marketCache';
 import { placeMarketOrder } from '@/lib/trading/orders';
 import type { Order } from '@/types/market';
 
+// Order placement signs and submits against the venue; the Vercel
+// default timeout is too tight for a cold start plus relayer round trip.
+export const maxDuration = 60;
+
 interface CreateTradeOrderInput {
   marketId: string;
   /** Index into the market's own `outcomes` array — the client never

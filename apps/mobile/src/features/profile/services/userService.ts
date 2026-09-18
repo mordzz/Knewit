@@ -104,6 +104,30 @@ export function getFollowing(userId: string, cursor?: string): Promise<Paginated
 }
 
 /**
+ * Follow suggestions for the tablet "Who to follow" rail — Knewit
+ * accounts the viewer doesn't follow yet, most-followed first
+ * (`GET /users/suggestions`, five per page). Dev-mock fallback is an
+ * **empty page, never fabricated people**: a suggestion is a promise
+ * that a real account exists to follow, so fixture users would be worse
+ * than an honestly empty rail (same rule as `positionService.ts`).
+ */
+export async function getFollowSuggestions(cursor?: string): Promise<Paginated<FollowListItem>> {
+  const query = cursor ? `?cursor=${encodeURIComponent(cursor)}` : '';
+  try {
+    return await apiRequest<Paginated<FollowListItem>>(`${endpoints.userSuggestions}${query}`);
+  } catch (error) {
+    if (env.isDev) {
+      console.warn(
+        '[userService] backend unreachable — returning no follow suggestions (never fabricated) for development only.',
+        error
+      );
+      return { items: [], nextCursor: null };
+    }
+    throw error;
+  }
+}
+
+/**
  * **No dev-mock fallback** — following is a real, user-visible mutating
  * action (same reasoning as every other create/mutate call in this
  * codebase). The backend derives the follower from the authenticated

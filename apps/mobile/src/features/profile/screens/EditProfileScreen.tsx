@@ -142,7 +142,7 @@ export function EditProfileScreen() {
             </Text>
           </View>
           <Button
-            label={mutation.isPending ? 'Saving...' : 'Save'}
+            label={mutation.isPending ? 'Saving…' : 'Save'}
             onPress={handleSave}
             disabled={!canSave}
             loading={mutation.isPending}

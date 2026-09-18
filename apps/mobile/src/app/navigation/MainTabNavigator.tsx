@@ -5,8 +5,9 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { colors, spacing, TAB_BAR_HEIGHT } from '@/theme';
+import { colors, spacing, TAB_BAR_HEIGHT, typography } from '@/theme';
 import { FAB } from '@/components/ui/FAB';
+import { useIsTablet } from '@/hooks/useIsTablet';
 import { HomeScreen } from '@/features/home/screens/HomeScreen';
 import { PostDetailScreen } from '@/features/home/screens/PostDetailScreen';
 import { MarketsScreen } from '@/features/markets/screens/MarketsScreen';
@@ -19,6 +20,7 @@ import { EditProfileScreen } from '@/features/profile/screens/EditProfileScreen'
 import { FollowersScreen } from '@/features/profile/screens/FollowersScreen';
 import { FollowingScreen } from '@/features/profile/screens/FollowingScreen';
 import { WalletScreen } from '@/features/wallet/screens/WalletScreen';
+import { FollowSuggestionsRail } from '@/features/profile/components/FollowSuggestionsRail';
 import type { AppParamList, MainTabParamList } from '@/types/navigation';
 
 const Tab = createBottomTabNavigator<MainTabParamList>();
@@ -156,65 +158,91 @@ function makeTabBarIcon(
 export function MainTabNavigator() {
   const navigation = useNavigation();
   const insets = useSafeAreaInsets();
+  const isTablet = useIsTablet();
   const [activeTab, setActiveTab] = useState<keyof MainTabParamList>('HomeTab');
 
   return (
-    <View className="flex-1">
-      <Tab.Navigator
-        screenOptions={{
-          headerShown: false,
-          tabBarShowLabel: false,
-          tabBarActiveTintColor: colors.textPrimary,
-          tabBarInactiveTintColor: colors.textTertiary,
-          tabBarStyle: {
-            backgroundColor: colors.background,
-            borderTopColor: colors.border,
-          },
-        }}
-      >
-        <Tab.Screen
-          name="HomeTab"
-          component={HomeStack}
-          options={{ title: 'Home', tabBarIcon: makeTabBarIcon('home', 'home-outline') }}
-          listeners={{ focus: () => setActiveTab('HomeTab') }}
-        />
-        <Tab.Screen
-          name="MarketsTab"
-          component={MarketsStack}
-          options={{
-            title: 'Markets',
-            tabBarIcon: makeTabBarIcon('trending-up', 'trending-up-outline'),
+    <View className="flex-1 flex-row">
+      <View className="relative flex-1">
+        <Tab.Navigator
+          screenOptions={{
+            headerShown: false,
+            // Tablet: X-style labeled rail on the left. Phone: the standard
+            // icon-only bottom bar (docs/DECISIONS.md, "Responsive Shell:
+            // Rail on Tablet, Sidebar on Desktop").
+            tabBarPosition: isTablet ? 'left' : 'bottom',
+            tabBarShowLabel: isTablet,
+            tabBarLabelPosition: 'beside-icon',
+            tabBarLabelStyle: {
+              fontFamily: typography.family.semibold,
+              fontSize: 15,
+            },
+            tabBarItemStyle: isTablet
+              ? { justifyContent: 'flex-start', paddingHorizontal: spacing.md }
+              : undefined,
+            tabBarActiveTintColor: colors.textPrimary,
+            tabBarInactiveTintColor: colors.textTertiary,
+            tabBarStyle: {
+              backgroundColor: colors.background,
+              borderTopColor: colors.border,
+            },
           }}
-          listeners={{ focus: () => setActiveTab('MarketsTab') }}
-        />
-        <Tab.Screen
-          name="SearchTab"
-          component={SearchStack}
-          options={{ title: 'Search', tabBarIcon: makeTabBarIcon('search', 'search-outline') }}
-          listeners={{ focus: () => setActiveTab('SearchTab') }}
-        />
-        <Tab.Screen
-          name="LeaderboardTab"
-          component={LeaderboardStack}
-          options={{ title: 'Leaderboard', tabBarIcon: makeTabBarIcon('trophy', 'trophy-outline') }}
-          listeners={{ focus: () => setActiveTab('LeaderboardTab') }}
-        />
-        <Tab.Screen
-          name="ProfileTab"
-          component={ProfileStack}
-          options={{ title: 'Profile', tabBarIcon: makeTabBarIcon('person', 'person-outline') }}
-          listeners={{ focus: () => setActiveTab('ProfileTab') }}
-        />
-      </Tab.Navigator>
+        >
+          <Tab.Screen
+            name="HomeTab"
+            component={HomeStack}
+            options={{ title: 'Home', tabBarIcon: makeTabBarIcon('home', 'home-outline') }}
+            listeners={{ focus: () => setActiveTab('HomeTab') }}
+          />
+          <Tab.Screen
+            name="MarketsTab"
+            component={MarketsStack}
+            options={{
+              title: 'Markets',
+              tabBarIcon: makeTabBarIcon('stats-chart', 'stats-chart-outline'),
+            }}
+            listeners={{ focus: () => setActiveTab('MarketsTab') }}
+          />
+          <Tab.Screen
+            name="SearchTab"
+            component={SearchStack}
+            options={{ title: 'Search', tabBarIcon: makeTabBarIcon('search', 'search-outline') }}
+            listeners={{ focus: () => setActiveTab('SearchTab') }}
+          />
+          <Tab.Screen
+            name="LeaderboardTab"
+            component={LeaderboardStack}
+            options={{
+              title: 'Leaderboard',
+              tabBarIcon: makeTabBarIcon('podium', 'podium-outline'),
+            }}
+            listeners={{ focus: () => setActiveTab('LeaderboardTab') }}
+          />
+          <Tab.Screen
+            name="ProfileTab"
+            component={ProfileStack}
+            options={{
+              title: 'Profile',
+              tabBarIcon: makeTabBarIcon('person-circle', 'person-circle-outline'),
+            }}
+            listeners={{ focus: () => setActiveTab('ProfileTab') }}
+          />
+        </Tab.Navigator>
 
-      {activeTab === 'HomeTab' ? (
-        <FAB
-          accessibilityLabel="Create a Callout"
-          onPress={() => navigation.navigate('CreateCall')}
-          className="absolute right-6"
-          style={{ bottom: insets.bottom + TAB_BAR_HEIGHT + spacing.sm }}
-        />
-      ) : null}
+        {activeTab === 'HomeTab' ? (
+          <FAB
+            accessibilityLabel="Create a Callout"
+            onPress={() => navigation.navigate('CreateCall')}
+            className="absolute right-6"
+            style={{
+              bottom: insets.bottom + (isTablet ? spacing.md : TAB_BAR_HEIGHT + spacing.sm),
+            }}
+          />
+        ) : null}
+      </View>
+
+      {/* Tablet-only right column (lg+), beside the tab content. */}
+      <FollowSuggestionsRail />
     </View>
   );
 }

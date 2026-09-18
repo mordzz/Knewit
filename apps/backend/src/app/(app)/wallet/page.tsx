@@ -275,7 +275,7 @@ export default function WalletPage() {
                 className="min-h-0 px-4 py-2"
               />
               <Button
-                label={sell.isPending ? 'Selling...' : 'Sell'}
+                label={sell.isPending ? 'Selling…' : 'Sell'}
                 variant="no"
                 loading={sell.isPending}
                 onClick={() =>

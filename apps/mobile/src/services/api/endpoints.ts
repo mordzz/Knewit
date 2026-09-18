@@ -45,5 +45,6 @@ export const endpoints = {
   followers: (id: string) => `/users/${id}/followers`,
   following: (id: string) => `/users/${id}/following`,
   follow: (userId: string) => `/users/${userId}/follow`,
+  userSuggestions: '/users/suggestions',
   leaderboard: '/leaderboard',
 } as const;

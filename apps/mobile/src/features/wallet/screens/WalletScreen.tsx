@@ -31,7 +31,7 @@ const STATUS_COPY: Record<
   { label: string; color: 'yes' | 'accent' | 'textTertiary' | 'danger' }
 > = {
   connected: { label: 'Connected', color: 'yes' },
-  connecting: { label: 'Connecting...', color: 'accent' },
+  connecting: { label: 'Connecting…', color: 'accent' },
   disconnected: { label: 'Not connected', color: 'textTertiary' },
   error: { label: 'Wallet connection failed', color: 'danger' },
 };
@@ -133,7 +133,7 @@ export function WalletScreen() {
       <Screen className="items-center justify-center gap-2">
         <ActivityIndicator accessibilityLabel="Loading wallet" />
         <Text variant="caption" color="textSecondary">
-          Loading wallet...
+          Loading wallet…
         </Text>
       </Screen>
     );
@@ -372,7 +372,7 @@ export function WalletScreen() {
                 className="min-h-0 px-4 py-2"
               />
               <Button
-                label={sell.isPending ? 'Selling...' : 'Sell'}
+                label={sell.isPending ? 'Selling…' : 'Sell'}
                 variant="no"
                 loading={sell.isPending}
                 onPress={() =>

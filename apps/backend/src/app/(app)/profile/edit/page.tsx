@@ -102,7 +102,7 @@ export default function EditProfilePage() {
           </Text>
         </div>
         <Button
-          label={mutation.isPending ? 'Saving...' : 'Save'}
+          label={mutation.isPending ? 'Saving…' : 'Save'}
           onClick={handleSave}
           disabled={!canSave}
           loading={mutation.isPending}

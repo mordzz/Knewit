@@ -14,11 +14,15 @@ request, rather than a separate `apps/web` project.
    - `PRIVY_APP_ID` / `PRIVY_APP_SECRET` — from the Privy dashboard's API Keys page (same app as the mobile client's `EXPO_PUBLIC_PRIVY_APP_ID`).
    - `NEXT_PUBLIC_PRIVY_APP_ID` — same value as `PRIVY_APP_ID`, just re-exposed under Next.js's required `NEXT_PUBLIC_` prefix for the web app's client-side Privy provider.
    - Optional, both defaulting to Polymarket's real public endpoints: `POLYMARKET_GAMMA_BASE_URL` (markets/events/categories) and `POLYMARKET_DATA_BASE_URL` (the leaderboard ranking — a different Polymarket service, `data-api.polymarket.com`).
-2. Run all three schema migrations against your Supabase project, in order:
-   paste `0001_init.sql`, then `0002_leaderboard.sql`, then
-   `0003_user_activity.sql` (all in `supabase/migrations/`) into the Supabase
-   SQL editor (or apply via the Supabase CLI once one is set up — not done in
-   this pass).
+2. Run **one file**: `supabase/all_in_one.sql` — every migration
+   (`0001` … `0011`) in order, generated from the numbered files in
+   `supabase/migrations/` (the canonical source, kept for history and
+   referenced by code comments). Paste it into the Supabase SQL editor,
+   or apply via the Supabase CLI once one is set up — not done in this
+   pass. It also creates the public `profile-images` storage bucket
+   (`0008`). Run it once on a fresh database; on an existing project,
+   apply only the migrations you are missing (the later files are
+   `IF NOT EXISTS` / `DROP IF EXISTS` style).
 3. `npm install && npm run dev`
 
 ## Implemented
@@ -174,3 +178,46 @@ A web port of the entire mobile app, sharing this project and its APIs
 Comment replies (the endpoint exists, no UI calls it), a Settings
 sheet (Log out lives in the sidebar instead), price charts, and the
 position-picker for attaching a verified position to a Call.
+
+## Deploying to Vercel
+
+The web frontend and the API deploy together as this one Next.js
+project. This repo is **not** an npm workspace — `apps/backend` has its
+own `package.json` and lockfile, so Vercel needs to be pointed at it
+directly.
+
+1. **Import the repository** in Vercel → *New Project*.
+2. **Root Directory: `apps/backend`** (Edit next to the repo name).
+   Framework preset: *Next.js* (auto-detected); install/build commands
+   stay the defaults (`npm install`, `next build`).
+3. **Node.js version**: 20.x or 22.x (`engines` requires `>=20.9.0`).
+4. **Environment Variables** — add every key from `.env.example` for the
+   Production environment (and Preview if you use it):
+   `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `PRIVY_APP_ID`,
+   `PRIVY_APP_SECRET`, `PRIVY_AUTHORIZATION_PRIVATE_KEY`,
+   `NEXT_PUBLIC_PRIVY_APP_ID`, `NEXT_PUBLIC_PRIVY_CLIENT_ID`,
+   `NEXT_PUBLIC_PRIVY_SIGNER_ID`, and — required for trading —
+   `POLYMARKET_BUILDER_API_KEY` / `POLYMARKET_BUILDER_SECRET` /
+   `POLYMARKET_BUILDER_PASSPHRASE`. The `POLYMARKET_*_BASE_URL` keys are
+   optional (public defaults). `NEXT_PUBLIC_*` values are inlined at
+   **build time**, so set them before the first deploy; never commit
+   `.env` (`.env.example` is the tracked template).
+5. **Apply the Supabase SQL** — `supabase/all_in_one.sql` (migrations
+   `0001` … `0011`, see Setup above). The latest endpoints depend on the
+   SQL functions in `0009` / `0010` — without them, profile reads and
+   follow lists answer `internal_error`.
+6. **Privy dashboard**: add the production domain to *Allowed Origins*
+   so email/Google/X sign-in and the embedded-wallet consent step work
+   on the deployed URL (same app id as the mobile client).
+7. **Deploy, then smoke-test**: sign-in (email + Google/X), feed,
+   profile read, "Who to follow", wallet balance, and a deposit. Trading
+   additionally needs funded Deposit Wallets plus the Builder
+   credentials from step 4.
+8. **Timeouts**: routes that talk to Polymarket's SDK/relayer
+   (`/api/trading/*`, `/api/wallet/*`) declare `maxDuration = 60` — the
+   Hobby plan's maximum. A higher limit is available on Pro if order
+   placement ever needs it.
+
+The web app calls its own `/api/*` same-origin, so no API base URL needs
+to be configured here; the mobile app points at the deployed domain via
+its own `EXPO_PUBLIC_API_BASE_URL`.

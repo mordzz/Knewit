@@ -2,7 +2,7 @@ import { ApiError, badRequest, notFound, withErrorHandling } from '@/lib/apiErro
 import { optionalAuth, requireAuth } from '@/lib/privy';
 import { getOrCreateUser, resolveTargetUserId } from '@/lib/users';
 import { getSupabase } from '@/lib/supabase';
-import { buildUserProfile } from '@/lib/social';
+import { buildUserProfile, fetchUserProfile } from '@/lib/social';
 import { env } from '@/lib/env';
 import type { UpdateProfileInput } from '@/types/social';
 
@@ -12,7 +12,9 @@ const HANDLE_RE = /^[a-z0-9_]{3,20}$/;
 
 /** `GET /users/:id` — `:id` accepts the literal `"me"` (docs/API.md).
  * Public read: an unauthenticated caller gets `isFollowing: false`,
- * `isSelf: false` (see `buildUserProfile`), never a 401. */
+ * `isSelf: false`, never a 401. The user row, counts, and follow state
+ * come from one `user_profile_overview` query
+ * (`lib/social.ts::fetchUserProfile`). */
 export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
   return withErrorHandling(async () => {
     const { id } = await params;
@@ -20,13 +22,12 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
     const viewerUserRow = viewer ? await getOrCreateUser(viewer.privyUserId) : null;
 
     const targetId = await resolveTargetUserId(id, viewer?.privyUserId ?? null);
-    const supabase = getSupabase();
-    const { data: target } = await supabase.from('users').select('*').eq('id', targetId).maybeSingle();
-    if (!target) {
+    const profile = await fetchUserProfile(targetId, viewerUserRow?.id ?? null);
+    if (!profile) {
       throw notFound(`User ${id} not found.`);
     }
 
-    return Response.json(await buildUserProfile(target, viewerUserRow?.id ?? null));
+    return Response.json(profile);
   });
 }
 

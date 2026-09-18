@@ -6,6 +6,10 @@ import { sellMarketPosition } from '@/lib/trading/orders';
 import type { Order } from '@/types/market';
 import type { SellPositionResponse } from '@/types/trading';
 
+// A sell also runs the cash-out transfer; 60s covers cold start + fill +
+// transfer on Vercel (the Hobby plan's maximum).
+export const maxDuration = 60;
+
 interface SellPositionInput {
   /** The `positions` row to close — ownership is re-verified server-side. */
   positionId: string;

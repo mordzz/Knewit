@@ -1,6 +1,5 @@
 import { View, Pressable } from 'react-native';
 import { Text } from '@/components/ui/Text';
-import { Skeleton } from '@/components/ui/Skeleton';
 import { MarketVisual } from '@/components/ui/MarketVisual';
 import { MarketOutcomeButtons } from '@/components/ui/MarketOutcomeButtons';
 import { GlassSurface } from '@/components/ui/GlassSurface';
@@ -113,10 +112,11 @@ function PositionColumns({
 }) {
   // The live choice is looked up by the snapshot's frozen index; a
   // legacy snapshot without one falls back to matching the label.
-  const choice =
-    market.choices.find((c) => c.index === snapshot.choiceIndex) ??
-    market.choices.find((c) => c.label.toLowerCase() === snapshot.outcome.toLowerCase()) ??
-    { index: snapshot.choiceIndex, label: snapshot.outcome };
+  const choice = market.choices.find((c) => c.index === snapshot.choiceIndex) ??
+    market.choices.find((c) => c.label.toLowerCase() === snapshot.outcome.toLowerCase()) ?? {
+      index: snapshot.choiceIndex,
+      label: snapshot.outcome,
+    };
   const outcomeColor = choiceTextColor(choiceTone(choice));
 
   const currentPrice = market.choices.find((c) => c.index === choice.index)?.price ?? 0;
@@ -144,26 +144,6 @@ function PositionColumns({
           {formatUsd(Math.abs(profit))}
         </Text>
       </View>
-    </View>
-  );
-}
-
-/** Loading placeholder matching MarketAttachment's footprint — same
- * black glass surface as the loaded card, not a different treatment, so
- * a list of skeletons doesn't visually jump when real cards swap in. */
-export function MarketAttachmentSkeleton() {
-  return (
-    <View className="mt-3">
-      <GlassSurface tone="dark" blur={false} radius={18} contentClassName="gap-3 p-3.5">
-        <View className="flex-row items-center gap-2.5">
-          <Skeleton width={40} height={40} className="rounded-xl" />
-          <Skeleton height={18} className="flex-1" />
-        </View>
-        <View className="flex-row justify-between">
-          <Skeleton height={32} className="w-24" />
-          <Skeleton height={32} className="w-24" />
-        </View>
-      </GlassSurface>
     </View>
   );
 }

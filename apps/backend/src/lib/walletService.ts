@@ -18,8 +18,6 @@ export interface WalletBalance {
   unavailable?: boolean;
 }
 
-export type WalletBalanceUnavailable = WalletBalance & { usdc: null; unavailable: true };
-
 /** Web equivalent of `apps/mobile/src/features/wallet/services/walletService.ts`. */
 export async function getWalletBalance(): Promise<WalletBalance> {
   return apiRequest<WalletBalance>('/api/wallet/balance');

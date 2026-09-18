@@ -42,45 +42,104 @@ export function toPublicUser(user: DbUser): User {
 }
 
 export async function buildUserProfile(target: DbUser, viewerUserId: string | null): Promise<UserProfile> {
-  const supabase = getSupabase();
-
-  const [followerCount, followingCount, callCount, standing] = await Promise.all([
-    supabase.from('follows').select('follower_id', { count: 'exact', head: true }).eq('following_id', target.id),
-    supabase.from('follows').select('following_id', { count: 'exact', head: true }).eq('follower_id', target.id),
-    supabase
-      .from('posts')
-      .select('id', { count: 'exact', head: true })
-      .eq('author_id', target.id)
-      .not('position_snapshot_market_id', 'is', null),
-    fetchPolymarketStanding(target.wallet_address),
-  ]);
-
-  let isFollowing = false;
-  if (viewerUserId && viewerUserId !== target.id) {
-    const { data } = await supabase
-      .from('follows')
-      .select('follower_id')
-      .eq('follower_id', viewerUserId)
-      .eq('following_id', target.id)
-      .maybeSingle();
-    isFollowing = Boolean(data);
-  }
-
-  return {
-    ...toPublicUser(target),
-    bio: target.bio,
-    bannerUrl: target.banner_url,
-    followerCount: followerCount.count ?? 0,
-    followingCount: followingCount.count ?? 0,
-    callCount: callCount.count ?? 0,
-    isFollowing,
-    isSelf: viewerUserId === target.id,
+  const [stats, standing] = await Promise.all([
+    fetchProfileStats(target.id, viewerUserId),
     // This account's live Polymarket standing — the *same* ranking the
     // Leaderboard shows (docs/DECISIONS.md, "Profile Trading Metric
     // Matches Leaderboard's Definition Exactly"), asked of Polymarket by
     // wallet address rather than summed from our own `orders` rows (which
     // have none). `null` when there's no wallet, no ranked volume, or the
     // lookup fails — never guessed.
+    fetchPolymarketStanding(target.wallet_address),
+  ]);
+
+  return {
+    ...toPublicUser(target),
+    bio: target.bio,
+    bannerUrl: target.banner_url,
+    followerCount: stats.followerCount,
+    followingCount: stats.followingCount,
+    callCount: stats.callCount,
+    isFollowing: stats.isFollowing,
+    isSelf: viewerUserId === target.id,
+    tradingVolume: standing?.volume ?? null,
+  };
+}
+
+interface ProfileStats {
+  followerCount: number;
+  followingCount: number;
+  callCount: number;
+  isFollowing: boolean;
+}
+
+interface ProfileStatsRow {
+  follower_count: number;
+  following_count: number;
+  call_count: number;
+  is_following: boolean;
+}
+
+/** Counts + viewer-relative follow state in **one** query — the
+ * `user_profile_stats` SQL function (migration `0010_single_query_reads.sql`)
+ * replaces the old three count queries plus an existence read
+ * (docs/DECISIONS.md, "Single-Query Read Paths"). */
+export async function fetchProfileStats(
+  userId: string,
+  viewerUserId: string | null
+): Promise<ProfileStats> {
+  const { data, error } = await getSupabase().rpc('user_profile_stats', {
+    p_user_id: userId,
+    p_viewer_id: viewerUserId,
+  });
+  if (error) throw error;
+
+  const row = (data ?? [])[0] as ProfileStatsRow | undefined;
+  return {
+    followerCount: Number(row?.follower_count ?? 0),
+    followingCount: Number(row?.following_count ?? 0),
+    callCount: Number(row?.call_count ?? 0),
+    isFollowing: Boolean(row?.is_following),
+  };
+}
+
+interface ProfileOverviewRow extends DbUser {
+  follower_count: number;
+  following_count: number;
+  call_count: number;
+  is_following: boolean;
+}
+
+/**
+ * The whole profile read in **one** query (`user_profile_overview`,
+ * migration `0010_single_query_reads.sql`): user row + counts +
+ * `isFollowing`, `null` when the id doesn't exist. `GET /users/:id` uses
+ * this directly instead of a target select followed by `buildUserProfile`.
+ */
+export async function fetchUserProfile(
+  targetId: string,
+  viewerUserId: string | null
+): Promise<UserProfile | null> {
+  const { data, error } = await getSupabase().rpc('user_profile_overview', {
+    p_user_id: targetId,
+    p_viewer_id: viewerUserId,
+  });
+  if (error) throw error;
+
+  const row = (data ?? [])[0] as ProfileOverviewRow | undefined;
+  if (!row) return null;
+
+  const standing = await fetchPolymarketStanding(row.wallet_address);
+
+  return {
+    ...toPublicUser(row),
+    bio: row.bio,
+    bannerUrl: row.banner_url,
+    followerCount: Number(row.follower_count ?? 0),
+    followingCount: Number(row.following_count ?? 0),
+    callCount: Number(row.call_count ?? 0),
+    isFollowing: Boolean(row.is_following),
+    isSelf: viewerUserId === row.id,
     tradingVolume: standing?.volume ?? null,
   };
 }

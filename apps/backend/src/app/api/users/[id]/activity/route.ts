@@ -17,13 +17,17 @@ interface ActivityRow {
   usd_amount: number | null;
   post_id: string | null;
   followed_user_id: string | null;
+  followed_user_handle: string | null;
+  followed_user_display_name: string | null;
 }
 
 /** `GET /users/:id/activity` — union of TRADE/CALL/FOLLOW events
- * (docs/API.md; see `supabase/migrations/0003_user_activity.sql` for
- * the query). Every row here reflects a completed server-side action
- * (a filled Order, a stored Call/Follow row) — never a client's
- * optimistic assumption. */
+ * (docs/API.md; `user_activity` in
+ * `supabase/migrations/0010_single_query_reads.sql`). Every row here
+ * reflects a completed server-side action (a filled Order, a stored
+ * Call/Follow row) — never a client's optimistic assumption. The
+ * followed user's handle/display name come back with the same query
+ * (docs/DECISIONS.md, "Single-Query Read Paths"). */
 export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
   return withErrorHandling(async () => {
     const { id } = await params;
@@ -46,14 +50,6 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
     const rows = (data ?? []) as ActivityRow[];
     const pageRows = rows.slice(0, DEFAULT_PAGE_SIZE);
     const nextCursor = rows.length > DEFAULT_PAGE_SIZE ? String(offset + DEFAULT_PAGE_SIZE) : null;
-
-    const followedUserIds = Array.from(
-      new Set(pageRows.filter((r) => r.type === 'FOLLOW' && r.followed_user_id).map((r) => r.followed_user_id!))
-    );
-    const { data: followedUsers } = followedUserIds.length
-      ? await supabase.from('users').select('id, handle, display_name').in('id', followedUserIds)
-      : { data: [] as Array<{ id: string; handle: string; display_name: string }> };
-    const followedById = new Map((followedUsers ?? []).map((u) => [u.id, u]));
 
     const items: ActivityItem[] = pageRows.flatMap((row): ActivityItem[] => {
       switch (row.type) {
@@ -85,14 +81,17 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
             },
           ];
         case 'FOLLOW': {
-          const followedUser = row.followed_user_id ? followedById.get(row.followed_user_id) : undefined;
-          if (!followedUser) return [];
+          if (!row.followed_user_id || !row.followed_user_handle) return [];
           return [
             {
               id: row.id,
               type: 'FOLLOW',
               createdAt: row.created_at,
-              followedUser: { id: followedUser.id, handle: followedUser.handle, displayName: followedUser.display_name },
+              followedUser: {
+                id: row.followed_user_id,
+                handle: row.followed_user_handle,
+                displayName: row.followed_user_display_name ?? row.followed_user_handle,
+              },
             },
           ];
         }

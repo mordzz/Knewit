@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 import { SOLID_PANEL_CLASS } from '@/components/ui/solidPanel';
+import { useMediaQuery } from '@/hooks/useMediaQuery';
 
 export interface BottomSheetProps {
   visible: boolean;
@@ -14,10 +15,35 @@ export interface BottomSheetProps {
  * transform transition standing in for RN's `Animated.timing`.
  * Solid absolute black (`bg-background`) with the glass *edge* only —
  * a faint white border plus a brighter top edge — the same treatment
- * `Modal` now shares; every non-overlay panel stays glass — see
+ * `Modal` shares; every non-overlay panel stays glass — see
  * docs/DECISIONS.md ("BottomSheet & Modal Solid Black + Glass Border").
+ *
+ * **Responsive by design**: from `lg` up it renders as a centered dialog
+ * instead of a bottom sheet (docs/DECISIONS.md, "Overlays Become Centered
+ * Dialogs on Tablet/Desktop"). Every sheet in the app consumes this
+ * component, so the call sites never need to know which form it takes.
  */
 export function BottomSheet({ visible, onClose, children }: BottomSheetProps) {
+  const isDialog = useMediaQuery('(min-width: 1024px)');
+
+  if (isDialog) {
+    if (!visible) return null;
+    return (
+      <div
+        className="absolute inset-0 z-50 flex items-center justify-center bg-overlay p-6"
+        onClick={onClose}
+        role="presentation"
+      >
+        <div
+          className={`w-full max-w-[520px] rounded-2xl ${SOLID_PANEL_CLASS} p-6`}
+          onClick={(e) => e.stopPropagation()}
+        >
+          {children}
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div
       className={`absolute inset-0 z-50 flex items-end bg-overlay transition-opacity duration-[250ms] ${

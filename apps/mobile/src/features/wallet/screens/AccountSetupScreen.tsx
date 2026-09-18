@@ -36,7 +36,7 @@ export function AccountSetupScreen({ status }: { status: WalletSetupStatus }) {
             Setting up your account…
           </Text>
           <Text variant="caption" color="textSecondary" className="text-center">
-            Creating your wallet and enabling trading. Follow any prompt if one appears.
+            Creating your wallet and enabling trading. This only happens once.
           </Text>
         </>
       )}

@@ -37,15 +37,6 @@ export interface LeaderboardEntry {
   metric: LeaderboardMetric;
 }
 
-/** The authenticated viewer's own live standing in Polymarket's global
- * ranking, used by the profile read's `tradingVolume` lookup — the
- * leaderboard response itself carries no viewer-relative figure any more
- * (docs/DECISIONS.md, "Your Rank Removed From the Leaderboard"). */
-export interface LeaderboardSelf {
-  rank: number;
-  metric: LeaderboardMetric;
-}
-
 export interface LeaderboardPage {
   items: LeaderboardEntry[];
   nextCursor: string | null;

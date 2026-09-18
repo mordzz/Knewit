@@ -5,18 +5,18 @@ import { usePathname } from 'next/navigation';
 import {
   IoHome,
   IoHomeOutline,
-  IoTrendingUp,
-  IoTrendingUpOutline,
+  IoStatsChart,
+  IoStatsChartOutline,
   IoSearch,
   IoSearchOutline,
-  IoTrophy,
-  IoTrophyOutline,
-  IoPerson,
-  IoPersonOutline,
+  IoPodium,
+  IoPodiumOutline,
+  IoPersonCircle,
+  IoPersonCircleOutline,
 } from 'react-icons/io5';
 import type { IconType } from 'react-icons';
 
-interface TabItem {
+export interface TabItem {
   href: string;
   label: string;
   icon: IconType;
@@ -24,27 +24,33 @@ interface TabItem {
 }
 
 /**
- * Direct conversion of `apps/mobile`'s `MainTabNavigator` bottom tab
- * bar — same five destinations, same icons, icon-only (no labels,
- * matching mobile's `tabBarShowLabel: false`), same active/inactive
- * color split. Not a left sidebar — this app's web version is meant to
- * look like the mobile app scaled up, not a separate desktop-pattern
- * redesign, so the navigation stays exactly where and how it is on
- * mobile.
+ * The five destinations, shared by the phone-width bottom bar below and
+ * the desktop sidebar (`SideNav`) — one definition, so the two
+ * navigations can never drift apart. Icons follow the "modern navbar"
+ * pass (docs/DECISIONS.md, "Navbar Icons Modernized"): Markets is a
+ * chart (`stats-chart`), Leaderboard a podium, Profile a circled person;
+ * Home and Search keep their existing glyphs.
  */
-const TAB_ITEMS: TabItem[] = [
+export const TAB_ITEMS: TabItem[] = [
   { href: '/', label: 'Home', icon: IoHomeOutline, activeIcon: IoHome },
-  { href: '/markets', label: 'Markets', icon: IoTrendingUpOutline, activeIcon: IoTrendingUp },
+  { href: '/markets', label: 'Markets', icon: IoStatsChartOutline, activeIcon: IoStatsChart },
   { href: '/search', label: 'Search', icon: IoSearchOutline, activeIcon: IoSearch },
-  { href: '/leaderboard', label: 'Leaderboard', icon: IoTrophyOutline, activeIcon: IoTrophy },
-  { href: '/profile', label: 'Profile', icon: IoPersonOutline, activeIcon: IoPerson },
+  { href: '/leaderboard', label: 'Leaderboard', icon: IoPodiumOutline, activeIcon: IoPodium },
+  { href: '/profile', label: 'Profile', icon: IoPersonCircleOutline, activeIcon: IoPersonCircle },
 ];
 
+/**
+ * Direct conversion of `apps/mobile`'s `MainTabNavigator` bottom bar —
+ * same five destinations, same icon-only style, same active/inactive
+ * color split. Hidden from `lg` up, where `SideNav` takes over with the
+ * X-style labeled rail (docs/DECISIONS.md, "Responsive Shell: Rail on
+ * Tablet, Sidebar on Desktop").
+ */
 export function BottomTabBar() {
   const pathname = usePathname();
 
   return (
-    <nav className="flex flex-shrink-0 border-t border-border bg-background">
+    <nav className="flex flex-shrink-0 border-t border-border bg-background lg:hidden">
       {TAB_ITEMS.map((item) => {
         const isActive = pathname === item.href;
         const Icon = isActive ? item.activeIcon : item.icon;

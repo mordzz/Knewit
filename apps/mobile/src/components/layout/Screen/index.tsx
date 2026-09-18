@@ -27,7 +27,7 @@ export function Screen({
     return (
       <SafeAreaView className="flex-1 bg-background" edges={edges}>
         <ScrollView
-          className="flex-1"
+          className="flex-1 md:w-full md:max-w-2xl md:self-center"
           contentContainerClassName={cn('px-4', contentContainerClassName ?? className)}
           {...rest}
         >
@@ -39,7 +39,10 @@ export function Screen({
 
   return (
     <SafeAreaView className="flex-1 bg-background" edges={edges}>
-      <View className={cn('flex-1 px-4', className)} {...rest}>
+      <View
+        className={cn('flex-1 px-4 md:w-full md:max-w-2xl md:self-center', className)}
+        {...rest}
+      >
         {children}
       </View>
     </SafeAreaView>

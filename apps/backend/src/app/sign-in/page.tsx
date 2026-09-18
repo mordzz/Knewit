@@ -148,7 +148,7 @@ export default function SignInPage() {
       </div>
 
       <div
-        className={`relative z-10 w-full rounded-t-3xl ${SOLID_PANEL_CLASS} border-b-0 px-4 pb-8 pt-3`}
+        className={`relative z-10 w-full rounded-t-3xl ${SOLID_PANEL_CLASS} border-b-0 px-4 pb-8 pt-3 lg:mx-auto lg:mb-16 lg:max-w-[420px] lg:rounded-3xl lg:border-b lg:px-6`}
       >
         <div className="mb-1 h-1 w-9 self-center rounded-full bg-white/20" />
 

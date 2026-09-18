@@ -93,14 +93,19 @@ export async function placeMarketOrder(params: {
       side: OrderSide.BUY,
     });
   } catch (error) {
+    // The upstream rejection reason is useful in server logs but never
+    // sent to the client — it can carry venue internals. The client gets
+    // an honest, stable message; the raw error stays here.
+    console.error('[trading/orders] buy rejected upstream:', error);
     throw new ApiError(
       502,
       'trade_failed',
-      `The order was rejected: ${error instanceof Error ? error.message : String(error)}`
+      'The order could not be placed right now. Please try again.'
     );
   }
 
   if (!response.ok) {
+    console.error('[trading/orders] buy not accepted:', response.message);
     return {
       tokenId,
       choiceLabel: choice.label,
@@ -108,7 +113,7 @@ export async function placeMarketOrder(params: {
       filledSize: 0,
       filledPrice: 0,
       polymarketOrderId: null,
-      errorMessage: response.message || 'Order was not accepted by Polymarket.',
+      errorMessage: 'The order was not accepted. Please try again.',
     };
   }
 
@@ -274,14 +279,18 @@ export async function sellMarketPosition(params: {
       side: OrderSide.SELL,
     });
   } catch (error) {
+    // Raw upstream reason stays in the server log only — see the BUY
+    // path's comment for why.
+    console.error('[trading/orders] sell rejected upstream:', error);
     throw new ApiError(
       502,
       'trade_failed',
-      `The sell was rejected: ${error instanceof Error ? error.message : String(error)}`
+      'The sell could not be placed right now. Please try again.'
     );
   }
 
   if (!response.ok) {
+    console.error('[trading/orders] sell not accepted:', response.message);
     return {
       marketId: position.market_id,
       choiceIndex: position.choice_index,
@@ -292,7 +301,7 @@ export async function sellMarketPosition(params: {
       filledPrice: 0,
       proceedsUsd: 0,
       polymarketOrderId: null,
-      errorMessage: response.message || 'Sell was not accepted by Polymarket.',
+      errorMessage: 'The sell was not accepted. Please try again.',
       cashOut: null,
     };
   }
@@ -333,10 +342,13 @@ export async function sellMarketPosition(params: {
     await handle.wait();
     cashOut = { status: 'sent', amountUsd: proceedsUsd, error: null };
   } catch (error) {
+    // `cashOut.error` is returned to the client, so it must not carry
+    // the raw upstream reason; the log keeps it.
+    console.error('[trading/orders] cash-out transfer failed:', error);
     cashOut = {
       status: 'failed',
       amountUsd: proceedsUsd,
-      error: error instanceof Error ? error.message : String(error),
+      error: null,
     };
   }
 

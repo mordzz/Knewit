@@ -15,6 +15,8 @@ import { Icon } from '@/components/ui/Icon';
 import { CodeInput } from '@/components/ui/CodeInput';
 import { XLogo } from '@/components/ui/XLogo';
 import { isPrivyConfigured } from '@/app/config/env';
+import { useIsTablet } from '@/hooks/useIsTablet';
+import { cn } from '@/utils/cn';
 import { solidPanel } from '@/theme';
 
 /**
@@ -66,6 +68,7 @@ import { solidPanel } from '@/theme';
  * the same way any other auth failure is, never silently.
  */
 export function SignInScreen() {
+  const isTablet = useIsTablet();
   const [email, setEmail] = useState('');
   const [code, setCode] = useState('');
   const [resendSeconds, setResendSeconds] = useState(0);
@@ -195,11 +198,16 @@ export function SignInScreen() {
           />
         </Animated.View>
 
-        <Animated.View style={bottomAnimatedStyle} className="w-full">
+        <Animated.View
+          style={bottomAnimatedStyle}
+          className={cn('w-full', isTablet && 'mb-10 max-w-[520px] self-center')}
+        >
           <View
             style={[
               solidPanel,
-              { borderTopLeftRadius: 24, borderTopRightRadius: 24, borderBottomWidth: 0 },
+              isTablet
+                ? { borderRadius: 24 }
+                : { borderTopLeftRadius: 24, borderTopRightRadius: 24, borderBottomWidth: 0 },
             ]}
           >
             <View className="gap-4 px-4 pb-8 pt-3">
@@ -207,8 +215,11 @@ export function SignInScreen() {
                 this panel reads as a bottom sheet even though it
                 doesn't reuse that component directly (this sheet never
                 closes/dismisses, so `BottomSheet`'s modal+backdrop
-                machinery isn't a fit here). */}
-              <View className="mb-1 h-1 w-9 self-center rounded-full bg-white/20" />
+                machinery isn't a fit here). On tablets the panel is a
+                centered card, not a sheet, so the handle is hidden. */}
+              {isTablet ? null : (
+                <View className="mb-1 h-1 w-9 self-center rounded-full bg-white/20" />
+              )}
 
               {!isAwaitingCode ? (
                 <>

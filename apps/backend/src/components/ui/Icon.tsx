@@ -3,6 +3,7 @@ import {
   IoHomeOutline,
   IoTrendingUp,
   IoTrendingUpOutline,
+  IoStatsChart,
   IoAdd,
   IoAddCircle,
   IoAddCircleOutline,
@@ -10,6 +11,8 @@ import {
   IoWalletOutline,
   IoPerson,
   IoPersonOutline,
+  IoPersonCircle,
+  IoPersonCircleOutline,
   IoClose,
   IoCheckmark,
   IoCheckmarkCircle,
@@ -26,6 +29,8 @@ import {
   IoLogoGoogle,
   IoFlagOutline,
   IoTrophyOutline,
+  IoPodium,
+  IoPodiumOutline,
   IoFilmOutline,
   IoBriefcaseOutline,
   IoStatsChartOutline,
@@ -53,6 +58,7 @@ export type IconName =
   | 'home-outline'
   | 'trending-up'
   | 'trending-up-outline'
+  | 'stats-chart'
   | 'add'
   | 'add-circle'
   | 'add-circle-outline'
@@ -60,6 +66,8 @@ export type IconName =
   | 'wallet-outline'
   | 'person'
   | 'person-outline'
+  | 'person-circle'
+  | 'person-circle-outline'
   | 'close'
   | 'checkmark'
   | 'checkmark-circle'
@@ -76,6 +84,8 @@ export type IconName =
   | 'logo-google'
   | 'flag-outline'
   | 'trophy-outline'
+  | 'podium'
+  | 'podium-outline'
   | 'film-outline'
   | 'briefcase-outline'
   | 'stats-chart-outline'
@@ -132,6 +142,7 @@ const ICONS: Record<IconName, IconType> = {
   'home-outline': IoHomeOutline,
   'trending-up': IoTrendingUp,
   'trending-up-outline': IoTrendingUpOutline,
+  'stats-chart': IoStatsChart,
   add: IoAdd,
   'add-circle': IoAddCircle,
   'add-circle-outline': IoAddCircleOutline,
@@ -139,6 +150,8 @@ const ICONS: Record<IconName, IconType> = {
   'wallet-outline': IoWalletOutline,
   person: IoPerson,
   'person-outline': IoPersonOutline,
+  'person-circle': IoPersonCircle,
+  'person-circle-outline': IoPersonCircleOutline,
   close: IoClose,
   checkmark: IoCheckmark,
   'checkmark-circle': IoCheckmarkCircle,
@@ -155,6 +168,8 @@ const ICONS: Record<IconName, IconType> = {
   'logo-google': IoLogoGoogle,
   'flag-outline': IoFlagOutline,
   'trophy-outline': IoTrophyOutline,
+  podium: IoPodium,
+  'podium-outline': IoPodiumOutline,
   'film-outline': IoFilmOutline,
   'briefcase-outline': IoBriefcaseOutline,
   'stats-chart-outline': IoStatsChartOutline,

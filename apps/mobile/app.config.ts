@@ -4,7 +4,7 @@ const config: ExpoConfig = {
   name: 'Knewit',
   slug: 'knewit',
   version: '1.0.0',
-  orientation: 'portrait',
+  orientation: 'default',
   icon: './assets/icon.png',
   userInterfaceStyle: 'light',
   // Required for Google/X OAuth sign-in (Privy's `useLoginWithOAuth`) to

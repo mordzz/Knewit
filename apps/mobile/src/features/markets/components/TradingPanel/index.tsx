@@ -432,7 +432,7 @@ function ConfirmTradeContent({
     return (
       <View className="items-center gap-2 py-6">
         <Text variant="bodyStrong">
-          {status === 'preparing' ? 'Preparing trade...' : 'Transaction pending...'}
+          {status === 'preparing' ? 'Preparing trade…' : 'Transaction pending…'}
         </Text>
         <Text variant="caption" color="textSecondary">
           This won&apos;t take long.

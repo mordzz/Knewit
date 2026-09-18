@@ -24,7 +24,7 @@ const solanaConnectors = toSolanaWalletConnectors();
  * page-level code (see `app/(app)/page.tsx`'s doc comment). Privy is
  * always mounted, even without a configured app id, so every page can
  * unconditionally use its hooks — pages that need it gate on
- * `isPrivyConfigured` instead, same pattern as the mobile app's
+ * `publicEnv.privyAppId` instead, same pattern as the mobile app's
  * `SignInScreen`.
  */
 export function Providers({ children }: { children: ReactNode }) {

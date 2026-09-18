@@ -31,18 +31,3 @@ export const typography = {
 } as const;
 
 export type TypographyVariant = keyof typeof typography.scale;
-
-/** Which Inter weight each typography variant renders in — mirrors
- * `theme/tw.ts`'s `typographyClass`, kept here too since a few call
- * sites need the raw family name for a `style`-level override rather
- * than a className (see MarketAttachment's question text). */
-export const typographyFamily: Record<TypographyVariant, string> = {
-  jumbo: typography.family.extrabold,
-  display: typography.family.bold,
-  heading: typography.family.bold,
-  title: typography.family.semibold,
-  body: typography.family.regular,
-  bodyStrong: typography.family.semibold,
-  caption: typography.family.regular,
-  micro: typography.family.medium,
-};
