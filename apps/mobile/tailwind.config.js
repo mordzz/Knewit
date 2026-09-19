@@ -33,8 +33,8 @@ module.exports = {
         no: '#F43F5E',
         'no-muted': 'rgba(244, 63, 94, 0.15)',
 
-        accent: '#FDCC03',
-        'accent-muted': 'rgba(253, 204, 3, 0.15)',
+        accent: '#FFE506',
+        'accent-muted': 'rgba(255, 229, 6, 0.15)',
         warning: '#F59E0B',
         danger: '#EF4444',
 

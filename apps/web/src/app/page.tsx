@@ -19,7 +19,7 @@ export default function Page() {
 
   useEffect(() => {
     if (ready && canUseApp) {
-      router.replace('/home');
+      router.replace('/callouts');
     }
   }, [ready, canUseApp, router]);
 

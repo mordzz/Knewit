@@ -9,6 +9,8 @@ import { LoadingState } from '@/components/feedback/LoadingState';
 import { EmptyState } from '@/components/feedback/EmptyState';
 import { ErrorState } from '@/components/feedback/ErrorState';
 import { CallCard } from '@/components/CallCard';
+import { CalloutComposerPanel } from '@/components/CalloutComposerPanel';
+import { TrendingMarketsPanel } from '@/components/TrendingMarketsPanel';
 import { useHomeFeed } from '@/hooks/useHomeFeed';
 import { useFollowingFeed } from '@/hooks/useFollowingFeed';
 import { useWalletBalance } from '@/hooks/useWalletBalance';
@@ -31,26 +33,20 @@ const FEED_TAB_OPTIONS: TabRowOption<FeedTabKey>[] = [
  * Deposit header, same infinite-scroll feed (an `IntersectionObserver`
  * sentinel replaces `FlatList`'s `onEndReached`).
  */
-export default function HomePage() {
+export default function CalloutsPage() {
   const router = useRouter();
   const { canUseApp } = useSession();
   const [tab, setTab] = useState<FeedTabKey>('forYou');
   const feed = useHomeFeed();
   const followingFeed = useFollowingFeed();
   const isDesktop = useIsDesktop();
-  // Desktop/tablet gets a centered, wider column with breathing room
-  // instead of the phone's edge-to-edge list — same feed, same
-  // `CallCard`s, just composed with the spacious feel of the
-  // `apps/dekstop` mockups (which browse markets, not this social feed,
-  // so the grid-of-cards treatment there doesn't apply here).
-  const containerClass = isDesktop ? 'mx-auto w-full max-w-3xl py-8' : 'w-full';
 
   const tabs = <TabRow options={FEED_TAB_OPTIONS} value={tab} onChange={setTab} />;
 
   if (tab === 'following') {
     if (!canUseApp) {
       return (
-        <main className={containerClass}>
+        <CalloutsLayout isDesktop={isDesktop}>
           <Header isDesktop={isDesktop} />
           {tabs}
           <EmptyState
@@ -60,36 +56,36 @@ export default function HomePage() {
             actionLabel="Connect Wallet"
             onAction={() => router.push('/sign-in')}
           />
-        </main>
+        </CalloutsLayout>
       );
     }
 
     if (followingFeed.status === 'pending') {
       return (
-        <main className={containerClass}>
+        <CalloutsLayout isDesktop={isDesktop}>
           <Header isDesktop={isDesktop} />
           {tabs}
           <div className="px-4 pt-4">
             <LoadingState rows={4} />
           </div>
-        </main>
+        </CalloutsLayout>
       );
     }
 
     if (followingFeed.status === 'error') {
       return (
-        <main className={containerClass}>
+        <CalloutsLayout isDesktop={isDesktop}>
           <Header isDesktop={isDesktop} />
           {tabs}
           <ErrorState message="Couldn't load your Following feed." onRetry={() => followingFeed.refetch()} />
-        </main>
+        </CalloutsLayout>
       );
     }
 
     const followingItems = followingFeed.data.pages.flatMap((page) => page.items);
 
     return (
-      <main className={containerClass}>
+      <CalloutsLayout isDesktop={isDesktop}>
         <Header isDesktop={isDesktop} />
         {tabs}
         {followingItems.length === 0 ? (
@@ -108,36 +104,36 @@ export default function HomePage() {
           isFetchingNextPage={followingFeed.isFetchingNextPage}
           onLoadMore={() => followingFeed.fetchNextPage()}
         />
-      </main>
+      </CalloutsLayout>
     );
   }
 
   if (feed.status === 'pending') {
     return (
-      <main className={containerClass}>
+      <CalloutsLayout isDesktop={isDesktop}>
         <Header isDesktop={isDesktop} />
         {tabs}
         <div className="px-4 pt-2">
           <LoadingState rows={4} />
         </div>
-      </main>
+      </CalloutsLayout>
     );
   }
 
   if (feed.status === 'error') {
     return (
-      <main className={containerClass}>
+      <CalloutsLayout isDesktop={isDesktop}>
         <Header isDesktop={isDesktop} />
         {tabs}
         <ErrorState message="Couldn't load your feed." onRetry={() => feed.refetch()} />
-      </main>
+      </CalloutsLayout>
     );
   }
 
   const items = feed.data.pages.flatMap((page) => page.items);
 
   return (
-    <main className={containerClass}>
+    <CalloutsLayout isDesktop={isDesktop}>
       <Header isDesktop={isDesktop} />
       {tabs}
       {items.length === 0 ? (
@@ -155,6 +151,29 @@ export default function HomePage() {
           You&apos;re all caught up
         </Text>
       ) : null}
+    </CalloutsLayout>
+  );
+}
+
+/**
+ * Phone: the edge-to-edge list, unchanged. Desktop (`lg:`): a full-width
+ * page with a title, the feed on the left, and a sticky New Callout
+ * composer on the right instead of the phone's floating button.
+ */
+function CalloutsLayout({ isDesktop, children }: { isDesktop: boolean; children: React.ReactNode }) {
+  if (!isDesktop) return <main className="w-full">{children}</main>;
+  return (
+    <main className="w-full py-8">
+      <Text variant="heading" className="block pb-6 text-5xl font-inter-extrabold">
+        Callouts
+      </Text>
+      <div className="grid grid-cols-[minmax(0,1fr)_380px] items-start gap-8">
+        <div className="min-w-0">{children}</div>
+        <div className="sticky top-24 flex max-h-[calc(100vh-7rem)] flex-col gap-4 overflow-y-auto [&>*]:shrink-0">
+          <CalloutComposerPanel />
+          <TrendingMarketsPanel />
+        </div>
+      </div>
     </main>
   );
 }

@@ -11,12 +11,12 @@ import { IoAdd } from 'react-icons/io5';
  * `MainTabNavigator` shows it only while the Home tab is focused — see
  * docs/DECISIONS.md). Links straight to `/create-call`, same
  * destination `onPress={() => navigation.navigate('CreateCall')}` goes
- * to on mobile. Home now lives at `/home` (`/` is the public landing
+ * to on mobile. Home now lives at `/callouts` (`/` is the public landing
  * page), so that's the route this checks.
  */
 export function Fab() {
   const pathname = usePathname();
-  if (pathname !== '/home') return null;
+  if (pathname !== '/callouts') return null;
 
   return (
     <Link

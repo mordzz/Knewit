@@ -24,7 +24,7 @@ export function Modal({ visible, onClose, children }: ModalProps) {
     // just that bordered column, not the full browser viewport, same
     // as every other overlay in this app.
     <div
-      className="absolute inset-0 z-50 flex items-center justify-center bg-overlay p-6"
+      className="absolute inset-0 z-50 flex items-center lg:fixed justify-center bg-overlay p-6"
       onClick={onClose}
       role="presentation"
     >

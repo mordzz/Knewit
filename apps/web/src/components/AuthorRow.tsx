@@ -41,6 +41,7 @@ export function AuthorRow({ author, onPress }: AuthorRowProps) {
           label={isFollowing ? 'Following' : 'Follow'}
           variant={isFollowing ? 'secondary' : 'primary'}
           loading={toggleFollow.isPending}
+          className="lg:min-h-0 lg:px-4 lg:py-2"
           onClick={() => toggleFollow.mutate({ userId: author.id, following: isFollowing })}
         />
       ) : null}

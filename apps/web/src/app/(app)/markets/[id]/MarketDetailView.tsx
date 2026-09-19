@@ -15,7 +15,7 @@ import { LoadingState } from '@/components/feedback/LoadingState';
 import { EmptyState } from '@/components/feedback/EmptyState';
 import { ErrorState } from '@/components/feedback/ErrorState';
 import { SocialActionBar } from '@/components/SocialActionBar';
-import { TradingPanel, TradeSheet } from '@/components/TradingPanel';
+import { TradingPanel, TradeSheet, TradeCard } from '@/components/TradingPanel';
 import { MyPositionCard } from '@/components/MyPositionCard';
 import { MarketPriceChart } from '@/components/MarketPriceChart';
 import { EventPriceChart } from '@/components/EventPriceChart';
@@ -28,6 +28,7 @@ import { useEvent } from '@/hooks/useEvent';
 import { useEventActivity } from '@/hooks/useEventActivity';
 import { useEventHolders } from '@/hooks/useEventHolders';
 import { useSession } from '@/hooks/useSession';
+import { useIsDesktop } from '@/hooks/useIsDesktop';
 import { ApiRequestError } from '@/lib/apiClient';
 import { formatCompactUsd, formatRelativeTime, formatUsd } from '@/lib/formatters';
 import type { EventDetail, EventHolderRow, FeedItem, MarketDetail, MarketHolder, MarketSummary } from '@/types/social';
@@ -69,6 +70,8 @@ export function MarketDetailView({ id }: { id: string }) {
   const { walletConnected: isConnected } = useSession();
   const [tab, setTab] = useState<DetailTab>('about');
   const [tradeMarketId, setTradeMarketId] = useState<string | null>(null);
+  const [selectedChildId, setSelectedChildId] = useState<string | null>(null);
+  const isDesktop = useIsDesktop();
 
   const market = useMarket(id);
   const marketIsMissing =
@@ -80,6 +83,10 @@ export function MarketDetailView({ id }: { id: string }) {
   const openAuthor = (userId: string) => router.push(`/profile/${userId}`);
   const openPost = (postId: string) => router.push(`/calls/${postId}`);
   const openTrade = (childId: string) => {
+    if (isDesktop) {
+      setSelectedChildId(childId);
+      return;
+    }
     if (!isConnected) {
       router.push('/wallet');
       return;
@@ -88,6 +95,14 @@ export function MarketDetailView({ id }: { id: string }) {
   };
 
   const isEventMode = marketIsMissing;
+  // Desktop shows the trade card for one child at a time — the event's
+  // largest market until another row's Trade is picked.
+  const defaultChildId =
+    event.status === 'success'
+      ? [...event.data.markets].sort((a, b) => (b.volume ?? 0) - (a.volume ?? 0))[0]?.id
+      : undefined;
+  const activeChildId = selectedChildId ?? defaultChildId ?? null;
+  const activeChild = useMarket(activeChildId ?? '', { enabled: isDesktop && isEventMode && activeChildId != null });
   const eventIsMissing =
     event.status === 'error' && event.error instanceof ApiRequestError && event.error.status === 404;
   // A plain market id never reaches event mode; only an event id that
@@ -137,8 +152,8 @@ export function MarketDetailView({ id }: { id: string }) {
                 data, just a two-column composition instead of one long
                 stack (styled after `apps/dekstop`'s detail.tsx, which
                 pairs a chart with a trade card side by side). */}
-            <div className="flex flex-col gap-4 px-4 pb-4 lg:grid lg:grid-cols-[1fr_380px] lg:items-start lg:gap-6 lg:px-0 lg:pb-8 lg:pt-2 2xl:grid-cols-[1fr_440px]">
-              <div className="flex flex-col gap-4">
+            <div className="flex flex-col gap-4 px-4 pb-0 lg:grid lg:grid-cols-[1fr_380px] lg:items-start lg:gap-x-6 lg:px-0 lg:pb-8 lg:pt-2 2xl:grid-cols-[1fr_440px]">
+              <div className="flex flex-col gap-4 lg:col-start-1 lg:row-start-1">
                 <MarketHero market={market.data} onBack={() => router.back()} />
                 {market.data.choices.length > 0 ? (
                   <MarketPriceChart marketId={id} choices={market.data.choices} />
@@ -152,45 +167,48 @@ export function MarketDetailView({ id }: { id: string }) {
                   />
                 ) : null}
               </div>
-              <div className="lg:sticky lg:top-4">
-                <TradingPanel market={market.data} />
+              <div className="lg:sticky lg:top-4 lg:col-start-2 lg:row-span-2 lg:row-start-1">
+                <div className="lg:hidden">
+                  <TradingPanel market={market.data} />
+                </div>
+                <div className="hidden lg:block">
+                  <TradeCard key={market.data.id} market={market.data} />
+                </div>
               </div>
-            </div>
+              <div className="-mx-4 lg:col-start-1 lg:row-start-2 lg:mx-0">
+                <TabRow options={DETAIL_TAB_OPTIONS} value={tab} onChange={setTab} />
 
-            <div>
-              <TabRow options={DETAIL_TAB_OPTIONS} value={tab} onChange={setTab} />
-
-              {tab === 'about' ? <AboutTab market={market.data} /> : null}
-              {tab === 'comments' ? <CommentsTab marketId={id} onOpenAuthor={openAuthor} onOpenPost={openPost} /> : null}
-              {tab === 'holders' ? <HoldersTab marketId={id} /> : null}
+                {tab === 'about' ? <AboutTab market={market.data} /> : null}
+                {tab === 'comments' ? <CommentsTab marketId={id} onOpenAuthor={openAuthor} onOpenPost={openPost} /> : null}
+                {tab === 'holders' ? <HoldersTab marketId={id} /> : null}
+              </div>
             </div>
           </>
         ) : null}
 
         {isEventMode && event.status === 'success' ? (
           <>
-            <div className="flex flex-col gap-4 px-4 pb-4 lg:px-0 lg:pb-8 lg:pt-2">
-              <EventHero event={event.data} onBack={() => router.back()} />
-              <EventPriceChart markets={event.data.markets} />
-
-              <div className="flex flex-col gap-1">
-                <Text variant="bodyStrong" className="block pb-1">
-                  All markets
-                </Text>
-                {event.data.markets.map((child) => (
-                  <EventMarketRow key={child.id} market={child} onTrade={() => openTrade(child.id)} />
-                ))}
+            <div className="flex flex-col gap-4 px-4 pb-0 lg:grid lg:grid-cols-[1fr_380px] lg:items-start lg:gap-x-6 lg:px-0 lg:pb-8 lg:pt-2 2xl:grid-cols-[1fr_440px]">
+              <div className="flex flex-col gap-4 lg:col-start-1 lg:row-start-1">
+                <EventHero event={event.data} onBack={() => router.back()} />
+                <EventPriceChart markets={event.data.markets} />
+                <div className="lg:hidden">
+                  <EventChildMarkets markets={event.data.markets} activeId={null} onTrade={openTrade} />
+                </div>
               </div>
-            </div>
+              <div className="hidden lg:sticky lg:top-4 lg:col-start-2 lg:row-span-2 lg:row-start-1 lg:flex lg:flex-col lg:gap-4">
+                <TradeCard key={activeChildId ?? 'none'} market={activeChild.data ?? null} />
+                <EventChildMarkets markets={event.data.markets} activeId={activeChildId} onTrade={openTrade} />
+              </div>
+              <div className="-mx-4 lg:col-start-1 lg:row-start-2 lg:mx-0">
+                <TabRow options={DETAIL_TAB_OPTIONS} value={tab} onChange={setTab} />
 
-            <div>
-              <TabRow options={DETAIL_TAB_OPTIONS} value={tab} onChange={setTab} />
-
-              {tab === 'about' ? <EventAboutTab event={event.data} /> : null}
-              {tab === 'comments' ? <EventCalloutsTab eventId={id} /> : null}
-              {tab === 'holders' ? (
-                <EventHoldersTab eventId={id} markets={event.data.markets} />
-              ) : null}
+                {tab === 'about' ? <EventAboutTab event={event.data} /> : null}
+                {tab === 'comments' ? <EventCalloutsTab eventId={id} /> : null}
+                {tab === 'holders' ? (
+                  <EventHoldersTab eventId={id} markets={event.data.markets} />
+                ) : null}
+              </div>
             </div>
           </>
         ) : null}
@@ -201,6 +219,28 @@ export function MarketDetailView({ id }: { id: string }) {
         visible={tradeMarketId != null}
         onClose={() => setTradeMarketId(null)}
       />
+    </div>
+  );
+}
+
+/** "All markets" list of an event; `activeId` highlights the child shown in the desktop trade card. */
+function EventChildMarkets({
+  markets,
+  activeId,
+  onTrade,
+}: {
+  markets: MarketSummary[];
+  activeId: string | null;
+  onTrade: (childId: string) => void;
+}) {
+  return (
+    <div className="flex flex-col gap-1">
+      <Text variant="bodyStrong" className="block pb-1">
+        All markets
+      </Text>
+      {markets.map((child) => (
+        <EventMarketRow key={child.id} market={child} selected={child.id === activeId} onTrade={() => onTrade(child.id)} />
+      ))}
     </div>
   );
 }
@@ -225,11 +265,11 @@ function EventHero({ event, onBack }: { event: EventDetail; onBack: () => void }
  * display-only (no click, no hover); the only action is the yellow Trade
  * button, which opens the shared `TradeSheet` for this child in place.
  */
-function EventMarketRow({ market, onTrade }: { market: MarketSummary; onTrade: () => void }) {
+function EventMarketRow({ market, selected = false, onTrade }: { market: MarketSummary; selected?: boolean; onTrade: () => void }) {
   const headline = market.label ?? market.question;
 
   return (
-    <div className="flex items-center gap-3 border-b border-border py-3">
+    <div className={`flex items-center gap-3 border-b border-border py-3 ${selected ? 'lg:bg-white/5' : ''}`}>
       {market.imageUrl ? (
         // eslint-disable-next-line @next/next/no-img-element
         <img src={market.imageUrl} alt="" className="h-10 w-10 flex-shrink-0 rounded-xl object-cover" />

@@ -42,7 +42,7 @@ export default function CreateCallPage() {
     if (!canPublish || !selectedPosition) return;
     mutation.mutate(
       { body: trimmed, positionId: selectedPosition.id },
-      { onSuccess: () => router.push('/home') }
+      { onSuccess: () => router.push('/callouts') }
     );
   }
 

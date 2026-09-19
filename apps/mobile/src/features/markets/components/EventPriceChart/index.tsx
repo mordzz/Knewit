@@ -15,7 +15,7 @@ import type { MarketSummary, PriceRange } from '@/types/social';
  * repeat the colors with a dashed stroke so two different outcomes can
  * never look identical. */
 const EVENT_LINE_COLORS = [
-  '#FDCC03',
+  '#FFE506',
   '#22C55E',
   '#F43F5E',
   '#60A5FA',

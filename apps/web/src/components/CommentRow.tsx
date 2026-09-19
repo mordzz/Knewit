@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 import { Text } from '@/components/ui/Text';
 import { Avatar } from '@/components/ui/Avatar';
 import { Icon } from '@/components/ui/Icon';
@@ -21,6 +21,9 @@ export interface CommentRowProps {
   onOpenAuthor: (userId: string) => void;
   onReply: (comment: CommentItem) => void;
   deletingCommentId: string | null;
+  /** Id of the comment whose inline reply composer is open, if any. */
+  activeReplyId?: string | null;
+  renderComposer?: (comment: CommentItem) => ReactNode;
   isReply?: boolean;
 }
 
@@ -30,7 +33,7 @@ export interface CommentRowProps {
  * top-level comments show a "View N replies" toggle, lazily fetching
  * and rendering that thread nested directly below, one level deep.
  */
-export function CommentRow({ comment, postId, onDelete, onOpenAuthor, onReply, deletingCommentId, isReply = false }: CommentRowProps) {
+export function CommentRow({ comment, postId, onDelete, onOpenAuthor, onReply, deletingCommentId, activeReplyId = null, renderComposer, isReply = false }: CommentRowProps) {
   const isDeleting = deletingCommentId === comment.id;
   const [confirmVisible, setConfirmVisible] = useState(false);
   const [repliesExpanded, setRepliesExpanded] = useState(false);
@@ -39,7 +42,7 @@ export function CommentRow({ comment, postId, onDelete, onOpenAuthor, onReply, d
   const replies = useCommentReplies(comment.id, repliesExpanded && !isReply);
 
   async function handleShare() {
-    const message = `${comment.author.displayName}: ${comment.body}\n\nvia Knewit`;
+    const message = `${comment.author.displayName}: ${comment.body}\n\nvia Knew it`;
     try {
       if (typeof navigator !== 'undefined' && navigator.share) {
         await navigator.share({ text: message });
@@ -56,7 +59,7 @@ export function CommentRow({ comment, postId, onDelete, onOpenAuthor, onReply, d
 
   return (
     <div className={cn('border-b border-border px-4 py-3', isReply && 'border-b-0 pb-0 pl-11 pt-2')}>
-      <div className="flex gap-3">
+      <div className="flex items-start gap-3">
         <button type="button" onClick={() => onOpenAuthor(comment.author.id)} aria-label={`Open ${comment.author.displayName}'s profile`}>
           <Avatar uri={comment.author.avatarUrl} fallbackLabel={comment.author.displayName} size={isReply ? 26 : 32} />
         </button>
@@ -69,9 +72,6 @@ export function CommentRow({ comment, postId, onDelete, onOpenAuthor, onReply, d
             >
               <Text variant="bodyStrong" numberOfLines={1} className="truncate">
                 {comment.author.displayName}
-              </Text>
-              <Text variant="caption" color="textTertiary">
-                · {formatRelativeTime(comment.createdAt)}
               </Text>
             </button>
             {comment.canDelete ? (
@@ -112,7 +112,12 @@ export function CommentRow({ comment, postId, onDelete, onOpenAuthor, onReply, d
                 </Text>
               ) : null}
             </button>
+            <Text variant="caption" color="textTertiary" className="ml-auto">
+              {formatRelativeTime(comment.createdAt)}
+            </Text>
           </div>
+
+          {activeReplyId === comment.id && renderComposer ? renderComposer(comment) : null}
 
           {!isReply && comment.replyCount > 0 ? (
             <button
@@ -140,6 +145,8 @@ export function CommentRow({ comment, postId, onDelete, onOpenAuthor, onReply, d
               onOpenAuthor={onOpenAuthor}
               onReply={onReply}
               deletingCommentId={deletingCommentId}
+              activeReplyId={activeReplyId}
+              renderComposer={renderComposer}
               isReply
             />
           ))

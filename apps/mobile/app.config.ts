@@ -1,7 +1,7 @@
 import type { ExpoConfig } from 'expo/config';
 
 const config: ExpoConfig = {
-  name: 'Knewit',
+  name: 'Knew it',
   slug: 'knewit',
   version: '1.0.0',
   orientation: 'portrait',
@@ -21,7 +21,7 @@ const config: ExpoConfig = {
   android: {
     package: 'com.dzakaal10.knewit', // <-- Ditambahkan di sini
     adaptiveIcon: {
-      backgroundColor: '#FDCC03',
+      backgroundColor: '#FFE506',
       foregroundImage: './assets/android-icon-foreground.png',
       backgroundImage: './assets/android-icon-background.png',
       monochromeImage: './assets/android-icon-monochrome.png',

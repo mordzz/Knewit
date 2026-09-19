@@ -174,7 +174,7 @@ export async function resolveTargetUserId(idParam: string, viewerPrivyUserId: st
   if (isWalletAddress(idParam)) {
     const local = await findUserByWalletAddress(idParam);
     if (local) return local.id;
-    throw notFound(`No Knewit profile for wallet ${idParam} yet.`);
+    throw notFound(`No Knew it profile for wallet ${idParam} yet.`);
   }
 
   throw notFound(`User ${idParam} not found.`);

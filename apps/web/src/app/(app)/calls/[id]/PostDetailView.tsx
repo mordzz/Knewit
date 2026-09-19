@@ -14,6 +14,7 @@ import { MarketAttachment } from '@/components/MarketAttachment';
 import { SocialActionBar } from '@/components/SocialActionBar';
 import { CommentRow } from '@/components/CommentRow';
 import { CommentComposer } from '@/components/CommentComposer';
+import { TrendingMarketsPanel } from '@/components/TrendingMarketsPanel';
 import { usePost } from '@/hooks/usePost';
 import { useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { getComments, createComment } from '@/lib/commentService';
@@ -57,9 +58,26 @@ export function PostDetailView({ postId }: { postId: string }) {
   });
   const deleteCommentMutation = useDeleteComment(postId);
   const deletePostMutation = useDeletePost(postId);
-  const [replyTarget, setReplyTarget] = useState<CommentItem | null>(null);
+  // Nothing is open until a comment button is tapped: the post's own
+  // button opens a top-level composer under the action bar, a comment's
+  // reply button opens one right under that comment.
+  const [composerTarget, setComposerTarget] = useState<{ kind: 'post' } | { kind: 'reply'; comment: CommentItem } | null>(null);
   const [confirmDeleteVisible, setConfirmDeleteVisible] = useState(false);
   const sentinelRef = useRef<HTMLDivElement>(null);
+
+  const renderComposer = (target: { kind: 'post' } | { kind: 'reply'; comment: CommentItem }) => (
+    <CommentComposer
+      isSubmitting={createCommentMutation.isPending}
+      replyingToHandle={target.kind === 'reply' ? target.comment.author.handle : null}
+      onClose={() => setComposerTarget(null)}
+      onSubmit={(body) =>
+        createCommentMutation.mutate(
+          { body, parentCommentId: target.kind === 'reply' ? target.comment.id : undefined },
+          { onSuccess: () => setComposerTarget(null) }
+        )
+      }
+    />
+  );
 
   const openAuthor = (userId: string) => router.push(`/profile/${userId}`);
   // A child market's attachment opens its parent event's detail instead
@@ -88,7 +106,8 @@ export function PostDetailView({ postId }: { postId: string }) {
   }, [hasNextCommentsPage, isFetchingNextCommentsPage, fetchNextCommentsPage]);
 
   return (
-    <div className="flex h-full w-full flex-col lg:mx-auto lg:max-w-3xl">
+    <div className="flex h-full w-full flex-col lg:grid lg:h-auto lg:grid-cols-[minmax(0,1fr)_340px] lg:items-start lg:gap-8">
+      <div className="flex min-h-0 min-w-0 flex-1 flex-col">
       <div className="flex flex-shrink-0 items-center justify-between px-4 pb-2 pt-4">
         <button type="button" onClick={() => router.back()} aria-label="Go back">
           <Icon name="chevron-back" size={24} />
@@ -130,7 +149,13 @@ export function PostDetailView({ postId }: { postId: string }) {
 
         {post.status === 'success' ? (
           <>
-            <PostContent item={post.data} onOpenAuthor={openAuthor} onOpenMarket={openMarket} />
+            <PostContent
+              item={post.data}
+              onOpenAuthor={openAuthor}
+              onOpenMarket={openMarket}
+              onPressComment={() => setComposerTarget((current) => (current?.kind === 'post' ? null : { kind: 'post' }))}
+              composer={composerTarget?.kind === 'post' ? renderComposer(composerTarget) : null}
+            />
 
             {comments.status === 'pending' ? (
               <div className="px-4">
@@ -149,7 +174,13 @@ export function PostDetailView({ postId }: { postId: string }) {
                     postId={postId}
                     onDelete={(commentId) => deleteCommentMutation.mutate(commentId)}
                     onOpenAuthor={openAuthor}
-                    onReply={setReplyTarget}
+                    onReply={(target) =>
+                      setComposerTarget((current) =>
+                        current?.kind === 'reply' && current.comment.id === target.id ? null : { kind: 'reply', comment: target }
+                      )
+                    }
+                    activeReplyId={composerTarget?.kind === 'reply' ? composerTarget.comment.id : null}
+                    renderComposer={(target) => renderComposer({ kind: 'reply', comment: target })}
                     deletingCommentId={deleteCommentMutation.isPending ? (deleteCommentMutation.variables ?? null) : null}
                   />
                 ))}
@@ -164,19 +195,11 @@ export function PostDetailView({ postId }: { postId: string }) {
         ) : null}
       </div>
 
-      {post.status === 'success' ? (
-        <div className="flex-shrink-0">
-          <CommentComposer
-            isSubmitting={createCommentMutation.isPending}
-            replyingToHandle={replyTarget?.author.handle ?? null}
-            onCancelReply={() => setReplyTarget(null)}
-            onSubmit={(body) => {
-              const parentCommentId = replyTarget?.id;
-              createCommentMutation.mutate({ body, parentCommentId }, { onSuccess: () => setReplyTarget(null) });
-            }}
-          />
-        </div>
-      ) : null}
+      </div>
+
+      <aside className="sticky top-20 hidden lg:block">
+        <TrendingMarketsPanel />
+      </aside>
 
       <Modal visible={confirmDeleteVisible} onClose={() => setConfirmDeleteVisible(false)}>
         <div className="flex flex-col gap-3">
@@ -211,25 +234,39 @@ function PostContent({
   item,
   onOpenAuthor,
   onOpenMarket,
+  onPressComment,
+  composer,
 }: {
   item: FeedItem;
   onOpenAuthor: (userId: string) => void;
   onOpenMarket: (market: MarketSummary) => void;
+  onPressComment: () => void;
+  composer: React.ReactNode;
 }) {
   return (
     <div className="flex flex-col gap-3 px-4 pb-4">
       <AuthorRow author={item.author} onPress={() => onOpenAuthor(item.author.id)} />
 
       <Text variant="body">{item.body}</Text>
-      <Text variant="caption" color="textTertiary">
-        {formatRelativeTime(item.createdAt)}
-      </Text>
-
       {item.market ? (
         <MarketAttachment market={item.market} positionSnapshot={item.positionSnapshot} onPress={() => onOpenMarket(item.market!)} />
       ) : null}
 
-      <SocialActionBar postId={item.id} liked={item.liked} likeCount={item.likeCount} commentCount={item.commentCount} />
+      <div>
+        <SocialActionBar
+          postId={item.id}
+          liked={item.liked}
+          likeCount={item.likeCount}
+          commentCount={item.commentCount}
+          onPressComment={onPressComment}
+          trailing={
+            <Text variant="caption" color="textTertiary">
+              {formatRelativeTime(item.createdAt)}
+            </Text>
+          }
+        />
+        {composer}
+      </div>
 
       <div className="mt-2 border-t border-border pt-3">
         <Text variant="bodyStrong">Comments</Text>

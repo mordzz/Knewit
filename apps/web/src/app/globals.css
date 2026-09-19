@@ -24,8 +24,8 @@
   --color-no: #f43f5e;
   --color-no-muted: rgba(244, 63, 94, 0.15);
 
-  --color-accent: #fdcc03;
-  --color-accent-muted: rgba(253, 204, 3, 0.15);
+  --color-accent: oklch(0.92 0.19 99);
+  --color-accent-muted: rgba(255, 229, 6, 0.15);
   --color-warning: #f59e0b;
   --color-danger: #ef4444;
 

@@ -74,7 +74,7 @@ export function AppProviders({ children }: PropsWithChildren) {
               funding flow behind the Wallet screen's Deposit button
               (docs/WALLET.md, "Deposit"). Dark + brand accent so its
               modals match the app. */}
-          <PrivyElements config={{ appearance: { colorScheme: 'dark', accentColor: '#FDCC03' } }} />
+          <PrivyElements config={{ appearance: { colorScheme: 'dark', accentColor: '#FFE506' } }} />
           {children}
         </PrivyProvider>
       </QueryClientProvider>

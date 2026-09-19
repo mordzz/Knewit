@@ -48,6 +48,9 @@ const nextConfig: NextConfig = {
       },
     ];
   },
+  async redirects() {
+    return [{ source: "/home", destination: "/callouts", permanent: false }];
+  },
   // This repo is a monorepo with a lockfile at both the repo root and
   // this app's own directory (apps/backend, apps/frontend each have
   // their own independent package.json/lockfile — see docs/ARCHITECTURE.md,

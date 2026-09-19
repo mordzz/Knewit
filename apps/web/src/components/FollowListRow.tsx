@@ -35,6 +35,7 @@ export function FollowListRow({ item, onPress }: FollowListRowProps) {
           label={item.isFollowing ? 'Following' : 'Follow'}
           variant={item.isFollowing ? 'secondary' : 'primary'}
           loading={toggleFollow.isPending}
+          className="lg:min-h-0 lg:px-4 lg:py-2"
           onClick={() => toggleFollow.mutate({ userId: item.user.id, following: item.isFollowing })}
         />
       ) : null}

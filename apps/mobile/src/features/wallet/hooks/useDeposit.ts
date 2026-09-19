@@ -45,7 +45,7 @@ export function useDeposit() {
       // MoonPay's hosted UI has its own theme; match the app's dark +
       // brand yellow (Privy's own screens follow `<PrivyElements />`'s
       // config in `AppProviders`). Coinbase's on-ramp exposes no theme.
-      moonpay: { uiConfig: { accentColor: '#FDCC03', theme: 'dark' } },
+      moonpay: { uiConfig: { accentColor: '#FFE506', theme: 'dark' } },
     });
     await queryClient.invalidateQueries({ queryKey: ['wallet-balance'] });
     await queryClient.invalidateQueries({ queryKey: ['positions'] });

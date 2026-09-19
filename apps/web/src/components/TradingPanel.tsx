@@ -8,6 +8,7 @@ import { Icon } from '@/components/ui/Icon';
 import { Input } from '@/components/ui/Input';
 import { Card } from '@/components/ui/Card';
 import { BottomSheet } from '@/components/ui/BottomSheet';
+import { CARD_SURFACE_CLASS } from '@/components/ui/cardSurface';
 import { LoadingState } from '@/components/feedback/LoadingState';
 import { WalletAddress } from '@/components/WalletAddress';
 import { useCreateTrade } from '@/hooks/useCreateTrade';
@@ -79,15 +80,7 @@ export function TradingPanel({ market }: { market: MarketDetail }) {
  * Never fabricates a successful trade — a failed backend call shows a
  * real "Trade failed" state.
  */
-export function TradeSheet({
-  market,
-  visible,
-  onClose,
-}: {
-  market: MarketDetail | null;
-  visible: boolean;
-  onClose: () => void;
-}) {
+function useTradeFlow(market: MarketDetail | null, onClose: () => void) {
   const { address, walletConnected: isConnected } = useSession();
   const [choiceIndex, setChoiceIndex] = useState(0);
   const [amountText, setAmountText] = useState('');
@@ -136,48 +129,113 @@ export function TradeSheet({
     mutation.mutate({ marketId: market.id, choiceIndex: choice.index, usdAmount: amount });
   }
 
+  return {
+    market,
+    address,
+    choice,
+    choiceIndex,
+    setChoiceIndex,
+    amountText,
+    handleChangeAmount,
+    amount,
+    displayPrice,
+    shares,
+    canSubmit,
+    step,
+    setStep,
+    isValidating,
+    mutation,
+    closeSheet,
+    goToConfirm,
+    handleConfirm,
+  };
+}
+
+type TradeFlow = ReturnType<typeof useTradeFlow>;
+
+/** The pick → confirm → result content, shared by the mobile sheet and
+ * the desktop inline card. */
+function TradeFlowContent({ flow }: { flow: TradeFlow }) {
+  const { market } = flow;
+
+  if (!market) {
+    return (
+      <div className="py-2">
+        <LoadingState rows={3} />
+      </div>
+    );
+  }
+  if (market.resolved) return <InfoBanner text="This market has resolved." />;
+  if (market.closed) return <InfoBanner text="Market Closed — Trading is no longer available." />;
+  if (market.choices.length === 0) return <InfoBanner text="This market has no tradeable outcomes." />;
+
+  return flow.step === 'pick' ? (
+    <PickStep
+      choices={market.choices}
+      choiceIndex={flow.choiceIndex}
+      onSelectChoice={flow.setChoiceIndex}
+      amountText={flow.amountText}
+      onChangeAmount={flow.handleChangeAmount}
+      amount={flow.amount}
+      price={flow.displayPrice}
+      shares={flow.shares}
+      canSubmit={flow.canSubmit}
+      onContinue={flow.goToConfirm}
+    />
+  ) : (
+    <ConfirmTradeContent
+      market={market}
+      choice={flow.choice}
+      amount={flow.amount}
+      shares={flow.shares}
+      price={flow.displayPrice}
+      address={flow.address}
+      isValidating={flow.isValidating}
+      mutationStatus={flow.mutation.status}
+      errorMessage={flow.mutation.error?.message ?? null}
+      onConfirm={flow.handleConfirm}
+      onBack={() => flow.setStep('pick')}
+      onClose={flow.closeSheet}
+    />
+  );
+}
+
+export function TradeSheet({
+  market,
+  visible,
+  onClose,
+}: {
+  market: MarketDetail | null;
+  visible: boolean;
+  onClose: () => void;
+}) {
+  const flow = useTradeFlow(market, onClose);
+
   return (
-    <BottomSheet visible={visible} onClose={closeSheet}>
-      {!market ? (
-        <div className="py-2">
-          <LoadingState rows={3} />
-        </div>
-      ) : market.resolved ? (
-        <InfoBanner text="This market has resolved." />
-      ) : market.closed ? (
-        <InfoBanner text="Market Closed — Trading is no longer available." />
-      ) : market.choices.length === 0 ? (
-        <InfoBanner text="This market has no tradeable outcomes." />
-      ) : step === 'pick' ? (
-        <PickStep
-          choices={market.choices}
-          choiceIndex={choiceIndex}
-          onSelectChoice={setChoiceIndex}
-          amountText={amountText}
-          onChangeAmount={handleChangeAmount}
-          amount={amount}
-          price={displayPrice}
-          shares={shares}
-          canSubmit={canSubmit}
-          onContinue={goToConfirm}
-        />
-      ) : (
-        <ConfirmTradeContent
-          market={market}
-          choice={choice}
-          amount={amount}
-          shares={shares}
-          price={displayPrice}
-          address={address}
-          isValidating={isValidating}
-          mutationStatus={mutation.status}
-          errorMessage={mutation.error?.message ?? null}
-          onConfirm={handleConfirm}
-          onBack={() => setStep('pick')}
-          onClose={closeSheet}
-        />
-      )}
+    <BottomSheet visible={visible} onClose={flow.closeSheet}>
+      <TradeFlowContent flow={flow} />
     </BottomSheet>
+  );
+}
+
+/**
+ * Desktop-only inline trade card (the right column of Market Detail) —
+ * the same flow as `TradeSheet`, rendered in place instead of a sheet.
+ * Give it a `key` of the market id so switching markets starts fresh.
+ */
+export function TradeCard({ market }: { market: MarketDetail | null }) {
+  const router = useRouter();
+  const { walletConnected: isConnected } = useSession();
+  const flow = useTradeFlow(market, () => {});
+
+  return (
+    <div className={`${CARD_SURFACE_CLASS} p-5`}>
+      {!isConnected && market && !market.resolved && !market.closed ? (
+        <Button label="Connect Wallet to Trade" onClick={() => router.push('/wallet')} />
+      ) : (
+        <TradeFlowContent flow={flow} />
+      )}
+    </div>
   );
 }
 

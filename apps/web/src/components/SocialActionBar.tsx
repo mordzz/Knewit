@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import { Icon } from '@/components/ui/Icon';
 import { Text } from '@/components/ui/Text';
 import { LikeButton } from '@/components/ui/LikeButton';
@@ -12,6 +13,8 @@ export interface SocialActionBarProps {
   /** Omit on the Detail page itself — the comments are already right
    * below, so the count renders as plain (non-interactive) text there. */
   onPressComment?: () => void;
+  /** Rendered at the far right of the row (e.g. the post's timestamp). */
+  trailing?: ReactNode;
 }
 
 /**
@@ -23,7 +26,7 @@ export interface SocialActionBarProps {
  * equivalent worth building for this pass (same scope note the old web
  * port already carried).
  */
-export function SocialActionBar({ postId, liked, likeCount, commentCount, onPressComment }: SocialActionBarProps) {
+export function SocialActionBar({ postId, liked, likeCount, commentCount, onPressComment, trailing }: SocialActionBarProps) {
   const toggleLike = useToggleLike();
 
   return (
@@ -58,6 +61,7 @@ export function SocialActionBar({ postId, liked, likeCount, commentCount, onPres
           ) : null}
         </div>
       )}
+      {trailing ? <div className="ml-auto">{trailing}</div> : null}
     </div>
   );
 }

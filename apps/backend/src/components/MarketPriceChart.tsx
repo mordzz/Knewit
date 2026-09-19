@@ -19,7 +19,7 @@ function lineColor(choice: MarketChoice): string {
   const tone = choiceTone(choice);
   if (tone === 'yes') return '#22C55E';
   if (tone === 'no') return '#F43F5E';
-  if (tone === 'accent') return '#FDCC03';
+  if (tone === 'accent') return '#FFE506';
   return '#9AA3B2';
 }
 

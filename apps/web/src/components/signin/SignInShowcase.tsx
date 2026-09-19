@@ -1,5 +1,6 @@
 import Image from 'next/image';
-import { TrendingUp } from 'lucide-react';
+import Link from 'next/link';
+import { TrendingUp, Zap, ShieldCheck, Globe2 } from 'lucide-react';
 import { Sparkline } from '@/components/ui/Sparkline';
 import { CARD_SURFACE_CLASS } from '@/components/ui/cardSurface';
 
@@ -14,20 +15,29 @@ import { CARD_SURFACE_CLASS } from '@/components/ui/cardSurface';
  */
 export function SignInShowcase() {
   return (
-    <section className="relative hidden overflow-hidden border-r border-border bg-surface p-12 lg:flex lg:flex-col">
-      <div className="flex items-center gap-2.5">
+    <section className="relative hidden overflow-hidden bg-landing-yellow p-12 text-landing-ink lg:flex lg:flex-col">
+      <Link
+        href="/"
+        aria-label="Back to home"
+        className="flex w-fit items-center gap-2.5 focus-visible:outline-3 focus-visible:outline-accent focus-visible:outline-offset-4"
+      >
         <Image src="/icon.png" alt="" width={36} height={36} className="rounded-lg" />
-        <span className="text-lg font-inter-bold text-text-primary">Knewit</span>
-      </div>
+        <span className="text-lg font-inter-bold text-text-collor">Knew it</span>
+      </Link>
       <div className="my-auto max-w-2xl">
-        <h1 className="mt-6 max-w-xl font-inter-bold text-5xl leading-[1.06] text-text-primary">
-          Your next move starts here.
+        <h1 className="mt-6 max-w-xl font-inter-bold text-7xl leading-[1.02] tracking-[-0.03em]">
+          See the market. Back your take.
         </h1>
-        <p className="mt-5 max-w-lg text-lg leading-7 text-text-secondary">
+        <p className="mt-5 max-w-lg text-lg leading-7 text-landing-ink/70">
           Predictions, crypto, memecoins, perps, and tokenized stocks. One app.
         </p>
-        <div className="relative mt-12 h-80">
-          <div className={`absolute left-0 top-0 w-[54%] ${CARD_SURFACE_CLASS} p-5 shadow-2xl`}>
+        <ul className="mt-8 space-y-3 text-sm font-inter-medium text-landing-ink/80">
+          <li className="flex items-center gap-2.5"><Globe2 className="size-4" /> Predictions, crypto, and stocks in one place</li>
+          <li className="flex items-center gap-2.5"><Zap className="size-4" /> Live prices and positions</li>
+          <li className="flex items-center gap-2.5"><ShieldCheck className="size-4" /> Try it instantly as a guest</li>
+        </ul>
+        <div className="relative mt-10 h-80">
+          <div className={`absolute left-0 top-0 w-[54%] -rotate-2 ${CARD_SURFACE_CLASS} p-5 shadow-2xl`}>
             <span className="text-xs font-inter-medium text-accent">Featured prediction</span>
             <p className="mt-4 font-inter-semibold text-text-primary">Will Bitcoin reach $150K before 2027?</p>
             <div className="mt-6 grid grid-cols-[auto_1fr] items-end gap-6">
@@ -46,7 +56,7 @@ export function SignInShowcase() {
               </span>
             </div>
           </div>
-          <div className={`absolute bottom-0 right-0 w-[42%] ${CARD_SURFACE_CLASS} p-5 shadow-2xl`}>
+          <div className={`absolute bottom-0 right-0 w-[42%] rotate-2 ${CARD_SURFACE_CLASS} p-5 shadow-2xl`}>
             <p className="text-xs text-text-tertiary">Portfolio value</p>
             <p className="mt-2 text-2xl font-inter-semibold tabular-nums text-text-primary">$24,680.42</p>
             <p className="mt-1 inline-flex items-center gap-1 text-xs text-yes">
@@ -66,7 +76,7 @@ export function SignInShowcase() {
           </div>
         </div>
       </div>
-      <p className="text-xs text-text-tertiary">Markets involve risk. Trade responsibly.</p>
+      <p className="text-xs text-landing-ink/60">Markets involve risk. Trade responsibly.</p>
     </section>
   );
 }

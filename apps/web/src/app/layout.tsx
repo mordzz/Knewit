@@ -15,8 +15,12 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: 'Knewit',
+  title: 'Knew it',
   description: 'A social prediction-market app — where hype becomes opportunity.',
+  icons: {
+    icon: '/favicon.ico',
+    apple: '/icon.png',
+  },
 };
 
 export default function RootLayout({ children }: LayoutProps<'/'>) {

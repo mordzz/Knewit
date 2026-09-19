@@ -16,6 +16,9 @@ import { ErrorState } from '@/components/feedback/ErrorState';
 import { CallCard } from '@/components/CallCard';
 import { ActivityRow } from '@/components/ActivityRow';
 import { WalletAddress } from '@/components/WalletAddress';
+import { EditProfileModal } from '@/components/EditProfileModal';
+import { WhoToFollowPanel } from '@/components/WhoToFollowPanel';
+import { TrendingMarketsPanel } from '@/components/TrendingMarketsPanel';
 import { useProfile } from '@/hooks/useProfile';
 import { useFollowToggle } from '@/hooks/useFollowToggle';
 import { useUserCalls } from '@/hooks/useUserCalls';
@@ -53,6 +56,7 @@ export function ProfileView({ userId }: { userId?: string }) {
   const isDesktop = useIsDesktop();
   const { walletConnected } = useSession();
   const [selectedTab, setTab] = useState<ProfileTab>('calls');
+  const [editOpen, setEditOpen] = useState(false);
   // A stale "activity" selection (e.g. after resizing to desktop, where
   // that tab doesn't exist) falls back to Calls.
   const tab: ProfileTab = isDesktop && selectedTab === 'activity' ? 'calls' : selectedTab;
@@ -80,7 +84,7 @@ export function ProfileView({ userId }: { userId?: string }) {
 
   if (profile.status === 'error' && isNotFound) {
     return (
-      <main className="w-full lg:mx-auto lg:max-w-3xl">
+      <main className="w-full ">
         <EmptyState icon="person-outline" title="User not found" message="This profile may have been removed or the link is incorrect." />
       </main>
     );
@@ -88,7 +92,7 @@ export function ProfileView({ userId }: { userId?: string }) {
 
   if (profile.status === 'error') {
     return (
-      <main className="w-full lg:mx-auto lg:max-w-3xl">
+      <main className="w-full ">
         <ErrorState message="Unable to load profile." onRetry={() => profile.refetch()} />
       </main>
     );
@@ -105,7 +109,8 @@ export function ProfileView({ userId }: { userId?: string }) {
   const activeStatus = tab === 'activity' ? activity.status : tab === 'replies' ? replies.status : calls.status;
 
   return (
-    <main className="w-full lg:mx-auto lg:max-w-3xl">
+    <main className="w-full lg:grid lg:grid-cols-[minmax(0,1fr)_340px] lg:items-start lg:gap-8">
+      <div className="min-w-0">
       <div className="relative z-0 h-36 w-full overflow-hidden">
         {user.bannerUrl ? (
           // eslint-disable-next-line @next/next/no-img-element -- uploaded storage URL, not a bundled asset
@@ -125,7 +130,7 @@ export function ProfileView({ userId }: { userId?: string }) {
             variant={user.isFollowing ? 'secondary' : 'primary'}
             loading={toggleFollow.isPending}
             onClick={() => toggleFollow.mutate({ userId: user.id, following: user.isFollowing })}
-            className="mt-12"
+            className="mt-12 lg:min-h-0 lg:px-4 lg:py-2"
           />
         ) : null}
       </div>
@@ -144,7 +149,7 @@ export function ProfileView({ userId }: { userId?: string }) {
             <Button
               label="Edit Profile"
               variant="secondary"
-              onClick={() => router.push('/profile/edit')}
+              onClick={() => (isDesktop ? setEditOpen(true) : router.push('/profile/edit'))}
               className="mt-0.5 min-h-0 shrink-0 px-4 py-2"
             />
           ) : null}
@@ -169,7 +174,7 @@ export function ProfileView({ userId }: { userId?: string }) {
         </div>
 
         {user.isSelf ? (
-          <Link href="/wallet" className="flex items-center gap-3 border-y border-border py-3 hover:opacity-90">
+          <Link href="/wallet" className="flex items-center gap-3 border-y border-border py-3 hover:opacity-90 lg:hidden">
             <Icon name="wallet-outline" color="accent" />
             <div className="flex-1">
               <Text variant="bodyStrong" className="block">
@@ -256,6 +261,12 @@ export function ProfileView({ userId }: { userId?: string }) {
       ) : (
         (items as FeedItem[]).map((item) => <CallCard key={item.id} item={item} />)
       )}
+      </div>
+      {isDesktop ? <EditProfileModal visible={editOpen} onClose={() => setEditOpen(false)} /> : null}
+      <aside className="sticky top-20 hidden flex-col gap-4 lg:flex">
+        <WhoToFollowPanel />
+        <TrendingMarketsPanel />
+      </aside>
     </main>
   );
 }

@@ -30,7 +30,7 @@ export interface TabItem {
  * circled person; Home and Search keep their existing glyphs.
  */
 export const TAB_ITEMS: TabItem[] = [
-  { href: '/home', label: 'Home', icon: IoHomeOutline, activeIcon: IoHome },
+  { href: '/callouts', label: 'Callouts', icon: IoHomeOutline, activeIcon: IoHome },
   { href: '/markets', label: 'Markets', icon: IoStatsChartOutline, activeIcon: IoStatsChart },
   { href: '/search', label: 'Search', icon: IoSearchOutline, activeIcon: IoSearch },
   { href: '/leaderboard', label: 'Leaderboard', icon: IoPodiumOutline, activeIcon: IoPodium },

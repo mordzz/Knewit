@@ -84,7 +84,7 @@ export const DEFAULT_GUEST_PROFILE: GuestProfile = {
   displayName: 'Guest',
   avatarUrl: null,
   walletAddress: GUEST_WALLET_ADDRESS,
-  bio: 'Exploring Knewit in guest demo mode.',
+  bio: 'Exploring Knew it in guest demo mode.',
   bannerUrl: null,
   followerCount: 0,
   followingCount: 0,

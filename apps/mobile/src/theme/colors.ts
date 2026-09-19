@@ -18,8 +18,8 @@ export const colors = {
   no: '#F43F5E',
   noMuted: 'rgba(244, 63, 94, 0.15)',
 
-  accent: '#FDCC03',
-  accentMuted: 'rgba(253, 204, 3, 0.15)',
+  accent: '#FFE506',
+  accentMuted: 'rgba(255, 229, 6, 0.15)',
   warning: '#F59E0B',
   danger: '#EF4444',
 

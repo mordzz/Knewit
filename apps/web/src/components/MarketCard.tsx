@@ -41,7 +41,7 @@ export function MarketCard({ item }: MarketCardProps) {
 async function shareMarket(title: string) {
   if (typeof navigator !== 'undefined' && navigator.share) {
     try {
-      await navigator.share({ text: `${title}\n\nvia Knewit` });
+      await navigator.share({ text: `${title}\n\nvia Knew it` });
     } catch {
       // User dismissed the share sheet — nothing to recover from.
     }

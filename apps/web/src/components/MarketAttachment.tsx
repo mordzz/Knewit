@@ -26,7 +26,7 @@ export function MarketAttachment({ market, positionSnapshot, onPress }: MarketAt
   const hasPosition = positionSnapshot != null;
 
   return (
-    <button type="button" onClick={onPress} className="mt-3 block w-full text-left transition-opacity hover:opacity-90">
+    <button type="button" onClick={onPress} className="mt-3 block w-full text-left transition-opacity hover:opacity-90 lg:max-w-[306px]">
       <GlassSurface tone="dark" blur={false} radius={18} contentClassName="flex flex-col gap-3 p-3.5">
         <div className="flex items-center gap-2.5">
           <MarketVisual imageUrl={market.imageUrl} fallbackIcon="trending-up-outline" />

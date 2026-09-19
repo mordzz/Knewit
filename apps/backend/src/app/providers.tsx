@@ -36,7 +36,7 @@ export function Providers({ children }: { children: ReactNode }) {
         appId={publicEnv.privyAppId}
         clientId={publicEnv.privyClientId || undefined}
         config={{
-          appearance: { theme: 'dark', accentColor: '#FDCC03' },
+          appearance: { theme: 'dark', accentColor: '#FFE506' },
           loginMethods: ['email', 'google', 'twitter'],
           embeddedWallets: { ethereum: { createOnLogin: 'users-without-wallets' } },
           // MoonPay's hosted UI has its own theme; match the app's dark +
@@ -44,7 +44,7 @@ export function Providers({ children }: { children: ReactNode }) {
           // (the Privy-owned part already follows `appearance` above).
           // Coinbase's on-ramp exposes no theme options.
           fundingMethodConfig: {
-            moonpay: { uiConfig: { accentColor: '#FDCC03', theme: 'dark' } },
+            moonpay: { uiConfig: { accentColor: '#FFE506', theme: 'dark' } },
           },
           // Solana wallet login is enabled in the Privy Dashboard for this
           // app, so the SDK warns unless real wallet-standard connectors

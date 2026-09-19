@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useLogout } from '@privy-io/react-auth';
@@ -41,10 +42,10 @@ export function SideNav() {
   const { canUseApp, isGuest } = useSession();
   const exitGuest = useGuestStore((state) => state.exitGuest);
   const { logout } = useLogout();
-  const home = TAB_ITEMS.find((item) => item.href === '/home')!;
+  const callouts = TAB_ITEMS.find((item) => item.href === '/callouts')!;
   const markets = TAB_ITEMS.find((item) => item.href === '/markets')!;
   const leaderboard = TAB_ITEMS.find((item) => item.href === '/leaderboard')!;
-  const items = [home, markets, WALLET_ITEM, ACTIVITY_ITEM, leaderboard];
+  const items = [callouts, markets, WALLET_ITEM, ACTIVITY_ITEM, leaderboard];
 
   const handleAccount = () => {
     if (!canUseApp) {
@@ -67,7 +68,8 @@ export function SideNav() {
   return (
     <aside className="fixed inset-y-0 left-0 z-30 hidden w-56 flex-col border-r border-border bg-background lg:flex">
       <div className="flex h-16 items-center px-5">
-        <span className="text-lg font-inter-bold text-text-primary">Knewit</span>
+        <Image src="/icon.png" alt="" width={32} height={32} className="rounded-lg" />
+        <span className="ml-2.5 text-lg font-inter-bold text-accent">Knew it</span>
       </div>
       <nav className="flex-1 space-y-1 px-3 py-5" aria-label="Main navigation">
         {items.map((item) => {

@@ -40,7 +40,7 @@ export default function LeaderboardPage() {
 
   if (leaderboard.status === 'pending') {
     return (
-      <main className="w-full lg:mx-auto lg:max-w-3xl">
+      <main className="w-full">
         {titleBlock}
         <div className="px-4 pt-3">
           <LoadingState rows={5} />
@@ -51,7 +51,7 @@ export default function LeaderboardPage() {
 
   if (leaderboard.status === 'error') {
     return (
-      <main className="w-full lg:mx-auto lg:max-w-3xl">
+      <main className="w-full">
         {titleBlock}
         <ErrorState message="Unable to load leaderboard." onRetry={() => leaderboard.refetch()} />
       </main>
@@ -59,7 +59,7 @@ export default function LeaderboardPage() {
   }
 
   return (
-    <main className="w-full lg:mx-auto lg:max-w-3xl">
+    <main className="w-full">
       {titleBlock}
       {topThree ? (
         <div className="pt-3">
