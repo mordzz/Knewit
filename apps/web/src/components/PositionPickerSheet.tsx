@@ -9,7 +9,7 @@ import { choiceTextColor, choiceTone } from '@/lib/choiceTone';
 import { LoadingState } from '@/components/feedback/LoadingState';
 import { ErrorState } from '@/components/feedback/ErrorState';
 import { EmptyState } from '@/components/feedback/EmptyState';
-import { usePositions } from '@/hooks/usePositions';
+import { usePositions } from '@/features/wallet/hooks/usePositions';
 import { useSession } from '@/hooks/useSession';
 import { formatPrice, formatUsd } from '@/lib/formatters';
 import type { UserPosition } from '@/types/social';

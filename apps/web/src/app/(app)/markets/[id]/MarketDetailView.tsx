@@ -15,18 +15,18 @@ import { LoadingState } from '@/components/feedback/LoadingState';
 import { EmptyState } from '@/components/feedback/EmptyState';
 import { ErrorState } from '@/components/feedback/ErrorState';
 import { SocialActionBar } from '@/components/SocialActionBar';
-import { TradingPanel, TradeSheet, TradeCard } from '@/components/TradingPanel';
+import { TradingPanel, TradeSheet, TradeCard } from '@/features/markets/components/TradingPanel';
 import { MyPositionCard } from '@/components/MyPositionCard';
-import { MarketPriceChart } from '@/components/MarketPriceChart';
-import { EventPriceChart } from '@/components/EventPriceChart';
+import { MarketPriceChart } from '@/features/markets/components/MarketPriceChart';
+import { EventPriceChart } from '@/features/markets/components/EventPriceChart';
 import { CallCard } from '@/components/CallCard';
-import { useMarket } from '@/hooks/useMarket';
-import { useMarketActivity } from '@/hooks/useMarketActivity';
-import { useTopHolders } from '@/hooks/useTopHolders';
-import { useMarketPosition } from '@/hooks/useMarketPosition';
-import { useEvent } from '@/hooks/useEvent';
-import { useEventActivity } from '@/hooks/useEventActivity';
-import { useEventHolders } from '@/hooks/useEventHolders';
+import { useMarket } from '@/features/markets/hooks/useMarket';
+import { useMarketActivity } from '@/features/markets/hooks/useMarketActivity';
+import { useTopHolders } from '@/features/markets/hooks/useTopHolders';
+import { useMarketPosition } from '@/features/markets/hooks/useMarketPosition';
+import { useEvent } from '@/features/markets/hooks/useEvent';
+import { useEventActivity } from '@/features/markets/hooks/useEventActivity';
+import { useEventHolders } from '@/features/markets/hooks/useEventHolders';
 import { useSession } from '@/hooks/useSession';
 import { useIsDesktop } from '@/hooks/useIsDesktop';
 import { ApiRequestError } from '@/lib/apiClient';
@@ -152,7 +152,7 @@ export function MarketDetailView({ id }: { id: string }) {
                 data, just a two-column composition instead of one long
                 stack (styled after `apps/dekstop`'s detail.tsx, which
                 pairs a chart with a trade card side by side). */}
-            <div className="flex flex-col gap-4 px-4 pb-0 lg:grid lg:grid-cols-[1fr_380px] lg:items-start lg:gap-x-6 lg:px-0 lg:pb-8 lg:pt-2 2xl:grid-cols-[1fr_440px]">
+            <div className="flex flex-col gap-4 px-4 pb-0 lg:grid lg:grid-cols-[1fr_380px] lg:items-start lg:grid-rows-[auto_1fr] lg:gap-x-6 lg:px-0 lg:pb-8 lg:pt-2 2xl:grid-cols-[1fr_440px]">
               <div className="flex flex-col gap-4 lg:col-start-1 lg:row-start-1">
                 <MarketHero market={market.data} onBack={() => router.back()} />
                 {market.data.choices.length > 0 ? (
@@ -188,12 +188,12 @@ export function MarketDetailView({ id }: { id: string }) {
 
         {isEventMode && event.status === 'success' ? (
           <>
-            <div className="flex flex-col gap-4 px-4 pb-0 lg:grid lg:grid-cols-[1fr_380px] lg:items-start lg:gap-x-6 lg:px-0 lg:pb-8 lg:pt-2 2xl:grid-cols-[1fr_440px]">
+            <div className="flex flex-col gap-4 px-4 pb-0 lg:grid lg:grid-cols-[1fr_380px] lg:items-start lg:grid-rows-[auto_1fr] lg:gap-x-6 lg:px-0 lg:pb-8 lg:pt-2 2xl:grid-cols-[1fr_440px]">
               <div className="flex flex-col gap-4 lg:col-start-1 lg:row-start-1">
                 <EventHero event={event.data} onBack={() => router.back()} />
                 <EventPriceChart markets={event.data.markets} />
                 <div className="lg:hidden">
-                  <EventChildMarkets markets={event.data.markets} activeId={null} onTrade={openTrade} />
+                  <EventChildMarkets markets={event.data.markets} activeId={null} onTrade={openTrade} limit={6} />
                 </div>
               </div>
               <div className="hidden lg:sticky lg:top-4 lg:col-start-2 lg:row-span-2 lg:row-start-1 lg:flex lg:flex-col lg:gap-4">
@@ -228,19 +228,33 @@ function EventChildMarkets({
   markets,
   activeId,
   onTrade,
+  limit,
 }: {
   markets: MarketSummary[];
   activeId: string | null;
   onTrade: (childId: string) => void;
+  /** Phone only: collapse a long list behind "Show more markets". */
+  limit?: number;
 }) {
+  const [expanded, setExpanded] = useState(false);
+  const collapsed = limit != null && markets.length > limit && !expanded;
+  const visible = collapsed ? markets.slice(0, limit) : markets;
+
   return (
     <div className="flex flex-col gap-1">
       <Text variant="bodyStrong" className="block pb-1">
         All markets
       </Text>
-      {markets.map((child) => (
+      {visible.map((child) => (
         <EventMarketRow key={child.id} market={child} selected={child.id === activeId} onTrade={() => onTrade(child.id)} />
       ))}
+      {limit != null && markets.length > limit ? (
+        <Button
+          variant="ghost"
+          label={expanded ? 'Show fewer markets' : `Show more markets (+${markets.length - limit})`}
+          onClick={() => setExpanded((current) => !current)}
+        />
+      ) : null}
     </div>
   );
 }

@@ -3,8 +3,8 @@
 import { useRouter } from 'next/navigation';
 import { Text } from '@/components/ui/Text';
 import { CARD_SURFACE_CLASS } from '@/components/ui/cardSurface';
-import { FollowListRow } from '@/components/FollowListRow';
-import { useFollowSuggestions } from '@/hooks/useFollowSuggestions';
+import { FollowListRow } from '@/features/profile/components/FollowListRow';
+import { useFollowSuggestions } from '@/features/profile/hooks/useFollowSuggestions';
 import { useSession } from '@/hooks/useSession';
 
 /** Desktop right-rail card: accounts the viewer doesn't follow yet. */

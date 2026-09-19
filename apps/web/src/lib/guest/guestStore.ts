@@ -93,7 +93,30 @@ export const DEFAULT_GUEST_PROFILE: GuestProfile = {
 
 function emptySandbox() {
   return {
-    positions: [] as UserPosition[],
+    positions: [
+      {
+        id: 'guest-position-1',
+        marketId: 'mock-market-all-0',
+        marketQuestion: 'Will Bitcoin reach $120K before December?',
+        outcome: 'Yes',
+        choiceIndex: 0,
+        entryPrice: 51,
+        currentPrice: 57,
+        size: 18,
+        openedAt: '2026-09-01T09:00:00.000Z',
+      },
+      {
+        id: 'guest-position-2',
+        marketId: 'mock-market-all-1',
+        marketQuestion: 'BTC Up or Down (5 minutes)',
+        outcome: 'Up',
+        choiceIndex: 0,
+        entryPrice: 48,
+        currentPrice: 51,
+        size: 12,
+        openedAt: '2026-09-03T14:30:00.000Z',
+      },
+    ] as UserPosition[],
     orders: [] as Order[],
     markets: {} as Record<string, MarketSummary>,
     createdCalls: [] as FeedItem[],

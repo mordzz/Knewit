@@ -1,5 +1,5 @@
 import { getSupabase } from '@/lib/supabase';
-import { getCachedOrLiveMarketSummary } from '@/lib/marketCache';
+import { getCachedOrLiveMarketSummary } from '@/features/markets/lib/marketCache';
 import { fetchPolymarketStanding } from '@/lib/leaderboard';
 import type { DbUser } from '@/lib/users';
 import type { CommentItem, FeedItem, PositionSnapshot, User, UserProfile } from '@/types/social';

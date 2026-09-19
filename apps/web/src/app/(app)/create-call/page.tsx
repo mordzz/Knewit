@@ -10,7 +10,7 @@ import { Avatar } from '@/components/ui/Avatar';
 import { SOLID_PANEL_CLASS } from '@/components/ui/solidPanel';
 import { PositionPickerSheet } from '@/components/PositionPickerSheet';
 import { useCreateCall } from '@/hooks/useCreateCall';
-import { useProfile } from '@/hooks/useProfile';
+import { useProfile } from '@/features/profile/hooks/useProfile';
 import { useSession } from '@/hooks/useSession';
 import { formatPrice, formatUsd } from '@/lib/formatters';
 import type { UserPosition } from '@/types/social';

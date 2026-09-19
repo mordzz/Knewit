@@ -13,8 +13,8 @@ import { CalloutComposerPanel } from '@/components/CalloutComposerPanel';
 import { TrendingMarketsPanel } from '@/components/TrendingMarketsPanel';
 import { useHomeFeed } from '@/hooks/useHomeFeed';
 import { useFollowingFeed } from '@/hooks/useFollowingFeed';
-import { useWalletBalance } from '@/hooks/useWalletBalance';
-import { useDepositFlow } from '@/hooks/useDepositFlow';
+import { useWalletBalance } from '@/features/wallet/hooks/useWalletBalance';
+import { useDepositFlow } from '@/features/wallet/hooks/useDepositFlow';
 import { useSession } from '@/hooks/useSession';
 import { useIsDesktop } from '@/hooks/useIsDesktop';
 import { formatUsd } from '@/lib/formatters';
@@ -37,7 +37,7 @@ export default function CalloutsPage() {
   const router = useRouter();
   const { canUseApp } = useSession();
   const [tab, setTab] = useState<FeedTabKey>('forYou');
-  const feed = useHomeFeed();
+  const feed = useHomeFeed('trending');
   const followingFeed = useFollowingFeed();
   const isDesktop = useIsDesktop();
 

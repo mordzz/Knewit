@@ -7,7 +7,7 @@ import { Fab } from '@/components/Fab';
 import { SideNav } from '@/components/SideNav';
 import { TopHeader } from '@/components/TopHeader';
 import { Text } from '@/components/ui/Text';
-import { useAutoWalletSetup } from '@/hooks/useAutoWalletSetup';
+import { useAutoWalletSetup } from '@/features/wallet/hooks/useAutoWalletSetup';
 import { useSession } from '@/hooks/useSession';
 import { useGuestStore } from '@/lib/guest/guestStore';
 
@@ -86,7 +86,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <div className="relative mx-auto flex h-screen w-full max-w-2xl flex-col border-x border-border lg:h-auto lg:min-h-screen lg:max-w-none lg:border-x-0">
+    <div className="relative mx-auto flex h-dvh w-full max-w-2xl flex-col overflow-hidden border-x border-border lg:h-auto lg:min-h-screen lg:max-w-none lg:overflow-visible lg:border-x-0">
       <SideNav />
       <TopHeader />
       <div className="min-h-0 flex-1 overflow-y-auto lg:ml-56 lg:overflow-visible lg:px-8 lg:pt-16 xl:px-12">

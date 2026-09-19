@@ -6,8 +6,8 @@ import { Text } from '@/components/ui/Text';
 import { LoadingState } from '@/components/feedback/LoadingState';
 import { EmptyState } from '@/components/feedback/EmptyState';
 import { ErrorState } from '@/components/feedback/ErrorState';
-import { ActivityRow } from '@/components/ActivityRow';
-import { useUserActivity } from '@/hooks/useUserActivity';
+import { ActivityRow } from '@/features/activity/components/ActivityRow';
+import { useUserActivity } from '@/features/activity/hooks/useUserActivity';
 import { useIsDesktop } from '@/hooks/useIsDesktop';
 import { CARD_SURFACE_CLASS } from '@/components/ui/cardSurface';
 
@@ -28,29 +28,33 @@ export default function ActivityPage() {
   const openMarket = (marketId: string) => router.push(`/markets/${marketId}`);
   const openPost = (postId: string) => router.push(`/calls/${postId}`);
 
-  const containerClass = isDesktop ? 'w-full py-8' : 'w-full';
+  const containerClass = isDesktop ? 'mx-auto w-full max-w-none py-10' : 'w-full';
 
   return (
     <main className={containerClass}>
-      <Text variant="heading" className={isDesktop ? 'block pb-6 text-5xl font-inter-extrabold' : 'block px-4 pb-3 pt-2 text-4xl font-inter-extrabold'}>
-        Activity
-      </Text>
+      <div className={isDesktop ? 'flex items-end justify-between gap-4 pb-6' : undefined}>
+        <div>
+          <Text variant="heading" className={isDesktop ? 'block text-[42px] font-inter-extrabold tracking-[-0.03em]' : 'block px-4 pb-3 pt-2 text-4xl font-inter-extrabold'}>
+            Activity
+          </Text>
+          {isDesktop ? (
+            <Text variant="caption" color="textSecondary" className="mt-1 block">
+              Follow your trades, calls, and connections in one place.
+            </Text>
+          ) : null}
+        </div>
+      </div>
       {isDesktop ? null : <div className="border-b border-border" />}
 
-      <div className={isDesktop ? CARD_SURFACE_CLASS : ''}>
+      <div className={isDesktop ? `${CARD_SURFACE_CLASS} shadow-[0_18px_50px_rgba(0,0,0,0.2)]` : ''}>
         {activity.status === 'pending' ? (
           <div className="px-4 pt-4">
             <LoadingState rows={4} />
           </div>
         ) : activity.status === 'error' ? (
           <ErrorState message="Couldn't load your activity." onRetry={() => activity.refetch()} />
-        ) : (
-          <ActivityList
-            activity={activity}
-            onOpenAuthor={openAuthor}
-            onOpenMarket={openMarket}
-            onOpenPost={openPost}
-          />
+      ) : (
+        <ActivityList activity={activity} onOpenAuthor={openAuthor} onOpenMarket={openMarket} onOpenPost={openPost} />
         )}
       </div>
     </main>
@@ -80,9 +84,11 @@ function ActivityList({
           message="Trades, Calls, and follows will show up here."
         />
       ) : (
-        items.map((item) => (
-          <ActivityRow key={item.id} item={item} onOpenUser={onOpenAuthor} onOpenMarket={onOpenMarket} onOpenPost={onOpenPost} />
-        ))
+        <div>
+          {items.map((item) => (
+            <ActivityRow key={item.id} item={item} onOpenUser={onOpenAuthor} onOpenMarket={onOpenMarket} onOpenPost={onOpenPost} />
+          ))}
+        </div>
       )}
       <InfiniteScrollSentinel
         hasNextPage={!!activity.hasNextPage}

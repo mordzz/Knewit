@@ -2,7 +2,7 @@ import { ApiError, badRequest, notFound, withErrorHandling } from '@/lib/apiErro
 import { requireAuth } from '@/lib/privy';
 import { getOrCreateUser } from '@/lib/users';
 import { getSupabase } from '@/lib/supabase';
-import { getAndCacheMarketSummary } from '@/lib/marketCache';
+import { getAndCacheMarketSummary } from '@/features/markets/lib/marketCache';
 import { buildFeedItems, type PostRow } from '@/lib/social';
 import type { CreateCallInput } from '@/types/social';
 

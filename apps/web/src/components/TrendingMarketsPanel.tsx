@@ -6,7 +6,7 @@ import { Text } from '@/components/ui/Text';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { MarketVisual } from '@/components/ui/MarketVisual';
 import { CARD_SURFACE_CLASS } from '@/components/ui/cardSurface';
-import { useMarkets } from '@/hooks/useMarkets';
+import { useMarkets } from '@/features/markets/hooks/useMarkets';
 import type { MarketListItem } from '@/types/social';
 
 const TRENDING_COUNT = 4;

@@ -14,6 +14,10 @@ export async function getCommentReplies(commentId: string, cursor?: string): Pro
   return apiRequest<Paginated<CommentItem>>(`/api/comments/${commentId}/replies${query}`);
 }
 
+export async function getCommentDetail(commentId: string): Promise<{ comment: CommentItem; callout: import('@/types/social').FeedItem }> {
+  return apiRequest(`/api/comments/${commentId}`);
+}
+
 export async function createComment(postId: string, input: CreateCommentInput): Promise<CommentItem> {
   return apiRequest<CommentItem>(`/api/calls/${postId}/comments`, {
     method: 'POST',

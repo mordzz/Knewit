@@ -1,4 +1,4 @@
-import { FollowListView } from '@/components/FollowListView';
+import { FollowListView } from '@/features/profile/components/FollowListView';
 
 export default async function FollowingPage({
   params,

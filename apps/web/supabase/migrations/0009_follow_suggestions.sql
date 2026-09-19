@@ -20,7 +20,6 @@ stable
 as $$
   select u.id, u.handle, u.display_name, u.avatar_url
   from users u
-  left join follows f on f.following_id = u.id
   where u.id <> p_user_id
     and not exists (
       select 1
@@ -28,7 +27,14 @@ as $$
       where vf.follower_id = p_user_id
         and vf.following_id = u.id
     )
-  group by u.id, u.handle, u.display_name, u.avatar_url, u.created_at
-  order by count(f.follower_id) desc, u.created_at desc
+  order by
+    (select count(*) from follows mutual
+      where mutual.following_id = u.id
+        and mutual.follower_id in (
+          select followed.following_id from follows followed where followed.follower_id = p_user_id
+        )) desc,
+    (select count(*) from follows popularity where popularity.following_id = u.id) desc,
+    (select max(posts.created_at) from posts where posts.author_id = u.id and posts.created_at >= now() - interval '30 days') desc nulls last,
+    u.created_at desc
   limit p_limit offset p_offset;
 $$;

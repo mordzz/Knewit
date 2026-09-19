@@ -1,6 +1,6 @@
 'use client';
 
-import { POLYGON_USDC_E } from '@/lib/walletService';
+import { POLYGON_USDC_E } from '@/features/wallet/lib/walletService';
 import { MOCK_PEOPLE } from '@/lib/guest/fixtures/people.mock';
 import * as data from '@/lib/guest/guestData';
 import {
@@ -478,7 +478,9 @@ function createComment(state: GuestState, postId: string, body: unknown): Commen
   if (input.parentCommentId) {
     const parent = data.findCommentById(state, input.parentCommentId);
     if (!parent) fail(404, 'not_found', 'Parent comment not found.');
-    parentCommentId = parent.parentCommentId ?? parent.id;
+    if (parent.postId !== postId) fail(400, 'invalid_parent', 'Parent comment must belong to this call.');
+    if (parent.id === input.parentCommentId) fail(400, 'invalid_parent', 'A comment cannot reply to itself.');
+    parentCommentId = parent.id;
   }
 
   const createdAt = new Date().toISOString();

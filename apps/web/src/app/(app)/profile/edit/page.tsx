@@ -1,7 +1,7 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { EditProfileForm } from '@/components/EditProfileForm';
+import { EditProfileForm } from '@/features/profile/components/EditProfileForm';
 
 /** Edit Profile as its own page (phone, or a direct visit); desktop
  * opens the same form as a modal from the Profile page. */

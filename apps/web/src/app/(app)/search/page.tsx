@@ -10,7 +10,7 @@ import { EmptyState } from '@/components/feedback/EmptyState';
 import { ErrorState } from '@/components/feedback/ErrorState';
 import { SearchInput } from '@/components/SearchInput';
 import { PersonResult } from '@/components/PersonResult';
-import { MarketCard } from '@/components/MarketCard';
+import { MarketCard } from '@/features/markets/components/MarketCard';
 import { useSearch, MIN_QUERY_LENGTH } from '@/hooks/useSearch';
 import { useDebounce } from '@/hooks/useDebounce';
 import { useRecentSearchesStore } from '@/store/recentSearchesStore';

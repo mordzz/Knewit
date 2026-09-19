@@ -1,7 +1,7 @@
 'use client';
 
 import { useQuery } from '@tanstack/react-query';
-import { getTradeEstimate } from '@/lib/marketService';
+import { getTradeEstimate } from '@/features/markets/lib/marketService';
 import { useDebounce } from '@/hooks/useDebounce';
 import type { TradeEstimate } from '@/types/trading';
 

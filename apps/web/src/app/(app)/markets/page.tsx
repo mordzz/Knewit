@@ -5,11 +5,10 @@ import { useQuery } from '@tanstack/react-query';
 import { TabRow, type TabRowOption } from '@/components/ui/TabRow';
 import { EmptyState } from '@/components/feedback/EmptyState';
 import { ErrorState } from '@/components/feedback/ErrorState';
-import { MarketCard, MarketCardSkeleton } from '@/components/MarketCard';
-import { useMarkets } from '@/hooks/useMarkets';
+import { MarketCard, MarketCardSkeleton } from '@/features/markets/components/MarketCard';
+import { useMarkets } from '@/features/markets/hooks/useMarkets';
 import { useIsDesktop } from '@/hooks/useIsDesktop';
-import { CARD_SURFACE_CLASS } from '@/components/ui/cardSurface';
-import { getCategories } from '@/lib/marketService';
+import { getCategories } from '@/features/markets/lib/marketService';
 import type { MarketListItem } from '@/types/social';
 
 const SKELETON_ROWS = [0, 1, 2, 3, 4, 5];
@@ -19,8 +18,8 @@ const SKELETON_ROWS = [0, 1, 2, 3, 4, 5];
 // (which browses markets in a grid too), each just wrapped in its own
 // bordered tile since `MarketCard` itself only carries a bottom border
 // (the right convention for a list row, not a grid cell).
-const GRID_CLASS = 'grid grid-cols-2 gap-4 pt-6 xl:grid-cols-3 2xl:grid-cols-4';
-const TILE_CLASS = CARD_SURFACE_CLASS;
+const GRID_CLASS = 'grid grid-cols-2 gap-4 pt-6 2xl:grid-cols-3';
+const TILE_CLASS = 'flex flex-col';
 
 /**
  * Direct conversion of `apps/mobile`'s Markets tab (`MarketsScreen` +

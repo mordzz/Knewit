@@ -19,27 +19,29 @@ export interface CommentRowProps {
   postId: string;
   onDelete: (commentId: string) => void;
   onOpenAuthor: (userId: string) => void;
+  onOpenComment?: (comment: CommentItem) => void;
   onReply: (comment: CommentItem) => void;
   deletingCommentId: string | null;
   /** Id of the comment whose inline reply composer is open, if any. */
   activeReplyId?: string | null;
   renderComposer?: (comment: CommentItem) => ReactNode;
   isReply?: boolean;
+  depth?: number;
 }
 
 /**
  * Direct conversion of `apps/mobile`'s `CommentRow` — every comment
  * (top-level or reply) carries its own Like, Reply, Share row. Only
  * top-level comments show a "View N replies" toggle, lazily fetching
- * and rendering that thread nested directly below, one level deep.
+ * and rendering each nested thread directly below its parent.
  */
-export function CommentRow({ comment, postId, onDelete, onOpenAuthor, onReply, deletingCommentId, activeReplyId = null, renderComposer, isReply = false }: CommentRowProps) {
+export function CommentRow({ comment, postId, onDelete, onOpenAuthor, onOpenComment, onReply, deletingCommentId, activeReplyId = null, renderComposer, isReply = false, depth = 0 }: CommentRowProps) {
   const isDeleting = deletingCommentId === comment.id;
   const [confirmVisible, setConfirmVisible] = useState(false);
   const [repliesExpanded, setRepliesExpanded] = useState(false);
   const toggleLike = useToggleCommentLike();
   const shareComment = useShareComment();
-  const replies = useCommentReplies(comment.id, repliesExpanded && !isReply);
+  const replies = useCommentReplies(comment.id, repliesExpanded);
 
   async function handleShare() {
     const message = `${comment.author.displayName}: ${comment.body}\n\nvia Knew it`;
@@ -58,7 +60,7 @@ export function CommentRow({ comment, postId, onDelete, onOpenAuthor, onReply, d
   const replyItems = replies.data?.pages.flatMap((page) => page.items) ?? [];
 
   return (
-    <div className={cn('border-b border-border px-4 py-3', isReply && 'border-b-0 pb-0 pl-11 pt-2')}>
+    <div className={cn('border-b border-border px-4 py-3', isReply && 'border-b-0 pb-0 pt-2')} style={depth > 0 ? { marginLeft: `${Math.min(depth, 4) * 28}px` } : undefined}>
       <div className="flex items-start gap-3">
         <button type="button" onClick={() => onOpenAuthor(comment.author.id)} aria-label={`Open ${comment.author.displayName}'s profile`}>
           <Avatar uri={comment.author.avatarUrl} fallbackLabel={comment.author.displayName} size={isReply ? 26 : 32} />
@@ -80,9 +82,9 @@ export function CommentRow({ comment, postId, onDelete, onOpenAuthor, onReply, d
               </button>
             ) : null}
           </div>
-          <Text variant="body" className="mt-0.5 block">
-            {comment.body}
-          </Text>
+          <button type="button" className="mt-0.5 block text-left" onClick={() => onOpenComment?.(comment)}>
+            <Text variant="body">{comment.body}</Text>
+          </button>
 
           <div className="mt-2 flex items-center gap-5">
             <LikeButton
@@ -119,7 +121,7 @@ export function CommentRow({ comment, postId, onDelete, onOpenAuthor, onReply, d
 
           {activeReplyId === comment.id && renderComposer ? renderComposer(comment) : null}
 
-          {!isReply && comment.replyCount > 0 ? (
+          {comment.replyCount > 0 ? (
             <button
               type="button"
               onClick={() => setRepliesExpanded((current) => !current)}
@@ -143,11 +145,13 @@ export function CommentRow({ comment, postId, onDelete, onOpenAuthor, onReply, d
               postId={postId}
               onDelete={onDelete}
               onOpenAuthor={onOpenAuthor}
+              onOpenComment={onOpenComment}
               onReply={onReply}
               deletingCommentId={deletingCommentId}
               activeReplyId={activeReplyId}
               renderComposer={renderComposer}
               isReply
+              depth={depth + 1}
             />
           ))
         : null}

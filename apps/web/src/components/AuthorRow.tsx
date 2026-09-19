@@ -1,8 +1,8 @@
 import { Text } from '@/components/ui/Text';
 import { Avatar } from '@/components/ui/Avatar';
 import { Button } from '@/components/ui/Button';
-import { useProfile } from '@/hooks/useProfile';
-import { useFollowToggle } from '@/hooks/useFollowToggle';
+import { useProfile } from '@/features/profile/hooks/useProfile';
+import { useFollowToggle } from '@/features/profile/hooks/useFollowToggle';
 import type { User } from '@/types/social';
 
 export interface AuthorRowProps {

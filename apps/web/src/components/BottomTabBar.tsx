@@ -46,7 +46,7 @@ export function BottomTabBar() {
   const pathname = usePathname();
 
   return (
-    <nav className="flex flex-shrink-0 border-t border-border bg-background lg:hidden">
+    <nav className="flex flex-shrink-0 border-t border-border bg-background pb-[env(safe-area-inset-bottom)] lg:hidden">
       {TAB_ITEMS.map((item) => {
         const isActive = pathname === item.href;
         const Icon = isActive ? item.activeIcon : item.icon;

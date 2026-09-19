@@ -1,6 +1,6 @@
 import { notFound, withErrorHandling } from '@/lib/apiError';
 import { fetchEventById } from '@/lib/polymarket/gammaClient';
-import { resolveMarketHolders } from '@/lib/marketHolders';
+import { resolveMarketHolders } from '@/features/markets/lib/marketHolders';
 import type { EventHolderRow } from '@/types/social';
 
 const HOLDER_LIMIT = 20;

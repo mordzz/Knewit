@@ -2,7 +2,7 @@ import { withErrorHandling } from '@/lib/apiError';
 import { requireAuth } from '@/lib/privy';
 import { getOrCreateUser } from '@/lib/users';
 import { getSupabase } from '@/lib/supabase';
-import { getCachedOrLiveMarketSummary } from '@/lib/marketCache';
+import { getCachedOrLiveMarketSummary } from '@/features/markets/lib/marketCache';
 import type { UserPosition } from '@/types/social';
 
 interface PositionRow {

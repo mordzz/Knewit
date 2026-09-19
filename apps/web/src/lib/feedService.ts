@@ -6,8 +6,11 @@ import type { FeedItem, LikeResult } from '@/types/social';
  * — real endpoint only, no dev-mock fallback (this backend is always
  * live for the web app, unlike the mobile client's disconnected-dev
  * case). */
-export async function getFeed(cursor?: string): Promise<Paginated<FeedItem>> {
-  const query = cursor ? `?cursor=${encodeURIComponent(cursor)}` : '';
+export async function getFeed(cursor?: string, sort: 'trending' | 'latest' = 'latest'): Promise<Paginated<FeedItem>> {
+  const params = new URLSearchParams();
+  if (cursor) params.set('cursor', cursor);
+  if (sort === 'trending') params.set('sort', sort);
+  const query = params.toString() ? `?${params.toString()}` : '';
   return apiRequest<Paginated<FeedItem>>(`/api/feed${query}`);
 }
 

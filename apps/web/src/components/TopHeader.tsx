@@ -7,9 +7,9 @@ import { Button } from '@/components/ui/Button';
 import { Text } from '@/components/ui/Text';
 import { CARD_SURFACE_CLASS } from '@/components/ui/cardSurface';
 import { PersonResult } from '@/components/PersonResult';
-import { MarketCard } from '@/components/MarketCard';
-import { useWalletBalance } from '@/hooks/useWalletBalance';
-import { useDepositFlow } from '@/hooks/useDepositFlow';
+import { MarketCard } from '@/features/markets/components/MarketCard';
+import { useWalletBalance } from '@/features/wallet/hooks/useWalletBalance';
+import { useDepositFlow } from '@/features/wallet/hooks/useDepositFlow';
 import { useSession } from '@/hooks/useSession';
 import { useSearch, MIN_QUERY_LENGTH } from '@/hooks/useSearch';
 import { useDebounce } from '@/hooks/useDebounce';
@@ -137,7 +137,7 @@ export function TopHeader() {
                       </Text>
                       {markets.map((item) => (
                         <div key={item.kind === 'market' ? item.market.id : item.group.id} onClickCapture={closeAndClear}>
-                          <MarketCard item={item} />
+                          <MarketCard item={item} compact />
                         </div>
                       ))}
                     </div>

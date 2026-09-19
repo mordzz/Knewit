@@ -2,7 +2,7 @@ import { ApiError, badRequest, withErrorHandling } from '@/lib/apiError';
 import { requireAuth } from '@/lib/privy';
 import { getOrCreateUser } from '@/lib/users';
 import { getSupabase } from '@/lib/supabase';
-import { getAndCacheMarketSummary } from '@/lib/marketCache';
+import { getAndCacheMarketSummary } from '@/features/markets/lib/marketCache';
 import { placeMarketOrder } from '@/lib/trading/orders';
 import type { Order } from '@/types/market';
 

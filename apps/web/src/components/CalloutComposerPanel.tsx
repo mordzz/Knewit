@@ -10,7 +10,7 @@ import { CARD_SURFACE_CLASS } from '@/components/ui/cardSurface';
 import { PositionPickerSheet } from '@/components/PositionPickerSheet';
 import { choiceTextColor, choiceTone } from '@/lib/choiceTone';
 import { useCreateCall } from '@/hooks/useCreateCall';
-import { useProfile } from '@/hooks/useProfile';
+import { useProfile } from '@/features/profile/hooks/useProfile';
 import { useSession } from '@/hooks/useSession';
 import { formatPrice, formatUsd } from '@/lib/formatters';
 import type { UserPosition } from '@/types/social';

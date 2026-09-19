@@ -44,9 +44,8 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
 
 /**
  * `POST /calls/:id/comments` — the backend derives the author from the
- * session; `parentCommentId`, when set, must itself be a top-level
- * comment on this same post — replies are one level deep, never a
- * reply-to-a-reply (docs/DATABASE.md, "One Reply Level").
+ * session. `parentCommentId`, when set, may reference any comment in the
+ * same callout, allowing arbitrarily nested reply threads.
  */
 export async function POST(request: Request, { params }: { params: Promise<{ id: string }> }) {
   return withErrorHandling(async () => {
@@ -68,12 +67,8 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
         .select('id, post_id, parent_comment_id')
         .eq('id', body.parentCommentId)
         .maybeSingle();
-      if (!parent || parent.post_id !== id) {
-        throw badRequest('parentCommentId must be a top-level comment on this same call.');
-      }
-      if (parent.parent_comment_id) {
-        throw badRequest('Cannot reply to a reply — replies are one level deep.');
-      }
+      if (!parent || parent.post_id !== id) throw badRequest('parentCommentId must belong to this same call.');
+      if (parent.id === body.parentCommentId) throw badRequest('A comment cannot reply to itself.');
     }
 
     const { data: created, error } = await supabase

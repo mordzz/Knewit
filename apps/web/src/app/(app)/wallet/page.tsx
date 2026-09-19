@@ -1,7 +1,6 @@
 'use client';
 
 import { useState } from 'react';
-import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useLogout } from '@privy-io/react-auth';
 import { Text } from '@/components/ui/Text';
@@ -9,25 +8,21 @@ import { Icon } from '@/components/ui/Icon';
 import { Button } from '@/components/ui/Button';
 import { Divider } from '@/components/ui/Divider';
 import { Modal } from '@/components/ui/Modal';
-import { WalletAddress } from '@/components/WalletAddress';
-import { ActivityRow } from '@/components/ActivityRow';
+import { WalletAddress } from '@/features/wallet/components/WalletAddress';
 import { CARD_SURFACE_CLASS } from '@/components/ui/cardSurface';
-import { LoadingState } from '@/components/feedback/LoadingState';
 import { choiceTextColor, choiceTone } from '@/lib/choiceTone';
 import { EmptyState } from '@/components/feedback/EmptyState';
 import { ErrorState } from '@/components/feedback/ErrorState';
 import { formatProbability, formatUsd } from '@/lib/formatters';
 import { ApiRequestError } from '@/lib/apiClient';
-import { usePositions } from '@/hooks/usePositions';
-import { useWalletBalance } from '@/hooks/useWalletBalance';
-import { useUserActivity } from '@/hooks/useUserActivity';
-import { useDepositFlow } from '@/hooks/useDepositFlow';
-import { useSellPosition } from '@/hooks/useSellPosition';
+import { usePositions } from '@/features/wallet/hooks/usePositions';
+import { useWalletBalance } from '@/features/wallet/hooks/useWalletBalance';
+import { useDepositFlow } from '@/features/wallet/hooks/useDepositFlow';
+import { useSellPosition } from '@/features/wallet/hooks/useSellPosition';
 import { useSession } from '@/hooks/useSession';
 import { useGuestStore } from '@/lib/guest/guestStore';
 import type { UserPosition } from '@/types/social';
 
-const RECENT_ACTIVITY_LIMIT = 3;
 const ALLOCATION_TOP_N = 4;
 
 /**
@@ -41,8 +36,7 @@ const ALLOCATION_TOP_N = 4;
  * Real data only: dekstop's allocation splits by a fictional asset-class
  * taxonomy (Predictions/Crypto/Perps/Stocks) this app doesn't have —
  * here it's each open position's real share of total position value
- * instead. "Recent activity" reuses `useUserActivity('me')` and
- * `ActivityRow`, the same data now also shown in full on `/activity`.
+ * instead. Activity remains available on its dedicated `/activity` page.
  *
  * **No manual setup buttons any more**: wallet creation and the signing
  * grant both run automatically through `useAutoWalletSetup` (the app
@@ -61,12 +55,7 @@ export default function WalletPage() {
   const balance = useWalletBalance();
   const positionsQuery = usePositions();
   const positions = positionsQuery.data ?? [];
-  const activity = useUserActivity('me', walletConnected);
   const { isDepositing, depositError, handleDeposit } = useDepositFlow();
-
-  const openAuthor = (userId: string) => router.push(`/profile/${userId}`);
-  const openMarket = (marketId: string) => router.push(`/markets/${marketId}`);
-  const openPost = (postId: string) => router.push(`/calls/${postId}`);
 
   const handleLogout = () => {
     // A guest session has no Privy session to end — leaving guest mode is
@@ -95,31 +84,42 @@ export default function WalletPage() {
   const pnlColor = totalPnl == null || totalPnl === 0 ? 'textSecondary' : totalPnl > 0 ? 'yes' : 'no';
 
   return (
-    <main className="flex w-full flex-col gap-3 px-0 pt-4 lg:gap-5 lg:py-8">
-      <div className="flex items-center gap-2 px-4 lg:px-0">
+    <main className="mx-auto flex w-full max-w-none flex-col gap-3 px-0 pt-4 lg:gap-6 lg:py-10">
+      <div className="flex items-end justify-between gap-4 px-4 lg:px-0">
+        <div>
         <button type="button" onClick={() => router.back()} aria-label="Go back" className="lg:hidden">
           <Icon name="chevron-back" size={24} />
         </button>
-        <Text variant="heading" className="block text-4xl font-inter-extrabold lg:text-5xl">
+        <Text variant="heading" className="block text-4xl font-inter-extrabold lg:text-[42px] lg:tracking-[-0.03em]">
           Portfolio
         </Text>
+          <Text variant="caption" color="textSecondary" className="mt-1 hidden lg:block">
+            A clear view of your balance, positions, and performance.
+          </Text>
+        </div>
       </div>
 
-      <section className="grid grid-cols-1 gap-3 px-4 sm:grid-cols-3 lg:px-0 lg:gap-4">
-        <StatCard label="Balance" value={balanceLabel} error={depositError}>
+      <section className="grid grid-cols-2 gap-3 px-4 sm:grid-cols-2 lg:grid-cols-[1.35fr_.8fr_.8fr] lg:px-0 lg:gap-4">
+        <StatCard
+          label="Balance"
+          value={balanceLabel}
+          error={depositError}
+          className="col-span-2 flex items-center justify-between gap-4 sm:col-span-2 lg:col-span-1 lg:block lg:min-h-[164px]"
+          valueClassName="text-3xl font-inter-extrabold"
+        >
           {address ? (
-            <Button label="Deposit" variant="primary" loading={isDepositing} onClick={handleDeposit} className="mt-3 min-h-0 px-4 py-2" />
+            <Button label="Deposit" variant="primary" loading={isDepositing} onClick={handleDeposit} className="mt-3 min-h-0 shrink-0 px-4 py-2 lg:hidden" />
           ) : null}
         </StatCard>
-        <StatCard label="Open Positions" value={String(positions.length)} />
-        <StatCard label="Unrealized PnL" value={pnlLabel} valueColor={pnlColor} />
+        <StatCard label="Open Positions" value={String(positions.length)} className="lg:min-h-[164px]" valueClassName="text-3xl font-inter-extrabold" />
+        <StatCard label="Unrealized PnL" value={pnlLabel} valueColor={pnlColor} className="lg:min-h-[164px]" valueClassName="text-3xl font-inter-extrabold" />
       </section>
 
-      <div className="flex items-center gap-3 border-y border-border px-4 py-3 lg:rounded-[18px] lg:border lg:border-white/[0.14] lg:bg-[rgba(14,15,19,0.88)] lg:px-5">
+      <div className="flex items-center gap-3 border-y border-border px-4 py-3 lg:rounded-[18px] lg:border lg:border-white/[0.14] lg:bg-[rgba(14,15,19,0.88)] lg:px-5 lg:py-4">
         <Icon name="wallet-outline" color={address ? 'yes' : 'textTertiary'} />
         <div className="flex-1">
           {address ? (
-            <WalletAddress address={address} compact />
+            <WalletAddress address={address} compact fullOnDesktop />
           ) : (
             <Text variant="bodyStrong" className="block">
               Setting up your wallet…
@@ -129,7 +129,7 @@ export default function WalletPage() {
             {address ? 'Connected' : 'This happens automatically — no action needed.'}
           </Text>
         </div>
-        {address ? <Button label="Log Out" variant="no" onClick={handleLogout} className="min-h-0 px-3 py-2" /> : null}
+        {address ? <Button label="Log Out" variant="no" onClick={handleLogout} className="min-h-0 px-3 py-2 lg:hidden" /> : null}
       </div>
 
       {sellNotice ? (
@@ -139,15 +139,20 @@ export default function WalletPage() {
       ) : null}
 
       {walletConnected && positions.length > 0 ? (
-        <section className="grid gap-3 px-4 lg:grid-cols-[1.5fr_1fr] lg:gap-4 lg:px-0">
+        <section className="grid gap-3 px-4 lg:grid-cols-1 lg:gap-4 lg:px-0">
           <AllocationPanel positions={positions} />
-          <RecentActivityPanel activity={activity} onOpenAuthor={openAuthor} onOpenMarket={openMarket} onOpenPost={openPost} />
         </section>
       ) : null}
 
       <section className="lg:overflow-hidden lg:rounded-[18px] lg:border lg:border-white/[0.14] lg:bg-[rgba(14,15,19,0.88)]">
-        <div className="hidden border-b border-border px-5 py-3 lg:block">
+        <div className="hidden border-b border-border px-5 py-4 lg:grid lg:grid-cols-[minmax(0,1.8fr)_repeat(4,minmax(72px,.45fr))_72px_76px] lg:items-center lg:gap-4">
           <Text variant="bodyStrong">Open positions</Text>
+          <Text variant="micro" color="textTertiary" className="text-right">Position</Text>
+          <Text variant="micro" color="textTertiary" className="text-right">Entry</Text>
+          <Text variant="micro" color="textTertiary" className="text-right">Current</Text>
+          <Text variant="micro" color="textTertiary" className="text-right">Size</Text>
+          <Text variant="micro" color="textTertiary" className="text-right">P/L</Text>
+          <span aria-hidden />
         </div>
 
         {!walletConnected ? (
@@ -295,26 +300,32 @@ function StatCard({
   valueColor,
   error,
   children,
+  className,
+  valueClassName,
 }: {
   label: string;
   value: string;
   valueColor?: 'yes' | 'no' | 'textSecondary';
   error?: string | null;
   children?: React.ReactNode;
+  className?: string;
+  valueClassName?: string;
 }) {
   return (
-    <div className={`${CARD_SURFACE_CLASS} p-5`}>
-      <Text variant="caption" color="textSecondary" className="block">
-        {label}
-      </Text>
-      <Text variant="title" color={valueColor} className="mt-1 block tabular-nums">
-        {value}
-      </Text>
-      {error ? (
-        <Text variant="caption" color="danger" className="mt-2 block">
-          {error}
+    <div className={`${CARD_SURFACE_CLASS} p-5 ${className ?? ''}`}>
+      <div className={children ? 'min-w-0 flex-1' : undefined}>
+        <Text variant="caption" color="textSecondary" className="block">
+          {label}
         </Text>
-      ) : null}
+        <Text variant="title" color={valueColor} className={`mt-1 block tabular-nums lg:text-4xl lg:leading-none ${valueClassName ?? ''}`}>
+          {value}
+        </Text>
+        {error ? (
+          <Text variant="caption" color="danger" className="mt-2 block">
+            {error}
+          </Text>
+        ) : null}
+      </div>
       {children}
     </div>
   );
@@ -342,8 +353,8 @@ function AllocationPanel({ positions }: { positions: UserPosition[] }) {
   const restCount = valued.length - top.length;
 
   return (
-    <div className={`${CARD_SURFACE_CLASS} p-5`}>
-      <Text variant="bodyStrong" className="block">
+    <div className={`${CARD_SURFACE_CLASS} p-5 lg:p-6`}>
+      <Text variant="bodyStrong" className="block lg:text-title">
         Allocation
       </Text>
       {total > 0 ? (
@@ -392,62 +403,18 @@ function AllocationPanel({ positions }: { positions: UserPosition[] }) {
   );
 }
 
-function RecentActivityPanel({
-  activity,
-  onOpenAuthor,
-  onOpenMarket,
-  onOpenPost,
-}: {
-  activity: ReturnType<typeof useUserActivity>;
-  onOpenAuthor: (userId: string) => void;
-  onOpenMarket: (marketId: string) => void;
-  onOpenPost: (postId: string) => void;
-}) {
-  const items = activity.status === 'success' ? activity.data.pages.flatMap((page) => page.items).slice(0, RECENT_ACTIVITY_LIMIT) : [];
-
-  return (
-    <div className={CARD_SURFACE_CLASS}>
-      <div className="flex items-center justify-between px-5 pt-5">
-        <Text variant="bodyStrong">Recent activity</Text>
-        <Link href="/activity" className="text-xs font-inter-medium text-accent hover:underline">
-          View all
-        </Link>
-      </div>
-      <div className="mt-3">
-        {activity.status === 'pending' ? (
-          <div className="px-5 pb-5">
-            <LoadingState rows={2} />
-          </div>
-        ) : activity.status === 'error' ? (
-          <Text variant="caption" color="textTertiary" className="block px-5 pb-5">
-            Couldn&apos;t load recent activity.
-          </Text>
-        ) : items.length === 0 ? (
-          <Text variant="caption" color="textTertiary" className="block px-5 pb-5">
-            No recent activity yet.
-          </Text>
-        ) : (
-          items.map((item) => (
-            <ActivityRow key={item.id} item={item} onOpenUser={onOpenAuthor} onOpenMarket={onOpenMarket} onOpenPost={onOpenPost} />
-          ))
-        )}
-      </div>
-    </div>
-  );
-}
-
 function PositionRow({ position, onSell }: { position: UserPosition; onSell: () => void }) {
   const pnl =
     position.currentPrice != null ? ((position.currentPrice - position.entryPrice) / 100) * position.size : null;
 
   return (
-    <article className="px-4 py-3 lg:px-5">
-      <Text variant="bodyStrong" numberOfLines={2} className="block">
+    <article className="grid grid-cols-3 gap-x-4 gap-y-3 px-4 py-3 lg:grid-cols-[minmax(0,1.8fr)_repeat(4,minmax(72px,.45fr))_72px_76px] lg:items-center lg:gap-4 lg:px-5 lg:py-4">
+      <Text variant="bodyStrong" numberOfLines={2} className="col-span-3 block min-w-0 lg:col-span-1">
         {position.marketQuestion}
       </Text>
-      <div className="mt-2 flex items-start justify-between gap-4">
-        <div className="flex gap-6">
-          <div>
+      <div className="col-span-3 grid grid-cols-3 gap-x-4 gap-y-2 lg:contents">
+        <div className="contents">
+          <div className="order-1 lg:order-none">
             <Text variant="caption" color="textTertiary" className="block">
               Position
             </Text>
@@ -458,13 +425,13 @@ function PositionRow({ position, onSell }: { position: UserPosition; onSell: () 
               {position.outcome}
             </Text>
           </div>
-          <div>
+          <div className="order-2 lg:order-none">
             <Text variant="caption" color="textTertiary" className="block">
               Entry
             </Text>
             <Text variant="bodyStrong">{formatProbability(position.entryPrice)}</Text>
           </div>
-          <div>
+          <div className="order-5 lg:order-none">
             <Text variant="caption" color="textTertiary" className="block">
               Current
             </Text>
@@ -472,14 +439,14 @@ function PositionRow({ position, onSell }: { position: UserPosition; onSell: () 
               {position.currentPrice != null ? formatProbability(position.currentPrice) : '—'}
             </Text>
           </div>
-          <div>
+          <div className="order-4 lg:order-none">
             <Text variant="caption" color="textTertiary" className="block">
               Size
             </Text>
             <Text variant="bodyStrong">{position.size}</Text>
           </div>
         </div>
-        <div className="flex-shrink-0 text-right">
+        <div className="order-3 col-span-1 text-right lg:order-none lg:col-span-1">
           <Text variant="caption" color="textTertiary" className="block">
             P/L
           </Text>
@@ -487,9 +454,9 @@ function PositionRow({ position, onSell }: { position: UserPosition; onSell: () 
             {pnl == null ? '—' : `${pnl >= 0 ? '+' : '−'}${formatUsd(Math.abs(pnl))}`}
           </Text>
         </div>
-      </div>
-      <div className="mt-3 flex justify-end">
-        <Button label="Sell" variant="secondary" onClick={onSell} className="min-h-0 px-4 py-2" />
+        <div className="order-6 col-span-1 flex items-end justify-end lg:order-none lg:col-span-1 lg:mt-0">
+          <Button label="Sell" variant="no" onClick={onSell} className="min-h-0 px-4 py-2 lg:w-full lg:px-2" />
+        </div>
       </div>
     </article>
   );

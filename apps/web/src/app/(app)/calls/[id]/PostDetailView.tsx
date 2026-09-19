@@ -10,7 +10,7 @@ import { LoadingState } from '@/components/feedback/LoadingState';
 import { EmptyState } from '@/components/feedback/EmptyState';
 import { ErrorState } from '@/components/feedback/ErrorState';
 import { AuthorRow } from '@/components/AuthorRow';
-import { MarketAttachment } from '@/components/MarketAttachment';
+import { MarketAttachment } from '@/features/markets/components/MarketAttachment';
 import { SocialActionBar } from '@/components/SocialActionBar';
 import { CommentRow } from '@/components/CommentRow';
 import { CommentComposer } from '@/components/CommentComposer';
@@ -27,7 +27,7 @@ import type { CommentItem, CreateCommentInput, FeedItem, MarketSummary } from '@
 
 /**
  * Direct conversion of `apps/mobile`'s `PostDetailScreen` — a
- * position-backed Callout's detail. Threaded comments (one level deep),
+ * position-backed Callout's detail. Threaded comments,
  * infinite scroll on the comment list, a composer that supports replying
  * to a specific top-level comment, and a header "…" that deletes the
  * Callout when the viewer authored it (`canDelete`, server-computed).
@@ -174,6 +174,7 @@ export function PostDetailView({ postId }: { postId: string }) {
                     postId={postId}
                     onDelete={(commentId) => deleteCommentMutation.mutate(commentId)}
                     onOpenAuthor={openAuthor}
+                    onOpenComment={(comment) => router.push(`/comments/${comment.id}`)}
                     onReply={(target) =>
                       setComposerTarget((current) =>
                         current?.kind === 'reply' && current.comment.id === target.id ? null : { kind: 'reply', comment: target }

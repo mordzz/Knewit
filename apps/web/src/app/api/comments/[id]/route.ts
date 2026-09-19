@@ -2,6 +2,24 @@ import { ApiError, notFound, withErrorHandling } from '@/lib/apiError';
 import { requireAuth } from '@/lib/privy';
 import { getOrCreateUser } from '@/lib/users';
 import { getSupabase } from '@/lib/supabase';
+import { optionalAuth } from '@/lib/privy';
+import { buildCommentItems, buildFeedItems, type CommentRow, type PostRow } from '@/lib/social';
+
+export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
+  return withErrorHandling(async () => {
+    const { id } = await params;
+    const supabase = getSupabase();
+    const { data: row } = await supabase.from('comments').select('*').eq('id', id).maybeSingle();
+    if (!row) throw notFound(`Comment ${id} not found.`);
+    const { data: post } = await supabase.from('posts').select('*').eq('id', row.post_id).maybeSingle();
+    if (!post) throw notFound(`Callout ${row.post_id} not found.`);
+    const viewer = await optionalAuth(request);
+    const viewerUser = viewer ? await getOrCreateUser(viewer.privyUserId) : null;
+    const [comment] = await buildCommentItems([row as CommentRow], viewerUser?.id ?? null);
+    const [callout] = await buildFeedItems([post as PostRow], viewerUser?.id ?? null);
+    return Response.json({ comment, callout });
+  });
+}
 
 /** `DELETE /comments/:id` — the backend independently verifies
  * ownership (docs/API.md); returns `{}` rather than a bare 204 since

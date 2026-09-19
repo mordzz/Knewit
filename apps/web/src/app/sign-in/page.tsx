@@ -9,7 +9,7 @@ import { FcGoogle } from 'react-icons/fc';
 import { FaXTwitter } from 'react-icons/fa6';
 import { CodeInput } from '@/components/ui/CodeInput';
 import { SOLID_PANEL_CLASS } from '@/components/ui/solidPanel';
-import { SignInShowcase } from '@/components/signin/SignInShowcase';
+import { SignInShowcase } from '@/features/auth/components/SignInShowcase';
 import { publicEnv } from '@/lib/publicEnv';
 import { useGuestStore } from '@/lib/guest/guestStore';
 

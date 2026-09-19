@@ -13,6 +13,8 @@ export interface MarketOutcomeButtonsProps {
 }
 
 function buttonVariant(choice: MarketChoice): ButtonVariant {
+  if (choice.index === 1) return 'secondary';
+  if (choice.index === 0) return 'primary';
   const tone = choiceTone(choice);
   if (tone === 'accent') return 'primary';
   if (tone === 'neutral') return 'secondary';

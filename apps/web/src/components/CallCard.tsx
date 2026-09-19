@@ -2,7 +2,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Text } from '@/components/ui/Text';
 import { Avatar } from '@/components/ui/Avatar';
-import { MarketAttachment } from '@/components/MarketAttachment';
+import { MarketAttachment } from '@/features/markets/components/MarketAttachment';
 import { SocialActionBar } from '@/components/SocialActionBar';
 import { formatRelativeTime } from '@/lib/formatters';
 import type { FeedItem } from '@/types/social';

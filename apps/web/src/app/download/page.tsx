@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { ArrowUpRight, Check, ShieldCheck } from 'lucide-react';
 import { FaApple, FaGooglePlay } from 'react-icons/fa6';
-import { LandingHeader, PRIMARY_BUTTON } from '@/components/landing/LandingHeader';
+import { LandingHeader, PRIMARY_BUTTON } from '@/features/landing/components/LandingHeader';
 
 export const metadata: Metadata = {
   title: 'Download Knew it',

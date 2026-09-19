@@ -2,10 +2,10 @@ import { useInfiniteQuery } from '@tanstack/react-query';
 import { getFeed } from '@/lib/feedService';
 
 /** Web equivalent of `apps/mobile/src/features/home/hooks/useHomeFeed.ts`. */
-export function useHomeFeed() {
+export function useHomeFeed(sort: 'trending' | 'latest' = 'trending') {
   return useInfiniteQuery({
-    queryKey: ['feed'],
-    queryFn: ({ pageParam }) => getFeed(pageParam),
+    queryKey: ['feed', sort],
+    queryFn: ({ pageParam }) => getFeed(pageParam, sort),
     initialPageParam: undefined as string | undefined,
     getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
   });

@@ -115,10 +115,10 @@ create table if not exists posts (
 create index if not exists posts_author_id_idx on posts (author_id);
 create index if not exists posts_market_id_idx on posts (market_id);
 create index if not exists posts_created_at_idx on posts (created_at desc);
+create index if not exists posts_created_at_author_idx on posts (created_at desc, author_id);
 
--- One level deep in MVP: parent_comment_id always points at a
--- top-level comment, never another reply (docs/DATABASE.md, "One
--- Reply Level").
+-- parent_comment_id points at the direct parent comment, enabling nested
+-- replies while all records remain attached to the same callout via post_id.
 create table if not exists comments (
   id uuid primary key default gen_random_uuid(),
   post_id uuid not null references posts (id) on delete cascade,
@@ -132,6 +132,7 @@ create table if not exists comments (
 
 create index if not exists comments_post_id_idx on comments (post_id);
 create index if not exists comments_parent_comment_id_idx on comments (parent_comment_id);
+create index if not exists comments_parent_created_at_idx on comments (parent_comment_id, created_at asc);
 
 create table if not exists likes (
   user_id uuid not null references users (id) on delete cascade,
@@ -156,6 +157,7 @@ create table if not exists follows (
 );
 
 create index if not exists follows_following_id_idx on follows (following_id);
+create index if not exists follows_follower_following_idx on follows (follower_id, following_id);
 
 -- ============================================================
 -- 0002_leaderboard.sql
@@ -505,7 +507,6 @@ stable
 as $$
   select u.id, u.handle, u.display_name, u.avatar_url
   from users u
-  left join follows f on f.following_id = u.id
   where u.id <> p_user_id
     and not exists (
       select 1
@@ -513,8 +514,15 @@ as $$
       where vf.follower_id = p_user_id
         and vf.following_id = u.id
     )
-  group by u.id, u.handle, u.display_name, u.avatar_url, u.created_at
-  order by count(f.follower_id) desc, u.created_at desc
+  order by
+    (select count(*) from follows mutual
+      where mutual.following_id = u.id
+        and mutual.follower_id in (
+          select followed.following_id from follows followed where followed.follower_id = p_user_id
+        )) desc,
+    (select count(*) from follows popularity where popularity.following_id = u.id) desc,
+    (select max(posts.created_at) from posts where posts.author_id = u.id and posts.created_at >= now() - interval '30 days') desc nulls last,
+    u.created_at desc
   limit p_limit offset p_offset;
 $$;
 
@@ -726,3 +734,54 @@ $$;
 -- Live from Polymarket's Data API"). No code calls it any more — drop it
 -- rather than leave an unused function behind.
 drop function if exists leaderboard_ranking(uuid);
+
+-- ============================================================
+-- 0012_threaded_comments.sql
+-- ============================================================
+
+create or replace function validate_comment_parent_post()
+returns trigger
+language plpgsql
+as $$
+begin
+  if new.parent_comment_id is not null then
+    if new.parent_comment_id = new.id then
+      raise exception 'comment cannot reply to itself';
+    end if;
+    if not exists (
+      select 1 from comments parent
+      where parent.id = new.parent_comment_id
+        and parent.post_id = new.post_id
+    ) then
+      raise exception 'parent comment must belong to the same post';
+    end if;
+  end if;
+  return new;
+end;
+$$;
+
+drop trigger if exists comments_validate_parent_post on comments;
+create constraint trigger comments_validate_parent_post
+after insert or update of post_id, parent_comment_id on comments
+deferrable initially deferred
+for each row execute function validate_comment_parent_post();
+
+-- ============================================================
+-- 0013_feed_ranking.sql
+-- ============================================================
+
+create or replace function trending_posts(p_limit int default 21, p_offset int default 0)
+returns setof posts
+language sql
+stable
+as $$
+  select p.*
+  from posts p
+  where p.created_at >= now() - interval '7 days'
+  order by
+    ((p.like_count + (p.comment_count * 3))::numeric /
+      power(extract(epoch from (now() - p.created_at)) / 3600 + 2, 1.2)) desc,
+    p.created_at desc,
+    p.id desc
+  limit p_limit offset p_offset;
+$$;

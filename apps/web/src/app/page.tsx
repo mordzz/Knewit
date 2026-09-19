@@ -3,7 +3,7 @@
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useSession } from '@/hooks/useSession';
-import { LandingPage } from '@/components/landing/LandingPage';
+import { LandingPage } from '@/features/landing/components/LandingPage';
 
 /**
  * Public entry point — the marketing landing page lives here now, not

@@ -7,8 +7,7 @@ import { buildCommentItems, type CommentRow } from '@/lib/social';
 import type { Paginated } from '@/types/common';
 import type { CommentItem } from '@/types/social';
 
-/** `GET /comments/:id/replies` — direct replies to one top-level
- * comment (one level deep — docs/DECISIONS.md, "One Reply Level"). */
+/** `GET /comments/:id/replies` — direct replies to any comment node. */
 export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
   return withErrorHandling(async () => {
     const { id } = await params;
