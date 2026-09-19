@@ -92,16 +92,20 @@ function ActivityRowShell({
   return (
     <Pressable
       onPress={onPress}
-      className="flex-row gap-3 border-b border-border px-4 py-3 active:bg-surface"
+      className="flex-row items-start gap-3 border-b border-border px-4 py-3.5 active:bg-surface"
       accessibilityRole="button"
       accessibilityLabel={accessibilityLabel}
     >
-      <Icon name={icon} size={20} color={iconColor} />
+      <View className="h-10 w-10 items-center justify-center rounded-xl bg-surface-elevated">
+        <Icon name={icon} size={20} color={iconColor} />
+      </View>
       <View className="flex-1 gap-0.5">
-        {children}
-        <Text variant="caption" color="textTertiary">
-          {formatRelativeTime(createdAt)}
-        </Text>
+        <View className="flex-row items-baseline justify-between gap-2">
+          <View className="flex-1">{children}</View>
+          <Text variant="caption" color="textTertiary">
+            {formatRelativeTime(createdAt)}
+          </Text>
+        </View>
       </View>
     </Pressable>
   );

@@ -20,14 +20,11 @@ import { useFollowToggle } from '@/features/profile/hooks/useFollowToggle';
 import { useUserReplies } from '@/features/profile/hooks/useUserReplies';
 import { useUserCalls } from '@/features/profile/hooks/useUserCalls';
 import { useUserActivity } from '@/features/profile/hooks/useUserActivity';
-import { usePositions } from '@/features/portfolio/hooks/usePositions';
 import { navigateToMarketDetail } from '@/features/markets/utils/openMarketDetail';
-import { useWallet } from '@/hooks/useWallet';
 import { useAuth } from '@/hooks/useAuth';
 import { ApiRequestError } from '@/services/api/client';
 import { formatCompactNumber } from '@/utils/formatNumber';
-import { formatPrice, formatUsd } from '@/utils/formatCurrency';
-import { choiceTextColor, choiceTone } from '@/utils/choiceTone';
+import { formatUsd } from '@/utils/formatCurrency';
 import type { CommentItem, FeedItem, MarketSummary } from '@/types/social';
 import type { ActivityItem } from '@/types/activity';
 import type { AppParamList } from '@/types/navigation';
@@ -55,7 +52,6 @@ export function ProfileScreen() {
   const userId = route.params?.userId;
   const targetId = userId ?? 'me';
   const { canUseApp } = useAuth();
-  const { isConnected: walletConnected } = useWallet();
   const [tab, setTab] = useState<ProfileTab>('calls');
 
   const isOwnProfileRoute = userId === undefined;
@@ -66,7 +62,6 @@ export function ProfileScreen() {
   const replies = useUserReplies(targetId, tab === 'replies' && profile.status === 'success');
   const calls = useUserCalls(targetId, tab === 'calls' && profile.status === 'success');
   const activity = useUserActivity(targetId, tab === 'activity' && profile.status === 'success');
-  const positions = usePositions();
 
   const openAuthor = (id: string) => navigation.navigate('Profile', { userId: id });
   const openMarket = (market: MarketSummary) => navigateToMarketDetail(navigation, market);
@@ -283,41 +278,6 @@ export function ProfileScreen() {
             <StatColumn label="Trading Volume" value={formatUsd(user.tradingVolume)} />
             <StatColumn label="Calls" value={String(user.callCount)} />
           </View>
-        </View>
-      ) : null}
-
-      {user.isSelf &&
-      walletConnected &&
-      positions.status === 'success' &&
-      positions.data.length > 0 ? (
-        <View className="gap-2 border-b border-border py-3">
-          <Text variant="bodyStrong">Wallet Activity</Text>
-          {positions.data.map((position) => (
-            <View key={position.id} className="flex-row items-center justify-between">
-              <View className="flex-1">
-                <Text
-                  variant="caption"
-                  color={choiceTextColor(
-                    choiceTone({ index: position.choiceIndex, label: position.outcome })
-                  )}
-                  className="mb-0.5"
-                >
-                  {position.outcome}
-                </Text>
-                <Text variant="caption" numberOfLines={1}>
-                  {position.marketQuestion}
-                </Text>
-              </View>
-              <View className="items-end">
-                <Text variant="caption">
-                  {formatUsd((position.entryPrice / 100) * position.size)}
-                </Text>
-                <Text variant="micro" color="textTertiary">
-                  Entry {formatPrice(position.entryPrice)}
-                </Text>
-              </View>
-            </View>
-          ))}
         </View>
       ) : null}
 

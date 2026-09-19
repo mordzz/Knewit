@@ -479,7 +479,8 @@ function createComment(state: GuestState, postId: string, body: unknown): Commen
   if (input.parentCommentId) {
     const parent = data.findCommentById(state, input.parentCommentId);
     if (!parent) fail(404, 'not_found', 'Parent comment not found.');
-    parentCommentId = parent.parentCommentId ?? parent.id;
+    if (parent.postId !== postId) fail(400, 'invalid_parent', 'Parent comment must belong to this call.');
+    parentCommentId = parent.id;
   }
 
   const createdAt = new Date().toISOString();

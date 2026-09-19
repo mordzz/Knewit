@@ -27,8 +27,11 @@ async function getMockFeedPage(cursor?: string): Promise<Paginated<FeedItem>> {
  * real request fails (no backend exists yet — see docs/API.md), and only
  * with a loud console warning so it's never mistaken for real data.
  */
-export async function getFeed(cursor?: string): Promise<Paginated<FeedItem>> {
-  const query = cursor ? `?cursor=${encodeURIComponent(cursor)}` : '';
+export async function getFeed(cursor?: string, sort: 'trending' | 'latest' = 'trending'): Promise<Paginated<FeedItem>> {
+  const params = new URLSearchParams();
+  if (cursor) params.set('cursor', cursor);
+  if (sort === 'trending') params.set('sort', sort);
+  const query = params.toString() ? `?${params.toString()}` : '';
 
   try {
     return await apiRequest<Paginated<FeedItem>>(`${endpoints.feed}${query}`);

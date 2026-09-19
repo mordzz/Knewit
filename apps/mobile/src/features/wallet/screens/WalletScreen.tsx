@@ -124,7 +124,7 @@ export function WalletScreen() {
           className="px-4 pb-3 text-4xl"
           style={{ fontFamily: typography.family.extrabold }}
         >
-          Wallet
+          Portfolio
         </Text>
         <Card contentClassName="gap-2">
           <Text variant="bodyStrong">Wallet isn&apos;t configured in this build</Text>
@@ -163,7 +163,7 @@ export function WalletScreen() {
           className="text-4xl"
           style={{ fontFamily: typography.family.extrabold }}
         >
-          Wallet
+          Portfolio
         </Text>
       </View>
 
@@ -209,7 +209,7 @@ export function WalletScreen() {
           <Text variant="caption" color="textSecondary">
             Balance
           </Text>
-          <Text variant="title">
+          <Text variant="title" className="text-3xl font-bold">
             {balance.isPending && status === 'connected'
               ? '···'
               : balance.data?.usdc != null
@@ -264,7 +264,7 @@ export function WalletScreen() {
               <Text variant="caption" color="textSecondary">
                 Open Positions
               </Text>
-              <Text variant="title">{positions.length}</Text>
+              <Text variant="title" className="text-3xl font-bold">{positions.length}</Text>
             </View>
             <View className="flex-1 gap-0.5">
               <Text variant="caption" color="textSecondary">
@@ -272,6 +272,7 @@ export function WalletScreen() {
               </Text>
               <Text
                 variant="title"
+                className="text-3xl font-bold"
                 color={
                   totalPnl == null || totalPnl === 0 ? 'textSecondary' : totalPnl > 0 ? 'yes' : 'no'
                 }
@@ -284,6 +285,8 @@ export function WalletScreen() {
               </Text>
             </View>
           </View>
+
+          {positions.length > 0 ? <AllocationPanel positions={positions} /> : null}
 
           {positionsQuery.isPending ? (
             <View className="items-center py-12">
@@ -419,6 +422,40 @@ export function WalletScreen() {
   );
 }
 
+function AllocationPanel({ positions }: { positions: UserPosition[] }) {
+  const values = positions
+    .map((position) => ({
+      position,
+      value: ((position.currentPrice ?? position.entryPrice) / 100) * position.size,
+    }))
+    .sort((a, b) => b.value - a.value);
+  const total = values.reduce((sum, item) => sum + item.value, 0);
+  if (total <= 0) return null;
+  const top = values.slice(0, 3);
+  return (
+    <Card contentClassName="gap-3">
+      <Text variant="bodyStrong">Allocation</Text>
+      <View className="h-3 flex-row overflow-hidden rounded-full bg-surface-elevated">
+        {top.map((item, index) => (
+          <View
+            key={item.position.id}
+            className="h-full bg-accent"
+            style={{ flex: item.value / total, opacity: 1 - index * 0.18 }}
+          />
+        ))}
+      </View>
+      {top.map((item) => (
+        <View key={item.position.id} className="flex-row items-center justify-between gap-2">
+          <Text variant="caption" color="textSecondary" numberOfLines={1} className="flex-1">
+            {item.position.marketQuestion}
+          </Text>
+          <Text variant="caption">{Math.round((item.value / total) * 100)}%</Text>
+        </View>
+      ))}
+    </Card>
+  );
+}
+
 function PositionRow({ position, onSell }: { position: UserPosition; onSell: () => void }) {
   const pnl =
     position.currentPrice != null
@@ -431,8 +468,8 @@ function PositionRow({ position, onSell }: { position: UserPosition; onSell: () 
         {position.marketQuestion}
       </Text>
       <View className="flex-row items-start justify-between gap-4">
-        <View className="flex-row gap-5">
-          <View className="gap-0.5">
+        <View className="flex-1 flex-row flex-wrap gap-3">
+          <View className="w-[28%] gap-0.5">
             <Text variant="caption" color="textTertiary">
               Position
             </Text>
@@ -445,13 +482,13 @@ function PositionRow({ position, onSell }: { position: UserPosition; onSell: () 
               {position.outcome}
             </Text>
           </View>
-          <View className="gap-0.5">
+          <View className="w-[28%] gap-0.5">
             <Text variant="caption" color="textTertiary">
               Entry
             </Text>
             <Text variant="bodyStrong">{formatProbability(position.entryPrice)}</Text>
           </View>
-          <View className="gap-0.5">
+          <View className="w-[28%] gap-0.5">
             <Text variant="caption" color="textTertiary">
               Current
             </Text>
@@ -459,7 +496,7 @@ function PositionRow({ position, onSell }: { position: UserPosition; onSell: () 
               {position.currentPrice != null ? formatProbability(position.currentPrice) : '—'}
             </Text>
           </View>
-          <View className="gap-0.5">
+          <View className="w-[28%] gap-0.5">
             <Text variant="caption" color="textTertiary">
               Size
             </Text>
@@ -481,7 +518,7 @@ function PositionRow({ position, onSell }: { position: UserPosition; onSell: () 
       <View className="flex-row justify-end">
         <Button
           label="Sell"
-          variant="secondary"
+          variant="no"
           onPress={onSell}
           className="min-h-0 px-4 py-2"
           accessibilityLabel={`Sell ${position.outcome} position`}

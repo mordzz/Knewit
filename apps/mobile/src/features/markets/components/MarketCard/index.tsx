@@ -5,7 +5,6 @@ import { Icon } from '@/components/ui/Icon';
 import { MarketVisual } from '@/components/ui/MarketVisual';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { formatCompactUsd } from '@/utils/formatCurrency';
-import { choiceTone, type ChoiceTone } from '@/utils/choiceTone';
 import { typography } from '@/theme';
 import type { MarketChoice } from '@/types/market';
 import type {
@@ -133,7 +132,7 @@ function SingleMarketCard({
       {market.choices.length === 2 ? (
         <View className="flex-row gap-2">
           {market.choices.map((choice) => (
-            <ChoiceBlock key={choice.index} label={choice.label} tone={choiceTone(choice)} />
+            <ChoiceBlock key={choice.index} label={choice.label} variant={choice.index % 2 === 0 ? 'primary' : 'secondary'} />
           ))}
         </View>
       ) : (
@@ -174,7 +173,7 @@ function ChoiceList({ choices }: { choices: MarketChoice[] }) {
   return (
     <View className="flex-row flex-wrap gap-1.5">
       {choices.map((choice) => (
-        <MiniPill key={choice.index} label={choice.label} tone={choiceTone(choice)} />
+        <MiniPill key={choice.index} label={choice.label} variant={choice.index % 2 === 0 ? 'primary' : 'secondary'} />
       ))}
     </View>
   );
@@ -248,7 +247,7 @@ function OutcomeRow({ row, large }: { row: MarketOutcomeRow; large: boolean }) {
       </Text>
       <View className="flex-row gap-1">
         {row.choices.slice(0, 2).map((choice) => (
-          <MiniPill key={choice.index} label={choice.label} tone={choiceTone(choice)} />
+          <MiniPill key={choice.index} label={choice.label} variant={choice.index % 2 === 0 ? 'primary' : 'secondary'} />
         ))}
       </View>
     </View>
@@ -265,24 +264,10 @@ function OutcomeRow({ row, large }: { row: MarketOutcomeRow; large: boolean }) {
  * to be the bigger, more square-cornered treatment the request asked
  * for.
  */
-const TONE_BLOCK_CLASS: Record<ChoiceTone, string> = {
-  yes: 'bg-yes',
-  no: 'bg-no',
-  accent: 'bg-accent',
-  neutral: 'border border-border bg-surface-elevated',
-};
-
-const TONE_TEXT_COLOR: Record<ChoiceTone, 'textInverse' | 'textPrimary'> = {
-  yes: 'textInverse',
-  no: 'textPrimary',
-  accent: 'textInverse',
-  neutral: 'textPrimary',
-};
-
-function ChoiceBlock({ label, tone }: { label: string; tone: ChoiceTone }) {
+function ChoiceBlock({ label, variant }: { label: string; variant: 'primary' | 'secondary' }) {
   return (
-    <View className={`flex-1 items-center rounded-md px-3 py-2.5 ${TONE_BLOCK_CLASS[tone]}`}>
-      <Text variant="bodyStrong" color={TONE_TEXT_COLOR[tone]}>
+    <View className={`flex-1 items-center rounded-md px-3 py-2.5 ${variant === 'primary' ? 'bg-accent' : 'border border-border bg-surface-elevated'}`}>
+      <Text variant="bodyStrong" color={variant === 'primary' ? 'textInverse' : 'textPrimary'}>
         {label}
       </Text>
     </View>
@@ -294,10 +279,10 @@ function ChoiceBlock({ label, tone }: { label: string; tone: ChoiceTone }) {
  * rather than shared since `Button`'s own size (min-h-12) is too tall
  * for a dense outcome-row list; this is the compact equivalent for that
  * context only. */
-function MiniPill({ label, tone }: { label: string; tone: ChoiceTone }) {
+function MiniPill({ label, variant }: { label: string; variant: 'primary' | 'secondary' }) {
   return (
-    <View className={`rounded-full px-2.5 py-1 ${TONE_BLOCK_CLASS[tone]}`}>
-      <Text variant="micro" color={TONE_TEXT_COLOR[tone]}>
+    <View className={`rounded-full px-2.5 py-1 ${variant === 'primary' ? 'bg-accent' : 'border border-border bg-surface-elevated'}`}>
+      <Text variant="micro" color={variant === 'primary' ? 'textInverse' : 'textPrimary'}>
         {label}
       </Text>
     </View>

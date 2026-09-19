@@ -225,9 +225,9 @@ export function SignInScreen() {
               {!isAwaitingCode ? (
                 <>
                   <View className="items-center gap-1">
-                    <Text className="text-3xl font-bold text-center">Sign in</Text>
+                    <Text className="text-3xl font-bold text-center">Welcome back</Text>
                     <Text variant="caption" color="textSecondary" className="text-center">
-                      Enter your email to get started
+                      Sign in to continue to Knew it
                     </Text>
                   </View>
 

@@ -1,8 +1,5 @@
-import { Image, View } from 'react-native';
+import { View } from 'react-native';
 import { Button, type ButtonVariant } from '@/components/ui/Button';
-import { Text } from '@/components/ui/Text';
-import { formatProbability } from '@/utils/formatCurrency';
-import { choiceTextColor, choiceTone } from '@/utils/choiceTone';
 import { cn } from '@/utils/cn';
 import type { MarketChoice } from '@/types/market';
 
@@ -14,10 +11,7 @@ export interface MarketOutcomeButtonsProps {
 }
 
 function buttonVariant(choice: MarketChoice): ButtonVariant {
-  const tone = choiceTone(choice);
-  if (tone === 'accent') return 'primary';
-  if (tone === 'neutral') return 'secondary';
-  return tone;
+  return choice.index % 2 === 0 ? 'primary' : 'secondary';
 }
 
 /**
@@ -43,7 +37,7 @@ export function MarketOutcomeButtons({ choices, onPress, className }: MarketOutc
           <Button
             key={choice.index}
             variant={buttonVariant(choice)}
-            label={`${choice.label} ${formatProbability(choice.price)}`}
+            label={choice.label}
             onPress={onPress}
             className="flex-1"
           />
@@ -53,19 +47,9 @@ export function MarketOutcomeButtons({ choices, onPress, className }: MarketOutc
   }
 
   return (
-    <View className={cn('gap-2 rounded-xl bg-surface-elevated p-2.5', className)}>
+    <View className={cn('flex-row flex-wrap gap-2', className)}>
       {choices.map((choice) => (
-        <View key={choice.index} className="flex-row items-center gap-2">
-          {choice.imageUrl ? (
-            <Image source={{ uri: choice.imageUrl }} className="h-5 w-5 rounded-full" />
-          ) : null}
-          <Text variant="caption" numberOfLines={1} className="flex-1">
-            {choice.label}
-          </Text>
-          <Text variant="caption" color={choiceTextColor(choiceTone(choice))}>
-            {formatProbability(choice.price)}
-          </Text>
-        </View>
+        <Button key={choice.index} variant={buttonVariant(choice)} label={choice.label} onPress={onPress} className="min-w-[48%] flex-1" />
       ))}
     </View>
   );

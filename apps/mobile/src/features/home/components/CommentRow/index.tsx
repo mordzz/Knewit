@@ -33,6 +33,7 @@ export interface CommentRowProps {
    * not a recursive tree (see docs/DECISIONS.md, "One Reply Level").
    * Tapping Reply on a reply still targets the same top-level thread. */
   isReply?: boolean;
+  depth?: number;
 }
 
 /**
@@ -58,13 +59,14 @@ export function CommentRow({
   onReply,
   deletingCommentId,
   isReply = false,
+  depth = 0,
 }: CommentRowProps) {
   const isDeleting = deletingCommentId === comment.id;
   const [confirmVisible, setConfirmVisible] = useState(false);
   const [repliesExpanded, setRepliesExpanded] = useState(false);
   const toggleLike = useToggleCommentLike();
   const shareComment = useShareComment();
-  const replies = useCommentReplies(comment.id, postId, repliesExpanded && !isReply);
+  const replies = useCommentReplies(comment.id, postId, repliesExpanded);
 
   async function handleShare() {
     try {
@@ -83,8 +85,9 @@ export function CommentRow({
     <View
       className={cn(
         'border-b border-border px-4 py-3',
-        isReply && 'border-b-0 pb-0 pl-11 pt-2'
+        isReply && 'border-b-0 pb-0 pt-2'
       )}
+      style={depth > 0 ? { marginLeft: Math.min(depth, 4) * 28 } : undefined}
     >
       <View className="flex-row gap-3">
         <Pressable
@@ -146,7 +149,7 @@ export function CommentRow({
               hitSlop={8}
             >
               <Icon name="chatbubble-outline" size={16} color="textTertiary" />
-              {!isReply && comment.replyCount > 0 ? (
+              {comment.replyCount > 0 ? (
                 <Text variant="caption" color="textTertiary">
                   {formatCompactNumber(comment.replyCount)}
                 </Text>
@@ -168,7 +171,7 @@ export function CommentRow({
             </Pressable>
           </View>
 
-          {!isReply && comment.replyCount > 0 ? (
+          {comment.replyCount > 0 ? (
             <Pressable
               onPress={() => setRepliesExpanded((current) => !current)}
               className="mt-2 min-h-8 flex-row items-center gap-1.5 py-1"
@@ -188,7 +191,7 @@ export function CommentRow({
         </View>
       </View>
 
-      {!isReply && repliesExpanded
+      {repliesExpanded
         ? replyItems.map((reply) => (
             <CommentRow
               key={reply.id}
@@ -199,6 +202,7 @@ export function CommentRow({
               onReply={onReply}
               deletingCommentId={deletingCommentId}
               isReply
+              depth={depth + 1}
             />
           ))
         : null}

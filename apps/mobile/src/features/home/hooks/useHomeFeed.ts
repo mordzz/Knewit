@@ -8,8 +8,8 @@ import { getFeed } from '@/features/home/services/feedService';
  */
 export function useHomeFeed() {
   return useInfiniteQuery({
-    queryKey: ['feed'],
-    queryFn: ({ pageParam }) => getFeed(pageParam),
+    queryKey: ['feed', 'trending'],
+    queryFn: ({ pageParam }) => getFeed(pageParam, 'trending'),
     initialPageParam: undefined as string | undefined,
     getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
   });
