@@ -12,7 +12,6 @@ import { MarketCardDesktop } from '@/features/markets/components/MarketCardDeskt
 import { Sparkline } from '@/components/ui/Sparkline';
 import { getMarketPriceHistory } from '@/features/markets/lib/marketService';
 import { CARD_SURFACE_CLASS } from '@/components/ui/cardSurface';
-import { choiceTone, type ChoiceTone } from '@/lib/choiceTone';
 import type { MarketChoice } from '@/types/market';
 import type { MarketGroupSummary, MarketListItem, MarketOutcomeRow, MarketSummary } from '@/types/social';
 
@@ -195,7 +194,7 @@ function ChoiceList({ choices }: { choices: MarketChoice[] }) {
   return (
     <div className="flex flex-wrap gap-1.5">
       {choices.map((choice) => (
-        <MiniPill key={choice.index} label={choice.label} tone={choiceTone(choice)} />
+        <MiniPill key={choice.index} label={choice.label} variant={choice.index % 2 === 0 ? 'primary' : 'secondary'} />
       ))}
     </div>
   );
@@ -270,31 +269,17 @@ function OutcomeRow({ row, large }: { row: MarketOutcomeRow; large: boolean }) {
       </Text>
       <div className="flex flex-shrink-0 gap-1">
         {row.choices.slice(0, 2).map((choice) => (
-          <MiniPill key={choice.index} label={choice.label} tone={choiceTone(choice)} />
+          <MiniPill key={choice.index} label={choice.label} variant={choice.index % 2 === 0 ? 'primary' : 'secondary'} />
         ))}
       </div>
     </div>
   );
 }
 
-const TONE_BLOCK_CLASS: Record<ChoiceTone, string> = {
-  yes: 'bg-yes',
-  no: 'bg-no',
-  accent: 'bg-accent',
-  neutral: 'border border-border bg-surface-elevated',
-};
-
-const TONE_TEXT_COLOR: Record<ChoiceTone, 'textInverse' | 'textPrimary'> = {
-  yes: 'textInverse',
-  no: 'textPrimary',
-  accent: 'textInverse',
-  neutral: 'textPrimary',
-};
-
-function MiniPill({ label, tone }: { label: string; tone: ChoiceTone }) {
+function MiniPill({ label, variant }: { label: string; variant: 'primary' | 'secondary' }) {
   return (
-    <div className={`rounded-full px-2.5 py-1 ${TONE_BLOCK_CLASS[tone]}`}>
-      <Text variant="micro" color={TONE_TEXT_COLOR[tone]}>
+    <div className={`rounded-full px-2.5 py-1 ${variant === 'primary' ? 'bg-accent' : 'border border-border bg-surface-elevated'}`}>
+      <Text variant="micro" color={variant === 'primary' ? 'textInverse' : 'textPrimary'}>
         {label}
       </Text>
     </div>

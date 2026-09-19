@@ -1,7 +1,4 @@
 import { Button, type ButtonVariant } from '@/components/ui/Button';
-import { Text } from '@/components/ui/Text';
-import { formatProbability } from '@/lib/formatters';
-import { choiceTextColor, choiceTone } from '@/lib/choiceTone';
 import { cn } from '@/lib/cn';
 import type { MarketChoice } from '@/types/market';
 
@@ -13,12 +10,7 @@ export interface MarketOutcomeButtonsProps {
 }
 
 function buttonVariant(choice: MarketChoice): ButtonVariant {
-  if (choice.index === 1) return 'secondary';
-  if (choice.index === 0) return 'primary';
-  const tone = choiceTone(choice);
-  if (tone === 'accent') return 'primary';
-  if (tone === 'neutral') return 'secondary';
-  return tone;
+  return choice.index % 2 === 0 ? 'primary' : 'secondary';
 }
 
 /**
@@ -40,7 +32,7 @@ export function MarketOutcomeButtons({ choices, onPress, className }: MarketOutc
           <Button
             key={choice.index}
             variant={buttonVariant(choice)}
-            label={`${choice.label} ${formatProbability(choice.price)}`}
+            label={choice.label}
             onClick={onPress}
             className="flex-1"
           />
@@ -50,20 +42,15 @@ export function MarketOutcomeButtons({ choices, onPress, className }: MarketOutc
   }
 
   return (
-    <div className={cn('flex flex-col gap-2 rounded-xl bg-surface-elevated p-2.5', className)}>
+    <div className={cn('grid grid-cols-2 gap-2', className)}>
       {choices.map((choice) => (
-        <div key={choice.index} className="flex items-center gap-2">
-          {choice.imageUrl ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img src={choice.imageUrl} alt="" className="h-5 w-5 flex-shrink-0 rounded-full object-cover" />
-          ) : null}
-          <Text variant="caption" numberOfLines={1} className="flex-1">
-            {choice.label}
-          </Text>
-          <Text variant="caption" color={choiceTextColor(choiceTone(choice))}>
-            {formatProbability(choice.price)}
-          </Text>
-        </div>
+        <Button
+          key={choice.index}
+          variant={buttonVariant(choice)}
+          label={choice.label}
+          onClick={onPress}
+          className="min-w-0"
+        />
       ))}
     </div>
   );

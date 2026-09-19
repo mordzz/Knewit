@@ -144,9 +144,9 @@ export default function SignInPage() {
   };
 
   return (
-    <main className="relative mx-auto flex h-screen w-full max-w-2xl flex-col overflow-hidden border-x border-border lg:grid lg:max-w-none lg:grid-cols-[1.1fr_.9fr] lg:overflow-visible lg:border-x-0">
+    <main className="relative mx-auto flex min-h-screen w-full max-w-2xl flex-col overflow-y-auto border-x border-border bg-background lg:h-screen lg:grid lg:max-w-none lg:grid-cols-[1.1fr_.9fr] lg:overflow-visible lg:border-x-0 lg:bg-transparent">
       <SignInShowcase />
-      <section className="relative flex flex-1 flex-col overflow-hidden lg:justify-center lg:overflow-y-auto lg:bg-[radial-gradient(60%_45%_at_50%_0%,rgba(255,229,6,0.07),transparent)] lg:px-10">
+      <section className="relative flex min-h-screen flex-1 flex-col overflow-hidden lg:min-h-0 lg:justify-center lg:overflow-y-auto lg:bg-[radial-gradient(60%_45%_at_50%_0%,rgba(255,229,6,0.07),transparent)] lg:px-10">
         {/* Ambient corner glows — same idea as the mobile screen's. */}
         <div
           aria-hidden
@@ -159,25 +159,26 @@ export default function SignInPage() {
           style={{ opacity: 0.06 }}
         />
 
-        <div className="relative z-10 flex flex-1 items-center justify-center px-4 pt-10 lg:hidden">
+        <div className="relative z-10 flex flex-1 flex-col items-center justify-center px-4 pb-6 pt-10 lg:hidden">
           <Link
             href="/"
             aria-label="Back to home"
-            className="rounded-[32px] focus-visible:outline-3 focus-visible:outline-accent focus-visible:outline-offset-4"
+            className="group rounded-[28px] focus-visible:outline-3 focus-visible:outline-accent focus-visible:outline-offset-4"
           >
             <Image
               src="/icon.png"
               alt="Knew it"
-              width={144}
-              height={144}
-              className="rounded-[32px] shadow-2xl"
+              width={112}
+              height={112}
+              className="rounded-[28px] shadow-[0_18px_45px_rgba(255,229,6,0.18)] transition-transform duration-200 group-active:scale-95"
               priority
             />
           </Link>
+          <p className="mt-4 text-sm font-semibold tracking-[0.18em] text-text-secondary uppercase">Knew it</p>
         </div>
 
         <div
-          className={`relative z-10 w-full rounded-t-3xl ${SOLID_PANEL_CLASS} border-b-0 px-4 pb-8 pt-3 lg:mx-auto lg:w-full lg:max-w-[400px] lg:rounded-none lg:border-transparent lg:bg-transparent lg:px-0 lg:py-0`}
+          className={`relative z-10 w-full rounded-t-3xl ${SOLID_PANEL_CLASS} border-b-0 px-5 pb-6 pt-5 shadow-xl lg:mx-auto lg:mb-0 lg:w-full lg:max-w-[400px] lg:rounded-none lg:border-transparent lg:bg-transparent lg:px-0 lg:py-0 lg:shadow-none`}
         >
 
         {isPreparing ? (
@@ -192,9 +193,9 @@ export default function SignInPage() {
           <>
             {!isAwaitingCode ? (
           <div className="flex flex-col gap-4">
-            <div className="flex flex-col items-center gap-1 text-center lg:items-start lg:gap-2 lg:text-left">
-              <h1 className="text-3xl font-bold lg:text-4xl">Sign in</h1>
-              <p className="text-sm text-text-secondary">Enter your email to get started</p>
+            <div className="flex flex-col items-center gap-2 text-center lg:items-start lg:gap-1 lg:text-left">
+              <h1 className="text-3xl font-bold tracking-tight lg:text-4xl lg:tracking-normal">Welcome back</h1>
+              <p className="text-sm text-text-secondary">Sign in to continue to Knew it</p>
             </div>
 
             <input
@@ -204,21 +205,21 @@ export default function SignInPage() {
               placeholder="Enter your email"
               autoComplete="email"
               disabled={isSendingCode}
-              className="min-h-12 rounded-md lg:rounded-xl border border-white/15 bg-white/10 px-3 py-3 text-text-primary placeholder:text-text-tertiary focus:outline-none focus:ring-1 focus:ring-accent"
+              className="min-h-[52px] rounded-xl border border-white/15 bg-white/5 px-4 py-3 text-text-primary placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-accent/70 lg:min-h-12 lg:bg-white/10 lg:px-3 lg:py-3 lg:focus:ring-1 lg:focus:ring-accent"
             />
             <button
               type="button"
               onClick={handleSendCode}
               disabled={isSendingCode || email.trim().length === 0}
-              className="min-h-12 rounded-md lg:rounded-xl border border-white/15 bg-accent px-6 py-3 font-semibold text-text-inverse transition-opacity hover:opacity-90 disabled:opacity-50"
+              className="min-h-[52px] rounded-xl border border-accent bg-accent px-6 py-3 font-semibold text-text-inverse transition-opacity hover:opacity-90 disabled:opacity-50 lg:min-h-12"
             >
               {isSendingCode ? 'Sending…' : 'Continue'}
             </button>
           </div>
         ) : (
           <div className="flex flex-col gap-4">
-            <div className="flex flex-col items-center gap-1 text-center lg:items-start lg:gap-2 lg:text-left">
-              <h1 className="text-3xl font-bold lg:text-4xl">Check your email</h1>
+            <div className="flex flex-col items-center gap-2 text-center lg:items-start lg:gap-1 lg:text-left">
+              <h1 className="text-3xl font-bold tracking-tight lg:text-4xl lg:tracking-normal">Check your email</h1>
               <p className="text-sm text-text-secondary">We sent a 6-digit code to {email}</p>
             </div>
 
@@ -228,7 +229,7 @@ export default function SignInPage() {
               type="button"
               onClick={handleVerifyCode}
               disabled={isSubmittingCode || code.length !== 6}
-              className="min-h-12 rounded-md lg:rounded-xl border border-white/15 bg-accent px-6 py-3 font-semibold text-text-inverse transition-opacity hover:opacity-90 disabled:opacity-50"
+              className="min-h-[52px] rounded-xl border border-accent bg-accent px-6 py-3 font-semibold text-text-inverse transition-opacity hover:opacity-90 disabled:opacity-50 lg:min-h-12"
             >
               {isSubmittingCode ? 'Verifying…' : 'Verify'}
             </button>
@@ -268,7 +269,7 @@ export default function SignInPage() {
             type="button"
             onClick={() => handleOAuth('google')}
             disabled={isOAuthLoading || isAwaitingCode}
-            className="lg:px-3 lg:text-sm flex min-h-12 items-center justify-center gap-2 rounded-md lg:rounded-xl border border-white/15 bg-white/10 px-6 py-3 font-semibold text-text-primary transition-opacity hover:opacity-90 disabled:opacity-50"
+            className="lg:px-3 lg:text-sm flex min-h-[52px] items-center justify-center gap-2 rounded-xl border border-white/15 bg-white/5 px-6 py-3 font-semibold text-text-primary transition-opacity hover:opacity-90 disabled:opacity-50 lg:min-h-12 lg:bg-white/10"
           >
             <FcGoogle size={18} />
             <span className="lg:hidden">Continue with </span>Google
@@ -277,7 +278,7 @@ export default function SignInPage() {
             type="button"
             onClick={() => handleOAuth('twitter')}
             disabled={isOAuthLoading || isAwaitingCode}
-            className="lg:px-3 lg:text-sm flex min-h-12 items-center justify-center gap-2 rounded-md lg:rounded-xl border border-white/15 bg-white/10 px-6 py-3 font-semibold text-text-primary transition-opacity hover:opacity-90 disabled:opacity-50"
+            className="lg:px-3 lg:text-sm flex min-h-[52px] items-center justify-center gap-2 rounded-xl border border-white/15 bg-white/5 px-6 py-3 font-semibold text-text-primary transition-opacity hover:opacity-90 disabled:opacity-50 lg:min-h-12 lg:bg-white/10"
           >
             <FaXTwitter size={16} />
             <span className="lg:hidden">Continue with </span>X
@@ -286,7 +287,7 @@ export default function SignInPage() {
             type="button"
             onClick={enterGuest}
             disabled={isOAuthLoading}
-            className="lg:col-span-2 lg:border-transparent lg:bg-transparent lg:text-text-secondary lg:hover:underline flex min-h-12 items-center justify-center gap-2 rounded-md lg:rounded-xl border border-white/15 bg-white/10 px-6 py-3 font-semibold text-text-primary transition-opacity hover:opacity-90 disabled:opacity-50"
+            className="lg:col-span-2 lg:border-transparent lg:bg-transparent lg:text-text-secondary lg:hover:underline flex min-h-12 items-center justify-center gap-2 rounded-xl border border-white/10 bg-transparent px-6 py-3 font-semibold text-text-secondary transition-opacity hover:opacity-90 disabled:opacity-50"
           >
             Sign in as guest
           </button>
