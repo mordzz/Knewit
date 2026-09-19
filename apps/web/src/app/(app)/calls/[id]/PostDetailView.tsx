@@ -88,7 +88,7 @@ export function PostDetailView({ postId }: { postId: string }) {
   }, [hasNextCommentsPage, isFetchingNextCommentsPage, fetchNextCommentsPage]);
 
   return (
-    <div className="flex h-full w-full flex-col">
+    <div className="flex h-full w-full flex-col lg:mx-auto lg:max-w-3xl">
       <div className="flex flex-shrink-0 items-center justify-between px-4 pb-2 pt-4">
         <button type="button" onClick={() => router.back()} aria-label="Go back">
           <Icon name="chevron-back" size={24} />

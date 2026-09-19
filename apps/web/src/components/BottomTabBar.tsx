@@ -29,8 +29,8 @@ export interface TabItem {
  * Markets is a chart (`stats-chart`), Leaderboard a podium, Profile a
  * circled person; Home and Search keep their existing glyphs.
  */
-const TAB_ITEMS: TabItem[] = [
-  { href: '/', label: 'Home', icon: IoHomeOutline, activeIcon: IoHome },
+export const TAB_ITEMS: TabItem[] = [
+  { href: '/home', label: 'Home', icon: IoHomeOutline, activeIcon: IoHome },
   { href: '/markets', label: 'Markets', icon: IoStatsChartOutline, activeIcon: IoStatsChart },
   { href: '/search', label: 'Search', icon: IoSearchOutline, activeIcon: IoSearch },
   { href: '/leaderboard', label: 'Leaderboard', icon: IoPodiumOutline, activeIcon: IoPodium },
@@ -46,7 +46,7 @@ export function BottomTabBar() {
   const pathname = usePathname();
 
   return (
-    <nav className="flex flex-shrink-0 border-t border-border bg-background">
+    <nav className="flex flex-shrink-0 border-t border-border bg-background lg:hidden">
       {TAB_ITEMS.map((item) => {
         const isActive = pathname === item.href;
         const Icon = isActive ? item.activeIcon : item.icon;

@@ -132,33 +132,44 @@ export function MarketDetailView({ id }: { id: string }) {
 
         {!isEventMode && market.status === 'success' ? (
           <>
-            <div className="flex flex-col gap-4 px-4 pb-4">
-              <MarketHero market={market.data} onBack={() => router.back()} />
-              {market.data.choices.length > 0 ? (
-                <MarketPriceChart marketId={id} choices={market.data.choices} />
-              ) : null}
-              {position.status === 'success' && position.data ? (
-                <MyPositionCard
-                  position={position.data}
-                  liveCurrentPriceCents={
-                    market.data.choices.find((c) => c.index === position.data?.choiceIndex)?.price ?? null
-                  }
-                />
-              ) : null}
-              <TradingPanel market={market.data} />
+            {/* Desktop/tablet: hero + chart + position on the left, a
+                sticky Trading Panel on the right — same components, same
+                data, just a two-column composition instead of one long
+                stack (styled after `apps/dekstop`'s detail.tsx, which
+                pairs a chart with a trade card side by side). */}
+            <div className="flex flex-col gap-4 px-4 pb-4 lg:grid lg:grid-cols-[1fr_380px] lg:items-start lg:gap-6 lg:px-0 lg:pb-8 lg:pt-2 2xl:grid-cols-[1fr_440px]">
+              <div className="flex flex-col gap-4">
+                <MarketHero market={market.data} onBack={() => router.back()} />
+                {market.data.choices.length > 0 ? (
+                  <MarketPriceChart marketId={id} choices={market.data.choices} />
+                ) : null}
+                {position.status === 'success' && position.data ? (
+                  <MyPositionCard
+                    position={position.data}
+                    liveCurrentPriceCents={
+                      market.data.choices.find((c) => c.index === position.data?.choiceIndex)?.price ?? null
+                    }
+                  />
+                ) : null}
+              </div>
+              <div className="lg:sticky lg:top-4">
+                <TradingPanel market={market.data} />
+              </div>
             </div>
 
-            <TabRow options={DETAIL_TAB_OPTIONS} value={tab} onChange={setTab} />
+            <div>
+              <TabRow options={DETAIL_TAB_OPTIONS} value={tab} onChange={setTab} />
 
-            {tab === 'about' ? <AboutTab market={market.data} /> : null}
-            {tab === 'comments' ? <CommentsTab marketId={id} onOpenAuthor={openAuthor} onOpenPost={openPost} /> : null}
-            {tab === 'holders' ? <HoldersTab marketId={id} /> : null}
+              {tab === 'about' ? <AboutTab market={market.data} /> : null}
+              {tab === 'comments' ? <CommentsTab marketId={id} onOpenAuthor={openAuthor} onOpenPost={openPost} /> : null}
+              {tab === 'holders' ? <HoldersTab marketId={id} /> : null}
+            </div>
           </>
         ) : null}
 
         {isEventMode && event.status === 'success' ? (
           <>
-            <div className="flex flex-col gap-4 px-4 pb-4">
+            <div className="flex flex-col gap-4 px-4 pb-4 lg:px-0 lg:pb-8 lg:pt-2">
               <EventHero event={event.data} onBack={() => router.back()} />
               <EventPriceChart markets={event.data.markets} />
 
@@ -172,13 +183,15 @@ export function MarketDetailView({ id }: { id: string }) {
               </div>
             </div>
 
-            <TabRow options={DETAIL_TAB_OPTIONS} value={tab} onChange={setTab} />
+            <div>
+              <TabRow options={DETAIL_TAB_OPTIONS} value={tab} onChange={setTab} />
 
-            {tab === 'about' ? <EventAboutTab event={event.data} /> : null}
-            {tab === 'comments' ? <EventCalloutsTab eventId={id} /> : null}
-            {tab === 'holders' ? (
-              <EventHoldersTab eventId={id} markets={event.data.markets} />
-            ) : null}
+              {tab === 'about' ? <EventAboutTab event={event.data} /> : null}
+              {tab === 'comments' ? <EventCalloutsTab eventId={id} /> : null}
+              {tab === 'holders' ? (
+                <EventHoldersTab eventId={id} markets={event.data.markets} />
+              ) : null}
+            </div>
           </>
         ) : null}
       </div>

@@ -4,6 +4,8 @@ import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { BottomTabBar } from '@/components/BottomTabBar';
 import { Fab } from '@/components/Fab';
+import { SideNav } from '@/components/SideNav';
+import { TopHeader } from '@/components/TopHeader';
 import { Text } from '@/components/ui/Text';
 import { useAutoWalletSetup } from '@/hooks/useAutoWalletSetup';
 import { useSession } from '@/hooks/useSession';
@@ -14,17 +16,17 @@ import { useGuestStore } from '@/lib/guest/guestStore';
  * Leaderboard, Profile, …) — a direct conversion of `apps/mobile`'s
  * `MainTabNavigator`: same bottom tab bar, same FAB, same single
  * scrolling column, rendered inside a phone-width frame (`max-w-2xl`,
- * bordered on both sides) regardless of viewport size — the desktop/
- * tablet rail layout has been removed; this is mobile-only now (the
- * wider desktop experience lives in `apps/web`). The frame is pinned
- * to the viewport height with its own internal scroll (`overflow-y-
- * auto` below) so the tab bar stays fixed at the bottom of the frame
- * exactly like a native screen's tab bar, rather than scrolling away
- * with page content. Same "Hard Login Gate" the mobile app's
- * `RootNavigator` enforces (docs/DECISIONS.md): signed-out visitors are
- * bounced to `/sign-in`, which deliberately sits *outside* this route
- * group (`app/sign-in/`, not `app/(app)/sign-in/`) so it never gets
- * this chrome.
+ * bordered on both sides, pinned to the viewport height with its own
+ * inner scroll) below the `lg` breakpoint. At `lg:` and up a `SideNav`
+ * rail (ported from `apps/dekstop`'s `app-shell.tsx`) and `TopHeader`
+ * take over instead of the bottom tab bar/FAB, the frame's border and
+ * height lock go away so the page scrolls natively like a normal
+ * website (the rail/header are `position: fixed`, so they stay pinned),
+ * and no width cap is imposed here — each page owns its own width. Same "Hard
+ * Login Gate" the mobile app's `RootNavigator` enforces
+ * (docs/DECISIONS.md): signed-out visitors are bounced to `/sign-in`,
+ * which deliberately sits *outside* this route group (`app/sign-in/`,
+ * not `app/(app)/sign-in/`) so it never gets this chrome.
  *
  * **Setup gate**: `useAutoWalletSetup` creates the embedded wallet and
  * grants the backend signing key automatically, and until it reports
@@ -58,7 +60,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
   if (!isGuest && setup.status !== 'ready') {
     return (
-      <div className="relative mx-auto flex h-screen w-full max-w-2xl flex-col items-center justify-center gap-3 border-x border-border px-6 text-center">
+      <div className="relative mx-auto flex h-screen w-full max-w-2xl flex-col items-center justify-center gap-3 border-x border-border px-6 text-center lg:max-w-none lg:border-x-0">
         {setup.status === 'error' ? (
           <>
             <Text variant="bodyStrong" className="block">
@@ -84,8 +86,12 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <div className="relative mx-auto flex h-screen w-full max-w-2xl flex-col border-x border-border">
-      <div className="min-h-0 flex-1 overflow-y-auto">{children}</div>
+    <div className="relative mx-auto flex h-screen w-full max-w-2xl flex-col border-x border-border lg:h-auto lg:min-h-screen lg:max-w-none lg:border-x-0">
+      <SideNav />
+      <TopHeader />
+      <div className="min-h-0 flex-1 overflow-y-auto lg:ml-56 lg:overflow-visible lg:px-8 lg:pt-16 xl:px-12">
+        {children}
+      </div>
       <BottomTabBar />
       <Fab />
     </div>

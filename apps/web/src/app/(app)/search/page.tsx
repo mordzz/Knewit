@@ -78,7 +78,7 @@ export default function SearchPage() {
   const noResultsAtAll = search.data && search.data.people.length === 0 && search.data.markets.length === 0;
 
   return (
-    <div className="flex h-full w-full flex-col">
+    <div className="flex h-full w-full flex-col lg:mx-auto lg:max-w-3xl">
       <Text variant="heading" className="block px-4 pb-3 pt-2 text-4xl font-inter-extrabold">
         Search
       </Text>

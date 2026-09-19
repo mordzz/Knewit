@@ -91,7 +91,7 @@ export default function EditProfilePage() {
   }
 
   return (
-    <main className="flex w-full flex-col gap-3 px-4 pb-8 pt-4">
+    <main className="flex w-full flex-col gap-3 px-4 pb-8 pt-4 lg:mx-auto lg:max-w-3xl lg:px-0">
       <div className="flex items-center justify-between">
         <div className="flex flex-1 items-center gap-2">
           <button type="button" onClick={() => router.back()} aria-label="Cancel">

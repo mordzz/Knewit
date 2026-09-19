@@ -31,7 +31,7 @@ export function FollowListView({ userId, kind }: { userId: string; kind: 'follow
   const title = kind === 'followers' ? 'Followers' : 'Following';
 
   return (
-    <main className="w-full pt-4">
+    <main className="w-full pt-4 lg:mx-auto lg:max-w-3xl">
       <div className="flex items-center px-4 pb-2">
         <button type="button" onClick={() => router.back()} aria-label="Go back">
           <Icon name="chevron-back" size={24} />

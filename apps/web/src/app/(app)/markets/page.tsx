@@ -7,10 +7,20 @@ import { EmptyState } from '@/components/feedback/EmptyState';
 import { ErrorState } from '@/components/feedback/ErrorState';
 import { MarketCard, MarketCardSkeleton } from '@/components/MarketCard';
 import { useMarkets } from '@/hooks/useMarkets';
+import { useIsDesktop } from '@/hooks/useIsDesktop';
+import { CARD_SURFACE_CLASS } from '@/components/ui/cardSurface';
 import { getCategories } from '@/lib/marketService';
 import type { MarketListItem } from '@/types/social';
 
-const SKELETON_ROWS = [0, 1, 2, 3];
+const SKELETON_ROWS = [0, 1, 2, 3, 4, 5];
+
+// Desktop/tablet swaps the phone's single-column list for a grid —
+// same `MarketCard`s, styled after `apps/dekstop`'s `MarketsPage`
+// (which browses markets in a grid too), each just wrapped in its own
+// bordered tile since `MarketCard` itself only carries a bottom border
+// (the right convention for a list row, not a grid cell).
+const GRID_CLASS = 'grid grid-cols-2 gap-4 pt-6 xl:grid-cols-3 2xl:grid-cols-4';
+const TILE_CLASS = CARD_SURFACE_CLASS;
 
 /**
  * Direct conversion of `apps/mobile`'s Markets tab (`MarketsScreen` +
@@ -24,6 +34,7 @@ export default function MarketsPage() {
   const [category, setCategory] = useState('Trending');
   const markets = useMarkets(category);
   const categoriesQuery = useQuery({ queryKey: ['categories'], queryFn: getCategories });
+  const isDesktop = useIsDesktop();
 
   // `key` is the API's tag slug (what the backend filters by); `label`
   // is only what the tab shows — the two are different namespaces
@@ -34,31 +45,42 @@ export default function MarketsPage() {
   ];
 
   return (
-    <main className="w-full">
-      <h1 className="px-4 pb-3 pt-2 text-4xl font-extrabold">Markets</h1>
-      <div className="border-b border-border" />
-      <div className="pt-4">
+    <main className={isDesktop ? 'w-full py-8' : 'w-full'}>
+      <h1 className={isDesktop ? 'pb-1 text-5xl font-extrabold' : 'px-4 pb-3 pt-2 text-4xl font-extrabold'}>Markets</h1>
+      {isDesktop ? null : <div className="border-b border-border" />}
+      <div className={isDesktop ? 'pt-6' : 'pt-4'}>
         <TabRow options={categoryOptions} value={category} onChange={setCategory} scroll />
       </div>
 
       {markets.status === 'pending' ? (
-        <div>
-          {SKELETON_ROWS.map((row) => (
-            <MarketCardSkeleton key={row} />
-          ))}
-        </div>
+        isDesktop ? (
+          <div className={GRID_CLASS}>
+            {SKELETON_ROWS.map((row) => (
+              <div key={row} className={TILE_CLASS}>
+                <MarketCardSkeleton />
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div>
+            {SKELETON_ROWS.map((row) => (
+              <MarketCardSkeleton key={row} />
+            ))}
+          </div>
+        )
       ) : markets.status === 'error' ? (
         <ErrorState message="Couldn't load markets." onRetry={() => markets.refetch()} />
       ) : (
-        <MarketsList markets={markets} />
+        <MarketsList markets={markets} isDesktop={isDesktop} />
       )}
     </main>
   );
 }
 
-function MarketsList({ markets }: { markets: ReturnType<typeof useMarkets> }) {
+function MarketsList({ markets, isDesktop }: { markets: ReturnType<typeof useMarkets>; isDesktop: boolean }) {
   if (markets.status !== 'success') return null;
   const items: MarketListItem[] = markets.data.pages.flatMap((page) => page.items);
+  const key = (item: MarketListItem) => (item.kind === 'market' ? item.market.id : item.group.id);
 
   return (
     <>
@@ -68,8 +90,16 @@ function MarketsList({ markets }: { markets: ReturnType<typeof useMarkets> }) {
           title="No markets in this category yet"
           message="Real Polymarket markets will appear here once the backend is connected."
         />
+      ) : isDesktop ? (
+        <div className={GRID_CLASS}>
+          {items.map((item) => (
+            <div key={key(item)} className={TILE_CLASS}>
+              <MarketCard item={item} />
+            </div>
+          ))}
+        </div>
       ) : (
-        items.map((item) => <MarketCard key={item.kind === 'market' ? item.market.id : item.group.id} item={item} />)
+        items.map((item) => <MarketCard key={key(item)} item={item} />)
       )}
       <InfiniteScrollSentinel
         hasNextPage={!!markets.hasNextPage}

@@ -23,6 +23,7 @@ import { useUserReplies } from '@/hooks/useUserReplies';
 import { useUserActivity } from '@/hooks/useUserActivity';
 import { usePositions } from '@/hooks/usePositions';
 import { useSession } from '@/hooks/useSession';
+import { useIsDesktop } from '@/hooks/useIsDesktop';
 import { ApiRequestError } from '@/lib/apiClient';
 import { formatCompactNumber, formatUsd, formatPrice, formatRelativeTime } from '@/lib/formatters';
 import type { CommentItem, FeedItem } from '@/types/social';
@@ -30,11 +31,14 @@ import type { ActivityItem } from '@/types/activity';
 
 type ProfileTab = 'calls' | 'replies' | 'activity';
 
-const PROFILE_TAB_OPTIONS: TabRowOption<ProfileTab>[] = [
+const BASE_TAB_OPTIONS: TabRowOption<ProfileTab>[] = [
   { key: 'calls', label: 'Calls' },
   { key: 'replies', label: 'Replies' },
-  { key: 'activity', label: 'Activity' },
 ];
+
+// Mobile keeps the Activity tab here; desktop has its own `/activity`
+// page in `SideNav`, so the tab is left out there.
+const MOBILE_TAB_OPTIONS: TabRowOption<ProfileTab>[] = [...BASE_TAB_OPTIONS, { key: 'activity', label: 'Activity' }];
 
 /**
  * Direct conversion of `apps/mobile`'s `ProfileScreen` — the one
@@ -46,8 +50,12 @@ const PROFILE_TAB_OPTIONS: TabRowOption<ProfileTab>[] = [
  */
 export function ProfileView({ userId }: { userId?: string }) {
   const router = useRouter();
+  const isDesktop = useIsDesktop();
   const { walletConnected } = useSession();
-  const [tab, setTab] = useState<ProfileTab>('calls');
+  const [selectedTab, setTab] = useState<ProfileTab>('calls');
+  // A stale "activity" selection (e.g. after resizing to desktop, where
+  // that tab doesn't exist) falls back to Calls.
+  const tab: ProfileTab = isDesktop && selectedTab === 'activity' ? 'calls' : selectedTab;
 
   const profile = useProfile(userId);
   const toggleFollow = useFollowToggle();
@@ -72,7 +80,7 @@ export function ProfileView({ userId }: { userId?: string }) {
 
   if (profile.status === 'error' && isNotFound) {
     return (
-      <main className="w-full">
+      <main className="w-full lg:mx-auto lg:max-w-3xl">
         <EmptyState icon="person-outline" title="User not found" message="This profile may have been removed or the link is incorrect." />
       </main>
     );
@@ -80,7 +88,7 @@ export function ProfileView({ userId }: { userId?: string }) {
 
   if (profile.status === 'error') {
     return (
-      <main className="w-full">
+      <main className="w-full lg:mx-auto lg:max-w-3xl">
         <ErrorState message="Unable to load profile." onRetry={() => profile.refetch()} />
       </main>
     );
@@ -97,7 +105,7 @@ export function ProfileView({ userId }: { userId?: string }) {
   const activeStatus = tab === 'activity' ? activity.status : tab === 'replies' ? replies.status : calls.status;
 
   return (
-    <main className="w-full">
+    <main className="w-full lg:mx-auto lg:max-w-3xl">
       <div className="relative z-0 h-36 w-full overflow-hidden">
         {user.bannerUrl ? (
           // eslint-disable-next-line @next/next/no-img-element -- uploaded storage URL, not a bundled asset
@@ -222,7 +230,7 @@ export function ProfileView({ userId }: { userId?: string }) {
       </div>
 
       <Divider />
-      <TabRow options={PROFILE_TAB_OPTIONS} value={tab} onChange={setTab} />
+      <TabRow options={isDesktop ? BASE_TAB_OPTIONS : MOBILE_TAB_OPTIONS} value={tab} onChange={setTab} />
 
       {activeStatus === 'pending' ? (
         <div className="px-4 pt-3">

@@ -12,9 +12,9 @@ import { CallCard } from '@/components/CallCard';
 import { useHomeFeed } from '@/hooks/useHomeFeed';
 import { useFollowingFeed } from '@/hooks/useFollowingFeed';
 import { useWalletBalance } from '@/hooks/useWalletBalance';
-import { useDeposit } from '@/hooks/useDeposit';
+import { useDepositFlow } from '@/hooks/useDepositFlow';
 import { useSession } from '@/hooks/useSession';
-import { isUserCancelledFunding } from '@/lib/privyErrors';
+import { useIsDesktop } from '@/hooks/useIsDesktop';
 import { formatUsd } from '@/lib/formatters';
 
 type FeedTabKey = 'forYou' | 'following';
@@ -37,14 +37,21 @@ export default function HomePage() {
   const [tab, setTab] = useState<FeedTabKey>('forYou');
   const feed = useHomeFeed();
   const followingFeed = useFollowingFeed();
+  const isDesktop = useIsDesktop();
+  // Desktop/tablet gets a centered, wider column with breathing room
+  // instead of the phone's edge-to-edge list — same feed, same
+  // `CallCard`s, just composed with the spacious feel of the
+  // `apps/dekstop` mockups (which browse markets, not this social feed,
+  // so the grid-of-cards treatment there doesn't apply here).
+  const containerClass = isDesktop ? 'mx-auto w-full max-w-3xl py-8' : 'w-full';
 
   const tabs = <TabRow options={FEED_TAB_OPTIONS} value={tab} onChange={setTab} />;
 
   if (tab === 'following') {
     if (!canUseApp) {
       return (
-        <main className="w-full">
-          <Header />
+        <main className={containerClass}>
+          <Header isDesktop={isDesktop} />
           {tabs}
           <EmptyState
             icon="person-outline"
@@ -59,8 +66,8 @@ export default function HomePage() {
 
     if (followingFeed.status === 'pending') {
       return (
-        <main className="w-full">
-          <Header />
+        <main className={containerClass}>
+          <Header isDesktop={isDesktop} />
           {tabs}
           <div className="px-4 pt-4">
             <LoadingState rows={4} />
@@ -71,8 +78,8 @@ export default function HomePage() {
 
     if (followingFeed.status === 'error') {
       return (
-        <main className="w-full">
-          <Header />
+        <main className={containerClass}>
+          <Header isDesktop={isDesktop} />
           {tabs}
           <ErrorState message="Couldn't load your Following feed." onRetry={() => followingFeed.refetch()} />
         </main>
@@ -82,8 +89,8 @@ export default function HomePage() {
     const followingItems = followingFeed.data.pages.flatMap((page) => page.items);
 
     return (
-      <main className="w-full">
-        <Header />
+      <main className={containerClass}>
+        <Header isDesktop={isDesktop} />
         {tabs}
         {followingItems.length === 0 ? (
           <EmptyState
@@ -107,8 +114,8 @@ export default function HomePage() {
 
   if (feed.status === 'pending') {
     return (
-      <main className="w-full">
-        <Header />
+      <main className={containerClass}>
+        <Header isDesktop={isDesktop} />
         {tabs}
         <div className="px-4 pt-2">
           <LoadingState rows={4} />
@@ -119,8 +126,8 @@ export default function HomePage() {
 
   if (feed.status === 'error') {
     return (
-      <main className="w-full">
-        <Header />
+      <main className={containerClass}>
+        <Header isDesktop={isDesktop} />
         {tabs}
         <ErrorState message="Couldn't load your feed." onRetry={() => feed.refetch()} />
       </main>
@@ -130,8 +137,8 @@ export default function HomePage() {
   const items = feed.data.pages.flatMap((page) => page.items);
 
   return (
-    <main className="w-full">
-      <Header />
+    <main className={containerClass}>
+      <Header isDesktop={isDesktop} />
       {tabs}
       {items.length === 0 ? (
         <EmptyState icon="heart-outline" title="No Calls yet" message="Be the first to back a prediction and post about it." />
@@ -201,33 +208,24 @@ function InfiniteScrollSentinel({
  * never a fabricated `$0.00`. Deposit opens Privy's funding flow once a
  * wallet exists; before that it routes to sign-in like any gated action.
  */
-function Header() {
+function Header({ isDesktop }: { isDesktop: boolean }) {
   const router = useRouter();
   const { canUseApp, walletConnected } = useSession();
   const balance = useWalletBalance();
-  const { deposit } = useDeposit();
-  const [isDepositing, setIsDepositing] = useState(false);
-  const [depositError, setDepositError] = useState<string | null>(null);
+  const { isDepositing, depositError, handleDeposit: doDeposit } = useDepositFlow();
 
   const balanceLabel = balance.data?.usdc != null ? formatUsd(balance.data.usdc) : '—';
 
-  const handleDeposit = async () => {
+  const handleDeposit = () => {
     if (!canUseApp || !walletConnected) {
       router.push('/sign-in');
       return;
     }
-    setDepositError(null);
-    setIsDepositing(true);
-    try {
-      await deposit();
-    } catch (error) {
-      if (isUserCancelledFunding(error)) return; // closing Privy's modal is not a failure
-      console.error('Deposit flow failed:', error);
-      setDepositError("Couldn't open the deposit flow. Please try again.");
-    } finally {
-      setIsDepositing(false);
-    }
+    doDeposit();
   };
+
+  // Desktop's `TopHeader` already shows balance + Deposit above every page.
+  if (isDesktop) return null;
 
   return (
     <div className="border-b border-border px-4 pb-3 pt-4">

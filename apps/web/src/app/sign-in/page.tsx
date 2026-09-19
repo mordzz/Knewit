@@ -8,16 +8,17 @@ import { FcGoogle } from 'react-icons/fc';
 import { FaXTwitter } from 'react-icons/fa6';
 import { CodeInput } from '@/components/ui/CodeInput';
 import { SOLID_PANEL_CLASS } from '@/components/ui/solidPanel';
+import { SignInShowcase } from '@/components/signin/SignInShowcase';
 import { publicEnv } from '@/lib/publicEnv';
 import { useGuestStore } from '@/lib/guest/guestStore';
 
 /**
  * Direct conversion of `apps/mobile/src/features/auth/screens/SignInScreen.tsx`
- * — same content, same single-column layout, rendered inside the same
- * bordered `max-w-2xl` frame every authenticated page uses
- * (`app/(app)/layout.tsx`) so this looks like the mobile app's screen
- * viewed bigger, not a separate desktop composition: ambient corner
- * glows, a centered logo above, and a bottom panel (rounded top
+ * below `lg:` — same content, same single-column layout, rendered
+ * inside the same bordered `max-w-2xl` frame every authenticated page
+ * uses (`app/(app)/layout.tsx`) so this looks like the mobile app's
+ * screen viewed bigger, not a separate desktop composition: ambient
+ * corner glows, a centered logo above, and a bottom panel (rounded top
  * corners only, flush with the frame's own bottom edge — the same
  * solid-black + glass-edge treatment as mobile's sign-in panel and the
  * `Modal`/`BottomSheet` surfaces: `bg-background` + faint white border
@@ -68,13 +69,13 @@ export default function SignInPage() {
   // "Sign-In Waits for Account Setup Before Entering").
   useEffect(() => {
     if (!isPreparing) return;
-    if (user?.wallet?.address) router.replace('/');
+    if (user?.wallet?.address) router.replace('/home');
   }, [isPreparing, user?.wallet?.address, router]);
 
   // Guest mode is a session too — leave this screen as soon as it starts,
   // the same way a completed Privy login does.
   useEffect(() => {
-    if (isGuest) router.replace('/');
+    if (isGuest) router.replace('/home');
   }, [isGuest, router]);
 
   const beginSetup = () => setIsPreparing(true);
@@ -142,34 +143,36 @@ export default function SignInPage() {
   };
 
   return (
-    <main className="relative mx-auto flex h-screen w-full max-w-2xl flex-col overflow-hidden border-x border-border">
-      {/* Ambient corner glows — same idea as the mobile screen's. */}
-      <div
-        aria-hidden
-        className="pointer-events-none absolute -left-24 -top-16 h-72 w-72 rounded-full bg-accent"
-        style={{ opacity: 0.08 }}
-      />
-      <div
-        aria-hidden
-        className="pointer-events-none absolute -bottom-32 -right-20 h-80 w-80 rounded-full bg-accent"
-        style={{ opacity: 0.06 }}
-      />
-
-      <div className="relative z-10 flex flex-1 items-center justify-center px-4 pt-10">
-        <Image
-          src="/icon.png"
-          alt="Knewit"
-          width={144}
-          height={144}
-          className="rounded-[32px] shadow-2xl"
-          priority
+    <main className="relative mx-auto flex h-screen w-full max-w-2xl flex-col overflow-hidden border-x border-border lg:grid lg:max-w-none lg:grid-cols-[1.15fr_.85fr] lg:overflow-visible lg:border-x-0">
+      <SignInShowcase />
+      <section className="relative flex flex-1 flex-col overflow-hidden lg:overflow-y-auto">
+        {/* Ambient corner glows — same idea as the mobile screen's. */}
+        <div
+          aria-hidden
+          className="pointer-events-none absolute -left-24 -top-16 h-72 w-72 rounded-full bg-accent"
+          style={{ opacity: 0.08 }}
         />
-      </div>
+        <div
+          aria-hidden
+          className="pointer-events-none absolute -bottom-32 -right-20 h-80 w-80 rounded-full bg-accent"
+          style={{ opacity: 0.06 }}
+        />
 
-      <div
-        className={`relative z-10 w-full rounded-t-3xl ${SOLID_PANEL_CLASS} border-b-0 px-4 pb-8 pt-3 lg:mx-auto lg:mb-16 lg:max-w-[420px] lg:rounded-3xl lg:border-b lg:px-6`}
-      >
-        <div className="mb-1 h-1 w-9 self-center rounded-full bg-white/20" />
+        <div className="relative z-10 flex flex-1 items-center justify-center px-4 pt-10">
+          <Image
+            src="/icon.png"
+            alt="Knewit"
+            width={144}
+            height={144}
+            className="rounded-[32px] shadow-2xl"
+            priority
+          />
+        </div>
+
+        <div
+          className={`relative z-10 w-full rounded-t-3xl ${SOLID_PANEL_CLASS} border-b-0 px-4 pb-8 pt-3 lg:mx-auto lg:mb-16 lg:w-full lg:max-w-[420px] lg:rounded-3xl lg:border-b lg:px-6`}
+        >
+          <div className="mb-1 h-1 w-9 self-center rounded-full bg-white/20" />
 
         {isPreparing ? (
           <div className="flex flex-col items-center gap-3 py-6 text-center">
@@ -297,7 +300,8 @@ export default function SignInPage() {
         <p className="mt-4 text-center text-xs text-text-tertiary">
           Your wallet is securely managed for you. We never see or store your private keys.
         </p>
-      </div>
+        </div>
+      </section>
     </main>
   );
 }

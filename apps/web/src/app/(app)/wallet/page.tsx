@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useLogout } from '@privy-io/react-auth';
 import { Text } from '@/components/ui/Text';
@@ -9,57 +10,63 @@ import { Button } from '@/components/ui/Button';
 import { Divider } from '@/components/ui/Divider';
 import { Modal } from '@/components/ui/Modal';
 import { WalletAddress } from '@/components/WalletAddress';
+import { ActivityRow } from '@/components/ActivityRow';
+import { CARD_SURFACE_CLASS } from '@/components/ui/cardSurface';
+import { LoadingState } from '@/components/feedback/LoadingState';
 import { choiceTextColor, choiceTone } from '@/lib/choiceTone';
 import { EmptyState } from '@/components/feedback/EmptyState';
 import { ErrorState } from '@/components/feedback/ErrorState';
 import { formatProbability, formatUsd } from '@/lib/formatters';
-import { isUserCancelledFunding } from '@/lib/privyErrors';
 import { ApiRequestError } from '@/lib/apiClient';
 import { usePositions } from '@/hooks/usePositions';
 import { useWalletBalance } from '@/hooks/useWalletBalance';
-import { useDeposit } from '@/hooks/useDeposit';
+import { useUserActivity } from '@/hooks/useUserActivity';
+import { useDepositFlow } from '@/hooks/useDepositFlow';
 import { useSellPosition } from '@/hooks/useSellPosition';
 import { useSession } from '@/hooks/useSession';
 import { useGuestStore } from '@/lib/guest/guestStore';
 import type { UserPosition } from '@/types/social';
 
+const RECENT_ACTIVITY_LIMIT = 3;
+const ALLOCATION_TOP_N = 4;
+
 /**
  * Wallet — the one account/funds screen (the old separate Portfolio page
  * and its Profile row are gone; docs/DECISIONS.md, "Wallet Replaces
- * Portfolio"). Connection state, the real USDC collateral balance read
- * from Polymarket's CLOB, and the viewer's open positions with unrealized
- * PnL computed from live current prices. No fabricated figures anywhere:
- * balance "—" until the CLOB read works, PnL "—" when no current price is
- * available.
+ * Portfolio"). Styled after `apps/dekstop`'s `PortfolioPage` — a stat
+ * row, an allocation breakdown, a recent-activity preview, and the open
+ * positions list — as **one** responsive layout (mobile-first classes,
+ * `lg:grid-cols-[1.5fr_1fr]` etc. only at `lg:`) rather than separate
+ * phone/desktop branches, so both get the same "Portfolio" composition.
+ * Real data only: dekstop's allocation splits by a fictional asset-class
+ * taxonomy (Predictions/Crypto/Perps/Stocks) this app doesn't have —
+ * here it's each open position's real share of total position value
+ * instead. "Recent activity" reuses `useUserActivity('me')` and
+ * `ActivityRow`, the same data now also shown in full on `/activity`.
  *
  * **No manual setup buttons any more**: wallet creation and the signing
  * grant both run automatically through `useAutoWalletSetup` (the app
  * shell's setup gate renders until they finish) — see docs/DECISIONS.md,
- * "Automatic Wallet & Trading Setup — No Manual Buttons". This screen
- * only states what it's waiting for.
- *
- * **Deposit** (yellow, right of the Balance row) opens Privy's funding
- * flow into this wallet on Polygon USDC.e; **Log Out** (red) stays in the
- * status row. The former in-app Approve USDC button was removed by
- * request — see docs/WALLET.md, "Approve USDC for Trading".
+ * "Automatic Wallet & Trading Setup — No Manual Buttons".
  */
 export default function WalletPage() {
+  const router = useRouter();
   const { address, authenticated, isGuest, walletConnected } = useSession();
   const { logout } = useLogout();
   const exitGuest = useGuestStore((state) => state.exitGuest);
-  const { deposit } = useDeposit();
-  const router = useRouter();
   const sell = useSellPosition();
-  const [isDepositing, setIsDepositing] = useState(false);
-  const [depositError, setDepositError] = useState<string | null>(null);
   const [sellTarget, setSellTarget] = useState<UserPosition | null>(null);
-  const [sellNotice, setSellNotice] = useState<{ tone: 'yes' | 'danger'; message: string } | null>(
-    null
-  );
+  const [sellNotice, setSellNotice] = useState<{ tone: 'yes' | 'danger'; message: string } | null>(null);
 
   const balance = useWalletBalance();
   const positionsQuery = usePositions();
   const positions = positionsQuery.data ?? [];
+  const activity = useUserActivity('me', walletConnected);
+  const { isDepositing, depositError, handleDeposit } = useDepositFlow();
+
+  const openAuthor = (userId: string) => router.push(`/profile/${userId}`);
+  const openMarket = (marketId: string) => router.push(`/markets/${marketId}`);
+  const openPost = (postId: string) => router.push(`/calls/${postId}`);
 
   const handleLogout = () => {
     // A guest session has no Privy session to end — leaving guest mode is
@@ -82,32 +89,33 @@ export default function WalletPage() {
         ? pricedPositions.reduce((sum, p) => sum + ((p.currentPrice! - p.entryPrice) / 100) * p.size, 0)
         : null;
 
-  const handleDeposit = async () => {
-    setDepositError(null);
-    setIsDepositing(true);
-    try {
-      await deposit();
-    } catch (error) {
-      if (isUserCancelledFunding(error)) return; // closing Privy's modal is not a failure
-      console.error('Deposit flow failed:', error);
-      setDepositError("Couldn't open the deposit flow. Please try again.");
-    } finally {
-      setIsDepositing(false);
-    }
-  };
+  const balanceLabel = balance.isPending && address ? '···' : balance.data?.usdc != null ? formatUsd(balance.data.usdc) : '—';
+  const pnlLabel =
+    totalPnl == null ? '—' : totalPnl === 0 ? formatUsd(0) : `${totalPnl > 0 ? '+' : '−'}${formatUsd(Math.abs(totalPnl))}`;
+  const pnlColor = totalPnl == null || totalPnl === 0 ? 'textSecondary' : totalPnl > 0 ? 'yes' : 'no';
 
   return (
-    <main className="flex w-full flex-col gap-3 px-0 pt-4">
-      <div className="flex items-center gap-2 px-4 pb-3">
-        <button type="button" onClick={() => router.back()} aria-label="Go back">
+    <main className="flex w-full flex-col gap-3 px-0 pt-4 lg:gap-5 lg:py-8">
+      <div className="flex items-center gap-2 px-4 lg:px-0">
+        <button type="button" onClick={() => router.back()} aria-label="Go back" className="lg:hidden">
           <Icon name="chevron-back" size={24} />
         </button>
-        <Text variant="heading" className="block text-4xl font-inter-extrabold">
-          Wallet
+        <Text variant="heading" className="block text-4xl font-inter-extrabold lg:text-5xl">
+          Portfolio
         </Text>
       </div>
 
-      <div className="flex items-center gap-3 border-b border-border px-4 py-3">
+      <section className="grid grid-cols-1 gap-3 px-4 sm:grid-cols-3 lg:px-0 lg:gap-4">
+        <StatCard label="Balance" value={balanceLabel} error={depositError}>
+          {address ? (
+            <Button label="Deposit" variant="primary" loading={isDepositing} onClick={handleDeposit} className="mt-3 min-h-0 px-4 py-2" />
+          ) : null}
+        </StatCard>
+        <StatCard label="Open Positions" value={String(positions.length)} />
+        <StatCard label="Unrealized PnL" value={pnlLabel} valueColor={pnlColor} />
+      </section>
+
+      <div className="flex items-center gap-3 border-y border-border px-4 py-3 lg:rounded-[18px] lg:border lg:border-white/[0.14] lg:bg-[rgba(14,15,19,0.88)] lg:px-5">
         <Icon name="wallet-outline" color={address ? 'yes' : 'textTertiary'} />
         <div className="flex-1">
           {address ? (
@@ -121,105 +129,61 @@ export default function WalletPage() {
             {address ? 'Connected' : 'This happens automatically — no action needed.'}
           </Text>
         </div>
-        {address ? (
-          <Button label="Log Out" variant="no" onClick={handleLogout} className="min-h-0 px-3 py-2" />
-        ) : null}
-      </div>
-
-      <div className="flex items-start justify-between gap-3 border-b border-border px-4 py-3">
-        <div className="flex-1">
-          <Text variant="caption" color="textSecondary" className="block">
-            Balance
-          </Text>
-          <Text variant="title">
-            {balance.isPending && address ? '···' : balance.data?.usdc != null ? formatUsd(balance.data.usdc) : '—'}
-          </Text>
-          {address && balance.data?.usdc == null && !balance.isPending ? (
-            <Text variant="micro" color="textTertiary">
-              Trading setup is still finishing — it completes automatically.
-            </Text>
-          ) : null}
-        </div>
-        {address ? (
-          <Button
-            label="Deposit"
-            variant="primary"
-            loading={isDepositing}
-            onClick={handleDeposit}
-            className="min-h-0 px-4 py-2"
-          />
-        ) : null}
-      </div>
-
-      {depositError ? (
-        <Text variant="caption" color="danger" className="block px-4">
-          {depositError}
-        </Text>
-      ) : null}
-
-      <div className="flex border-b border-border px-4 py-3">
-        <div className="flex-1">
-          <Text variant="caption" color="textSecondary" className="block">
-            Open Positions
-          </Text>
-          <Text variant="title">{positions.length}</Text>
-        </div>
-        <div className="flex-1">
-          <Text variant="caption" color="textSecondary" className="block">
-            Unrealized PnL
-          </Text>
-          <Text
-            variant="title"
-            color={totalPnl == null || totalPnl === 0 ? 'textSecondary' : totalPnl > 0 ? 'yes' : 'no'}
-          >
-            {totalPnl == null
-              ? '—'
-              : totalPnl === 0
-                ? formatUsd(0)
-                : `${totalPnl > 0 ? '+' : '−'}${formatUsd(Math.abs(totalPnl))}`}
-          </Text>
-        </div>
+        {address ? <Button label="Log Out" variant="no" onClick={handleLogout} className="min-h-0 px-3 py-2" /> : null}
       </div>
 
       {sellNotice ? (
-        <Text variant="caption" color={sellNotice.tone} className="block px-4">
+        <Text variant="caption" color={sellNotice.tone} className="block px-4 lg:px-0">
           {sellNotice.message}
         </Text>
       ) : null}
 
-      {!walletConnected ? (
-        <EmptyState
-          icon="wallet-outline"
-          title="Connect your wallet"
-          message="Your balance and positions appear here once a wallet is connected."
-        />
-      ) : positionsQuery.isError ? (
-        <ErrorState message="Couldn't load your positions." onRetry={() => positionsQuery.refetch()} />
-      ) : positionsQuery.isPending ? (
-        <div className="flex justify-center py-12">
-          <div className="h-5 w-5 animate-spin rounded-full border-2 border-text-secondary border-t-transparent" />
+      {walletConnected && positions.length > 0 ? (
+        <section className="grid gap-3 px-4 lg:grid-cols-[1.5fr_1fr] lg:gap-4 lg:px-0">
+          <AllocationPanel positions={positions} />
+          <RecentActivityPanel activity={activity} onOpenAuthor={openAuthor} onOpenMarket={openMarket} onOpenPost={openPost} />
+        </section>
+      ) : null}
+
+      <section className="lg:overflow-hidden lg:rounded-[18px] lg:border lg:border-white/[0.14] lg:bg-[rgba(14,15,19,0.88)]">
+        <div className="hidden border-b border-border px-5 py-3 lg:block">
+          <Text variant="bodyStrong">Open positions</Text>
         </div>
-      ) : positions.length === 0 ? (
-        <EmptyState
-          icon="trending-up-outline"
-          title="No positions yet"
-          message="Positions you take on markets will show up here."
-        />
-      ) : (
-        positions.map((position, index) => (
-          <div key={position.id}>
-            <PositionRow
-              position={position}
-              onSell={() => {
-                setSellNotice(null);
-                sell.reset();
-                setSellTarget(position);
-              }}
-            />
-            {index < positions.length - 1 ? <Divider /> : null}
+
+        {!walletConnected ? (
+          <EmptyState
+            icon="wallet-outline"
+            title="Connect your wallet"
+            message="Your balance and positions appear here once a wallet is connected."
+          />
+        ) : positionsQuery.isError ? (
+          <ErrorState message="Couldn't load your positions." onRetry={() => positionsQuery.refetch()} />
+        ) : positionsQuery.isPending ? (
+          <div className="flex justify-center py-12">
+            <div className="h-5 w-5 animate-spin rounded-full border-2 border-text-secondary border-t-transparent" />
           </div>
-        ))
-      )}
+        ) : positions.length === 0 ? (
+          <EmptyState
+            icon="trending-up-outline"
+            title="No positions yet"
+            message="Positions you take on markets will show up here."
+          />
+        ) : (
+          positions.map((position, index) => (
+            <div key={position.id}>
+              <PositionRow
+                position={position}
+                onSell={() => {
+                  setSellNotice(null);
+                  sell.reset();
+                  setSellTarget(position);
+                }}
+              />
+              {index < positions.length - 1 ? <Divider /> : null}
+            </div>
+          ))
+        )}
+      </section>
 
       <Modal
         visible={sellTarget != null}
@@ -243,9 +207,7 @@ export default function WalletPage() {
                 </Text>
                 <Text
                   variant="bodyStrong"
-                  color={choiceTextColor(
-                    choiceTone({ index: sellTarget.choiceIndex, label: sellTarget.outcome })
-                  )}
+                  color={choiceTextColor(choiceTone({ index: sellTarget.choiceIndex, label: sellTarget.outcome }))}
                 >
                   {sellTarget.outcome}
                 </Text>
@@ -261,15 +223,13 @@ export default function WalletPage() {
                   Current
                 </Text>
                 <Text variant="bodyStrong">
-                  {sellTarget.currentPrice != null
-                    ? formatProbability(sellTarget.currentPrice)
-                    : '—'}
+                  {sellTarget.currentPrice != null ? formatProbability(sellTarget.currentPrice) : '—'}
                 </Text>
               </div>
             </div>
             <Text variant="caption" color="textSecondary" className="block">
-              Sells the whole position at market — the final price is set when it fills. Proceeds
-              are sent to your Privy wallet, so they won&apos;t appear in this screen&apos;s trading
+              Sells the whole position at market — the final price is set when it fills. Proceeds are
+              sent to your Privy wallet, so they won&apos;t appear in this screen&apos;s trading
               balance.
             </Text>
             {sell.isError ? (
@@ -316,16 +276,163 @@ export default function WalletPage() {
       </Modal>
 
       {isGuest ? (
-        <Text variant="micro" color="textTertiary" className="block px-4 text-center">
-          Guest demo mode — this wallet address, balance, and every trade here are simulated
-          locally and are not tied to a real account.
+        <Text variant="micro" color="textTertiary" className="block px-4 text-center lg:px-0">
+          Guest demo mode — this wallet address, balance, and every trade here are simulated locally
+          and are not tied to a real account.
         </Text>
       ) : authenticated ? (
-        <Text variant="micro" color="textTertiary" className="block px-4 text-center">
+        <Text variant="micro" color="textTertiary" className="block px-4 text-center lg:px-0">
           Logging out ends your app session only — it doesn&apos;t delete your embedded wallet.
         </Text>
       ) : null}
     </main>
+  );
+}
+
+function StatCard({
+  label,
+  value,
+  valueColor,
+  error,
+  children,
+}: {
+  label: string;
+  value: string;
+  valueColor?: 'yes' | 'no' | 'textSecondary';
+  error?: string | null;
+  children?: React.ReactNode;
+}) {
+  return (
+    <div className={`${CARD_SURFACE_CLASS} p-5`}>
+      <Text variant="caption" color="textSecondary" className="block">
+        {label}
+      </Text>
+      <Text variant="title" color={valueColor} className="mt-1 block tabular-nums">
+        {value}
+      </Text>
+      {error ? (
+        <Text variant="caption" color="danger" className="mt-2 block">
+          {error}
+        </Text>
+      ) : null}
+      {children}
+    </div>
+  );
+}
+
+/**
+ * Real-data stand-in for `apps/dekstop`'s "Allocation" panel — that
+ * version splits by a fictional asset-class taxonomy (Predictions/
+ * Crypto/Perps/Stocks) this app has no data for. This splits by each
+ * open position's own share of total position value instead (current
+ * price when known, entry price otherwise), capped to the largest few
+ * with a "+N more" remainder — same convention `MarketCard`'s
+ * `GroupCard` already uses for long outcome lists.
+ */
+function AllocationPanel({ positions }: { positions: UserPosition[] }) {
+  const valued = positions
+    .map((position) => ({
+      position,
+      value: ((position.currentPrice ?? position.entryPrice) / 100) * position.size,
+    }))
+    .sort((a, b) => b.value - a.value);
+  const total = valued.reduce((sum, entry) => sum + entry.value, 0);
+  const top = valued.slice(0, ALLOCATION_TOP_N);
+  const restValue = valued.slice(ALLOCATION_TOP_N).reduce((sum, entry) => sum + entry.value, 0);
+  const restCount = valued.length - top.length;
+
+  return (
+    <div className={`${CARD_SURFACE_CLASS} p-5`}>
+      <Text variant="bodyStrong" className="block">
+        Allocation
+      </Text>
+      {total > 0 ? (
+        <>
+          <div className="mt-5 flex h-3 overflow-hidden rounded-full bg-surface-elevated">
+            {top.map((entry, index) => (
+              <div
+                key={entry.position.id}
+                className="h-full bg-accent"
+                style={{ width: `${(entry.value / total) * 100}%`, opacity: 1 - index * 0.18 }}
+              />
+            ))}
+            {restCount > 0 ? (
+              <div className="h-full bg-accent" style={{ width: `${(restValue / total) * 100}%`, opacity: 0.25 }} />
+            ) : null}
+          </div>
+          <div className="mt-5 flex flex-col gap-2">
+            {top.map((entry) => (
+              <div key={entry.position.id} className="flex items-center justify-between gap-3">
+                <Text variant="caption" color="textSecondary" numberOfLines={1} className="min-w-0 flex-1 truncate">
+                  {entry.position.marketQuestion}
+                </Text>
+                <Text variant="caption" className="tabular-nums">
+                  {Math.round((entry.value / total) * 100)}%
+                </Text>
+              </div>
+            ))}
+            {restCount > 0 ? (
+              <div className="flex items-center justify-between gap-3">
+                <Text variant="caption" color="textSecondary">
+                  +{restCount} more
+                </Text>
+                <Text variant="caption" className="tabular-nums">
+                  {Math.round((restValue / total) * 100)}%
+                </Text>
+              </div>
+            ) : null}
+          </div>
+        </>
+      ) : (
+        <Text variant="caption" color="textTertiary" className="mt-3 block">
+          No priced positions yet.
+        </Text>
+      )}
+    </div>
+  );
+}
+
+function RecentActivityPanel({
+  activity,
+  onOpenAuthor,
+  onOpenMarket,
+  onOpenPost,
+}: {
+  activity: ReturnType<typeof useUserActivity>;
+  onOpenAuthor: (userId: string) => void;
+  onOpenMarket: (marketId: string) => void;
+  onOpenPost: (postId: string) => void;
+}) {
+  const items = activity.status === 'success' ? activity.data.pages.flatMap((page) => page.items).slice(0, RECENT_ACTIVITY_LIMIT) : [];
+
+  return (
+    <div className={CARD_SURFACE_CLASS}>
+      <div className="flex items-center justify-between px-5 pt-5">
+        <Text variant="bodyStrong">Recent activity</Text>
+        <Link href="/activity" className="text-xs font-inter-medium text-accent hover:underline">
+          View all
+        </Link>
+      </div>
+      <div className="mt-3">
+        {activity.status === 'pending' ? (
+          <div className="px-5 pb-5">
+            <LoadingState rows={2} />
+          </div>
+        ) : activity.status === 'error' ? (
+          <Text variant="caption" color="textTertiary" className="block px-5 pb-5">
+            Couldn&apos;t load recent activity.
+          </Text>
+        ) : items.length === 0 ? (
+          <Text variant="caption" color="textTertiary" className="block px-5 pb-5">
+            No recent activity yet.
+          </Text>
+        ) : (
+          items.map((item) => (
+            <ActivityRow key={item.id} item={item} onOpenUser={onOpenAuthor} onOpenMarket={onOpenMarket} onOpenPost={onOpenPost} />
+          ))
+        )}
+      </div>
+    </div>
   );
 }
 
@@ -334,7 +441,7 @@ function PositionRow({ position, onSell }: { position: UserPosition; onSell: () 
     position.currentPrice != null ? ((position.currentPrice - position.entryPrice) / 100) * position.size : null;
 
   return (
-    <article className="px-4 py-3">
+    <article className="px-4 py-3 lg:px-5">
       <Text variant="bodyStrong" numberOfLines={2} className="block">
         {position.marketQuestion}
       </Text>
@@ -382,12 +489,7 @@ function PositionRow({ position, onSell }: { position: UserPosition; onSell: () 
         </div>
       </div>
       <div className="mt-3 flex justify-end">
-        <Button
-          label="Sell"
-          variant="secondary"
-          onClick={onSell}
-          className="min-h-0 px-4 py-2"
-        />
+        <Button label="Sell" variant="secondary" onClick={onSell} className="min-h-0 px-4 py-2" />
       </div>
     </article>
   );
