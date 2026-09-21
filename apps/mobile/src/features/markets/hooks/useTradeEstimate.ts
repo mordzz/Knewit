@@ -4,7 +4,7 @@ import { useDebounce } from '@/hooks/useDebounce';
 import type { TradeEstimate } from '@/types/trading';
 
 /**
- * Mobile equivalent of `apps/backend/src/hooks/useTradeEstimate.ts` —
+ * Mobile trade estimate query backed by the API in `apps/web` —
  * live order-book estimate for the amount currently being typed,
  * debounced, disabled until a choice + amount exist. A failure is
  * intentionally quiet: the panel falls back to its plain

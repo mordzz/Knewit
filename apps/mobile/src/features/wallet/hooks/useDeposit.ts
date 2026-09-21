@@ -5,6 +5,7 @@ import { useWallet } from '@/hooks/useWallet';
 import { useWalletBalance } from '@/features/wallet/hooks/useWalletBalance';
 import { POLYGON_USDC_E } from '@/features/wallet/services/walletService';
 import { creditGuestFunds, isGuestSession } from '@/services/guest/guestBackend';
+import { env } from '@/app/config/env';
 
 /**
  * Opens Privy's own funding flow (`useFundWallet` from
@@ -29,6 +30,7 @@ export function useDeposit() {
   const canDeposit = isConnected && Boolean(address);
 
   const deposit = async () => {
+    if (!env.tradingEnabled) throw new Error('Trading is temporarily unavailable.');
     // No Privy funding flow exists for a guest account — Deposit credits
     // demo funds so the trade → position → callout loop stays testable.
     if (isGuestSession()) {

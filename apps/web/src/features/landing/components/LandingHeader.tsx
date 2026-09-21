@@ -41,7 +41,7 @@ export function LandingHeader({ anchorPrefix = '' }: { anchorPrefix?: '' | '/' }
           <Link href="/download" className={cn('hidden px-3 py-2 text-sm font-semibold sm:inline-flex', FOCUS)}>
             Download
           </Link>
-          <Link href="/sign-in" className={cn(PRIMARY_BUTTON, 'min-h-10 px-5 py-2.5 text-xs')}>
+          <Link href="/sign-in" className={cn(PRIMARY_BUTTON, 'hidden min-h-10 px-5 py-2.5 text-xs md:inline-flex')}>
             Explore app <ArrowUpRight size={16} />
           </Link>
           <button
@@ -77,7 +77,8 @@ export function LandingHeader({ anchorPrefix = '' }: { anchorPrefix?: '' | '/' }
               {label}
             </a>
           ))}
-          <Link href="/download" className={cn('block py-3 text-sm font-medium', FOCUS)}>Download</Link>
+          <Link href="/download" className={cn('block border-b border-landing-ink/10 py-3 text-sm font-medium', FOCUS)}>Download</Link>
+          <Link href="/sign-in" className={cn('block py-3 text-sm font-medium', FOCUS)}>Explore app</Link>
         </nav>
       ) : null}
     </div>

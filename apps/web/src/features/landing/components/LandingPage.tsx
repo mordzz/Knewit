@@ -19,7 +19,8 @@ import {
   Zap,
 } from 'lucide-react';
 import { cn } from '@/lib/cn';
-import { FOCUS, LandingHeader, Logo, PRIMARY_BUTTON } from '@/features/landing/components/LandingHeader';
+import { FOCUS, LandingHeader, PRIMARY_BUTTON } from '@/features/landing/components/LandingHeader';
+import { LandingFooter } from '@/features/landing/components/LandingFooter';
 
 const CTA_YELLOW = cn(
   'inline-flex min-h-12 items-center justify-center gap-3 rounded-full bg-landing-yellow px-6 py-3 text-sm font-semibold text-landing-ink',
@@ -278,9 +279,9 @@ export function LandingPage() {
         Skip to content
       </a>
 
-      <div className="bg-landing-yellow">
-        <LandingHeader />
+      <LandingHeader />
 
+      <div className="bg-landing-yellow">
         <main id="main-content">
           <section className="mx-auto grid min-h-[calc(100svh-145px)] min-w-0 max-w-[1300px] grid-cols-[1.05fr_.95fr] items-center gap-12 px-6 pb-16 pt-8 lg:px-10 max-[900px]:grid-cols-1 max-[900px]:pb-10 max-[900px]:pt-14 max-[900px]:text-center">
             <div className="relative z-10 min-w-0 motion-safe:animate-ki-rise">
@@ -574,7 +575,8 @@ export function LandingPage() {
         </div>
       </section>
 
-      <footer className="bg-landing-ink px-6 py-10 text-landing-paper lg:px-10">
+      <LandingFooter />
+      {/*
         <div className="mx-auto flex max-w-[1180px] flex-wrap items-center justify-between gap-8">
           <div>
             <Logo />
@@ -585,13 +587,16 @@ export function LandingPage() {
             <a className={cn('hover:text-white', FOCUS)} href="#how-it-works">How it works</a>
             <a className={cn('hover:text-white', FOCUS)} href="#faq">FAQ</a>
             <Link className={cn('hover:text-white', FOCUS)} href="/download">Download</Link>
+            <Link className={cn('hover:text-white', FOCUS)} href="/privacy">Privacy</Link>
+            <Link className={cn('hover:text-white', FOCUS)} href="/terms">Terms</Link>
+            <Link className={cn('hover:text-white', FOCUS)} href="/support">Support</Link>
           </nav>
           <div className="flex w-full justify-between border-t border-white/10 pt-6 text-[11px] text-white/35 max-[640px]:flex-col max-[640px]:gap-2">
             <span>© {new Date().getFullYear()} Knew it</span>
             <span>Trading involves risk. Product previews use illustrative data.</span>
           </div>
         </div>
-      </footer>
+      </footer> */}
     </div>
   );
 }

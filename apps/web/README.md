@@ -4,9 +4,7 @@ Next.js (App Router), deployed on Vercel — both the API/BFF the Knewit
 mobile app calls (see `../../docs/ARCHITECTURE.md` for the full system
 design and `../../docs/API.md` for the endpoint contract) **and** the
 web frontend for the same product (`src/app/sign-in`, `src/app/page.tsx`),
-sharing this one Next.js project and deploy. Copied from `apps/backend`
-(kept as the original source) so this app has its own place to run and
-deploy under `apps/web` — see `../backend/README.md` if the two drift.
+sharing this one Next.js project and deploy.
 
 ## Setup
 
@@ -187,12 +185,11 @@ position-picker for attaching a verified position to a Call.
 ## Deploying to Vercel
 
 The web frontend and the API deploy together as this one Next.js
-project. This repo is **not** an npm workspace — `apps/backend` has its
-own `package.json` and lockfile, so Vercel needs to be pointed at it
-directly.
+project. This repo is **not** an npm workspace — `apps/web` has its own
+`package.json` and lockfile, so Vercel needs to be pointed at it directly.
 
 1. **Import the repository** in Vercel → *New Project*.
-2. **Root Directory: `apps/backend`** (Edit next to the repo name).
+2. **Root Directory: `apps/web`** (Edit next to the repo name).
    Framework preset: *Next.js* (auto-detected); install/build commands
    stay the defaults (`npm install`, `next build`). The directory's
    `.npmrc` (`legacy-peer-deps=true`) is picked up automatically — it is

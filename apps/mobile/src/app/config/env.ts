@@ -16,6 +16,7 @@ export const env = {
    * signing authority on their embedded wallet (docs/WALLET.md, "Backend
    * Signing"). Public by design; the private key stays on the backend. */
   privySignerId: process.env.EXPO_PUBLIC_PRIVY_SIGNER_ID ?? '',
+  tradingEnabled: process.env.EXPO_PUBLIC_TRADING_ENABLED === 'true',
   isDev: __DEV__,
 } as const;
 

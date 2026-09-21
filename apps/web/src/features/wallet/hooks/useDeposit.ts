@@ -6,6 +6,7 @@ import { useWalletBalance } from '@/features/wallet/hooks/useWalletBalance';
 import { useSession } from '@/hooks/useSession';
 import { POLYGON_CAIP2, POLYGON_USDC_E } from '@/features/wallet/lib/walletService';
 import { creditGuestFunds } from '@/lib/guest/guestBackend';
+import { tradingEnabled, tradingUnavailableMessage } from '@/lib/tradingAvailability';
 
 /**
  * Opens Privy's own funding flow (`useAddFunds` — fiat card on-ramp and
@@ -33,6 +34,7 @@ export function useDeposit() {
   const canDeposit = Boolean(address);
 
   const deposit = async () => {
+    if (!tradingEnabled) throw new Error(tradingUnavailableMessage);
     if (isGuest) {
       creditGuestFunds(500);
       await queryClient.invalidateQueries({ queryKey: ['wallet-balance'] });

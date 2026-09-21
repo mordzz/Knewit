@@ -10,7 +10,7 @@ import { useWalletBalance } from '@/features/wallet/hooks/useWalletBalance';
 export type WalletSetupStatus = 'preparing' | 'ready' | 'error';
 
 /**
- * Mobile equivalent of `apps/backend/src/hooks/useAutoWalletSetup.ts` —
+ * Mobile wallet setup flow backed by the API in `apps/web` —
  * fully automatic account setup, with the manual "Connect Wallet" and
  * "Enable trading" buttons removed by request (docs/DECISIONS.md,
  * "Automatic Wallet & Trading Setup — No Manual Buttons"). Runs the two

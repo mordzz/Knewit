@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { View, Image, KeyboardAvoidingView, Platform, Pressable } from 'react-native';
+import { View, Image, KeyboardAvoidingView, Platform, Pressable, Linking } from 'react-native';
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
@@ -14,7 +14,7 @@ import { Input } from '@/components/ui/Input';
 import { Icon } from '@/components/ui/Icon';
 import { CodeInput } from '@/components/ui/CodeInput';
 import { XLogo } from '@/components/ui/XLogo';
-import { isPrivyConfigured } from '@/app/config/env';
+import { env, isPrivyConfigured } from '@/app/config/env';
 import { useGuestStore } from '@/store/guest/guestStore';
 import { solidPanel } from '@/theme';
 
@@ -366,6 +366,14 @@ export function SignInScreen() {
               <Text variant="micro" color="textTertiary" className="text-center">
                 Your wallet is securely managed for you. We never see or store your private keys.
               </Text>
+              <View className="flex-row justify-center gap-4">
+                <Pressable onPress={() => Linking.openURL(`${env.apiBaseUrl}/terms`)} accessibilityRole="link">
+                  <Text variant="micro" color="textTertiary" className="underline">Terms</Text>
+                </Pressable>
+                <Pressable onPress={() => Linking.openURL(`${env.apiBaseUrl}/privacy`)} accessibilityRole="link">
+                  <Text variant="micro" color="textTertiary" className="underline">Privacy</Text>
+                </Pressable>
+              </View>
             </View>
           </View>
         </Animated.View>

@@ -14,6 +14,7 @@ import { useCreateTrade } from '@/features/markets/hooks/useCreateTrade';
 import { useTradeEstimate } from '@/features/markets/hooks/useTradeEstimate';
 import { formatPrice, formatProbability, formatUsd } from '@/utils/formatCurrency';
 import { choiceTextColor, choiceTone, type ChoiceTone } from '@/utils/choiceTone';
+import { env } from '@/app/config/env';
 import type { MarketChoice } from '@/types/market';
 import type { MarketDetail } from '@/types/social';
 
@@ -52,6 +53,7 @@ export function TradingPanel({ market }: { market: MarketDetail }) {
     return <InfoBanner text="Market Closed — Trading is no longer available." />;
   }
   if (market.choices.length === 0) return null;
+  if (!env.tradingEnabled) return <InfoBanner text="Trading is temporarily unavailable." />;
 
   return (
     <>
@@ -108,6 +110,14 @@ export function TradeSheet({
   // market's rounded summary price is only the pre-response fallback.
   const displayPrice = estimate.data?.estimatedPrice ?? price;
   const canSubmit = amount > 0 && price > 0 && choice != null;
+
+  if (!env.tradingEnabled) {
+    return (
+      <BottomSheet visible={visible} onClose={onClose}>
+        <InfoBanner text="Trading is temporarily unavailable." />
+      </BottomSheet>
+    );
+  }
 
   function handleChangeAmount(text: string) {
     setAmountText(text.replace(/[^0-9]/g, ''));

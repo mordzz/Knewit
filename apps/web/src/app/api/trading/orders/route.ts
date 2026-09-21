@@ -32,6 +32,9 @@ interface CreateTradeOrderInput {
  */
 export async function POST(request: Request) {
   return withErrorHandling(async () => {
+    if (process.env.TRADING_ENABLED !== 'true') {
+      throw new ApiError(503, 'trading_unavailable', 'Trading is temporarily unavailable.');
+    }
     const { privyUserId } = await requireAuth(request);
     const viewer = await getOrCreateUser(privyUserId);
 

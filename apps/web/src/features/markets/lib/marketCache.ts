@@ -7,7 +7,7 @@ import type { MarketSummary } from '@/types/social';
  * `posts.market_id` has a foreign key into our local `markets` table
  * (docs/DATABASE.md: "Market/Event rows are a cache of Polymarket
  * data"), but Phase 1 never wrote to it (pure live proxy, no caching
- * — see `apps/backend/README.md`). Phase 2 needs the FK to actually
+ * — see the web app README). Phase 2 needs the FK to actually
  * hold when a Call/Post references a market, so this fetches the
  * market live (reusing Phase 1's Gamma client/normalizer) and
  * upserts a minimal cache row before the reference is allowed.

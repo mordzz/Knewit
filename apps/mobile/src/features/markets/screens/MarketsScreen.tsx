@@ -36,7 +36,7 @@ function itemKey(item: MarketListItem): string {
  * previous `KNOWN_CATEGORIES` (`types/common.ts`, now deleted) static
  * list, which had silently drifted out of sync with what the shared
  * backend actually resolves category filters against (e.g. "Technology"/
- * "World Events" matched nothing real — see `apps/backend`'s
+ * "World Events" matched nothing real — see the web app's
  * `gammaClient.ts::CATEGORY_SLUG_CANDIDATES` for the same fix applied
  * there first).
  */

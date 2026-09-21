@@ -11,7 +11,7 @@ let client: SupabaseClient | null = null;
  * docs/ARCHITECTURE.md regardless.
  *
  * No generated `Database` type is wired up (no `supabase gen types`
- * step in this pass — see `apps/backend/README.md`), so this is the
+ * step in this pass — see the web app README), so this is the
  * untyped `SupabaseClient` — every table read/write in `src/lib/`
  * is typed by hand against `supabase/migrations/0001_init.sql`
  * instead of inferred from a schema type. A follow-up could generate

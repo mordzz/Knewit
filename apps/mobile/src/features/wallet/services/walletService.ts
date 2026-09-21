@@ -18,7 +18,7 @@ export interface WalletBalance {
   unavailable?: boolean;
 }
 
-/** Mobile equivalent of `apps/backend/src/lib/walletService.ts`. */
+/** Mobile client for the wallet API in `apps/web`. */
 export async function getWalletBalance(): Promise<WalletBalance> {
   return apiRequest<WalletBalance>(endpoints.walletBalance);
 }

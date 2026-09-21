@@ -1,6 +1,6 @@
 /**
  * The internal API surface — see docs/API.md for request/response
- * shapes. Backed by `apps/backend` (Next.js route handlers), which both
+ * shapes. Backed by `apps/web` (Next.js route handlers), which both
  * the web and mobile clients call.
  */
 export const endpoints = {
