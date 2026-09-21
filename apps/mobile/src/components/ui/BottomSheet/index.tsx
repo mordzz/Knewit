@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Animated, Dimensions, Modal, Pressable, useWindowDimensions, View } from 'react-native';
+import { Animated, Dimensions, Modal, Pressable, ScrollView, useWindowDimensions, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { solidPanel } from '@/theme';
 
@@ -28,6 +28,7 @@ export interface BottomSheetProps {
  */
 export function BottomSheet({ visible, onClose, children }: BottomSheetProps) {
   const { height } = useWindowDimensions();
+  const sheetHeight = height * 0.75;
   const [translateY] = useState(() => new Animated.Value(Dimensions.get('window').height));
 
   useEffect(() => {
@@ -45,7 +46,7 @@ export function BottomSheet({ visible, onClose, children }: BottomSheetProps) {
         onPress={onClose}
         accessibilityLabel="Close"
       >
-        <Animated.View className="w-full" style={{ transform: [{ translateY }] }}>
+        <Animated.View className="w-full" style={{ height: sheetHeight, transform: [{ translateY }] }}>
           <Pressable onPress={(e) => e.stopPropagation()}>
             <View
               className="p-6"
@@ -54,9 +55,16 @@ export function BottomSheet({ visible, onClose, children }: BottomSheetProps) {
                 { borderTopLeftRadius: 20, borderTopRightRadius: 20, borderBottomWidth: 0 },
               ]}
             >
-              <SafeAreaView edges={['bottom']}>
+              <SafeAreaView edges={['bottom']} className="flex-1">
                 <View className="mb-3 h-1 w-9 self-center rounded-full bg-white/20" />
-                {children}
+                <ScrollView
+                  className="flex-1"
+                  contentContainerStyle={{ paddingBottom: 8, flexGrow: 1 }}
+                  keyboardShouldPersistTaps="handled"
+                  showsVerticalScrollIndicator={false}
+                >
+                  {children}
+                </ScrollView>
               </SafeAreaView>
             </View>
           </Pressable>

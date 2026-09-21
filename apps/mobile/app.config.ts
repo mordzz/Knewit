@@ -29,7 +29,7 @@ const config: ExpoConfig = {
     predictiveBackGestureEnabled: false,
   },
   web: {
-    favicon: './assets/favicon.png',
+    favicon: './assets/favicon.ico',
   },
   plugins: [
     'expo-font',

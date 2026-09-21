@@ -40,13 +40,13 @@ export function BottomSheet({ visible, onClose, children }: BottomSheetProps) {
       role="presentation"
     >
       <div
-        className={`w-full rounded-t-[20px] ${SOLID_PANEL_CLASS} border-b-0 p-6 transition-transform duration-[250ms] lg:max-h-[85vh] lg:max-w-[460px] lg:overflow-y-auto lg:rounded-2xl lg:border-b ${
+        className={`flex h-[75dvh] max-h-[75dvh] w-full min-h-0 flex-col rounded-t-[20px] ${SOLID_PANEL_CLASS} border-b-0 p-6 transition-transform duration-[250ms] lg:max-h-[85vh] lg:max-w-[460px] lg:rounded-2xl lg:border-b ${
           visible ? 'translate-y-0 lg:scale-100' : 'translate-y-full lg:translate-y-0 lg:scale-95'
         }`}
         onClick={(e) => e.stopPropagation()}
       >
         <div className="mb-3 h-1 w-9 self-center rounded-full bg-white/20 lg:hidden" />
-        {children}
+        <div className="min-h-0 flex-1 overflow-y-auto lg:overflow-y-auto">{children}</div>
       </div>
     </div>
   );
