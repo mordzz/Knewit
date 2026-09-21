@@ -24,7 +24,6 @@ import { navigateToMarketDetail } from '@/features/markets/utils/openMarketDetai
 import { useAuth } from '@/hooks/useAuth';
 import { ApiRequestError } from '@/services/api/client';
 import { formatCompactNumber } from '@/utils/formatNumber';
-import { formatUsd } from '@/utils/formatCurrency';
 import type { CommentItem, FeedItem, MarketSummary } from '@/types/social';
 import type { ActivityItem } from '@/types/activity';
 import type { AppParamList } from '@/types/navigation';
@@ -271,16 +270,6 @@ export function ProfileScreen() {
         </View>
       ) : null}
 
-      {user.tradingVolume != null ? (
-        <View className="gap-2 border-b border-border py-3">
-          <Text variant="bodyStrong">Trading Performance</Text>
-          <View className="flex-row justify-between">
-            <StatColumn label="Trading Volume" value={formatUsd(user.tradingVolume)} />
-            <StatColumn label="Calls" value={String(user.callCount)} />
-          </View>
-        </View>
-      ) : null}
-
       <Divider />
 
       <TabRow options={PROFILE_TAB_OPTIONS} value={tab} onChange={setTab} />
@@ -359,13 +348,3 @@ export function ProfileScreen() {
   );
 }
 
-function StatColumn({ label, value }: { label: string; value: string }) {
-  return (
-    <View className="items-center gap-0.5">
-      <Text variant="bodyStrong">{value}</Text>
-      <Text variant="micro" color="textTertiary">
-        {label}
-      </Text>
-    </View>
-  );
-}

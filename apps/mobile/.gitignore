@@ -4,4 +4,6 @@
 .prettierignore
 .prettierjson
 
+/android
+
 /node_modules

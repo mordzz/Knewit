@@ -25,7 +25,7 @@ import { useUserReplies } from '@/features/profile/hooks/useUserReplies';
 import { useUserActivity } from '@/features/activity/hooks/useUserActivity';
 import { useIsDesktop } from '@/hooks/useIsDesktop';
 import { ApiRequestError } from '@/lib/apiClient';
-import { formatCompactNumber, formatUsd, formatRelativeTime } from '@/lib/formatters';
+import { formatCompactNumber, formatRelativeTime } from '@/lib/formatters';
 import type { CommentItem, FeedItem } from '@/types/social';
 import type { ActivityItem } from '@/types/activity';
 
@@ -45,7 +45,7 @@ const MOBILE_TAB_OPTIONS: TabRowOption<ProfileTab>[] = [...BASE_TAB_OPTIONS, { k
  * Profile route/screen for both the viewer's own profile and anyone
  * else's. Same header (avatar plus an "Edit Profile" button beside the
  * name for the viewer's own profile, or a Follow button), same
- * Wallet & Portfolio row and Trading Performance card.
+ * Wallet & Portfolio row and profile activity tabs.
  */
 export function ProfileView({ userId }: { userId?: string }) {
   const router = useRouter();
@@ -189,16 +189,6 @@ export function ProfileView({ userId }: { userId?: string }) {
           </div>
         ) : null}
 
-        {user.tradingVolume != null ? (
-          <div className="gap-2 border-b border-border py-3">
-            <Text variant="bodyStrong">Trading Performance</Text>
-            <div className="mt-2 flex justify-between">
-              <StatColumn label="Trading Volume" value={formatUsd(user.tradingVolume)} />
-              <StatColumn label="Calls" value={String(user.callCount)} />
-            </div>
-          </div>
-        ) : null}
-
       </div>
 
       <Divider />
@@ -235,19 +225,6 @@ export function ProfileView({ userId }: { userId?: string }) {
         <TrendingMarketsPanel />
       </aside>
     </main>
-  );
-}
-
-function StatColumn({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="text-center">
-      <Text variant="bodyStrong" className="block">
-        {value}
-      </Text>
-      <Text variant="micro" color="textTertiary">
-        {label}
-      </Text>
-    </div>
   );
 }
 
