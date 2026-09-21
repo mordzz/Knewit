@@ -42,6 +42,11 @@ import {
   IoEllipsisHorizontal,
   IoShareOutline,
   IoOptionsOutline,
+  IoDocumentTextOutline,
+  IoHelpCircleOutline,
+  IoLogOutOutline,
+  IoArrowDownCircleOutline,
+  IoArrowUpCircleOutline,
 } from 'react-icons/io5';
 import type { IconType } from 'react-icons';
 
@@ -96,7 +101,12 @@ export type IconName =
   | 'time-outline'
   | 'ellipsis-horizontal'
   | 'share-outline'
-  | 'options-outline';
+  | 'options-outline'
+  | 'document-text-outline'
+  | 'help-circle-outline'
+  | 'log-out-outline'
+  | 'arrow-down-circle-outline'
+  | 'arrow-up-circle-outline';
 
 export type ColorToken =
   | 'background'
@@ -181,6 +191,11 @@ const ICONS: Record<IconName, IconType> = {
   'ellipsis-horizontal': IoEllipsisHorizontal,
   'share-outline': IoShareOutline,
   'options-outline': IoOptionsOutline,
+  'document-text-outline': IoDocumentTextOutline,
+  'help-circle-outline': IoHelpCircleOutline,
+  'log-out-outline': IoLogOutOutline,
+  'arrow-down-circle-outline': IoArrowDownCircleOutline,
+  'arrow-up-circle-outline': IoArrowUpCircleOutline,
 };
 
 export interface IconProps {

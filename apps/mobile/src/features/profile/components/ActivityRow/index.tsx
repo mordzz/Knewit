@@ -6,6 +6,7 @@ import { formatRelativeTime } from '@/utils/formatRelativeTime';
 import { choiceTextColor, choiceTone } from '@/utils/choiceTone';
 import type { ActivityItem } from '@/types/activity';
 import type { ColorToken } from '@/theme/colors';
+import { solidPanel } from '@/theme';
 
 export interface ActivityRowProps {
   item: ActivityItem;
@@ -92,7 +93,8 @@ function ActivityRowShell({
   return (
     <Pressable
       onPress={onPress}
-      className="flex-row items-start gap-3 border-b border-border px-4 py-3.5 active:bg-surface"
+      style={[solidPanel, { borderRadius: 16 }]}
+      className="mx-4 mb-3 flex-row items-start gap-3 p-4 active:opacity-80"
       accessibilityRole="button"
       accessibilityLabel={accessibilityLabel}
     >

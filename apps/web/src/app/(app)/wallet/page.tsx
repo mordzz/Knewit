@@ -2,7 +2,6 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { useLogout } from '@privy-io/react-auth';
 import { Text } from '@/components/ui/Text';
 import { Icon } from '@/components/ui/Icon';
 import { Button } from '@/components/ui/Button';
@@ -19,8 +18,8 @@ import { usePositions } from '@/features/wallet/hooks/usePositions';
 import { useWalletBalance } from '@/features/wallet/hooks/useWalletBalance';
 import { useDepositFlow } from '@/features/wallet/hooks/useDepositFlow';
 import { useSellPosition } from '@/features/wallet/hooks/useSellPosition';
+import { WithdrawModal } from '@/features/wallet/components/WithdrawModal';
 import { useSession } from '@/hooks/useSession';
-import { useGuestStore } from '@/lib/guest/guestStore';
 import type { UserPosition } from '@/types/social';
 
 const ALLOCATION_TOP_N = 4;
@@ -46,26 +45,15 @@ const ALLOCATION_TOP_N = 4;
 export default function WalletPage() {
   const router = useRouter();
   const { address, authenticated, isGuest, walletConnected } = useSession();
-  const { logout } = useLogout();
-  const exitGuest = useGuestStore((state) => state.exitGuest);
   const sell = useSellPosition();
   const [sellTarget, setSellTarget] = useState<UserPosition | null>(null);
+  const [withdrawOpen, setWithdrawOpen] = useState(false);
   const [sellNotice, setSellNotice] = useState<{ tone: 'yes' | 'danger'; message: string } | null>(null);
 
   const balance = useWalletBalance();
   const positionsQuery = usePositions();
   const positions = positionsQuery.data ?? [];
   const { isDepositing, depositError, handleDeposit } = useDepositFlow();
-
-  const handleLogout = () => {
-    // A guest session has no Privy session to end — leaving guest mode is
-    // the logout, and the app shell routes back to `/sign-in`.
-    if (isGuest) {
-      exitGuest();
-      return;
-    }
-    logout();
-  };
 
   // Unrealized PnL per position: (current − entry) cents × shares. No
   // positions is a real $0.00; positions whose live price is missing make
@@ -87,12 +75,14 @@ export default function WalletPage() {
     <main className="mx-auto flex w-full max-w-none flex-col gap-3 px-0 pt-4 lg:gap-6 lg:py-10">
       <div className="flex items-end justify-between gap-4 px-4 lg:px-0">
         <div>
-        <button type="button" onClick={() => router.back()} aria-label="Go back" className="lg:hidden">
-          <Icon name="chevron-back" size={24} />
-        </button>
-        <Text variant="heading" className="block text-4xl font-inter-extrabold lg:text-[42px] lg:tracking-[-0.03em]">
-          Portfolio
-        </Text>
+        <div className="flex items-center gap-2">
+          <button type="button" onClick={() => router.back()} aria-label="Go back" className="lg:hidden">
+            <Icon name="chevron-back" size={24} />
+          </button>
+          <Text variant="heading" className="block text-4xl font-inter-extrabold lg:text-[42px] lg:tracking-[-0.03em]">
+          Wallet &amp; Portfolio
+          </Text>
+        </div>
           <Text variant="caption" color="textSecondary" className="mt-1 hidden lg:block">
             A clear view of your balance, positions, and performance.
           </Text>
@@ -104,22 +94,18 @@ export default function WalletPage() {
           label="Balance"
           value={balanceLabel}
           error={depositError}
-          className="col-span-2 flex items-center justify-between gap-4 sm:col-span-2 lg:col-span-1 lg:block lg:min-h-[164px]"
+          className="col-span-2 sm:col-span-2 lg:col-span-1 lg:min-h-[164px]"
           valueClassName="text-3xl font-inter-extrabold"
-        >
-          {address ? (
-            <Button label="Deposit" variant="primary" loading={isDepositing} onClick={handleDeposit} className="mt-3 min-h-0 shrink-0 px-4 py-2 lg:hidden" />
-          ) : null}
-        </StatCard>
+        />
         <StatCard label="Open Positions" value={String(positions.length)} className="lg:min-h-[164px]" valueClassName="text-3xl font-inter-extrabold" />
         <StatCard label="Unrealized PnL" value={pnlLabel} valueColor={pnlColor} className="lg:min-h-[164px]" valueClassName="text-3xl font-inter-extrabold" />
       </section>
 
       <div className="flex items-center gap-3 border-y border-border px-4 py-3 lg:rounded-[18px] lg:border lg:border-white/[0.14] lg:bg-[rgba(14,15,19,0.88)] lg:px-5 lg:py-4">
         <Icon name="wallet-outline" color={address ? 'yes' : 'textTertiary'} />
-        <div className="flex-1">
+        <div className="min-w-0 flex-1">
           {address ? (
-            <WalletAddress address={address} compact fullOnDesktop />
+            <WalletAddress address={address} compact fullOnDesktop className="min-w-0" />
           ) : (
             <Text variant="bodyStrong" className="block">
               Setting up your wallet…
@@ -129,7 +115,12 @@ export default function WalletPage() {
             {address ? 'Connected' : 'This happens automatically — no action needed.'}
           </Text>
         </div>
-        {address ? <Button label="Log Out" variant="no" onClick={handleLogout} className="min-h-0 px-3 py-2 lg:hidden" /> : null}
+        {address ? (
+          <div className="flex shrink-0 gap-2 lg:hidden">
+            <Button label="Deposit" variant="primary" loading={isDepositing} onClick={handleDeposit} className="min-h-0 px-3 py-2" />
+            <Button label="Withdraw" variant="secondary" onClick={() => setWithdrawOpen(true)} className="min-h-0 px-3 py-2" />
+          </div>
+        ) : null}
       </div>
 
       {sellNotice ? (
@@ -280,6 +271,8 @@ export default function WalletPage() {
         ) : null}
       </Modal>
 
+      <WithdrawModal visible={withdrawOpen} onClose={() => setWithdrawOpen(false)} />
+
       {isGuest ? (
         <Text variant="micro" color="textTertiary" className="block px-4 text-center lg:px-0">
           Guest demo mode — this wallet address, balance, and every trade here are simulated locally
@@ -353,10 +346,11 @@ function AllocationPanel({ positions }: { positions: UserPosition[] }) {
   const restCount = valued.length - top.length;
 
   return (
-    <div className={`${CARD_SURFACE_CLASS} p-5 lg:p-6`}>
-      <Text variant="bodyStrong" className="block lg:text-title">
-        Allocation
-      </Text>
+    <div className={`${CARD_SURFACE_CLASS} p-4 lg:p-5`}>
+      <div className="flex items-center gap-3">
+        <Icon name="stats-chart-outline" color="textSecondary" />
+        <Text variant="bodyStrong" className="block lg:text-title">Allocation</Text>
+      </div>
       {total > 0 ? (
         <>
           <div className="mt-5 flex h-3 overflow-hidden rounded-full bg-surface-elevated">

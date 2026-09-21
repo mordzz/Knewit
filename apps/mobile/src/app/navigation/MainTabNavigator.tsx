@@ -19,6 +19,8 @@ import { EditProfileScreen } from '@/features/profile/screens/EditProfileScreen'
 import { FollowersScreen } from '@/features/profile/screens/FollowersScreen';
 import { FollowingScreen } from '@/features/profile/screens/FollowingScreen';
 import { WalletScreen } from '@/features/wallet/screens/WalletScreen';
+import { SettingsScreen } from '@/features/settings/screens/SettingsScreen';
+import { NotificationsScreen } from '@/features/settings/screens/NotificationsScreen';
 import type { AppParamList, MainTabParamList } from '@/types/navigation';
 
 const Tab = createBottomTabNavigator<MainTabParamList>();
@@ -88,6 +90,8 @@ function ProfileStack() {
       <ProfileStackNav.Screen name="Following" component={FollowingScreen} />
       <ProfileStackNav.Screen name="EditProfile" component={EditProfileScreen} />
       <ProfileStackNav.Screen name="Wallet" component={WalletScreen} />
+      <ProfileStackNav.Screen name="Settings" component={SettingsScreen} />
+      <ProfileStackNav.Screen name="Notifications" component={NotificationsScreen} />
     </ProfileStackNav.Navigator>
   );
 }

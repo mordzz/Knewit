@@ -2,7 +2,7 @@
 
 import { useRef, useState } from 'react';
 import { Text } from '@/components/ui/Text';
-import { Icon } from '@/components/ui/Icon';
+import { Modal } from '@/components/ui/Modal';
 import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
 import { Avatar } from '@/components/ui/Avatar';
@@ -27,7 +27,7 @@ const IMAGE_ACCEPT = 'image/png,image/jpeg,image/webp';
  * `POST /users/me/images`; Save sends the text fields via
  * `PATCH /users/me` (docs/API.md).
  */
-export function EditProfileForm({ onClose, onSaved }: { onClose: () => void; onSaved: () => void }) {
+export function EditProfileForm({ onSaved }: { onSaved: () => void }) {
   const profile = useProfile();
   const mutation = useUpdateProfile();
   const upload = useUploadProfileImage();
@@ -38,6 +38,7 @@ export function EditProfileForm({ onClose, onSaved }: { onClose: () => void; onS
   const [bannerUrl, setBannerUrl] = useState<string | null>(null);
   const [seededFor, setSeededFor] = useState<string | null>(null);
   const [imageError, setImageError] = useState<string | null>(null);
+  const [deleteOpen, setDeleteOpen] = useState(false);
   const avatarInputRef = useRef<HTMLInputElement>(null);
   const bannerInputRef = useRef<HTMLInputElement>(null);
 
@@ -90,24 +91,6 @@ export function EditProfileForm({ onClose, onSaved }: { onClose: () => void; onS
 
   return (
     <div className="flex w-full flex-col gap-3">
-      <div className="flex items-center justify-between">
-        <div className="flex flex-1 items-center gap-2">
-          <button type="button" onClick={onClose} aria-label="Cancel">
-            <Icon name="close" size={24} />
-          </button>
-          <Text variant="heading" className="block text-2xl">
-            Edit Profile
-          </Text>
-        </div>
-        <Button
-          label={mutation.isPending ? 'Saving…' : 'Save'}
-          onClick={handleSave}
-          disabled={!canSave}
-          loading={mutation.isPending}
-          className="min-h-0 px-5 py-2"
-        />
-      </div>
-
       {profile.status === 'pending' ? <LoadingState rows={4} /> : null}
 
       {profile.status === 'error' ? (
@@ -151,7 +134,7 @@ export function EditProfileForm({ onClose, onSaved }: { onClose: () => void; onS
                 variant="secondary"
                 onClick={() => avatarInputRef.current?.click()}
                 loading={upload.isPending && upload.variables?.kind === 'avatar'}
-                className="min-h-0 px-4 py-2"
+                className="min-h-0 rounded-xl px-3 py-1.5"
               />
               {avatarUrl ? (
                 <button
@@ -240,13 +223,43 @@ export function EditProfileForm({ onClose, onSaved }: { onClose: () => void; onS
             </Text>
           ) : null}
 
-          {mutation.isError ? (
+      {mutation.isError ? (
             <Text variant="caption" color="danger">
               {friendlyEditError(mutation.error?.message ?? null)}
             </Text>
           ) : null}
         </>
       ) : null}
+
+      {profile.status === 'success' ? (
+        <div className="flex flex-col gap-2">
+          <Button
+            label={mutation.isPending ? 'Saving…' : 'Save'}
+            onClick={handleSave}
+            disabled={!canSave}
+            loading={mutation.isPending}
+            className="min-h-12 w-full rounded-xl"
+          />
+          <button
+            type="button"
+            onClick={() => setDeleteOpen(true)}
+            className="w-full rounded-xl border border-danger/30 bg-danger/5 px-4 py-3 text-sm font-semibold text-danger transition-colors hover:bg-danger/15 focus-visible:outline-2 focus-visible:outline-danger focus-visible:outline-offset-2 active:bg-danger/20"
+          >
+            Delete Account
+          </button>
+        </div>
+      ) : null}
+
+      <Modal visible={deleteOpen} onClose={() => setDeleteOpen(false)}>
+        <Text variant="heading" className="block">Delete account?</Text>
+        <Text variant="body" color="textSecondary" className="mt-2 block">
+          This requests deletion of your Knewit account. Blockchain, Privy, and Polymarket records cannot be deleted by Knewit.
+        </Text>
+        <div className="mt-6 flex justify-end gap-3">
+          <button type="button" onClick={() => setDeleteOpen(false)} className="rounded-md px-4 py-2 text-sm text-text-secondary">Cancel</button>
+          <button type="button" onClick={() => setDeleteOpen(false)} className="rounded-md bg-danger px-4 py-2 text-sm font-semibold text-white">Request deletion</button>
+        </div>
+      </Modal>
 
       <input
         ref={bannerInputRef}

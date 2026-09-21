@@ -10,6 +10,7 @@ import { useMarkets } from '@/features/markets/hooks/useMarkets';
 import { useIsDesktop } from '@/hooks/useIsDesktop';
 import { getCategories } from '@/features/markets/lib/marketService';
 import type { MarketListItem } from '@/types/social';
+import { PageHeader } from '@/components/ui/PageHeader';
 
 const SKELETON_ROWS = [0, 1, 2, 3, 4, 5];
 
@@ -45,7 +46,11 @@ export default function MarketsPage() {
 
   return (
     <main className={isDesktop ? 'w-full py-8' : 'w-full'}>
-      <h1 className={isDesktop ? 'pb-1 text-5xl font-extrabold' : 'px-4 pb-3 pt-2 text-4xl font-extrabold'}>Markets</h1>
+      {isDesktop ? (
+        <PageHeader title="Markets" subtitle="Explore prediction markets and find your next position." />
+      ) : (
+        <h1 className="px-4 pb-3 pt-2 text-4xl font-extrabold">Markets</h1>
+      )}
       {isDesktop ? null : <div className="border-b border-border" />}
       <div className={isDesktop ? 'pt-6' : 'pt-4'}>
         <TabRow options={categoryOptions} value={category} onChange={setCategory} scroll />

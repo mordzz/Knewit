@@ -15,7 +15,6 @@ import { ErrorState } from '@/components/feedback/ErrorState';
 import { CallCard } from '@/components/CallCard';
 import { ActivityRow } from '@/features/activity/components/ActivityRow';
 import { WalletAddress } from '@/features/wallet/components/WalletAddress';
-import { EditProfileModal } from '@/features/profile/components/EditProfileModal';
 import { WhoToFollowPanel } from '@/components/WhoToFollowPanel';
 import { TrendingMarketsPanel } from '@/components/TrendingMarketsPanel';
 import { useProfile } from '@/features/profile/hooks/useProfile';
@@ -23,6 +22,9 @@ import { useFollowToggle } from '@/features/profile/hooks/useFollowToggle';
 import { useUserCalls } from '@/features/profile/hooks/useUserCalls';
 import { useUserReplies } from '@/features/profile/hooks/useUserReplies';
 import { useUserActivity } from '@/features/activity/hooks/useUserActivity';
+import { useWalletBalance } from '@/features/wallet/hooks/useWalletBalance';
+import { formatUsd } from '@/lib/formatters';
+import { CARD_SURFACE_CLASS } from '@/components/ui/cardSurface';
 import { useIsDesktop } from '@/hooks/useIsDesktop';
 import { ApiRequestError } from '@/lib/apiClient';
 import { formatCompactNumber, formatRelativeTime } from '@/lib/formatters';
@@ -51,7 +53,6 @@ export function ProfileView({ userId }: { userId?: string }) {
   const router = useRouter();
   const isDesktop = useIsDesktop();
   const [selectedTab, setTab] = useState<ProfileTab>('calls');
-  const [editOpen, setEditOpen] = useState(false);
   // A stale "activity" selection (e.g. after resizing to desktop, where
   // that tab doesn't exist) falls back to Calls.
   const tab: ProfileTab = isDesktop && selectedTab === 'activity' ? 'calls' : selectedTab;
@@ -61,6 +62,7 @@ export function ProfileView({ userId }: { userId?: string }) {
   const calls = useUserCalls(userId ?? 'me', tab === 'calls' && profile.status === 'success');
   const replies = useUserReplies(userId ?? 'me', tab === 'replies' && profile.status === 'success');
   const activity = useUserActivity(userId ?? 'me', tab === 'activity' && profile.status === 'success');
+  const walletBalance = useWalletBalance();
 
   const openAuthor = (id: string) => router.push(`/profile/${id}`);
   const openMarket = (marketId: string) => router.push(`/markets/${marketId}`);
@@ -114,6 +116,8 @@ export function ProfileView({ userId }: { userId?: string }) {
         )}
       </div>
 
+      {user.isSelf ? <Link href="/settings" aria-label="Open Settings" className="absolute right-4 top-3 z-10 rounded-full bg-black/45 p-2 text-white hover:bg-black/65"><Icon name="options-outline" size={20} /></Link> : null}
+
       <div className="flex items-start justify-between gap-3 px-4">
         <div className="relative z-10 -mt-12 rounded-full border-4 border-background bg-background">
           <Avatar uri={user.avatarUrl} fallbackLabel={user.displayName} size={96} />
@@ -140,12 +144,11 @@ export function ProfileView({ userId }: { userId?: string }) {
             </Text>
           </div>
           {user.isSelf ? (
-            <Button
-              label="Edit Profile"
-              variant="secondary"
-              onClick={() => (isDesktop ? setEditOpen(true) : router.push('/profile/edit'))}
-              className="mt-0.5 min-h-0 shrink-0 px-4 py-2"
-            />
+            <Link href="/wallet" className="mt-0.5 shrink-0 text-right">
+              <Text variant="bodyStrong" className="block text-2xl font-inter-extrabold tabular-nums">
+                {walletBalance.data?.usdc != null ? formatUsd(walletBalance.data.usdc) : '—'}
+              </Text>
+            </Link>
           ) : null}
         </div>
         <Text variant="body" color="textSecondary" className="mt-2 block">
@@ -181,7 +184,7 @@ export function ProfileView({ userId }: { userId?: string }) {
             <Icon name="chevron-forward" size={18} color="textTertiary" />
           </Link>
         ) : user.walletAddress ? (
-          <div className="gap-1 border-y border-border py-3">
+          <div className={`${CARD_SURFACE_CLASS} mt-3 gap-1 p-4`}>
             <Text variant="caption" color="textSecondary" className="block">
               Wallet
             </Text>
@@ -219,7 +222,6 @@ export function ProfileView({ userId }: { userId?: string }) {
         (items as FeedItem[]).map((item) => <CallCard key={item.id} item={item} />)
       )}
       </div>
-      {isDesktop ? <EditProfileModal visible={editOpen} onClose={() => setEditOpen(false)} /> : null}
       <aside className="sticky top-20 hidden flex-col gap-4 lg:flex">
         <WhoToFollowPanel />
         <TrendingMarketsPanel />

@@ -10,6 +10,7 @@ import { PersonResult } from '@/components/PersonResult';
 import { MarketCard } from '@/features/markets/components/MarketCard';
 import { useWalletBalance } from '@/features/wallet/hooks/useWalletBalance';
 import { useDepositFlow } from '@/features/wallet/hooks/useDepositFlow';
+import { WithdrawModal } from '@/features/wallet/components/WithdrawModal';
 import { useSession } from '@/hooks/useSession';
 import { useSearch, MIN_QUERY_LENGTH } from '@/hooks/useSearch';
 import { useDebounce } from '@/hooks/useDebounce';
@@ -36,6 +37,7 @@ export function TopHeader() {
 
   const [query, setQuery] = useState('');
   const [open, setOpen] = useState(false);
+  const [withdrawOpen, setWithdrawOpen] = useState(false);
   const searchRef = useRef<HTMLDivElement>(null);
   const debouncedQuery = useDebounce(query, SEARCH_DEBOUNCE_MS);
   const trimmed = query.trim();
@@ -159,12 +161,14 @@ export function TopHeader() {
           </Text>
         </div>
         <Button label="Deposit" loading={isDepositing} onClick={handleDeposit} className="min-h-0 px-4 py-2" />
+        <Button label="Withdraw" variant="secondary" onClick={() => setWithdrawOpen(true)} className="min-h-0 px-4 py-2" />
         {depositError ? (
           <Text variant="caption" color="danger" className="absolute right-7 top-full mt-1">
             {depositError}
           </Text>
         ) : null}
       </div>
+      <WithdrawModal visible={withdrawOpen} onClose={() => setWithdrawOpen(false)} />
     </header>
   );
 }

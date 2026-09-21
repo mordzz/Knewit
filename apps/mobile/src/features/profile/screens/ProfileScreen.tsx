@@ -20,6 +20,9 @@ import { useFollowToggle } from '@/features/profile/hooks/useFollowToggle';
 import { useUserReplies } from '@/features/profile/hooks/useUserReplies';
 import { useUserCalls } from '@/features/profile/hooks/useUserCalls';
 import { useUserActivity } from '@/features/profile/hooks/useUserActivity';
+import { useWalletBalance } from '@/features/wallet/hooks/useWalletBalance';
+import { formatUsd } from '@/utils/formatCurrency';
+import { solidPanel } from '@/theme';
 import { navigateToMarketDetail } from '@/features/markets/utils/openMarketDetail';
 import { useAuth } from '@/hooks/useAuth';
 import { ApiRequestError } from '@/services/api/client';
@@ -61,6 +64,7 @@ export function ProfileScreen() {
   const replies = useUserReplies(targetId, tab === 'replies' && profile.status === 'success');
   const calls = useUserCalls(targetId, tab === 'calls' && profile.status === 'success');
   const activity = useUserActivity(targetId, tab === 'activity' && profile.status === 'success');
+  const walletBalance = useWalletBalance();
 
   const openAuthor = (id: string) => navigation.navigate('Profile', { userId: id });
   const openMarket = (market: MarketSummary) => navigateToMarketDetail(navigation, market);
@@ -182,6 +186,17 @@ export function ProfileScreen() {
         )}
       </View>
 
+      {isOwnProfileRoute ? (
+        <Pressable
+          onPress={() => navigation.navigate('Settings')}
+          className="absolute right-4 top-3 z-10 rounded-full bg-black/45 p-2 active:opacity-70"
+          accessibilityRole="button"
+          accessibilityLabel="Open Settings"
+        >
+          <Icon name="options-outline" size={22} color="textPrimary" />
+        </Pressable>
+      ) : null}
+
       <View className="flex-row items-start justify-between">
         <View className="z-10 -mt-12 rounded-full border-4 border-background bg-background">
           <Avatar uri={user.avatarUrl} fallbackLabel={user.displayName} size={96} />
@@ -198,7 +213,7 @@ export function ProfileScreen() {
         ) : null}
       </View>
 
-      <View className="flex-row items-start justify-between gap-3">
+      <View style={[solidPanel, { borderRadius: 16 }]} className="flex-row items-start justify-between gap-3 p-4">
         <View className="flex-1 gap-0.5">
           <Text variant="title">{user.displayName}</Text>
           <Text variant="caption" color="textSecondary">
@@ -206,13 +221,20 @@ export function ProfileScreen() {
           </Text>
         </View>
         {user.isSelf ? (
-          <Button
-            label="Edit Profile"
-            variant="secondary"
-            onPress={() => navigation.navigate('EditProfile')}
-            className="mt-0.5 min-h-0 shrink-0 px-4 py-2"
-            accessibilityLabel="Edit Profile"
-          />
+          <Pressable
+            onPress={() => navigation.navigate('Wallet')}
+            className="mt-0.5 shrink-0 items-end"
+            accessibilityRole="button"
+            accessibilityLabel="Wallet balance"
+          >
+            <Text variant="bodyStrong" className="text-xl font-inter-extrabold tabular-nums">
+              {walletBalance.isPending
+                ? '—'
+                : walletBalance.data?.usdc != null
+                  ? formatUsd(walletBalance.data.usdc)
+                  : '—'}
+            </Text>
+          </Pressable>
         ) : null}
       </View>
 
@@ -262,7 +284,7 @@ export function ProfileScreen() {
           <Icon name="chevron-forward" size={18} color="textTertiary" />
         </Pressable>
       ) : user.walletAddress ? (
-        <View className="gap-1 border-y border-border py-3">
+        <View style={[solidPanel, { borderRadius: 16 }]} className="gap-1 p-4">
           <Text variant="caption" color="textSecondary">
             Wallet
           </Text>
@@ -347,4 +369,3 @@ export function ProfileScreen() {
     </Screen>
   );
 }
-

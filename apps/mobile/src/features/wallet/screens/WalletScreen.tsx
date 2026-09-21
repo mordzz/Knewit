@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ActivityIndicator, Pressable, View } from 'react-native';
+import { ActivityIndicator, Pressable, TextInput, View } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { usePrivy } from '@privy-io/expo';
 import { Screen } from '@/components/layout/Screen';
@@ -8,6 +8,7 @@ import { typography } from '@/theme';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { BottomSheet } from '@/components/ui/BottomSheet';
+import { Modal } from '@/components/ui/Modal';
 import { Icon } from '@/components/ui/Icon';
 import { Divider } from '@/components/ui/Divider';
 import { EmptyState } from '@/components/feedback/EmptyState';
@@ -15,12 +16,12 @@ import { ErrorState } from '@/components/feedback/ErrorState';
 import { WalletAddress } from '@/features/wallet/components/WalletAddress';
 import { useWalletBalance } from '@/features/wallet/hooks/useWalletBalance';
 import { useDeposit } from '@/features/wallet/hooks/useDeposit';
+import { useWithdraw } from '@/features/wallet/hooks/useWithdraw';
 import { isUserCancelledFunding } from '@/features/wallet/utils/privyErrors';
 import { usePositions } from '@/features/portfolio/hooks/usePositions';
 import { useSellPosition } from '@/features/portfolio/hooks/useSellPosition';
 import { useWallet } from '@/hooks/useWallet';
 import { useAuth } from '@/hooks/useAuth';
-import { useGuestStore } from '@/store/guest/guestStore';
 import { isPrivyConfigured } from '@/app/config/env';
 import { formatProbability, formatUsd } from '@/utils/formatCurrency';
 import { choiceTextColor, choiceTone } from '@/utils/choiceTone';
@@ -55,13 +56,18 @@ const STATUS_COPY: Record<
 export function WalletScreen() {
   const navigation = useNavigation();
   const { isAuthenticated, isGuest } = useAuth();
-  const exitGuest = useGuestStore((state) => state.exitGuest);
   const { status, address, error } = useWallet();
-  const { logout, isReady } = usePrivy();
+  const { isReady } = usePrivy();
   const { deposit } = useDeposit();
+  const { withdraw } = useWithdraw();
   const sell = useSellPosition();
   const [isDepositing, setIsDepositing] = useState(false);
   const [depositError, setDepositError] = useState<string | null>(null);
+  const [withdrawOpen, setWithdrawOpen] = useState(false);
+  const [recipient, setRecipient] = useState('');
+  const [amount, setAmount] = useState('');
+  const [withdrawError, setWithdrawError] = useState<string | null>(null);
+  const [withdrawHash, setWithdrawHash] = useState<string | null>(null);
   const [sellTarget, setSellTarget] = useState<UserPosition | null>(null);
   const [sellNotice, setSellNotice] = useState<{ tone: 'yes' | 'danger'; message: string } | null>(
     null
@@ -88,20 +94,6 @@ export function WalletScreen() {
           )
         : null;
 
-  const handleLogout = async () => {
-    // A guest session has no Privy session to end — leaving guest mode is
-    // the logout, and returns to the sign-in screen via `RootNavigator`.
-    if (isGuest) {
-      exitGuest();
-      return;
-    }
-    try {
-      await logout();
-    } catch (logoutError) {
-      if (__DEV__) console.warn('[wallet] logout failed', logoutError);
-    }
-  };
-
   const handleDeposit = async () => {
     setDepositError(null);
     setIsDepositing(true);
@@ -124,7 +116,7 @@ export function WalletScreen() {
           className="px-4 pb-3 text-4xl"
           style={{ fontFamily: typography.family.extrabold }}
         >
-          Portfolio
+          Wallet &amp; Portfolio
         </Text>
         <Card contentClassName="gap-2">
           <Text variant="bodyStrong">Wallet isn&apos;t configured in this build</Text>
@@ -163,7 +155,7 @@ export function WalletScreen() {
           className="text-4xl"
           style={{ fontFamily: typography.family.extrabold }}
         >
-          Portfolio
+          Wallet &amp; Portfolio
         </Text>
       </View>
 
@@ -173,7 +165,7 @@ export function WalletScreen() {
           size={18}
           color={statusMeta.color}
         />
-        <View className="flex-1 gap-0.5">
+        <View className="min-w-0 flex-1 gap-0.5">
           <Text variant="bodyStrong" color={statusMeta.color} accessibilityLiveRegion="polite">
             {(isAuthenticated || isGuest) && status === 'connected'
               ? 'Wallet Connected'
@@ -188,13 +180,27 @@ export function WalletScreen() {
           )}
         </View>
         {status === 'connected' ? (
-          <Button
-            label="Log Out"
-            variant="no"
-            onPress={handleLogout}
-            accessibilityLabel="Log Out"
-            className="min-h-0 px-3 py-2"
-          />
+          <View className="flex-shrink-0 flex-row gap-2">
+            <Button
+              label="Deposit"
+              variant="primary"
+              loading={isDepositing}
+              onPress={handleDeposit}
+              accessibilityLabel="Deposit"
+              className="min-h-0 px-3 py-2"
+            />
+            <Button
+              label="Withdraw"
+              variant="secondary"
+              onPress={() => {
+                setWithdrawError(null);
+                setWithdrawHash(null);
+                setWithdrawOpen(true);
+              }}
+              accessibilityLabel="Withdraw"
+              className="min-h-0 px-3 py-2"
+            />
+          </View>
         ) : null}
       </View>
 
@@ -222,16 +228,6 @@ export function WalletScreen() {
             </Text>
           ) : null}
         </View>
-        {status === 'connected' ? (
-          <Button
-            label="Deposit"
-            variant="primary"
-            loading={isDepositing}
-            onPress={handleDeposit}
-            accessibilityLabel="Deposit"
-            className="min-h-0 px-4 py-2"
-          />
-        ) : null}
       </View>
 
       {depositError ? (
@@ -239,6 +235,61 @@ export function WalletScreen() {
           {depositError}
         </Text>
       ) : null}
+
+      <Modal visible={withdrawOpen} onClose={() => setWithdrawOpen(false)}>
+        <Text variant="heading">Withdraw USDC</Text>
+        <Text variant="body" color="textSecondary" className="mt-2">
+          Send USDC on Polygon to another wallet. Privy will ask you to confirm.
+        </Text>
+        <TextInput
+          value={recipient}
+          onChangeText={setRecipient}
+          placeholder="Recipient wallet address"
+          placeholderTextColor="#6B7280"
+          autoCapitalize="none"
+          className="mt-5 rounded-lg border border-border bg-surface px-3 py-3 text-white"
+        />
+        <TextInput
+          value={amount}
+          onChangeText={setAmount}
+          placeholder="Amount (USDC)"
+          placeholderTextColor="#6B7280"
+          keyboardType="decimal-pad"
+          className="mt-3 rounded-lg border border-border bg-surface px-3 py-3 text-white"
+        />
+        {withdrawError ? (
+          <Text variant="caption" color="danger" className="mt-3">
+            {withdrawError}
+          </Text>
+        ) : null}
+        {withdrawHash ? (
+          <Text variant="caption" color="yes" className="mt-3">
+            Transaction sent: {withdrawHash}
+          </Text>
+        ) : null}
+        <View className="mt-5 flex-row justify-end gap-3">
+          <Pressable onPress={() => setWithdrawOpen(false)} className="px-4 py-2">
+            <Text variant="body" color="textSecondary">Cancel</Text>
+          </Pressable>
+          <Pressable
+            onPress={async () => {
+              try {
+                setWithdrawError(null);
+                if (!/^0x[a-fA-F0-9]{40}$/.test(recipient.trim())) {
+                  throw new Error('Enter a valid EVM wallet address.');
+                }
+                const hash = await withdraw(recipient.trim(), amount.trim());
+                setWithdrawHash(hash);
+              } catch (error) {
+                setWithdrawError(error instanceof Error ? error.message : 'Withdrawal failed.');
+              }
+            }}
+            className="rounded-lg bg-accent px-4 py-2"
+          >
+            <Text variant="bodyStrong" className="text-black">Continue with Privy</Text>
+          </Pressable>
+        </View>
+      </Modal>
 
       {sellNotice ? (
         <Text variant="caption" color={sellNotice.tone} className="px-4">
@@ -434,7 +485,10 @@ function AllocationPanel({ positions }: { positions: UserPosition[] }) {
   const top = values.slice(0, 3);
   return (
     <Card contentClassName="gap-3">
-      <Text variant="bodyStrong">Allocation</Text>
+      <View className="flex-row items-center gap-3">
+        <Icon name="stats-chart-outline" color="textSecondary" />
+        <Text variant="bodyStrong">Allocation</Text>
+      </View>
       <View className="h-3 flex-row overflow-hidden rounded-full bg-surface-elevated">
         {top.map((item, index) => (
           <View

@@ -49,7 +49,12 @@ export type IconName =
   | 'time-outline'
   | 'ellipsis-horizontal'
   | 'share-outline'
-  | 'options-outline';
+  | 'options-outline'
+  | 'document-text-outline'
+  | 'help-circle-outline'
+  | 'log-out-outline'
+  | 'arrow-down-circle-outline'
+  | 'arrow-up-circle-outline';
 
 export interface IconProps {
   name: IconName;

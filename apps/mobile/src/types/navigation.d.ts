@@ -18,6 +18,8 @@ export type ProfileStackParamList = {
   Following: { userId: string };
   EditProfile: undefined;
   Wallet: undefined;
+  Settings: undefined;
+  Notifications: undefined;
 };
 
 export type MainTabParamList = {
@@ -62,6 +64,8 @@ export type AppParamList = {
   Followers: { userId: string };
   Following: { userId: string };
   Wallet: undefined;
+  Settings: undefined;
+  Notifications: undefined;
   /** One detail screen for a single market (`marketId`) and a grouped
    * event (`eventId`) — event mode shows the event's own chart, child
    * markets with inline Trade sheets, and combined tabs; there is no

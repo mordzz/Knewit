@@ -10,6 +10,7 @@ import { LeaderboardUserCard } from '@/components/LeaderboardUserCard';
 import { TopPerformers } from '@/components/TopPerformers';
 import { useLeaderboard } from '@/hooks/useLeaderboard';
 import type { LeaderboardEntry } from '@/types/leaderboard';
+import { PageHeader } from '@/components/ui/PageHeader';
 
 /**
  * Direct conversion of `apps/mobile`'s `LeaderboardScreen` — Polymarket's
@@ -29,7 +30,7 @@ export default function LeaderboardPage() {
   const topThree = items.length >= 3 ? (items.slice(0, 3) as [LeaderboardEntry, LeaderboardEntry, LeaderboardEntry]) : null;
   const rest = topThree ? items.slice(3) : items;
 
-  const titleBlock = (
+  const mobileTitleBlock = (
     <div>
       <Text variant="heading" className="block px-4 pb-3 pt-2 text-4xl font-inter-extrabold">
         Leaderboard
@@ -38,9 +39,18 @@ export default function LeaderboardPage() {
     </div>
   );
 
+  const titleBlock = (
+    <>
+      <div className="hidden lg:block">
+        <PageHeader title="Leaderboard" subtitle="See how traders are performing across the platform." />
+      </div>
+      <div className="lg:hidden">{mobileTitleBlock}</div>
+    </>
+  );
+
   if (leaderboard.status === 'pending') {
     return (
-      <main className="w-full">
+      <main className="w-full lg:py-8">
         {titleBlock}
         <div className="px-4 pt-3">
           <LoadingState rows={5} />
@@ -51,7 +61,7 @@ export default function LeaderboardPage() {
 
   if (leaderboard.status === 'error') {
     return (
-      <main className="w-full">
+      <main className="w-full lg:py-8">
         {titleBlock}
         <ErrorState message="Unable to load leaderboard." onRetry={() => leaderboard.refetch()} />
       </main>
@@ -59,7 +69,7 @@ export default function LeaderboardPage() {
   }
 
   return (
-    <main className="w-full">
+    <main className="w-full lg:py-8">
       {titleBlock}
       {topThree ? (
         <div className="pt-3">

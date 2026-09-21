@@ -290,7 +290,7 @@ function Header() {
   };
 
   return (
-    <View className="border-b border-border px-4 pb-3 pt-4">
+    <View className="border-b border-border px-4 py-3">
       <View className="flex-row items-center justify-between">
         <Text className="text-4xl font-bold">{balanceLabel}</Text>
         <Button

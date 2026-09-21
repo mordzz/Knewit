@@ -18,6 +18,7 @@ import { useDepositFlow } from '@/features/wallet/hooks/useDepositFlow';
 import { useSession } from '@/hooks/useSession';
 import { useIsDesktop } from '@/hooks/useIsDesktop';
 import { formatUsd } from '@/lib/formatters';
+import { PageHeader } from '@/components/ui/PageHeader';
 
 type FeedTabKey = 'forYou' | 'following';
 
@@ -164,9 +165,7 @@ function CalloutsLayout({ isDesktop, children }: { isDesktop: boolean; children:
   if (!isDesktop) return <main className="w-full">{children}</main>;
   return (
     <main className="w-full py-8">
-      <Text variant="heading" className="block pb-6 text-5xl font-inter-extrabold">
-        Callouts
-      </Text>
+      <PageHeader title="Callouts" subtitle="Share your market views and follow the conversation." />
       <div className="grid grid-cols-[minmax(0,1fr)_380px] items-start gap-8">
         <div className="min-w-0">{children}</div>
         <div className="sticky top-24 flex max-h-[calc(100vh-7rem)] flex-col gap-4 overflow-y-auto [&>*]:shrink-0">
@@ -247,7 +246,7 @@ function Header({ isDesktop }: { isDesktop: boolean }) {
   if (isDesktop) return null;
 
   return (
-    <div className="border-b border-border px-4 pb-3 pt-4">
+    <div className="border-b border-border px-4 py-3">
       <div className="flex items-center justify-between">
         <Text className="text-4xl font-bold">{balanceLabel}</Text>
         <Button

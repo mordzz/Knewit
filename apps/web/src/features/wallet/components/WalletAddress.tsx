@@ -8,11 +8,12 @@ export interface WalletAddressProps {
   address: string;
   compact?: boolean;
   fullOnDesktop?: boolean;
+  className?: string;
 }
 
 function shortenAddress(address: string): string {
   if (address.length <= 12) return address;
-  return `${address.slice(0, 6)}...${address.slice(-4)}`;
+  return `${address.slice(0, 4)}…${address.slice(-4)}`;
 }
 
 /**
@@ -20,7 +21,7 @@ function shortenAddress(address: string): string {
  * — the single place that formats and copies a wallet address, using
  * the browser's Clipboard API instead of `expo-clipboard`.
  */
-export function WalletAddress({ address, compact = false, fullOnDesktop = false }: WalletAddressProps) {
+export function WalletAddress({ address, compact = false, fullOnDesktop = false, className = '' }: WalletAddressProps) {
   const [copied, setCopied] = useState(false);
   const [copyFailed, setCopyFailed] = useState(false);
 
@@ -37,14 +38,14 @@ export function WalletAddress({ address, compact = false, fullOnDesktop = false 
   };
 
   return (
-    <div className={compact ? 'flex items-center gap-2' : 'flex flex-col gap-1'}>
+    <div className={`${compact ? 'flex min-w-0 items-center gap-2' : 'flex flex-col gap-1'} ${className}`}>
       <button
         type="button"
         onClick={handleCopy}
         aria-label={`Wallet address ${address}. Click to copy.`}
-        className="flex items-center gap-2 text-left transition-opacity hover:opacity-70"
+        className="flex min-w-0 items-center gap-2 text-left transition-opacity hover:opacity-70"
       >
-        <Text variant={compact ? 'bodyStrong' : 'body'} className={fullOnDesktop ? 'lg:hidden' : undefined}>
+        <Text variant={compact ? 'bodyStrong' : 'body'} className={`${fullOnDesktop ? 'lg:hidden' : ''} min-w-0 truncate`}>
           {shortenAddress(address)}
         </Text>
         {fullOnDesktop ? (

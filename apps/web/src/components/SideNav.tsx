@@ -2,9 +2,18 @@
 
 import Image from 'next/image';
 import Link from 'next/link';
-import { usePathname, useRouter } from 'next/navigation';
+import { usePathname } from 'next/navigation';
 import { useLogout } from '@privy-io/react-auth';
-import { IoWalletOutline, IoWallet, IoTimeOutline, IoTime, IoPersonCircleOutline, IoLogOutOutline } from 'react-icons/io5';
+import {
+  IoWalletOutline,
+  IoWallet,
+  IoTimeOutline,
+  IoTime,
+  IoPersonCircleOutline,
+  IoPersonCircle,
+  IoLogOutOutline,
+  IoSettingsOutline,
+} from 'react-icons/io5';
 import { TAB_ITEMS } from '@/components/BottomTabBar';
 import { useSession } from '@/hooks/useSession';
 import { useGuestStore } from '@/lib/guest/guestStore';
@@ -23,6 +32,13 @@ const ACTIVITY_ITEM = {
   activeIcon: IoTime,
 };
 
+const PROFILE_ITEM = {
+  href: '/profile',
+  label: 'Profile',
+  icon: IoPersonCircleOutline,
+  activeIcon: IoPersonCircle,
+};
+
 /**
  * Desktop/tablet-only sidebar rail (`hidden lg:flex`), ported from
  * `apps/dekstop/src/components/knew/app-shell.tsx`'s left nav — same
@@ -38,22 +54,13 @@ const ACTIVITY_ITEM = {
  */
 export function SideNav() {
   const pathname = usePathname();
-  const router = useRouter();
   const { canUseApp, isGuest } = useSession();
   const exitGuest = useGuestStore((state) => state.exitGuest);
   const { logout } = useLogout();
   const callouts = TAB_ITEMS.find((item) => item.href === '/callouts')!;
   const markets = TAB_ITEMS.find((item) => item.href === '/markets')!;
   const leaderboard = TAB_ITEMS.find((item) => item.href === '/leaderboard')!;
-  const items = [callouts, markets, WALLET_ITEM, ACTIVITY_ITEM, leaderboard];
-
-  const handleAccount = () => {
-    if (!canUseApp) {
-      router.push('/sign-in');
-      return;
-    }
-    router.push('/profile');
-  };
+  const items = [callouts, markets, WALLET_ITEM, ACTIVITY_ITEM, leaderboard, PROFILE_ITEM];
 
   // Same rule `wallet/page.tsx`'s `handleLogout` follows: a guest session
   // has no Privy session to end, so leaving guest mode is the logout.
@@ -90,14 +97,17 @@ export function SideNav() {
         })}
       </nav>
       <div className="border-t border-border p-3">
-        <button
-          type="button"
-          onClick={handleAccount}
-          className="flex h-11 w-full items-center gap-3 rounded-md px-3 text-sm font-inter-medium text-text-secondary hover:bg-surface hover:text-text-primary"
+        <Link
+          href="/settings"
+          className={`flex h-11 items-center gap-3 rounded-md px-3 text-sm font-inter-medium transition-colors ${
+            pathname === '/settings'
+              ? 'bg-surface-elevated text-text-primary'
+              : 'text-text-secondary hover:bg-surface hover:text-text-primary'
+          }`}
         >
-          <IoPersonCircleOutline size={20} />
-          Account
-        </button>
+          <IoSettingsOutline size={20} />
+          Settings
+        </Link>
         {canUseApp ? (
           <button
             type="button"

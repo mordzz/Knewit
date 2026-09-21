@@ -13,7 +13,7 @@ export interface WalletAddressProps {
 
 function shortenAddress(address: string): string {
   if (address.length <= 12) return address;
-  return `${address.slice(0, 6)}...${address.slice(-4)}`;
+  return `${address.slice(0, 4)}…${address.slice(-4)}`;
 }
 
 /**
@@ -40,14 +40,16 @@ export function WalletAddress({ address, compact = false }: WalletAddressProps) 
   };
 
   return (
-    <View className={compact ? 'flex-row items-center gap-2' : 'gap-1'}>
+    <View className={compact ? 'min-w-0 flex-row items-center gap-2' : 'gap-1'}>
       <Pressable
         onPress={handleCopy}
-        className="flex-row items-center gap-2 active:opacity-70"
+        className="min-w-0 flex-row items-center gap-2 active:opacity-70"
         accessibilityRole="button"
         accessibilityLabel={`Wallet address ${address}. Double tap to copy.`}
       >
-        <Text variant={compact ? 'bodyStrong' : 'body'}>{shortenAddress(address)}</Text>
+        <Text variant={compact ? 'bodyStrong' : 'body'} numberOfLines={1} className="min-w-0 flex-shrink truncate">
+          {shortenAddress(address)}
+        </Text>
         <Icon name={copied ? 'checkmark' : 'layers-outline'} size={16} color="textSecondary" />
       </Pressable>
       {!compact && (copied || copyFailed) ? (

@@ -14,6 +14,7 @@ import { Text } from '@/components/ui/Text';
 import { Icon } from '@/components/ui/Icon';
 import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
+import { Modal } from '@/components/ui/Modal';
 import { Avatar } from '@/components/ui/Avatar';
 import { LoadingState } from '@/components/feedback/LoadingState';
 import { useProfile } from '@/features/profile/hooks/useProfile';
@@ -55,6 +56,7 @@ export function EditProfileScreen() {
   // background refetch.
   const [seededFor, setSeededFor] = useState<string | null>(null);
   const [imageError, setImageError] = useState<string | null>(null);
+  const [deleteOpen, setDeleteOpen] = useState(false);
 
   if (profile.status === 'success' && seededFor !== profile.data.id) {
     setDisplayName(profile.data.displayName);
@@ -138,17 +140,9 @@ export function EditProfileScreen() {
               <Icon name="close" size={24} />
             </Pressable>
             <Text variant="heading" className="text-2xl">
-              Edit Profile
+              Profile &amp; Account
             </Text>
           </View>
-          <Button
-            label={mutation.isPending ? 'Saving…' : 'Save'}
-            onPress={handleSave}
-            disabled={!canSave}
-            loading={mutation.isPending}
-            className="min-h-0 px-5 py-2"
-            accessibilityLabel="Save profile"
-          />
         </View>
 
         {profile.status === 'pending' ? (
@@ -214,7 +208,7 @@ export function EditProfileScreen() {
                   variant="secondary"
                   onPress={() => handlePickImage('avatar')}
                   loading={upload.isPending && upload.variables?.kind === 'avatar'}
-                  className="min-h-0 px-4 py-2"
+                  className="min-h-0 rounded-xl px-3 py-1.5"
                   accessibilityLabel="Change photo"
                 />
                 {avatarUrl ? (
@@ -316,6 +310,42 @@ export function EditProfileScreen() {
             ) : null}
           </>
         ) : null}
+
+        {profile.status === 'success' ? (
+          <>
+            <Button
+              label={mutation.isPending ? 'Saving…' : 'Save'}
+              onPress={handleSave}
+              disabled={!canSave}
+              loading={mutation.isPending}
+              className="mt-2 min-h-12 w-full rounded-xl"
+              accessibilityLabel="Save profile"
+            />
+            <Pressable
+              onPress={() => setDeleteOpen(true)}
+              className="w-full rounded-xl border border-danger/30 bg-danger/5 px-4 py-3 active:bg-danger/15"
+              accessibilityRole="button"
+            >
+              <Text variant="body" color="danger" className="text-center">
+                Delete Account
+              </Text>
+            </Pressable>
+          </>
+        ) : null}
+        <Modal visible={deleteOpen} onClose={() => setDeleteOpen(false)}>
+          <Text variant="heading">Delete account?</Text>
+          <Text variant="body" color="textSecondary" className="mt-2">
+            This requests deletion of your Knewit account. Blockchain, Privy, and Polymarket records cannot be deleted by Knewit.
+          </Text>
+          <View className="mt-6 flex-row justify-end gap-3">
+            <Pressable onPress={() => setDeleteOpen(false)} className="px-4 py-2">
+              <Text variant="body" color="textSecondary">Cancel</Text>
+            </Pressable>
+            <Pressable onPress={() => setDeleteOpen(false)} className="rounded-lg bg-danger px-4 py-2">
+              <Text variant="bodyStrong" className="text-white">Request deletion</Text>
+            </Pressable>
+          </View>
+        </Modal>
       </Screen>
     </KeyboardAvoidingView>
   );
