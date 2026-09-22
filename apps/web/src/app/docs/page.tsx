@@ -5,7 +5,7 @@ import { LegalPage, LegalSection } from '@/components/LegalPage';
 export const metadata: Metadata = {
   title: 'Knewit Product Documentation',
   description:
-    'Product guide and technical overview for Knewit: prediction markets, wallet and portfolio, position-backed Callouts, architecture, and security.',
+    'Complete Knewit product documentation: markets, Callouts, account setup, wallet deposits, portfolio, architecture, and troubleshooting.',
 };
 
 const List = ({ children }: { children: React.ReactNode }) => (
@@ -59,7 +59,7 @@ export default function DocsPage() {
       <DataTable
         headers={['Document information', 'Details']}
         rows={[
-          ['Version', '1.0'],
+          ['Version', '0.1'],
           ['Document date', 'September 22, 2026'],
           ['Prepared for', 'Product development, product presentation, and team onboarding'],
           [
@@ -74,7 +74,7 @@ export default function DocsPage() {
             </a>,
           ],
           ['Interface language', 'English'],
-          ['Current product shape', 'Active web application with guest demonstrations and some simulated activity'],
+          ['Current product shape', 'Active web and mobile clients; some guest activity is simulated and real-money provider flows depend on configuration and eligibility'],
         ]}
       />
 
@@ -122,6 +122,7 @@ export default function DocsPage() {
           <li>Open the Knewit landing page and choose the web app entry point.</li>
           <li>Choose an available sign-in provider, or select guest mode to enter the demonstration.</li>
           <li>After authentication, allow the app to complete embedded-wallet and trading authorization setup.</li>
+          <li>When setup finishes, the app continues to Callouts automatically. If the wallet is still provisioning, keep the app open briefly; if it remains stuck, retry the session and contact support with the displayed error code.</li>
           <li>The app opens the Callouts feed; use the navigation to move between markets, wallet, activity, leaderboard, profile, and settings.</li>
         </List>
         <p>
@@ -183,10 +184,36 @@ export default function DocsPage() {
         </p>
         <h3 className={subheadingClass}>Wallet, search, and social features</h3>
         <p>
-          Deposit opens the funding provider flow. Withdraw asks for a recipient EVM address and USDC
-          amount, then requests confirmation through Privy for a Polygon transfer. Verify the network
-          and recipient carefully; blockchain transfers may be public and irreversible. Wallet balance
-          and trading balance can be reported separately.
+          Deposit opens Privy’s funding flow, which can offer fiat on-ramp and crypto funding methods
+          supported for the account and region. Knewit resolves the user’s Polymarket Deposit Wallet
+          before opening the flow and selects Polygon USDC.e as the trading collateral destination.
+          This is the wallet read by Knewit’s trading balance endpoint. Deposit availability, supported
+          currencies, payment methods, and quotes depend on Privy provider configuration, geography,
+          identity checks, and the selected asset/network. The embedded signer wallet and the
+          Polymarket Deposit Wallet serve different roles; depositing to the signer EOA may not credit
+          the trading balance shown in Knewit.
+        </p>
+        <List>
+          <li>Open Wallet or use the Deposit action in Settings/Home.</li>
+          <li>Wait for the trading wallet address to be resolved; if it is unavailable, the app asks you to retry instead of opening a flow to the wrong wallet.</li>
+          <li>Choose a funding method offered by Privy, review the currency, network, destination, fees, and quote expiration, then confirm with the provider.</li>
+          <li>Wait for the provider and network to complete processing. A submitted payment is not necessarily credited yet; refresh the trading balance after confirmation.</li>
+        </List>
+        <p>
+          A Privy quote request returning HTTP 400 means the provider could not create that quote; it
+          does not by itself mean funds were transferred. Retry with another available method or
+          supported currency/network, check account/region eligibility, and ensure fiat on-ramp
+          providers are enabled for the Privy app. Browser messages about Apple Pay or Google Pay
+          payment manifests are separate capability warnings and are not proof of a successful or
+          failed blockchain transfer. Never retry a payment if the provider shows it as submitted or
+          pending; first confirm its status to avoid duplicate funding.
+        </p>
+        <p>
+          Withdraw asks for a recipient EVM address and USDC amount, then requests confirmation through
+          Privy for a Polygon transfer. Verify the network and recipient carefully; blockchain transfers
+          may be public and irreversible. Embedded wallet balance and trading balance are separate
+          concepts and can differ. Knewit’s displayed trading balance is sourced from the Polymarket
+          trading account, not assumed from the embedded wallet’s raw token balance.
         </p>
         <p>
           Profile usernames must be unique and are separate from display names. Search combines Knewit
@@ -210,7 +237,7 @@ export default function DocsPage() {
             ['Guest mode', 'Available as a demonstration', 'Wallet, trade, and supported social activity is simulated; it is not real account or transaction data.'],
             ['Callouts and social interactions', 'Implemented', 'Feed, position-backed publishing, likes, comments/replies, and following use account-backed services; guest behavior is simulated where supported.'],
             ['Markets and search', 'Implemented with upstream data', 'Market list and detail depend on Polymarket data and availability; categories follow provider taxonomy.'],
-            ['Wallet and portfolio', 'Implemented; provider-dependent', 'Displays wallet and position information and offers deposit, withdrawal, and sale flows. Real trade execution has not been verified end-to-end.'],
+            ['Wallet and portfolio', 'Implemented; provider-dependent', 'Resolves the Polymarket Deposit Wallet for funding and reads trading balance; offers deposit, withdrawal, and sale flows. Provider quotes and real trade execution remain dependent on configuration and end-to-end verification.'],
             ['Activity and profiles', 'Implemented', 'Routes display account activity and profile information backed by application services.'],
             ['Leaderboard', 'Available; read-only', 'Polymarket global all-time ranking by trading volume; rows are Polymarket traders, not Knewit profiles.'],
             ['Settings and legal pages', 'Available', 'Profile editing, wallet actions, Privacy Policy, Terms, and FAQ link are present.'],
@@ -234,7 +261,8 @@ export default function DocsPage() {
             ['Web client', 'Next.js App Router and React pages for landing, authentication, markets, social feeds, wallet, and profiles.'],
             ['Backend for frontend', 'Next.js API routes authenticate requests, apply application rules, normalize upstream data, and return client-facing responses.'],
             ['Privy', 'Authentication, embedded wallet lifecycle, and wallet authorization/signing flows.'],
-            ['Polymarket services', 'Gamma and related endpoints supply market metadata; CLOB-related services support order-book estimates and trading; Data API supplies the leaderboard.'],
+            ['Polymarket services', 'Gamma and related endpoints supply market metadata; CLOB-related services support order-book estimates and trading; Data API supplies the leaderboard; the Deposit Wallet holds trading collateral.'],
+            ['Funding providers', 'Privy on-ramp and crypto funding integrations provide account- and region-dependent quotes and payment flows; Knewit supplies the trading destination and refreshes trading balance after completion.'],
             ['Supabase', 'Server-side application storage for profiles, Callouts, comments, likes, follows, activity, and related records.'],
             ['TanStack Query', 'Client-side request state, caching, pagination, and refresh for server data.'],
             ['Mobile application', 'A separate native client exists in the repository; public app-store release is not available at the time of this document.'],
@@ -247,6 +275,8 @@ export default function DocsPage() {
           <li>For market data, the server reads or normalizes provider data; social data is read from application storage.</li>
           <li>For a trade, the server validates the market, outcome, amount, wallet authorization, and applicable availability.</li>
           <li>The wallet authorizes actions requiring user consent; the backend and provider determine the resulting status.</li>
+          <li>For deposits, the client asks Knewit’s backend for the Polymarket Deposit Wallet address, then opens Privy funding with that address, Polygon, and USDC.e as destination details.</li>
+          <li>After the funding flow resolves, the client invalidates the wallet balance query; provider settlement and blockchain confirmation may take additional time before the trading balance changes.</li>
           <li>The client refreshes affected balance, position, market, and activity views from authoritative responses.</li>
         </List>
         <p>
@@ -274,7 +304,7 @@ export default function DocsPage() {
         <h3 className={subheadingClass}>Security principles</h3>
         <List>
           <li>Privy manages embedded user wallets; Knewit must not request or expose a user’s private key or recovery phrase.</li>
-          <li>Keep Supabase service-role credentials, Privy server authorization keys, and provider secrets in backend environment configuration only.</li>
+          <li>Keep Supabase service-role credentials, Privy server authorization keys, Polymarket builder credentials, and provider secrets in backend environment configuration only.</li>
           <li>Authenticate and authorize sensitive API actions, including ownership checks for positions and user content.</li>
           <li>Validate and sanitize Callout, comment, username, and search inputs; apply rate limits and operational logging where appropriate.</li>
           <li>Verify provider and webhook results before changing order or portfolio state; calculate sensitive transaction values on the server.</li>
@@ -309,7 +339,7 @@ export default function DocsPage() {
             ['Markets', 'Load, category, search, pagination, empty response, and provider error.', 'Current data or clear loading, empty, and retryable error states.'],
             ['Trading', 'Tradeable outcome, invalid/minimum amount, insufficient funds, retry, and uncertain submission.', 'No duplicate order; UI follows backend/provider status.'],
             ['Callouts', 'Empty text, 280 characters, over limit, no position, and a position not owned by the user.', 'Invalid submissions are blocked and ownership is enforced server-side.'],
-            ['Wallet', 'Deposit, withdrawal, sale, pending/failure, refresh, and unavailable balance.', 'Correct network and transaction context; no fabricated balance or success.'],
+            ['Wallet and funding', 'Deposit wallet unavailable, fiat quote failure, crypto deposit quote failure, cancellation, pending/confirmation, withdrawal, sale, and balance refresh.', 'Correct destination and network; actionable provider error; no fabricated balance or success; pending actions are not duplicated.'],
             ['Social', 'Like/unlike, comment/reply, follow/unfollow, and unavailable content.', 'Changes persist once and access rules are respected.'],
             ['Responsive and accessibility', 'Desktop, tablet, mobile, keyboard navigation, and screen-reader labels.', 'Content remains readable and actions are reachable at each viewport.'],
             ['Security', 'Unauthenticated requests, wrong-owner access, malicious text, rate limiting, and tampered transaction input.', 'Requests are rejected safely without exposing credentials or secrets.'],
@@ -325,6 +355,23 @@ export default function DocsPage() {
           <li>Define leaderboard scope and metrics before introducing any Knewit-specific ranking.</li>
           <li>Expand moderation, reporting, audit trails, monitoring, and regional/legal review before broader real-money release.</li>
         </List>
+        <h3 className={subheadingClass}>Deposit troubleshooting</h3>
+        <DataTable
+          headers={['Symptom', 'Likely area', 'Recommended action']}
+          rows={[
+            ['Trading wallet is not ready', 'Polymarket Deposit Wallet provisioning or backend configuration.', 'Wait briefly and retry. If repeated, check backend wallet/relayer configuration and the safe error code; do not send funds to a different address as a workaround.'],
+            ['Privy fiat quote returns 400', 'No supported quote for the current currency, amount, region, destination token/network, or enabled provider.', 'Try a method/currency offered in the funding UI and verify provider enablement and regional eligibility in Privy configuration.'],
+            ['Crypto deposit quote returns 400', 'Unsupported source asset/network, unavailable route, or invalid destination details.', 'Confirm the provider-supported source network and token, then review the destination shown before approving.'],
+            ['Payment is pending but balance is unchanged', 'Provider settlement, blockchain confirmation, or trading-account indexing delay.', 'Check the funding provider status and transaction reference; refresh balance after confirmed completion. Avoid creating a duplicate payment while pending.'],
+            ['Apple Pay or Google Pay manifest warning', 'Browser wallet/payment capability check.', 'Treat this as separate from quote status; use the funding provider’s visible result to determine whether payment is available or failed.'],
+          ]}
+        />
+        <p>
+          Support diagnostics should include platform (web/mobile), approximate time, selected funding
+          method, currency and network, app version, and the safe error code shown by Knewit. Do not
+          send passwords, one-time codes, private keys, recovery phrases, full payment-card details, or
+          unredacted identity documents.
+        </p>
         <h3 className={subheadingClass}>Definition of done</h3>
         <List>
           <li>Acceptance criteria and applicable scenarios have been tested.</li>

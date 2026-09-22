@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useLoginWithEmail, useLoginWithOAuth } from '@privy-io/react-auth';
+import { useLoginWithEmail, useLoginWithOAuth, usePrivy } from '@privy-io/react-auth';
 import { FcGoogle } from 'react-icons/fc';
 import { FaXTwitter } from 'react-icons/fa6';
 import { CodeInput } from '@/components/ui/CodeInput';
@@ -50,6 +50,7 @@ import { useGuestStore } from '@/lib/guest/guestStore';
  */
 export default function SignInPage() {
   const router = useRouter();
+  const { authenticated } = usePrivy();
   const enterGuest = useGuestStore((state) => state.enterGuest);
   const isGuest = useGuestStore((state) => state.isGuest);
   const [email, setEmail] = useState('');
@@ -68,6 +69,14 @@ export default function SignInPage() {
   useEffect(() => {
     if (isGuest) router.replace('/callouts');
   }, [isGuest, router]);
+
+  // AppLayout can bounce back here if it mounts before Privy's
+  // `authenticated` flag has propagated to this component (a race right
+  // after login). Once it does propagate, retry the navigation instead of
+  // leaving the user stuck until a manual refresh.
+  useEffect(() => {
+    if (authenticated) router.replace('/callouts');
+  }, [authenticated, router]);
 
   // The authenticated app shell owns the wallet setup gate. Route there as
   // soon as login completes so it can reconcile Privy's wallet state and

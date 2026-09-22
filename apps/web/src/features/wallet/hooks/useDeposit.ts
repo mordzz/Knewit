@@ -51,8 +51,22 @@ export function useDeposit() {
       fiat: {},
       crypto: {},
     });
+    // `addFunds` can resolve before the funds are actually indexed on
+    // Polymarket's side (fiat: 'submitted' rather than settled; crypto:
+    // on-chain confirmation + CLOB indexing lag even after 'completed'), so a
+    // single invalidate right after it resolves often refetches the
+    // pre-deposit balance. Keep re-invalidating for a short window, the same
+    // way useAutoWalletSetup polls for signer consent, so the UI catches the
+    // update once it lands instead of requiring a manual refresh.
     await queryClient.invalidateQueries({ queryKey: ['wallet-balance'] });
     await queryClient.invalidateQueries({ queryKey: ['positions'] });
+    let attempts = 0;
+    const pollTimer = window.setInterval(() => {
+      attempts += 1;
+      void queryClient.invalidateQueries({ queryKey: ['wallet-balance'] });
+      void queryClient.invalidateQueries({ queryKey: ['positions'] });
+      if (attempts >= 15) window.clearInterval(pollTimer);
+    }, 4000);
   };
 
   return { deposit, canDeposit };
