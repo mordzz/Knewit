@@ -57,32 +57,57 @@ export function useAutoWalletSetup(): { status: WalletSetupStatus } {
   const queryClient = useQueryClient();
   const attemptedCreation = useRef(false);
   const attemptedSigner = useRef(false);
+  const [refreshedWallet, setRefreshedWallet] = useState<{ userId: string; address: string } | null>(null);
+  const [setupStartedAt, setSetupStartedAt] = useState<number | null>(null);
   const [failed, setFailed] = useState(false);
   const [signerGranted, setSignerGranted] = useState(false);
   const [signerAttempted, setSignerAttempted] = useState(false);
 
-  const address = user?.wallet?.address ?? null;
+  const userId = user?.id ?? null;
+  const address =
+    user?.wallet?.address ??
+    (refreshedWallet?.userId === userId ? refreshedWallet.address : null);
   const signerId = publicEnv.privySignerId;
 
   useEffect(() => {
-    if (!ready || !authenticated || address || attemptedCreation.current) return;
+    if (!ready || !authenticated || setupStartedAt != null) return;
+    const timeout = window.setTimeout(() => setSetupStartedAt(Date.now()), 30_000);
+    return () => window.clearTimeout(timeout);
+  }, [ready, authenticated, setupStartedAt]);
+
+  useEffect(() => {
+    if (!ready || !authenticated || !userId || address || attemptedCreation.current) return;
     attemptedCreation.current = true;
     let active = true;
 
+    const captureWallet = (walletAddress?: string | null) => {
+      if (active && walletAddress && userId) {
+        setRefreshedWallet({ userId, address: walletAddress });
+      }
+    };
+
+    const refreshWallet = async () => {
+      const refreshedUser = await refreshUser();
+      captureWallet(refreshedUser?.wallet?.address);
+      return refreshedUser;
+    };
+
     // Privy can finish creating the wallet before the user snapshot exposed
-    // by usePrivy refreshes. Re-read it while setup is active, and once more
-    // when createWallet settles, so the shell gate can observe that wallet
-    // without requiring a full page reload.
+    // by usePrivy refreshes. Keep the returned user address in local state as
+    // well as refreshing Privy's context so setup can progress immediately.
     const refreshTimer = window.setInterval(() => {
-      void refreshUser().catch(() => undefined);
+      void refreshWallet().catch(() => undefined);
     }, 3000);
 
     createWallet()
-      .then(() => refreshUser())
+      .then(async (wallet) => {
+        captureWallet(wallet.address);
+        await refreshWallet();
+      })
       .catch(async (error) => {
         console.error('Embedded wallet creation failed:', error);
         try {
-          const refreshedUser = await refreshUser();
+          const refreshedUser = await refreshWallet();
           if (active && !refreshedUser.wallet?.address) setFailed(true);
         } catch {
           if (active) setFailed(true);
@@ -93,7 +118,7 @@ export function useAutoWalletSetup(): { status: WalletSetupStatus } {
       active = false;
       window.clearInterval(refreshTimer);
     };
-  }, [ready, authenticated, address, createWallet, refreshUser]);
+  }, [ready, authenticated, address, userId, createWallet, refreshUser]);
 
   useEffect(() => {
     if (attemptedSigner.current || !authenticated || !address || !signerId) return;
@@ -133,9 +158,15 @@ export function useAutoWalletSetup(): { status: WalletSetupStatus } {
   const setupReady =
      !signerId || signerGranted || balance.data?.usdc != null || balance.isError;
 
+  // Provider responses can be HTTP 200 with { usdc: null, unavailable: true }.
+  // That is not a React Query error, but waiting on it indefinitely traps the
+  // user behind the app shell. After a short bootstrap window, continue into
+  // the app; wallet screens can keep reporting the unavailable state/retry.
+  const setupTimedOut = setupStartedAt != null;
+
   let status: WalletSetupStatus;
   if (!authenticated || alreadySetUp) status = 'ready';
-  else if (balance.data?.usdc != null) status = 'ready';
+  else if (balance.data?.usdc != null || setupTimedOut) status = 'ready';
   else if (failed) status = 'error';
   else if (!address) status = 'preparing';
   else status = setupReady ? 'ready' : 'preparing';

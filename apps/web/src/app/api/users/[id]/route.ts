@@ -135,3 +135,22 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     return Response.json(await buildUserProfile(updated, viewer.id));
   });
 }
+
+/** `DELETE /users/me` removes only the authenticated caller's Knewit data.
+ * Keep this on the dynamic route so `/users/me` can also use the GET and
+ * PATCH handlers above; a static `users/me/route.ts` shadows them in Next. */
+export async function DELETE(request: Request, { params }: { params: Promise<{ id: string }> }) {
+  return withErrorHandling(async () => {
+    const { id } = await params;
+    if (id !== 'me') {
+      throw badRequest('Only the authenticated caller\'s own account ("me") can be deleted.');
+    }
+
+    const { privyUserId } = await requireAuth(request);
+    const user = await getOrCreateUser(privyUserId);
+    const { error } = await getSupabase().from('users').delete().eq('id', user.id);
+
+    if (error) throw error;
+    return Response.json({ deleted: true });
+  });
+}

@@ -39,10 +39,20 @@ export function useAutoWalletSetup(): { status: WalletSetupStatus } {
   const queryClient = useQueryClient();
   const attemptedCreation = useRef(false);
   const attemptedSigner = useRef(false);
+  const [setupTimedOut, setSetupTimedOut] = useState(false);
   const [failed, setFailed] = useState(false);
   const [signerGranted, setSignerGranted] = useState(false);
 
   const signerId = env.privySignerId;
+
+  useEffect(() => {
+    if (!isAuthenticated) {
+      setSetupTimedOut(false);
+      return;
+    }
+    const timer = setTimeout(() => setSetupTimedOut(true), 30_000);
+    return () => clearTimeout(timer);
+  }, [isAuthenticated]);
 
   useEffect(() => {
     if (!isAuthenticated || isConnected || attemptedCreation.current) return;
@@ -52,6 +62,17 @@ export function useAutoWalletSetup(): { status: WalletSetupStatus } {
       setFailed(true);
     });
   }, [isAuthenticated, isConnected, createWallet]);
+
+  // Check the backend balance while Privy's local wallet list catches up.
+  // This query is enabled by authentication in useWalletBalance above, and
+  // invalidation prompts React Query to reconcile transient unavailable data.
+  useEffect(() => {
+    if (!isAuthenticated || isConnected) return;
+    const timer = setInterval(() => {
+      void queryClient.invalidateQueries({ queryKey: ['wallet-balance'] });
+    }, 3000);
+    return () => clearInterval(timer);
+  }, [isAuthenticated, isConnected, queryClient]);
 
   useEffect(() => {
     if (attemptedSigner.current || !isConnected || !address || !signerId) return;
@@ -72,6 +93,7 @@ export function useAutoWalletSetup(): { status: WalletSetupStatus } {
   // the sandbox wallet is already "connected" (see `useWallet`).
   if (isGuest) return { status: 'ready' };
   if (!isAuthenticated) return { status: 'ready' };
+  if (setupTimedOut) return { status: 'ready' };
   if (failed) return { status: 'error' };
   if (!isConnected || !address) return { status: 'preparing' };
 
