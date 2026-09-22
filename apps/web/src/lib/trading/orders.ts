@@ -147,18 +147,6 @@ export async function placeMarketOrder(params: {
   };
 }
 
-export interface SellCashOut {
-  status: 'sent' | 'failed';
-  amountUsd: number;
-  error: string | null;
-}
-
-/** USDC.e on Polygon — the collateral token sells pay out in. Same
- * address both clients carry as their deposit fallback
- * (`lib/walletService.ts::POLYGON_USDC_E`); this SDK version's typed
- * `environment` no longer exposes contract addresses. */
-const COLLATERAL_TOKEN_ADDRESS = '0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174';
-
 export interface SellPositionResult {
   marketId: string;
   choiceIndex: number;
@@ -166,20 +154,19 @@ export interface SellPositionResult {
   choiceLabel: string;
   status: 'filled' | 'failed';
   soldShares: number;
+  /** Remaining shares after a potentially partial FAK fill. */
+  remainingShares: number;
   /** Shares-weighted average fill price in decimal cents (4dp). */
   filledPrice: number;
   proceedsUsd: number;
   polymarketOrderId: string | null;
   errorMessage: string | null;
-  /** `null` when nothing was sold (no proceeds to move). */
-  cashOut: SellCashOut | null;
 }
 
 /**
- * Market-price SELL of an entire position row, then a cash-out of the
- * proceeds from the trading wallet (Polymarket Deposit Wallet) back to
- * the caller's Privy embedded wallet — see docs/DECISIONS.md, "Selling a
- * Position Cashes Out to the Privy Wallet".
+ * Market-price SELL of an entire position row. Polymarket keeps the USDC.e
+ * proceeds in the caller's Deposit Wallet so they remain available for
+ * another trade or a later withdrawal.
  *
  * The row must belong to the authenticated caller (never trusted from
  * the client): the backend resolves market/choice from the row itself.
@@ -190,10 +177,7 @@ export interface SellPositionResult {
  * own idempotent `setupTradingApprovals` when missing.
  *
  * A failed sell is a real error (or a `failed` result the route records
- * before erroring) — never a fabricated fill. A sell that fills but
- * whose cash-out transfer then fails is NOT an error: the proceeds are
- * still in the user's own trading wallet, so the result carries
- * `cashOut.status: 'failed'` instead.
+ * before erroring) — never a fabricated fill.
  *
  * Note: the sell response's `making`/`taking` convention is mirrored from
  * the proved BUY path — for SELL the maker gives shares and takes pUSD,
@@ -298,11 +282,11 @@ export async function sellMarketPosition(params: {
       choiceLabel: choice.label,
       status: 'failed',
       soldShares: 0,
+      remainingShares: shares,
       filledPrice: 0,
       proceedsUsd: 0,
       polymarketOrderId: null,
       errorMessage: 'The sell was not accepted. Please try again.',
-      cashOut: null,
     };
   }
 
@@ -320,35 +304,11 @@ export async function sellMarketPosition(params: {
       choiceLabel: choice.label,
       status: 'failed',
       soldShares: 0,
+      remainingShares: shares,
       filledPrice: 0,
       proceedsUsd: 0,
       polymarketOrderId: response.orderId ?? null,
       errorMessage: 'Sell was not filled (no matching liquidity).',
-      cashOut: null,
-    };
-  }
-
-  // Cash out the proceeds from the trading wallet to the user's Privy
-  // embedded wallet (`client.account.signer` is that EOA; the deposit
-  // wallet is `client.account.wallet`). A failure here is reported, not
-  // hidden — the money is still in the user's own trading wallet.
-  let cashOut: SellCashOut;
-  try {
-    const handle = await client.transferErc20({
-      amount: BigInt(Math.round(proceedsUsd * 1e6)),
-      recipientAddress: client.account.signer,
-      tokenAddress: COLLATERAL_TOKEN_ADDRESS,
-    });
-    await handle.wait();
-    cashOut = { status: 'sent', amountUsd: proceedsUsd, error: null };
-  } catch (error) {
-    // `cashOut.error` is returned to the client, so it must not carry
-    // the raw upstream reason; the log keeps it.
-    console.error('[trading/orders] cash-out transfer failed:', error);
-    cashOut = {
-      status: 'failed',
-      amountUsd: proceedsUsd,
-      error: null,
     };
   }
 
@@ -359,10 +319,10 @@ export async function sellMarketPosition(params: {
     choiceLabel: choice.label,
     status: 'filled',
     soldShares,
+    remainingShares: Math.max(0, shares - soldShares),
     filledPrice: Number(((proceedsUsd / soldShares) * 100).toFixed(4)),
     proceedsUsd,
     polymarketOrderId: response.orderId ?? null,
     errorMessage: null,
-    cashOut,
   };
 }

@@ -110,7 +110,13 @@ function useTradeFlow(market: MarketDetail | null, onClose: () => void) {
   const canSubmit = amount > 0 && price > 0 && choice != null;
 
   function handleChangeAmount(value: string) {
-    setAmountText(value.replace(/[^0-9]/g, ''));
+    // Keep digits and at most one decimal point with up to 2 decimal places
+    // (USDC cents) — the previous `[^0-9]` strip silently turned "12.50"
+    // into "1250".
+    const cleaned = value.replace(/[^0-9.]/g, '');
+    const [whole, ...rest] = cleaned.split('.');
+    const normalized = rest.length > 0 ? `${whole}.${rest.join('').slice(0, 2)}` : whole;
+    setAmountText(normalized);
   }
 
   function closeSheet() {

@@ -1,44 +1,46 @@
 'use client';
 
-import { useSendTransaction } from '@privy-io/react-auth';
-import { encodeFunctionData, parseUnits } from 'viem';
+import { useEffect, useRef } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
-import { useWalletBalance } from '@/features/wallet/hooks/useWalletBalance';
 import { useSession } from '@/hooks/useSession';
-import { POLYGON_CAIP2, POLYGON_USDC_E } from '@/features/wallet/lib/walletService';
-
-const erc20Abi = [{
-  name: 'transfer', type: 'function', stateMutability: 'nonpayable',
-  inputs: [{ name: 'to', type: 'address' }, { name: 'amount', type: 'uint256' }],
-  outputs: [{ name: '', type: 'bool' }],
-}] as const;
+import { withdrawTradingBalance, POLYGON_CAIP2 } from '@/features/wallet/lib/walletService';
 
 export function useWithdraw() {
   const { address, isGuest } = useSession();
-  const { sendTransaction } = useSendTransaction();
-  const balance = useWalletBalance();
   const queryClient = useQueryClient();
+  const activeRef = useRef(true);
+  useEffect(() => {
+    activeRef.current = true;
+    return () => {
+      activeRef.current = false;
+    };
+  }, []);
 
   const withdraw = async (recipient: `0x${string}`, amount: string) => {
     if (isGuest) throw new Error('Withdraw is unavailable in guest mode.');
     if (!address) throw new Error('Connect a wallet before withdrawing.');
-    const value = parseUnits(amount, 6);
-    if (value <= BigInt(0)) throw new Error('Enter a withdrawal amount greater than zero.');
-    if (balance.data?.usdc != null && Number(amount) > balance.data.usdc) {
-      throw new Error('The withdrawal amount exceeds your available balance.');
+    if (!/^\d+(?:\.\d{1,6})?$/.test(amount.trim()) || Number(amount) <= 0) {
+      throw new Error('Enter a valid USDC amount with up to 6 decimal places.');
     }
-
-    const result = await sendTransaction(
-      {
-        to: POLYGON_USDC_E,
-        chainId: 137,
-        data: encodeFunctionData({ abi: erc20Abi, functionName: 'transfer', args: [recipient, value] }),
-        value: BigInt(0),
-      },
-      { address, uiOptions: { showWalletUIs: true }, sponsor: false }
-    );
+    // Refetch first — the cached balance can be stale (e.g. right after a
+    // deposit, or a withdrawal from another tab), and validating against it
+    // without refreshing can wrongly allow or deny the withdrawal.
+    const result = await withdrawTradingBalance({ recipient, amount: amount.trim() });
+    // On-chain confirmation lags behind `sendTransaction` resolving, the same
+    // as the deposit flow — poll for a short window instead of a single
+    // immediate invalidate so the balance UI catches the update.
     await queryClient.invalidateQueries({ queryKey: ['wallet-balance'] });
-    return result.hash;
+    let attempts = 0;
+    const pollTimer = window.setInterval(() => {
+      attempts += 1;
+      if (!activeRef.current) {
+        window.clearInterval(pollTimer);
+        return;
+      }
+      void queryClient.invalidateQueries({ queryKey: ['wallet-balance'] });
+      if (attempts >= 15) window.clearInterval(pollTimer);
+    }, 4000);
+    return result;
   };
 
   return { withdraw, canWithdraw: Boolean(address) && !isGuest, chain: POLYGON_CAIP2 };

@@ -14,7 +14,7 @@ import { TrendingMarketsPanel } from '@/components/TrendingMarketsPanel';
 import { useHomeFeed } from '@/hooks/useHomeFeed';
 import { useFollowingFeed } from '@/hooks/useFollowingFeed';
 import { useWalletBalance } from '@/features/wallet/hooks/useWalletBalance';
-import { useDepositFlow } from '@/features/wallet/hooks/useDepositFlow';
+import { useBuyWithCardFlow } from '@/features/wallet/hooks/useBuyWithCardFlow';
 import { useSession } from '@/hooks/useSession';
 import { useIsDesktop } from '@/hooks/useIsDesktop';
 import { formatUsd } from '@/lib/formatters';
@@ -230,7 +230,7 @@ function Header({ isDesktop }: { isDesktop: boolean }) {
   const router = useRouter();
   const { canUseApp, walletConnected } = useSession();
   const balance = useWalletBalance();
-  const { isDepositing, depositError, handleDeposit: doDeposit } = useDepositFlow();
+  const { isBuying, buyError, handleBuyWithCard } = useBuyWithCardFlow();
 
   const balanceLabel = balance.data?.usdc != null ? formatUsd(balance.data.usdc) : '—';
 
@@ -239,7 +239,7 @@ function Header({ isDesktop }: { isDesktop: boolean }) {
       router.push('/sign-in');
       return;
     }
-    doDeposit();
+    void handleBuyWithCard();
   };
 
   // Desktop's `TopHeader` already shows balance + Deposit above every page.
@@ -250,15 +250,15 @@ function Header({ isDesktop }: { isDesktop: boolean }) {
       <div className="flex items-center justify-between">
         <Text className="text-4xl font-bold">{balanceLabel}</Text>
         <Button
-          label="Deposit"
-          loading={isDepositing}
+          label={isBuying ? 'Depositing…' : 'Deposit'}
+          loading={isBuying}
           onClick={handleDeposit}
           className="min-h-0 px-4 py-2"
         />
       </div>
-      {depositError ? (
+      {buyError ? (
         <Text variant="caption" color="danger" className="mt-1 block">
-          {depositError}
+          {buyError}
         </Text>
       ) : null}
     </div>

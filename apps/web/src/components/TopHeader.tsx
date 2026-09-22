@@ -9,7 +9,7 @@ import { CARD_SURFACE_CLASS } from '@/components/ui/cardSurface';
 import { PersonResult } from '@/components/PersonResult';
 import { MarketCard } from '@/features/markets/components/MarketCard';
 import { useWalletBalance } from '@/features/wallet/hooks/useWalletBalance';
-import { useDepositFlow } from '@/features/wallet/hooks/useDepositFlow';
+import { useBuyWithCardFlow } from '@/features/wallet/hooks/useBuyWithCardFlow';
 import { WithdrawModal } from '@/features/wallet/components/WithdrawModal';
 import { useSession } from '@/hooks/useSession';
 import { useSearch, MIN_QUERY_LENGTH } from '@/hooks/useSearch';
@@ -33,7 +33,7 @@ export function TopHeader() {
   const router = useRouter();
   const { canUseApp, walletConnected } = useSession();
   const balance = useWalletBalance();
-  const { isDepositing, depositError, handleDeposit: doDeposit } = useDepositFlow();
+  const { isBuying, stage: buyStage, buyError, handleBuyWithCard } = useBuyWithCardFlow();
 
   const [query, setQuery] = useState('');
   const [open, setOpen] = useState(false);
@@ -60,19 +60,30 @@ export function TopHeader() {
 
   const balanceLabel = balance.data?.usdc != null ? formatUsd(balance.data.usdc) : '—';
 
-  const handleDeposit = () => {
+  const openDeposit = () => {
     if (!canUseApp || !walletConnected) {
       router.push('/sign-in');
       return;
     }
-    doDeposit();
+    void handleBuyWithCard();
   };
+
+  const isDepositBusy = isBuying;
+  const depositLabel =
+    buyStage === 'converting'
+      ? 'Converting…'
+      : buyStage === 'waiting'
+        ? 'Waiting for USDC…'
+        : buyStage === 'buying'
+          ? 'Depositing…'
+          : 'Deposit';
 
   const people = search.data?.people.slice(0, MAX_PEOPLE) ?? [];
   const markets = search.data?.markets.slice(0, MAX_MARKETS) ?? [];
   const isSettled = debouncedQuery.trim() === trimmed;
 
   return (
+    <>
     <header className="fixed inset-x-0 top-0 z-20 hidden h-16 items-center gap-4 border-b border-border bg-background/95 px-7 backdrop-blur lg:left-56 lg:flex">
       <div ref={searchRef} className="relative w-full max-w-md">
         <label className="flex h-10 w-full items-center gap-2 rounded-md border border-border bg-surface px-3 text-text-tertiary transition-colors focus-within:border-border-strong hover:border-border-strong">
@@ -160,15 +171,16 @@ export function TopHeader() {
             {balanceLabel}
           </Text>
         </div>
-        <Button label="Deposit" loading={isDepositing} onClick={handleDeposit} className="min-h-0 px-4 py-2" />
+        <Button label={depositLabel} loading={isDepositBusy} onClick={openDeposit} className="min-h-0 px-4 py-2" />
         <Button label="Withdraw" variant="secondary" onClick={() => setWithdrawOpen(true)} className="min-h-0 px-4 py-2" />
-        {depositError ? (
+        {buyError ? (
           <Text variant="caption" color="danger" className="absolute right-7 top-full mt-1">
-            {depositError}
+            {buyError}
           </Text>
         ) : null}
       </div>
-      <WithdrawModal visible={withdrawOpen} onClose={() => setWithdrawOpen(false)} />
     </header>
+    <WithdrawModal visible={withdrawOpen} onClose={() => setWithdrawOpen(false)} />
+    </>
   );
 }

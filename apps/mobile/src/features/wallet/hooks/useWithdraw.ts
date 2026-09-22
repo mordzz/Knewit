@@ -1,42 +1,47 @@
 import { useQueryClient } from '@tanstack/react-query';
-import { useEmbeddedEthereumWallet } from '@privy-io/expo';
+import { useEffect, useRef } from 'react';
 import { useWallet } from '@/hooks/useWallet';
-import { useWalletBalance } from '@/features/wallet/hooks/useWalletBalance';
-import { POLYGON_USDC_E } from '@/features/wallet/services/walletService';
-
-function encodeTransfer(recipient: string, amount: bigint) {
-  const address = recipient.slice(2).toLowerCase().padStart(64, '0');
-  const value = amount.toString(16).padStart(64, '0');
-  return `0xa9059cbb${address}${value}`;
-}
+import { useAuth } from '@/hooks/useAuth';
+import { withdrawTradingBalance } from '@/features/wallet/services/walletService';
 
 export function useWithdraw() {
   const { address } = useWallet();
-  const { wallets } = useEmbeddedEthereumWallet();
-  const balance = useWalletBalance();
+  const { isGuest } = useAuth();
   const queryClient = useQueryClient();
+  const activeRef = useRef(true);
+  useEffect(() => {
+    activeRef.current = true;
+    return () => {
+      activeRef.current = false;
+    };
+  }, []);
 
   const withdraw = async (recipient: string, amount: string) => {
-    if (!address || wallets.length === 0) throw new Error('Connect a wallet before withdrawing.');
-    const value = BigInt(Math.round(Number(amount) * 1_000_000));
-    if (value <= 0n) throw new Error('Enter a withdrawal amount greater than zero.');
-    if (balance.data?.usdc != null && Number(amount) > balance.data.usdc)
-      throw new Error('The withdrawal amount exceeds your available balance.');
-    const provider = await wallets[0].getProvider();
-    const hash = await provider.request({
-      method: 'eth_sendTransaction',
-      params: [
-        {
-          from: address,
-          to: POLYGON_USDC_E,
-          data: encodeTransfer(recipient, value),
-          value: '0x0',
-          chainId: '0x89',
-        },
-      ],
-    });
+    if (isGuest) throw new Error('Withdraw is unavailable in guest mode.');
+    if (!address) throw new Error('Connect a wallet before withdrawing.');
+    if (!/^\d+(?:\.\d{1,6})?$/.test(amount.trim()) || Number(amount) <= 0) {
+      throw new Error('Enter a valid USDC amount with up to 6 decimal places.');
+    }
+    // Refetch first — the cached balance can be stale (e.g. right after a
+    // deposit, or a withdrawal from another device), and validating
+    // against it without refreshing can wrongly allow or deny the
+    // withdrawal.
+    const result = await withdrawTradingBalance({ recipient, amount: amount.trim() });
+    // On-chain confirmation lags behind the request resolving, the same as
+    // the deposit flow — poll for a short window instead of a single
+    // immediate invalidate so the balance UI catches the update.
     await queryClient.invalidateQueries({ queryKey: ['wallet-balance'] });
-    return String(hash);
+    let attempts = 0;
+    const pollTimer = setInterval(() => {
+      attempts += 1;
+      if (!activeRef.current) {
+        clearInterval(pollTimer);
+        return;
+      }
+      void queryClient.invalidateQueries({ queryKey: ['wallet-balance'] });
+      if (attempts >= 15) clearInterval(pollTimer);
+    }, 4000);
+    return result;
   };
 
   return { withdraw };

@@ -122,6 +122,10 @@ export function useAutoWalletSetup(): { status: WalletSetupStatus } {
 
   useEffect(() => {
     if (attemptedSigner.current || !authenticated || !address || !signerId) return;
+    // Skip requesting consent again when the balance already reads
+    // successfully with a usable value — the signer already works, and
+    // asking Privy for a redundant grant can itself fail and flip an
+    // otherwise-healthy wallet's status to 'error'.
     if (!balance.isSuccess || balance.data?.usdc != null) return;
     attemptedSigner.current = true;
     setSignerAttempted(true);
@@ -152,16 +156,15 @@ export function useAutoWalletSetup(): { status: WalletSetupStatus } {
   const alreadySetUp = authenticated && address != null && typeof window !== 'undefined' && hasCompletedSetup(address);
 
   // Ready once the wallet exists and either signing already works
-  // (`usdc` readable), no signer is configured, consent just succeeded,
-  // or the balance read itself errored — in that last case there is
-  // nothing more this automatic path can do.
-  const setupReady =
-     !signerId || signerGranted || balance.data?.usdc != null || balance.isError;
+  // (`usdc` readable), no signer is configured, consent just succeeded, or
+  // the balance read itself errored — in that last case there is nothing
+  // more this automatic path can do, so waiting on it would just block
+  // readiness (and `markSetupComplete`, below) indefinitely for no benefit.
+  const setupReady = !signerId || signerGranted || (balance.isSuccess && balance.data?.usdc != null) || balance.isError;
 
   // Provider responses can be HTTP 200 with { usdc: null, unavailable: true }.
-  // That is not a React Query error, but waiting on it indefinitely traps the
-  // user behind the app shell. After a short bootstrap window, continue into
-  // the app; wallet screens can keep reporting the unavailable state/retry.
+  // Keep the short timeout to avoid trapping navigation, but don't persist it
+  // as completed setup. A later login can retry the real balance/signer check.
   const setupTimedOut = setupStartedAt != null;
 
   let status: WalletSetupStatus;
@@ -172,8 +175,8 @@ export function useAutoWalletSetup(): { status: WalletSetupStatus } {
   else status = setupReady ? 'ready' : 'preparing';
 
   useEffect(() => {
-    if (status === 'ready' && authenticated && address) markSetupComplete(address);
-  }, [status, authenticated, address]);
+  if (status === 'ready' && authenticated && address && setupReady) markSetupComplete(address);
+  }, [status, authenticated, address, setupReady]);
 
   return { status };
 }

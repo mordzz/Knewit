@@ -1,6 +1,8 @@
 import { useQuery } from '@tanstack/react-query';
+import { usePrivy } from '@privy-io/expo';
 import { getUserPositions } from '@/features/portfolio/services/positionService';
 import { useWallet } from '@/hooks/useWallet';
+import { useAuth } from '@/hooks/useAuth';
 
 /**
  * All of the authenticated user's positions. Gated on a connected
@@ -10,10 +12,13 @@ import { useWallet } from '@/hooks/useWallet';
  */
 export function usePositions() {
   const { isConnected } = useWallet();
+  const { isAuthenticated, isGuest } = useAuth();
+  const { user } = usePrivy();
+  const accountKey = isAuthenticated ? user?.id ?? null : isGuest ? 'guest' : null;
 
   return useQuery({
-    queryKey: ['positions'],
+    queryKey: ['positions', accountKey],
     queryFn: getUserPositions,
-    enabled: isConnected,
+    enabled: isConnected && Boolean(accountKey),
   });
 }

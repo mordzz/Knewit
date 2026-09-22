@@ -17,7 +17,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ mark
     const { privyUserId } = await requireAuth(request);
     const viewer = await getOrCreateUser(privyUserId);
 
-    const { data: row } = await getSupabase()
+    const { data: row, error } = await getSupabase()
       .from('positions')
       .select('id, market_id, outcome, choice_index, entry_price, size, opened_at')
       .eq('user_id', viewer.id)
@@ -25,6 +25,8 @@ export async function GET(request: Request, { params }: { params: Promise<{ mark
       .order('opened_at', { ascending: false })
       .limit(1)
       .maybeSingle();
+
+    if (error) throw error;
 
     if (!row) throw notFound(`No position for market ${marketId}.`);
 

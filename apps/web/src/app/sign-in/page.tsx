@@ -64,19 +64,34 @@ export default function SignInPage() {
     return () => clearTimeout(timer);
   }, [resendSeconds]);
 
+  // `router.replace` is a soft, client-side navigation — Next.js can fetch
+  // the destination's RSC payload successfully yet never actually commit
+  // the URL/route swap (observed directly: the /callouts request lands
+  // with a 200, the address bar still reads /sign-in). When that happens
+  // there's no rejected promise or thrown error to catch, so the user is
+  // left stuck on this screen indefinitely. Verify the navigation actually
+  // took within a couple seconds and force a full page load if it didn't —
+  // slower, but guaranteed to land.
+  const goToApp = () => {
+    router.replace('/callouts');
+    window.setTimeout(() => {
+      if (window.location.pathname === '/sign-in') window.location.assign('/callouts');
+    }, 2000);
+  };
+
   // Guest mode is a session too — leave this screen as soon as it starts,
   // the same way a completed Privy login does.
   useEffect(() => {
-    if (isGuest) router.replace('/callouts');
-  }, [isGuest, router]);
+    if (isGuest) goToApp();
+  }, [isGuest]);
 
   // AppLayout can bounce back here if it mounts before Privy's
   // `authenticated` flag has propagated to this component (a race right
   // after login). Once it does propagate, retry the navigation instead of
   // leaving the user stuck until a manual refresh.
   useEffect(() => {
-    if (authenticated) router.replace('/callouts');
-  }, [authenticated, router]);
+    if (authenticated) goToApp();
+  }, [authenticated]);
 
   // The authenticated app shell owns the wallet setup gate. Route there as
   // soon as login completes so it can reconcile Privy's wallet state and
@@ -84,7 +99,7 @@ export default function SignInPage() {
   // snapshot to update.
   const beginSetup = () => {
     setIsPreparing(true);
-    router.replace('/callouts');
+    goToApp();
   };
 
   const { state, sendCode, loginWithCode } = useLoginWithEmail({

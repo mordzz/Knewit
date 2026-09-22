@@ -5,15 +5,28 @@ import { useSession } from '@/hooks/useSession';
 /** Web equivalent of `apps/mobile/src/features/wallet/hooks/useWalletBalance.ts`
  * — gated on a connected wallet, same as `usePositions`. */
 export function useWalletBalance() {
-  const { walletConnected, authenticated } = useSession();
+  const { authenticated, privyUser, isGuest } = useSession();
+  const accountKey = authenticated ? privyUser?.id ?? null : isGuest ? 'guest' : null;
 
   return useQuery({
-    queryKey: ['wallet-balance'],
-    queryFn: getWalletBalance,
+    // Scope private financial data to the authenticated account. The fixed
+    // query key could briefly show the previous user's cached balance after
+    // an account switch while the new request was still loading.
+    queryKey: ['wallet-balance', accountKey],
+    queryFn: async () => {
+      const result = await getWalletBalance();
+      // Refuse an unexpected account response rather than cache/show it under
+      // the active user's key (normally prevented by the authenticated API).
+      if (result.accountId && result.accountId !== accountKey) {
+        throw new Error('Wallet balance account mismatch. Please refresh your session.');
+      }
+      return result;
+    },
     // During Privy's wallet bootstrap the authenticated user can already
     // have a server-side wallet while its address has not reached the
     // session context yet. Let the API resolve that state instead of
-    // keeping account setup stuck behind a disabled query.
-    enabled: walletConnected || authenticated,
+    // keeping account setup stuck behind a disabled query. Guest mode has
+    // no Privy session at all, so it's gated on `isGuest` alone.
+    enabled: isGuest || (authenticated && Boolean(accountKey)),
   });
 }

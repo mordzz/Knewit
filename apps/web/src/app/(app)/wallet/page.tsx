@@ -16,7 +16,7 @@ import { formatProbability, formatUsd } from '@/lib/formatters';
 import { ApiRequestError } from '@/lib/apiClient';
 import { usePositions } from '@/features/wallet/hooks/usePositions';
 import { useWalletBalance } from '@/features/wallet/hooks/useWalletBalance';
-import { useDepositFlow } from '@/features/wallet/hooks/useDepositFlow';
+import { useBuyWithCardFlow } from '@/features/wallet/hooks/useBuyWithCardFlow';
 import { useSellPosition } from '@/features/wallet/hooks/useSellPosition';
 import { WithdrawModal } from '@/features/wallet/components/WithdrawModal';
 import { useSession } from '@/hooks/useSession';
@@ -51,9 +51,10 @@ export default function WalletPage() {
   const [sellNotice, setSellNotice] = useState<{ tone: 'yes' | 'danger'; message: string } | null>(null);
 
   const balance = useWalletBalance();
+  const tradingAddress = isGuest ? address : balance.data?.address ?? null;
   const positionsQuery = usePositions();
   const positions = positionsQuery.data ?? [];
-  const { isDepositing, depositError, handleDeposit } = useDepositFlow();
+  const { isBuying, stage: buyStage, buyError, handleBuyWithCard } = useBuyWithCardFlow();
 
   // Unrealized PnL per position: (current − entry) cents × shares. No
   // positions is a real $0.00; positions whose live price is missing make
@@ -93,7 +94,7 @@ export default function WalletPage() {
         <StatCard
           label="Balance"
           value={balanceLabel}
-          error={depositError}
+          error={null}
           className="col-span-2 sm:col-span-2 lg:col-span-1 lg:min-h-[164px]"
           valueClassName="text-3xl font-inter-extrabold"
         />
@@ -102,26 +103,38 @@ export default function WalletPage() {
       </section>
 
       <div className="flex items-center gap-3 border-y border-border px-4 py-3 lg:rounded-[18px] lg:border lg:border-white/[0.14] lg:bg-[rgba(14,15,19,0.88)] lg:px-5 lg:py-4">
-        <Icon name="wallet-outline" color={address ? 'yes' : 'textTertiary'} />
+        <Icon name="wallet-outline" color={tradingAddress ? 'yes' : 'textTertiary'} />
         <div className="min-w-0 flex-1">
-          {address ? (
-            <WalletAddress address={address} compact fullOnDesktop className="min-w-0" />
+          {tradingAddress ? (
+            <WalletAddress address={tradingAddress} compact fullOnDesktop className="min-w-0" />
           ) : (
             <Text variant="bodyStrong" className="block">
               Setting up your wallet…
             </Text>
           )}
           <Text variant="caption" color="textSecondary">
-            {address ? 'Connected' : 'This happens automatically — no action needed.'}
+            {tradingAddress ? 'Polymarket trading wallet · balance and funds shown here' : 'Resolving your trading wallet…'}
           </Text>
         </div>
-        {address ? (
-          <div className="flex shrink-0 gap-2 lg:hidden">
-            <Button label="Deposit" variant="primary" loading={isDepositing} onClick={handleDeposit} className="min-h-0 px-3 py-2" />
+        {tradingAddress ? (
+          <div className="flex shrink-0 flex-wrap justify-end gap-2 lg:hidden">
+            <Button
+              label={buyStage === 'converting' ? 'Converting…' : buyStage === 'waiting' ? 'Waiting for USDC…' : isBuying ? 'Depositing…' : 'Deposit'}
+              variant="primary"
+              loading={isBuying}
+              onClick={() => void handleBuyWithCard()}
+              className="min-h-0 px-3 py-2"
+            />
             <Button label="Withdraw" variant="secondary" onClick={() => setWithdrawOpen(true)} className="min-h-0 px-3 py-2" />
           </div>
         ) : null}
       </div>
+
+      {buyError ? (
+        <Text variant="caption" color="danger" className="block px-4 lg:px-0">
+          {buyError}
+        </Text>
+      ) : null}
 
       {sellNotice ? (
         <Text variant="caption" color={sellNotice.tone} className="block px-4 lg:px-0">
@@ -224,9 +237,8 @@ export default function WalletPage() {
               </div>
             </div>
             <Text variant="caption" color="textSecondary" className="block">
-              Sells the whole position at market — the final price is set when it fills. Proceeds are
-              sent to your Privy wallet, so they won&apos;t appear in this screen&apos;s trading
-              balance.
+              Sells the whole position at market. Final price is set when it fills; proceeds stay
+              in your trading balance for another trade or withdrawal.
             </Text>
             {sell.isError ? (
               <Text variant="caption" color="danger" className="block">
@@ -248,18 +260,10 @@ export default function WalletPage() {
                 onClick={() =>
                   sell.mutate(sellTarget.id, {
                     onSuccess: (result) => {
-                      setSellNotice(
-                        result.cashOut.status === 'sent'
-                          ? {
-                              tone: 'yes',
-                              message: `Position sold — ${formatUsd(result.cashOut.amountUsd)} is on its way to your Privy wallet.`,
-                            }
-                          : {
-                              tone: 'danger',
-                              message:
-                                'Position sold, but sending the proceeds to your wallet failed — the money is still in your trading balance.',
-                            }
-                      );
+                      setSellNotice({
+                        tone: 'yes',
+                        message: `Position sold — ${formatUsd(result.proceedsUsd)} is now in your trading balance.`,
+                      });
                       setSellTarget(null);
                     },
                   })

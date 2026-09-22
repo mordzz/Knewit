@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useLogout } from "@privy-io/react-auth";
-import { useDeposit } from "@/features/wallet/hooks/useDeposit";
+import { useBuyWithCardFlow } from "@/features/wallet/hooks/useBuyWithCardFlow";
 import { WithdrawModal } from "@/features/wallet/components/WithdrawModal";
 import { Icon } from "@/components/ui/Icon";
 import { Text } from "@/components/ui/Text";
@@ -15,15 +15,17 @@ function SettingRow({
   href,
   onClick,
   danger = false,
+  disabled = false,
   icon,
 }: {
   label: string;
   href?: string;
   onClick?: () => void;
   danger?: boolean;
+  disabled?: boolean;
   icon: import("@/components/ui/Icon").IconName;
 }) {
-  const className = `flex min-h-14 items-center justify-between border-b border-border px-4 py-3 text-sm ${danger ? "text-danger" : "text-text-primary"} hover:bg-surface`;
+  const className = `flex min-h-14 items-center justify-between border-b border-border px-4 py-3 text-sm ${danger ? "text-danger" : "text-text-primary"} hover:bg-surface disabled:cursor-not-allowed disabled:opacity-60`;
   const content = (
     <>
       <span className="flex items-center gap-3"><Icon name={icon} size={19} color={danger ? "danger" : "textSecondary"} />{label}</span>
@@ -38,6 +40,7 @@ function SettingRow({
     <button
       type="button"
       onClick={onClick}
+      disabled={disabled}
       className={`${className} w-full text-left`}
     >
       {content}
@@ -49,7 +52,7 @@ export default function SettingsPage() {
   const { logout } = useLogout();
   const [logoutOpen, setLogoutOpen] = useState(false);
   const [withdrawOpen, setWithdrawOpen] = useState(false);
-  const { deposit } = useDeposit();
+  const { isBuying, stage, buyError, handleBuyWithCard } = useBuyWithCardFlow();
   return (
     <main className="mx-auto flex w-full max-w-none flex-col gap-3 px-4 pb-12 pt-4 lg:gap-6 lg:px-0 lg:py-10">
       <div className="flex items-end justify-between gap-4 pb-3 lg:pb-6">
@@ -87,11 +90,15 @@ export default function SettingsPage() {
         </Text>
         <SettingRow
           icon="arrow-down-circle-outline"
-          label="Deposit"
-          onClick={() => {
-            void deposit().catch(() => undefined);
-          }}
+          label={stage === 'converting' ? 'Converting…' : stage === 'waiting' ? 'Waiting for USDC…' : isBuying ? 'Depositing…' : 'Deposit'}
+          onClick={handleBuyWithCard}
+          disabled={isBuying}
         />
+        {buyError ? (
+          <Text variant="caption" color="danger" className="block px-4 pb-3">
+            {buyError}
+          </Text>
+        ) : null}
         <SettingRow icon="arrow-up-circle-outline" label="Withdraw" onClick={() => setWithdrawOpen(true)} />
       </section>
       <section className={`mb-6 overflow-hidden rounded-2xl ${SOLID_PANEL_CLASS}`}>

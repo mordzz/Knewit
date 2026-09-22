@@ -5,9 +5,10 @@ import { getSupabase } from '@/lib/supabase';
 import { sellMarketPosition } from '@/lib/trading/orders';
 import type { Order } from '@/types/market';
 import type { SellPositionResponse } from '@/types/trading';
+import { beginWalletOperation, operationInProgress, updateWalletOperation } from '@/lib/walletOperations';
+import { reconcileUserWalletOperations } from '@/lib/walletReconciliation';
 
-// A sell also runs the cash-out transfer; 60s covers cold start + fill +
-// transfer on Vercel (the Hobby plan's maximum).
+// Covers cold start and order execution on Vercel (the Hobby plan's maximum).
 export const maxDuration = 60;
 
 interface SellPositionInput {
@@ -16,35 +17,60 @@ interface SellPositionInput {
 }
 
 /**
- * `POST /trading/sell` — market-price SELL of one whole position and a
- * cash-out of the proceeds to the caller's Privy wallet
- * (docs/API.md; docs/DECISIONS.md, "Selling a Position Cashes Out to the
- * Privy Wallet"). The wallet and the position's ownership are resolved
+ * `POST /trading/sell` — market-price SELL of one whole position. Proceeds
+ * stay in the caller's Polymarket Deposit Wallet for future trading or
+ * withdrawal. The wallet and the position's ownership are resolved
  * from the authenticated session, never from the client.
  *
  * A failed sell is recorded as a `failed` Order row for audit history
  * and answered as a real error — never a `200` with a silently-failed
- * trade ("No Fake Trade Success"). A sell that fills but whose cash-out
- * transfer fails is still a success: the proceeds are in the user's own
- * trading wallet, and the response carries
- * `cashOut.status: 'failed'` so the client can say so honestly.
+ * trade ("No Fake Trade Success").
  */
 export async function POST(request: Request) {
   return withErrorHandling(async () => {
-    if (process.env.TRADING_ENABLED !== 'true') {
+    if (process.env.NEXT_PUBLIC_TRADING_ENABLED !== 'true') {
       throw new ApiError(503, 'trading_unavailable', 'Trading is temporarily unavailable.');
     }
     const { privyUserId } = await requireAuth(request);
     const viewer = await getOrCreateUser(privyUserId);
+    await reconcileUserWalletOperations(viewer.id).catch((error) => console.warn('[trading/sell] prior operation reconciliation incomplete:', error));
 
     const body = (await request.json().catch(() => null)) as Partial<SellPositionInput> | null;
     if (!body || typeof body.positionId !== 'string' || body.positionId.length === 0) {
       throw badRequest('Expected { positionId: string }.');
     }
 
-    const result = await sellMarketPosition({ privyUserId, positionId: body.positionId });
-
     const supabase = getSupabase();
+    const { operation, started } = await beginWalletOperation(supabase, {
+      userId: viewer.id,
+      type: 'sell',
+      request: { positionId: body.positionId },
+      idempotencyKey: request.headers.get('idempotency-key'),
+    });
+    if (!started) {
+      if (operation.status === 'confirmed' && operation.result?.response) {
+        return Response.json(operation.result.response);
+      }
+      throw operationInProgress();
+    }
+
+    let result;
+    try {
+      result = await sellMarketPosition({ privyUserId, positionId: body.positionId });
+    } catch (error) {
+      await updateWalletOperation(supabase, operation.id, { status: 'reconciliation_required' });
+      console.error('[trading/sell] sell outcome requires backend reconciliation:', error);
+      return Response.json({ code: 'trade_reconciliation_required', message: 'The sell result is being checked. Check your positions and balance before trying again.', status: 'reconciliation_required' }, { status: 202 });
+    }
+    if (result.status === 'failed') {
+      await updateWalletOperation(supabase, operation.id, { status: 'failed', result: { errorMessage: result.errorMessage }, error_code: 'trade_failed' });
+    } else {
+      await updateWalletOperation(supabase, operation.id, {
+        status: 'reconciliation_required',
+        provider_order_id: result.polymarketOrderId,
+        result: { positionId: body.positionId, marketId: result.marketId, choiceIndex: result.choiceIndex, choiceLabel: result.choiceLabel, soldShares: result.soldShares, remainingShares: result.remainingShares, filledPrice: result.filledPrice, proceedsUsd: result.proceedsUsd, status: result.status },
+      });
+    }
     const { data: orderRow, error: orderError } = await supabase
       .from('orders')
       .insert({
@@ -55,12 +81,24 @@ export async function POST(request: Request) {
         size: result.soldShares,
         price: result.filledPrice,
         status: result.status,
+        wallet_operation_id: operation.id,
       })
       .select('*')
       .single();
-    if (orderError) throw orderError;
+    if (orderError) {
+      if (result.status !== 'failed') {
+        console.error('[trading/sell] venue sell executed but order persistence failed:', orderError);
+        return Response.json({
+          code: 'trade_reconciliation_required',
+          message: 'The sell may have executed. Check your positions and balance before trying again.',
+          status: 'reconciliation_required',
+        }, { status: 202 });
+      }
+      throw orderError;
+    }
 
     if (result.status === 'failed') {
+      await updateWalletOperation(supabase, operation.id, { status: 'failed', result: { orderId: orderRow.id }, reconciled_at: new Date().toISOString() });
       throw new ApiError(502, 'trade_failed', result.errorMessage ?? 'Sell failed.');
     }
 
@@ -68,13 +106,12 @@ export async function POST(request: Request) {
     // sell already happened on the venue, so a cleanup failure is logged
     // rather than answered as a failed sell — the preflight on a later
     // sell would catch the stale row anyway.
-    const { error: deleteError } = await supabase
-      .from('positions')
-      .delete()
-      .eq('id', body.positionId)
-      .eq('user_id', viewer.id);
-    if (deleteError) {
-      console.error('[trading/sell] sold position row could not be deleted:', deleteError);
+    const positionMutation = result.remainingShares <= 1e-6
+      ? await supabase.from('positions').delete().eq('id', body.positionId).eq('user_id', viewer.id)
+      : await supabase.from('positions').update({ size: result.remainingShares }).eq('id', body.positionId).eq('user_id', viewer.id);
+    if (positionMutation.error) {
+      console.error('[trading/sell] sold position could not be reconciled:', positionMutation.error);
+      return Response.json({ code: 'trade_reconciliation_required', message: 'The sell completed and your position is syncing. Check your wallet before trying again.', status: 'reconciliation_required' }, { status: 202 });
     }
 
     const order: Order = {
@@ -91,8 +128,9 @@ export async function POST(request: Request) {
 
     const response: SellPositionResponse = {
       order,
-      cashOut: result.cashOut ?? { status: 'failed', amountUsd: 0, error: null },
+      proceedsUsd: result.proceedsUsd,
     };
+    await updateWalletOperation(supabase, operation.id, { status: 'confirmed', result: { response }, reconciled_at: new Date().toISOString() });
     return Response.json(response);
   });
 }

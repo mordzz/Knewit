@@ -5,6 +5,8 @@ import { getSupabase } from '@/lib/supabase';
 import { getAndCacheMarketSummary } from '@/features/markets/lib/marketCache';
 import { placeMarketOrder } from '@/lib/trading/orders';
 import type { Order } from '@/types/market';
+import { beginWalletOperation, operationInProgress, updateWalletOperation } from '@/lib/walletOperations';
+import { reconcileUserWalletOperations } from '@/lib/walletReconciliation';
 
 // Order placement signs and submits against the venue; the Vercel
 // default timeout is too tight for a cold start plus relayer round trip.
@@ -32,11 +34,12 @@ interface CreateTradeOrderInput {
  */
 export async function POST(request: Request) {
   return withErrorHandling(async () => {
-    if (process.env.TRADING_ENABLED !== 'true') {
+    if (process.env.NEXT_PUBLIC_TRADING_ENABLED !== 'true') {
       throw new ApiError(503, 'trading_unavailable', 'Trading is temporarily unavailable.');
     }
     const { privyUserId } = await requireAuth(request);
     const viewer = await getOrCreateUser(privyUserId);
+    await reconcileUserWalletOperations(viewer.id).catch((error) => console.warn('[trading/orders] prior operation reconciliation incomplete:', error));
 
     const body = (await request.json().catch(() => null)) as Partial<CreateTradeOrderInput> | null;
     if (
@@ -51,18 +54,56 @@ export async function POST(request: Request) {
     }
 
     const choiceIndex = body.choiceIndex as number;
-
-    const result = await placeMarketOrder({
-      privyUserId,
-      marketId: body.marketId,
-      choiceIndex,
-      usdAmount: body.usdAmount,
-    });
-
     const supabase = getSupabase();
+    const { operation, started } = await beginWalletOperation(supabase, {
+      userId: viewer.id,
+      type: 'buy',
+      request: { marketId: body.marketId, choiceIndex, usdAmount: body.usdAmount },
+      idempotencyKey: request.headers.get('idempotency-key'),
+    });
+    if (!started) {
+      if (operation.status === 'confirmed' && operation.result?.order) {
+        return Response.json(operation.result.order);
+      }
+      throw operationInProgress();
+    }
+
+    let result;
+    try {
+      result = await placeMarketOrder({ privyUserId, marketId: body.marketId, choiceIndex, usdAmount: body.usdAmount });
+    } catch (error) {
+      await updateWalletOperation(supabase, operation.id, { status: 'reconciliation_required' });
+      console.error('[trading/orders] order outcome requires backend reconciliation:', error);
+      return Response.json({ code: 'trade_reconciliation_required', message: 'The trade result is being checked. Check your positions and balance before submitting another order.', status: 'reconciliation_required' }, { status: 202 });
+    }
+    if (result.status === 'failed') {
+      await updateWalletOperation(supabase, operation.id, { status: 'failed', result: { errorMessage: result.errorMessage }, error_code: 'trade_failed' });
+    } else {
+      await updateWalletOperation(supabase, operation.id, {
+        status: 'reconciliation_required',
+        provider_order_id: result.polymarketOrderId,
+        result: { marketId: body.marketId, choiceIndex, choiceLabel: result.choiceLabel, filledSize: result.filledSize, filledPrice: result.filledPrice, status: result.status },
+      });
+    }
     // Cache the market row first so the Order/Position FK into `markets`
     // holds regardless of fill outcome (see lib/marketCache.ts).
-    await getAndCacheMarketSummary(body.marketId);
+    try {
+      await getAndCacheMarketSummary(body.marketId);
+    } catch (error) {
+      if (result.status !== 'failed') {
+        console.error('[trading/orders] trade executed but market cache reconciliation failed:', error);
+        return Response.json({
+          code: 'trade_reconciliation_required',
+          message: 'The trade may have executed. Check your positions and balance before submitting another order.',
+          status: 'reconciliation_required',
+        }, { status: 202 });
+      }
+      // The trade itself was already rejected and recorded as 'failed'
+      // above — a coincidental market-cache error here must not mask that
+      // with a generic 500. Report the real, already-known trade failure.
+      console.error('[trading/orders] market cache reconciliation also failed for an already-failed trade:', error);
+      throw new ApiError(502, 'trade_failed', result.errorMessage ?? 'Trade failed.');
+    }
 
     const { data: orderRow, error: orderError } = await supabase
       .from('orders')
@@ -74,12 +115,24 @@ export async function POST(request: Request) {
         size: result.filledSize,
         price: result.filledPrice,
         status: result.status,
+        wallet_operation_id: operation.id,
       })
       .select('*')
       .single();
-    if (orderError) throw orderError;
+    if (orderError) {
+      if (result.status !== 'failed') {
+        console.error('[trading/orders] venue trade executed but order persistence failed:', orderError);
+        return Response.json({
+          code: 'trade_reconciliation_required',
+          message: 'The trade may have executed. Check your positions and balance before submitting another order.',
+          status: 'reconciliation_required',
+        }, { status: 202 });
+      }
+      throw orderError;
+    }
 
     if (result.status === 'failed') {
+      await updateWalletOperation(supabase, operation.id, { status: 'failed', result: { orderId: orderRow.id }, reconciled_at: new Date().toISOString() });
       throw new ApiError(502, 'trade_failed', result.errorMessage ?? 'Trade failed.');
     }
 
@@ -90,8 +143,17 @@ export async function POST(request: Request) {
       choice_index: choiceIndex,
       entry_price: result.filledPrice,
       size: result.filledSize,
+      wallet_operation_id: operation.id,
     });
-    if (positionError) throw positionError;
+    if (positionError) {
+      console.error('[trading/orders] venue trade executed but position persistence failed:', { orderId: orderRow.id, error: positionError });
+      return Response.json({
+        code: 'trade_reconciliation_required',
+        message: 'The trade executed but your position is still syncing. Check your wallet before placing another order.',
+        status: 'reconciliation_required',
+        orderId: orderRow.id,
+      }, { status: 202 });
+    }
 
     const order: Order = {
       id: orderRow.id,
@@ -104,6 +166,7 @@ export async function POST(request: Request) {
       status: orderRow.status,
       createdAt: orderRow.created_at,
     };
+    await updateWalletOperation(supabase, operation.id, { status: 'confirmed', result: { order }, reconciled_at: new Date().toISOString() });
     return Response.json(order, { status: 201 });
   });
 }

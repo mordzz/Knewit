@@ -13,6 +13,7 @@ import {
 } from '@tanstack/react-query';
 import { env } from '@/app/config/env';
 import { PrivySessionBridge } from '@/app/providers/PrivySessionBridge';
+import { ApiRequestError } from '@/services/api/client';
 
 // Wire TanStack Query's connectivity/focus signals to React Native's own
 // APIs — by default it assumes a browser (navigator.onLine, window focus
@@ -46,7 +47,15 @@ export function AppProviders({ children }: PropsWithChildren) {
             // metadata a longer one. This is the conservative default;
             // individual queries override it once they exist.
             staleTime: 30_000,
-            retry: 2,
+            // A 404 means "this id doesn't exist in this resource" — a
+            // real, meaningful answer, not a transient failure — so
+            // retrying it just delays `status` reaching `'error'` for no
+            // benefit. Screens that branch on a 404 (e.g. a market-detail
+            // route that isn't sure yet whether an id is a market or an
+            // event) would otherwise sit on a loading state through the
+            // full retry backoff first.
+            retry: (failureCount, error) =>
+              error instanceof ApiRequestError && error.status === 404 ? false : failureCount < 2,
             refetchOnReconnect: true,
           },
         },
@@ -70,10 +79,8 @@ export function AppProviders({ children }: PropsWithChildren) {
       <QueryClientProvider client={queryClient}>
         <PrivyProvider appId={env.privyAppId} clientId={env.privyClientId || undefined}>
           <PrivySessionBridge />
-          {/* Privy's own UI layer — required by the `/ui` hooks, e.g. the
-              funding flow behind the Wallet screen's Deposit button
-              (docs/WALLET.md, "Deposit"). Dark + brand accent so its
-              modals match the app. */}
+          {/* Privy's UI layer for the card funding flow. Dark + brand
+              accent so its MoonPay screens match the app. */}
           <PrivyElements config={{ appearance: { colorScheme: 'dark', accentColor: '#FFE506' } }} />
           {children}
         </PrivyProvider>

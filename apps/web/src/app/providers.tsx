@@ -5,6 +5,7 @@ import { PrivyProvider } from '@privy-io/react-auth';
 import { toSolanaWalletConnectors } from '@privy-io/react-auth/solana';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { publicEnv } from '@/lib/publicEnv';
+import { ApiRequestError } from '@/lib/apiClient';
 
 /** Module-level so the connector registry (and its wallet-standard
  * listeners, registered by Privy via `onMount`) is created once, not on
@@ -28,7 +29,26 @@ const solanaConnectors = toSolanaWalletConnectors();
  * `SignInScreen`.
  */
 export function Providers({ children }: { children: ReactNode }) {
-  const [queryClient] = useState(() => new QueryClient());
+  const [queryClient] = useState(
+    () =>
+      new QueryClient({
+        defaultOptions: {
+          queries: {
+            // A 404 almost always means "this id doesn't exist in this
+            // resource" — a real, meaningful answer, not a transient
+            // failure — so retrying it just delays the query's `status`
+            // reaching `'error'` for no benefit (observed concretely: a
+            // market-detail page that tries a market id then falls back to
+            // an event id got stuck on its loading skeleton for the full
+            // default 3-retry backoff because `status` stayed `'pending'`
+            // throughout). Every other error keeps React Query's own
+            // default (3 retries).
+            retry: (failureCount, error) =>
+              error instanceof ApiRequestError && error.status === 404 ? false : failureCount < 3,
+          },
+        },
+      }),
+  );
 
   return (
     <QueryClientProvider client={queryClient}>

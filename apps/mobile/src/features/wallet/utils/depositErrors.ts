@@ -23,15 +23,19 @@ export function getDepositErrorMessage(error: unknown): string {
     code?: unknown;
     status?: unknown;
     message?: unknown;
+    body?: { code?: unknown };
     responseData?: { code?: unknown; error?: unknown };
   } | null;
-  const rawCode = candidate?.code ?? candidate?.responseData?.code;
+  const rawCode = candidate?.code ?? candidate?.body?.code ?? candidate?.responseData?.code;
   const code = typeof rawCode === 'string' ? rawCode.toLowerCase() : '';
   if (NO_ROUTE_CODES.has(code)) {
     return 'No deposit route is available for this method, token, or region. Please try the other deposit method.';
   }
   if (code === 'feature_not_enabled') {
     return 'This deposit method is not enabled yet. Please try the other method or contact support.';
+  }
+  if (code === 'trade_reconciliation_required' || code === 'withdrawal_pending_review') {
+    return "This may have already gone through — we're still verifying it. Check your balance before trying again.";
   }
   if (typeof candidate?.message === 'string' && /trading wallet is not ready/i.test(candidate.message)) {
     return candidate.message;

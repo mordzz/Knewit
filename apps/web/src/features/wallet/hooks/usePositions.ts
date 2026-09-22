@@ -6,11 +6,12 @@ import { useSession } from '@/hooks/useSession';
  * — gated on a connected wallet, which guest mode's sandbox wallet also
  * satisfies. */
 export function usePositions() {
-  const { walletConnected } = useSession();
+  const { walletConnected, authenticated, privyUser, isGuest, address } = useSession();
+  const accountKey = authenticated ? privyUser?.id ?? null : isGuest ? `guest:${address ?? 'unknown'}` : null;
 
   return useQuery({
-    queryKey: ['positions'],
+    queryKey: ['positions', accountKey],
     queryFn: getUserPositions,
-    enabled: walletConnected,
+    enabled: walletConnected && Boolean(accountKey),
   });
 }

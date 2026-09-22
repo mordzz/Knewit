@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { BottomTabBar } from '@/components/BottomTabBar';
 import { Fab } from '@/components/Fab';
@@ -38,12 +38,28 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   const exitGuest = useGuestStore((state) => state.exitGuest);
   // Keep wallet provisioning active without blocking app navigation.
   useAutoWalletSetup();
+  const [readyTimedOut, setReadyTimedOut] = useState(false);
 
   useEffect(() => {
     if (ready && !canUseApp) {
       router.replace('/sign-in');
     }
   }, [ready, canUseApp, router]);
+
+  // Privy's own `ready` flag can stay false indefinitely (slow/failed SDK
+  // bootstrap, e.g. right after an OAuth redirect back into the app).
+  // Without this, the blank `return null` below never resolves and the app
+  // looks frozen. After a bounded wait, bail out to `/sign-in` instead of
+  // hanging forever.
+  useEffect(() => {
+    if (ready || readyTimedOut) return;
+    const timeout = window.setTimeout(() => setReadyTimedOut(true), 15_000);
+    return () => window.clearTimeout(timeout);
+  }, [ready, readyTimedOut]);
+
+  useEffect(() => {
+    if (readyTimedOut && !ready) router.replace('/sign-in');
+  }, [readyTimedOut, ready, router]);
 
   // A real Privy login while guest mode is active (e.g. signing in from
   // the guest session) takes over — drop the sandbox and render the real
@@ -53,7 +69,11 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   }, [privyUser, isGuest, exitGuest]);
 
   if (!ready || !canUseApp) {
-    return null;
+    return (
+      <div className="flex h-dvh w-full items-center justify-center">
+        <div className="h-6 w-6 animate-spin rounded-full border-2 border-accent border-t-transparent" />
+      </div>
+    );
   }
 
   return (

@@ -1,5 +1,6 @@
 import { useQuery, useQueryClient, type InfiniteData } from '@tanstack/react-query';
 import { getMarketById } from '@/features/markets/lib/marketService';
+import { ApiRequestError } from '@/lib/apiClient';
 import type { Paginated } from '@/types/common';
 import type { MarketDetail, MarketListItem } from '@/types/social';
 
@@ -32,5 +33,14 @@ export function useMarket(marketId: string, options?: { enabled?: boolean }) {
     queryFn: () => getMarketById(marketId),
     placeholderData: () => findCachedMarket(marketId, queryClient),
     enabled: options?.enabled ?? true,
+    // MarketDetailView (`app/(app)/markets/[id]/MarketDetailView.tsx`) tries
+    // this lookup first and falls back to `useEvent` once it 404s — an id
+    // that belongs to an event, not a market. A 404 here is that meaningful
+    // signal, not a transient failure, but React Query's default `retry: 3`
+    // keeps `status` stuck on `'pending'` through ~3 retries first, which
+    // kept the page's loading skeleton showing indefinitely on remount/focus
+    // refetch. Only retry on errors that aren't a plain "wrong id space" 404.
+    retry: (failureCount, error) =>
+      error instanceof ApiRequestError && error.status === 404 ? false : failureCount < 3,
   });
 }

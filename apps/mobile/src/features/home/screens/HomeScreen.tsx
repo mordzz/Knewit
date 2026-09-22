@@ -263,10 +263,10 @@ export function HomeScreen() {
  */
 function Header() {
   const navigation = useNavigation();
-  const { canUseApp } = useAuth();
+  const { canUseApp, isGuest } = useAuth();
   const { isConnected } = useWallet();
   const balance = useWalletBalance();
-  const { deposit } = useDeposit();
+  const { deposit, stage: depositStage } = useDeposit();
   const [isDepositing, setIsDepositing] = useState(false);
   const [depositError, setDepositError] = useState<string | null>(null);
 
@@ -295,7 +295,15 @@ function Header() {
       <View className="flex-row items-center justify-between">
         <Text className="text-4xl font-bold">{balanceLabel}</Text>
         <Button
-          label="Deposit"
+          label={isGuest ? 'Add demo funds' :
+            depositStage === 'converting'
+              ? 'Converting…'
+              : depositStage === 'waiting'
+                ? 'Waiting…'
+                : depositStage === 'buying'
+                  ? 'Depositing…'
+                  : 'Deposit'
+          }
           loading={isDepositing}
           onPress={handleDeposit}
           className="min-h-0 px-4 py-2"

@@ -16,12 +16,18 @@ export interface WalletBalance {
    * destination token for deposits and the token `approve` is sent to. */
   collateral?: string;
   unavailable?: boolean;
+  /** Stable authenticated account identifier used to scope private query cache. */
+  accountId?: string;
+  address?: string;
+  walletType?: number;
 }
 
 export interface DepositWallet {
   address: string | null;
   walletType: number | null;
   unavailable?: boolean;
+  /** Stable authenticated account identifier used to scope private query cache. */
+  accountId?: string;
 }
 
 /** Mobile client for the wallet API in `apps/web`. */
@@ -34,7 +40,50 @@ export async function getDepositWallet(): Promise<DepositWallet> {
   return apiRequest<DepositWallet>(endpoints.walletDeposit);
 }
 
+export interface NativeUsdcBalance {
+  raw: string;
+  usdc: number;
+}
+
+export async function getNativeUsdcBalance(): Promise<NativeUsdcBalance> {
+  return apiRequest<NativeUsdcBalance>(endpoints.walletNativeBalance);
+}
+
+export interface ConvertToCollateralResult {
+  status: 'converted' | 'pending' | 'failed';
+  amountUsd: number;
+  /** Check both source and trading balances before retrying after failure. */
+  errorMessage: string | null;
+}
+
+export async function convertToCollateral(): Promise<ConvertToCollateralResult> {
+  return apiRequest<ConvertToCollateralResult>(endpoints.walletConvertToCollateral, {
+    method: 'POST',
+  });
+}
+
+export interface WithdrawResult {
+  status: 'confirmed' | 'pending';
+  amountUsdc: number;
+  transactionHash: string | null;
+  transactionId: string | null;
+}
+
+/** Withdraws trading collateral through the backend's Polymarket client. */
+export async function withdrawTradingBalance(input: {
+  recipient: string;
+  amount: string;
+}): Promise<WithdrawResult> {
+  return apiRequest<WithdrawResult>(endpoints.walletWithdraw, {
+    method: 'POST',
+    body: JSON.stringify(input),
+  });
+}
+
 /** USDC.e on Polygon — the collateral the trading flow spends. Same value
  * the backend returns from the CLOB's contract config; this constant is
  * the pre-read fallback for the deposit destination. */
 export const POLYGON_USDC_E = '0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174';
+
+/** Native USDC on Polygon, the asset card on-ramps can purchase. */
+export const POLYGON_USDC_NATIVE = '0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359';

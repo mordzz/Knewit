@@ -163,7 +163,7 @@ export default function DocsPage() {
           <li>Review the order-book estimate, selected outcome, amount, estimated shares, and price.</li>
           <li>Confirm through the wallet flow and wait for a provider result before treating the order as complete.</li>
           <li>In Wallet, review entry price, current price when available, size, and estimated unrealized P/L.</li>
-          <li>Selling submits the whole displayed position for market execution; final fill and proceeds can differ from an estimate.</li>
+          <li>Selling submits the whole displayed position for market execution; final fill and proceeds can differ from an estimate. Proceeds stay in the trading balance for another trade or withdrawal.</li>
         </List>
         <p>
           The web trading flow is implemented but has not been verified end-to-end for production
@@ -184,36 +184,41 @@ export default function DocsPage() {
         </p>
         <h3 className={subheadingClass}>Wallet, search, and social features</h3>
         <p>
-          Deposit opens Privy’s funding flow, which can offer fiat on-ramp and crypto funding methods
-          supported for the account and region. Knewit resolves the user’s Polymarket Deposit Wallet
-          before opening the flow and selects Polygon USDC.e as the trading collateral destination.
-          This is the wallet read by Knewit’s trading balance endpoint. Deposit availability, supported
-          currencies, payment methods, and quotes depend on Privy provider configuration, geography,
-          identity checks, and the selected asset/network. The embedded signer wallet and the
-          Polymarket Deposit Wallet serve different roles; depositing to the signer EOA may not credit
-          the trading balance shown in Knewit.
+          The Deposit action opens Privy’s card/bank on-ramp directly, without an intermediate
+          deposit-method chooser. It buys native USDC to the user’s embedded wallet, then Knewit
+          converts that asset to Polygon USDC.e and sends it to the Polymarket Deposit Wallet. That is
+          the wallet read by Knewit’s trading balance endpoint. Whether Stripe, MoonPay, or another
+          provider is offered depends on Privy configuration, geography, identity checks, and the
+          selected amount and currency. The embedded signer wallet and Polymarket Deposit Wallet serve
+          different roles; raw embedded-wallet balance is not the trading balance shown in Knewit.
+          On mobile, the Privy Expo flow defaults to card and prefers MoonPay; the provider still has
+          to be enabled for the app and available for the user’s region.
         </p>
         <List>
-          <li>Open Wallet or use the Deposit action in Settings/Home.</li>
-          <li>Wait for the trading wallet address to be resolved; if it is unavailable, the app asks you to retry instead of opening a flow to the wrong wallet.</li>
-          <li>Choose a funding method offered by Privy, review the currency, network, destination, fees, and quote expiration, then confirm with the provider.</li>
-          <li>Wait for the provider and network to complete processing. A submitted payment is not necessarily credited yet; refresh the trading balance after confirmation.</li>
+          <li>Open Wallet or Settings, or use Deposit in the app header.</li>
+          <li>Select Deposit; the app opens the Privy card/bank purchase flow directly.</li>
+          <li>Review the provider, currency, network, destination, fees, and quote expiration in the provider flow, then confirm there.</li>
+          <li>After purchase, Knewit waits for native USDC to arrive, converts it to USDC.e, and refreshes trading balance. Provider settlement, swap confirmation, and trading-account indexing may take additional time.</li>
         </List>
         <p>
           A Privy quote request returning HTTP 400 means the provider could not create that quote; it
-          does not by itself mean funds were transferred. Retry with another available method or
-          supported currency/network, check account/region eligibility, and ensure fiat on-ramp
-          providers are enabled for the Privy app. Browser messages about Apple Pay or Google Pay
+          does not by itself mean funds were transferred. Check account/region eligibility and ensure
+          card/bank on-ramp providers are enabled for the Privy app. Browser messages about Apple Pay or Google Pay
           payment manifests are separate capability warnings and are not proof of a successful or
           failed blockchain transfer. Never retry a payment if the provider shows it as submitted or
           pending; first confirm its status to avoid duplicate funding.
         </p>
         <p>
-          Withdraw asks for a recipient EVM address and USDC amount, then requests confirmation through
-          Privy for a Polygon transfer. Verify the network and recipient carefully; blockchain transfers
-          may be public and irreversible. Embedded wallet balance and trading balance are separate
-          concepts and can differ. Knewit’s displayed trading balance is sourced from the Polymarket
-          trading account, not assumed from the embedded wallet’s raw token balance.
+          Withdraw asks for a recipient EVM address and USDC amount, then the authenticated backend
+          checks the live Polymarket collateral balance and submits a USDC.e transfer from the
+          Polymarket Deposit Wallet through the official secure client. The delegated Privy signer
+          authorizes the Deposit Wallet transaction; the embedded EOA is not used as the source of
+          trading funds. The app waits for the relayer/Polygon result and displays a confirmed or
+          pending status with a transaction reference when available. Verify the network and recipient
+          carefully; the server validates the address and checks EIP-55 when mixed-case formatting is used, and the user
+          must review the full destination in a final confirmation step. This confirms address format,
+          not ownership or the recipient's ability to access USDC.e. Transfers may be public and irreversible. Embedded wallet balance and trading
+          balance are separate concepts and can differ.
         </p>
         <p>
           Profile usernames must be unique and are separate from display names. Search combines Knewit
@@ -237,7 +242,7 @@ export default function DocsPage() {
             ['Guest mode', 'Available as a demonstration', 'Wallet, trade, and supported social activity is simulated; it is not real account or transaction data.'],
             ['Callouts and social interactions', 'Implemented', 'Feed, position-backed publishing, likes, comments/replies, and following use account-backed services; guest behavior is simulated where supported.'],
             ['Markets and search', 'Implemented with upstream data', 'Market list and detail depend on Polymarket data and availability; categories follow provider taxonomy.'],
-            ['Wallet and portfolio', 'Implemented; provider-dependent', 'Resolves the Polymarket Deposit Wallet for funding and reads trading balance; offers deposit, withdrawal, and sale flows. Provider quotes and real trade execution remain dependent on configuration and end-to-end verification.'],
+            ['Wallet and portfolio', 'Implemented; provider-dependent', 'Deposit opens the card/bank on-ramp directly, then converts native USDC to USDC.e in the Polymarket Deposit Wallet. Provider quotes and real trade execution depend on configuration and end-to-end verification.'],
             ['Activity and profiles', 'Implemented', 'Routes display account activity and profile information backed by application services.'],
             ['Leaderboard', 'Available; read-only', 'Polymarket global all-time ranking by trading volume; rows are Polymarket traders, not Knewit profiles.'],
             ['Settings and legal pages', 'Available', 'Profile editing, wallet actions, Privacy Policy, Terms, and FAQ link are present.'],
@@ -262,7 +267,7 @@ export default function DocsPage() {
             ['Backend for frontend', 'Next.js API routes authenticate requests, apply application rules, normalize upstream data, and return client-facing responses.'],
             ['Privy', 'Authentication, embedded wallet lifecycle, and wallet authorization/signing flows.'],
             ['Polymarket services', 'Gamma and related endpoints supply market metadata; CLOB-related services support order-book estimates and trading; Data API supplies the leaderboard; the Deposit Wallet holds trading collateral.'],
-            ['Funding providers', 'Privy on-ramp and crypto funding integrations provide account- and region-dependent quotes and payment flows; Knewit supplies the trading destination and refreshes trading balance after completion.'],
+            ['Funding providers', 'Privy on-ramp integrations (such as Stripe or MoonPay when configured) provide account- and region-dependent card/bank quotes; the app converts native USDC to trading collateral after funding.'],
             ['Supabase', 'Server-side application storage for profiles, Callouts, comments, likes, follows, activity, and related records.'],
             ['TanStack Query', 'Client-side request state, caching, pagination, and refresh for server data.'],
             ['Mobile application', 'A separate native client exists in the repository; public app-store release is not available at the time of this document.'],
@@ -275,7 +280,8 @@ export default function DocsPage() {
           <li>For market data, the server reads or normalizes provider data; social data is read from application storage.</li>
           <li>For a trade, the server validates the market, outcome, amount, wallet authorization, and applicable availability.</li>
           <li>The wallet authorizes actions requiring user consent; the backend and provider determine the resulting status.</li>
-          <li>For deposits, the client asks Knewit’s backend for the Polymarket Deposit Wallet address, then opens Privy funding with that address, Polygon, and USDC.e as destination details.</li>
+          <li>For card/bank purchases, Privy sends native USDC to the embedded wallet; Knewit then swaps it to USDC.e and routes collateral to the Polymarket Deposit Wallet.</li>
+          <li>For withdrawals, the authenticated API validates the recipient, precision, and live collateral balance, then asks the secure Polymarket client to transfer USDC.e from the Deposit Wallet and waits for settlement.</li>
           <li>After the funding flow resolves, the client invalidates the wallet balance query; provider settlement and blockchain confirmation may take additional time before the trading balance changes.</li>
           <li>The client refreshes affected balance, position, market, and activity views from authoritative responses.</li>
         </List>
@@ -339,7 +345,7 @@ export default function DocsPage() {
             ['Markets', 'Load, category, search, pagination, empty response, and provider error.', 'Current data or clear loading, empty, and retryable error states.'],
             ['Trading', 'Tradeable outcome, invalid/minimum amount, insufficient funds, retry, and uncertain submission.', 'No duplicate order; UI follows backend/provider status.'],
             ['Callouts', 'Empty text, 280 characters, over limit, no position, and a position not owned by the user.', 'Invalid submissions are blocked and ownership is enforced server-side.'],
-            ['Wallet and funding', 'Deposit wallet unavailable, fiat quote failure, crypto deposit quote failure, cancellation, pending/confirmation, withdrawal, sale, and balance refresh.', 'Correct destination and network; actionable provider error; no fabricated balance or success; pending actions are not duplicated.'],
+            ['Wallet and funding', 'Card/bank quote failure, cancellation, pending purchase, native USDC arrival, conversion failure, withdrawal, sale, and balance refresh.', 'Correct destination and network; actionable provider error; no fabricated balance or success; pending actions are not duplicated.'],
             ['Social', 'Like/unlike, comment/reply, follow/unfollow, and unavailable content.', 'Changes persist once and access rules are respected.'],
             ['Responsive and accessibility', 'Desktop, tablet, mobile, keyboard navigation, and screen-reader labels.', 'Content remains readable and actions are reachable at each viewport.'],
             ['Security', 'Unauthenticated requests, wrong-owner access, malicious text, rate limiting, and tampered transaction input.', 'Requests are rejected safely without exposing credentials or secrets.'],
@@ -361,7 +367,7 @@ export default function DocsPage() {
           rows={[
             ['Trading wallet is not ready', 'Polymarket Deposit Wallet provisioning or backend configuration.', 'Wait briefly and retry. If repeated, check backend wallet/relayer configuration and the safe error code; do not send funds to a different address as a workaround.'],
             ['Privy fiat quote returns 400', 'No supported quote for the current currency, amount, region, destination token/network, or enabled provider.', 'Try a method/currency offered in the funding UI and verify provider enablement and regional eligibility in Privy configuration.'],
-            ['Crypto deposit quote returns 400', 'Unsupported source asset/network, unavailable route, or invalid destination details.', 'Confirm the provider-supported source network and token, then review the destination shown before approving.'],
+            ['USDC conversion fails after purchase', 'Swap route, signer authorization, gas/relayer availability, or temporary venue issue.', 'Native USDC remains in the embedded wallet; press Deposit again to retry conversion without starting another card purchase.'],
             ['Payment is pending but balance is unchanged', 'Provider settlement, blockchain confirmation, or trading-account indexing delay.', 'Check the funding provider status and transaction reference; refresh balance after confirmed completion. Avoid creating a duplicate payment while pending.'],
             ['Apple Pay or Google Pay manifest warning', 'Browser wallet/payment capability check.', 'Treat this as separate from quote status; use the funding provider’s visible result to determine whether payment is available or failed.'],
           ]}

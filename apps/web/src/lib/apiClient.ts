@@ -64,6 +64,12 @@ export async function apiRequest<T>(path: string, init?: RequestInit): Promise<T
     const body = (await response.json().catch(() => null)) as ApiErrorBody | null;
     throw new ApiRequestError(response.status, body ?? { code: 'unknown', message: response.statusText });
   }
-
-  return response.json() as Promise<T>;
+  const data = await response.json() as T & { status?: string; code?: string; message?: string };
+  if (data?.status === 'reconciliation_required') {
+    throw new ApiRequestError(202, {
+      code: data.code ?? 'trade_reconciliation_required',
+      message: data.message ?? 'The transaction may have executed. Check your wallet before trying again.',
+    });
+  }
+  return data;
 }

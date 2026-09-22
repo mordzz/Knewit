@@ -22,6 +22,7 @@ import { getDepositErrorMessage, logDepositFailure } from '@/features/wallet/uti
 import { usePositions } from '@/features/portfolio/hooks/usePositions';
 import { useSellPosition } from '@/features/portfolio/hooks/useSellPosition';
 import { useWallet } from '@/hooks/useWallet';
+import type { WithdrawResult } from '@/features/wallet/services/walletService';
 import { useAuth } from '@/hooks/useAuth';
 import { isPrivyConfigured } from '@/app/config/env';
 import { formatProbability, formatUsd } from '@/utils/formatCurrency';
@@ -59,7 +60,7 @@ export function WalletScreen() {
   const { isAuthenticated, isGuest } = useAuth();
   const { status, address, error } = useWallet();
   const { isReady } = usePrivy();
-  const { deposit } = useDeposit();
+  const { deposit, stage: depositStage } = useDeposit();
   const { withdraw } = useWithdraw();
   const sell = useSellPosition();
   const [isDepositing, setIsDepositing] = useState(false);
@@ -68,7 +69,9 @@ export function WalletScreen() {
   const [recipient, setRecipient] = useState('');
   const [amount, setAmount] = useState('');
   const [withdrawError, setWithdrawError] = useState<string | null>(null);
-  const [withdrawHash, setWithdrawHash] = useState<string | null>(null);
+  const [withdrawResult, setWithdrawResult] = useState<WithdrawResult | null>(null);
+  const [isWithdrawing, setIsWithdrawing] = useState(false);
+  const [confirmingWithdraw, setConfirmingWithdraw] = useState(false);
   const [sellTarget, setSellTarget] = useState<UserPosition | null>(null);
   const [sellNotice, setSellNotice] = useState<{ tone: 'yes' | 'danger'; message: string } | null>(
     null
@@ -77,6 +80,7 @@ export function WalletScreen() {
   const statusMeta = STATUS_COPY[status] ?? STATUS_COPY.disconnected;
 
   const balance = useWalletBalance();
+  const tradingAddress = isGuest ? address : balance.data?.address ?? null;
   const positionsQuery = usePositions();
   const positions = positionsQuery.data ?? [];
 
@@ -172,8 +176,8 @@ export function WalletScreen() {
               ? 'Wallet Connected'
               : statusMeta.label}
           </Text>
-          {status === 'connected' && address ? (
-            <WalletAddress address={address} compact />
+          {status === 'connected' && tradingAddress ? (
+            <WalletAddress address={tradingAddress} compact />
           ) : (
             <Text variant="caption" color="textSecondary">
               Setting up automatically — no action needed.
@@ -183,11 +187,19 @@ export function WalletScreen() {
         {status === 'connected' ? (
           <View className="flex-shrink-0 flex-row gap-2">
             <Button
-              label="Deposit"
+              label={isGuest ? 'Add demo funds' :
+                depositStage === 'converting'
+                  ? 'Converting…'
+                  : depositStage === 'waiting'
+                    ? 'Waiting…'
+                    : depositStage === 'buying'
+                      ? 'Depositing…'
+                      : 'Deposit'
+              }
               variant="primary"
               loading={isDepositing}
               onPress={handleDeposit}
-              accessibilityLabel="Deposit"
+              accessibilityLabel={isGuest ? 'Add demo funds' : 'Deposit'}
               className="min-h-0 px-3 py-2"
             />
             <Button
@@ -195,7 +207,8 @@ export function WalletScreen() {
               variant="secondary"
               onPress={() => {
                 setWithdrawError(null);
-                setWithdrawHash(null);
+                setWithdrawResult(null);
+                setConfirmingWithdraw(false);
                 setWithdrawOpen(true);
               }}
               accessibilityLabel="Withdraw"
@@ -237,57 +250,93 @@ export function WalletScreen() {
         </Text>
       ) : null}
 
-      <Modal visible={withdrawOpen} onClose={() => setWithdrawOpen(false)}>
+      <Modal visible={withdrawOpen} onClose={() => { setWithdrawOpen(false); setConfirmingWithdraw(false); }}>
         <Text variant="heading">Withdraw USDC</Text>
         <Text variant="body" color="textSecondary" className="mt-2">
-          Send USDC on Polygon to another wallet. Privy will ask you to confirm.
+          Send funds from your trading balance to a Polygon wallet.
         </Text>
-        <TextInput
+        {!confirmingWithdraw && !withdrawResult ? <TextInput
           value={recipient}
           onChangeText={setRecipient}
-          placeholder="Recipient wallet address"
+          placeholder="Polygon wallet address"
           placeholderTextColor="#6B7280"
           autoCapitalize="none"
           className="mt-5 rounded-lg border border-border bg-surface px-3 py-3 text-white"
-        />
-        <TextInput
+        /> : null}
+        {confirmingWithdraw && !withdrawResult ? (
+          <View className="mt-5 gap-2 rounded-lg border border-border bg-surface p-3">
+            <Text variant="bodyStrong">Review withdrawal</Text>
+            <Text variant="caption" color="textSecondary">Network: Polygon</Text>
+            <Text variant="caption" color="textSecondary">Asset: USDC.e</Text>
+            <Text variant="caption" className="font-mono">{recipient.trim()}</Text>
+            <Text variant="caption" color="textSecondary">Amount: {amount.trim()} USDC.e</Text>
+            <Text variant="caption" color="danger">Check the address and network. Transfers can't be reversed.</Text>
+          </View>
+        ) : null}
+        {!confirmingWithdraw && !withdrawResult ? <TextInput
           value={amount}
           onChangeText={setAmount}
-          placeholder="Amount (USDC)"
+          placeholder="Amount (USDC.e)"
           placeholderTextColor="#6B7280"
           keyboardType="decimal-pad"
           className="mt-3 rounded-lg border border-border bg-surface px-3 py-3 text-white"
-        />
+        /> : null}
         {withdrawError ? (
           <Text variant="caption" color="danger" className="mt-3">
             {withdrawError}
           </Text>
         ) : null}
-        {withdrawHash ? (
-          <Text variant="caption" color="yes" className="mt-3">
-            Transaction sent: {withdrawHash}
+        {withdrawResult ? (
+          <Text variant="caption" color={withdrawResult.status === 'confirmed' ? 'yes' : 'accent'} className="mt-3">
+            {withdrawResult.status === 'confirmed' ? 'Withdrawal confirmed.' : 'Withdrawal pending. Wait for confirmation before trying again.'}
+            {withdrawResult.transactionHash ? ` Transaction: ${withdrawResult.transactionHash}` : ''}
+            {withdrawResult.transactionId ? ` Relayer ID: ${withdrawResult.transactionId}` : ''}
           </Text>
         ) : null}
         <View className="mt-5 flex-row justify-end gap-3">
-          <Pressable onPress={() => setWithdrawOpen(false)} className="px-4 py-2">
-            <Text variant="body" color="textSecondary">Cancel</Text>
+          <Pressable
+            onPress={() => {
+              if (confirmingWithdraw && !withdrawResult) {
+                // "Back" returns to the edit step, keeping the entered
+                // recipient/amount instead of discarding them.
+                setConfirmingWithdraw(false);
+                return;
+              }
+              setWithdrawOpen(false);
+            }}
+            className="px-4 py-2"
+          >
+            <Text variant="body" color="textSecondary">{withdrawResult ? 'Close' : confirmingWithdraw ? 'Back' : 'Cancel'}</Text>
           </Pressable>
           <Pressable
+            disabled={isWithdrawing || Boolean(withdrawResult)}
             onPress={async () => {
+              if (isWithdrawing) return;
+              if (!confirmingWithdraw) {
+                if (!/^0x[a-fA-F0-9]{40}$/.test(recipient.trim())) {
+                  setWithdrawError('Enter a valid Polygon wallet address. Check the address and its checksum.');
+                  return;
+                }
+                setWithdrawError(null);
+                setConfirmingWithdraw(true);
+                return;
+              }
+              setIsWithdrawing(true);
               try {
                 setWithdrawError(null);
-                if (!/^0x[a-fA-F0-9]{40}$/.test(recipient.trim())) {
-                  throw new Error('Enter a valid EVM wallet address.');
-                }
-                const hash = await withdraw(recipient.trim(), amount.trim());
-                setWithdrawHash(hash);
+                const result = await withdraw(recipient.trim(), amount.trim());
+                setWithdrawResult(result);
               } catch (error) {
                 setWithdrawError(error instanceof Error ? error.message : 'Withdrawal failed.');
+              } finally {
+                setIsWithdrawing(false);
               }
             }}
-            className="rounded-lg bg-accent px-4 py-2"
+            className={`rounded-lg bg-accent px-4 py-2 ${isWithdrawing ? 'opacity-50' : ''}`}
           >
-            <Text variant="bodyStrong" className="text-black">Continue with Privy</Text>
+            <Text variant="bodyStrong" className="text-black">
+              {isWithdrawing ? 'Submitting…' : withdrawResult ? 'Submitted' : confirmingWithdraw ? 'Confirm withdrawal' : 'Review withdrawal'}
+            </Text>
           </Pressable>
         </View>
       </Modal>
@@ -424,9 +473,8 @@ export function WalletScreen() {
               </View>
             </View>
             <Text variant="caption" color="textSecondary">
-              Sells the whole position at market — the final price is set when it fills. Proceeds
-              are sent to your Privy wallet, so they won&apos;t appear in this screen&apos;s trading
-              balance.
+              Sells the whole position at market. Final price is set when it fills; proceeds stay
+              in your trading balance for another trade or withdrawal.
             </Text>
             {sell.isError ? (
               <Text variant="caption" color="danger">
@@ -448,18 +496,10 @@ export function WalletScreen() {
                 onPress={() =>
                   sell.mutate(sellTarget.id, {
                     onSuccess: (result) => {
-                      setSellNotice(
-                        result.cashOut.status === 'sent'
-                          ? {
-                              tone: 'yes',
-                              message: `Position sold — ${formatUsd(result.cashOut.amountUsd)} is on its way to your Privy wallet.`,
-                            }
-                          : {
-                              tone: 'danger',
-                              message:
-                                'Position sold, but sending the proceeds to your wallet failed — the money is still in your trading balance.',
-                            }
-                      );
+                      setSellNotice({
+                        tone: 'yes',
+                        message: `Position sold — ${formatUsd(result.proceedsUsd)} is now in your trading balance.`,
+                      });
                       setSellTarget(null);
                     },
                   })

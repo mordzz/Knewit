@@ -4,6 +4,8 @@ import { withErrorHandling } from '@/lib/apiError';
 import { requireAuth } from '@/lib/privy';
 import { getPrimaryEthereumWallet } from '@/lib/users';
 import { buildSecureClientForUser } from '@/lib/trading/client';
+import { getOrCreateUser } from '@/lib/users';
+import { reconcileUserWalletOperations } from '@/lib/walletReconciliation';
 
 // Authenticated CLOB read (account resolution + balance/allowance).
 export const maxDuration = 60;
@@ -24,24 +26,32 @@ export const maxDuration = 60;
 export async function GET(request: Request) {
   return withErrorHandling(async () => {
     const { privyUserId } = await requireAuth(request);
+    const viewer = await getOrCreateUser(privyUserId);
+    await reconcileUserWalletOperations(viewer.id).catch((error) => {
+      console.warn('[wallet/balance] backend reconciliation pass was incomplete:', error);
+    });
     const wallet = await getPrimaryEthereumWallet(privyUserId);
-    if (!wallet) return Response.json({ usdc: null, unavailable: true });
+    if (!wallet) return Response.json({ usdc: null, unavailable: true, accountId: privyUserId });
 
+    let tradingAddress: string | null = null;
+    let walletType: number | null = null;
     try {
       const client = await buildSecureClientForUser(wallet.id);
+      tradingAddress = client.account.wallet;
+      walletType = client.account.walletType;
       const result = await fetchBalanceAllowance(client, { assetType: AssetType.COLLATERAL });
       const usdc = Number(result.balance) / 1e6; // 6 decimals
-      if (!Number.isFinite(usdc)) return Response.json({ usdc: null, unavailable: true });
+      if (!Number.isFinite(usdc)) return Response.json({ usdc: null, unavailable: true, accountId: privyUserId });
 
       // BigInt values aren't JSON-serializable — send raw strings.
       const allowances: Record<string, string> = Object.fromEntries(
         Object.entries(result.allowances ?? {}).map(([spender, amount]) => [spender, String(amount)])
       );
 
-      return Response.json({ usdc, allowances });
+      return Response.json({ usdc, allowances, accountId: privyUserId, address: client.account.wallet, walletType: client.account.walletType });
     } catch (error) {
       console.warn('[wallet/balance] balance read unavailable:', error);
-      return Response.json({ usdc: null, unavailable: true });
+      return Response.json({ usdc: null, unavailable: true, accountId: privyUserId, address: tradingAddress, walletType });
     }
   });
 }

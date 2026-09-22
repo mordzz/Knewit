@@ -93,9 +93,16 @@ export const DEFAULT_GUEST_PROFILE: GuestProfile = {
 
 function emptySandbox() {
   return {
+    // `guest-seed-position-*`, deliberately a different namespace from
+    // `nextGuestId(state, 'position')`'s `guest-position-{n}` output
+    // (`guestBackend.ts`) — `positions`/`nextId` aren't persisted (see
+    // `partialize` below), so every guest session reseeds these same two
+    // rows with `nextId` back at 1. A shared `guest-position-1` id here
+    // collided with the very first real trade's generated position id,
+    // producing a duplicate React key in the positions list.
     positions: [
       {
-        id: 'guest-position-1',
+        id: 'guest-seed-position-1',
         marketId: 'mock-market-all-0',
         marketQuestion: 'Will Bitcoin reach $120K before December?',
         outcome: 'Yes',
@@ -106,7 +113,7 @@ function emptySandbox() {
         openedAt: '2026-09-01T09:00:00.000Z',
       },
       {
-        id: 'guest-position-2',
+        id: 'guest-seed-position-2',
         marketId: 'mock-market-all-1',
         marketQuestion: 'BTC Up or Down (5 minutes)',
         outcome: 'Up',

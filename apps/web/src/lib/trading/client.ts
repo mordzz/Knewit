@@ -33,15 +33,15 @@ export async function buildSecureClientForUser(walletId: string): Promise<UserSe
     );
   }
 
+  const signer = signerForUserWallet(walletId);
+
+  return createSecureClient({ signer, apiKey: builderApiKey({ key, secret, passphrase }) });
+}
+
+/** The signer associated with the user's Privy EOA (owner of their deterministic Deposit Wallet). */
+export function signerForUserWallet(walletId: string) {
   const authorizationContext = env.privyAuthorizationPrivateKey
     ? { authorization_private_keys: [env.privyAuthorizationPrivateKey] }
     : undefined;
-
-  const signer = signerFrom({
-    privy: getPrivyClient(),
-    walletId,
-    authorizationContext,
-  });
-
-  return createSecureClient({ signer, apiKey: builderApiKey({ key, secret, passphrase }) });
+  return signerFrom({ privy: getPrivyClient(), walletId, authorizationContext });
 }

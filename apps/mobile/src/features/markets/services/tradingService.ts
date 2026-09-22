@@ -29,8 +29,8 @@ export async function createTrade(input: CreateTradeInput): Promise<CreateTradeR
 }
 
 /**
- * Closes one whole position at market; the backend also sends the
- * proceeds to this account's Privy wallet. **No dev-mock fallback**,
+ * Closes one whole position at market and leaves proceeds in this
+ * account's trading balance. **No dev-mock fallback**,
  * same reasoning as `createTrade` — a sell that never happened must
  * never look like it did.
  */

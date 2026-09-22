@@ -56,4 +56,11 @@ export const env = {
   get polymarketBuilderPassphrase() {
     return process.env.POLYMARKET_BUILDER_PASSPHRASE;
   },
+  /** Polygon JSON-RPC endpoint (e.g. an Alchemy/Infura app URL) used to
+   * read on-chain balances directly (native USDC on a user's embedded
+   * wallet — not tracked by the CLOB's own balance endpoint, which only
+   * knows about the Deposit Wallet's collateral). */
+  get polygonRpcUrl() {
+    return required('POLYGON_RPC_URL', process.env.POLYGON_RPC_URL);
+  },
 };

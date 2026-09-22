@@ -25,7 +25,6 @@ export async function GET(request: Request) {
     return Response.json({
       address: client.account.wallet,
       walletType: client.account.walletType,
-      signer: client.account.signer,
     });
   });
 }

@@ -14,17 +14,12 @@ export interface CreateTradeInput {
 
 export type CreateTradeResult = Order;
 
-/** `POST /trading/sell` — closes one whole position at market and sends
- * the proceeds from the trading wallet back to the caller's Privy
- * embedded wallet. `cashOut.status: 'failed'` still means the sell
- * succeeded: the money is in the user's own trading wallet, not lost. */
+/** `POST /trading/sell` — closes one whole position at market. Proceeds
+ * stay in the user's Polymarket Deposit Wallet for future trading or
+ * withdrawal. */
 export interface SellPositionResponse {
   order: Order;
-  cashOut: {
-    status: 'sent' | 'failed';
-    amountUsd: number;
-    error: string | null;
-  };
+  proceedsUsd: number;
 }
 
 /** Live order-book estimate for a market BUY of `usdAmount` —

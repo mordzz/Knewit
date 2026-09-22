@@ -27,11 +27,12 @@ export async function GET(request: Request) {
     const { privyUserId } = await requireAuth(request);
     const viewer = await getOrCreateUser(privyUserId);
 
-    const { data: rows } = await getSupabase()
+    const { data: rows, error } = await getSupabase()
       .from('positions')
       .select('id, market_id, outcome, choice_index, entry_price, size, opened_at')
       .eq('user_id', viewer.id)
       .order('opened_at', { ascending: false });
+    if (error) throw error;
 
     const positionRows = (rows ?? []) as PositionRow[];
     const items: UserPosition[] = await Promise.all(

@@ -38,7 +38,6 @@ export function useAutoWalletSetup(): { status: WalletSetupStatus } {
   const queryClient = useQueryClient();
   const attemptedCreation = useRef(false);
   const attemptedSigner = useRef(false);
-  const [createdAddress, setCreatedAddress] = useState<string | null>(null);
   const [setupTimedOut, setSetupTimedOut] = useState(false);
   const [failed, setFailed] = useState(false);
   const [signerGranted, setSignerGranted] = useState(false);
@@ -58,9 +57,6 @@ export function useAutoWalletSetup(): { status: WalletSetupStatus } {
     if (!isAuthenticated || isConnected || attemptedCreation.current) return;
     attemptedCreation.current = true;
     createWallet()
-      .then((wallet) => {
-        if (wallet?.address) setCreatedAddress(wallet.address);
-      })
       .catch((error) => {
         if (__DEV__) console.warn('[wallet] embedded wallet creation failed', error);
         setFailed(true);
@@ -79,8 +75,12 @@ export function useAutoWalletSetup(): { status: WalletSetupStatus } {
   }, [isAuthenticated, isConnected, queryClient]);
 
   useEffect(() => {
-    const signerAddress = address ?? createdAddress;
+    const signerAddress = address;
     if (attemptedSigner.current || !signerAddress || !signerId) return;
+    // Skip requesting consent again when the balance already reads
+    // successfully with a usable value — the signer already works, and
+    // asking Privy for a redundant grant can itself fail and flip an
+    // otherwise-healthy wallet's status to 'error'.
     if (!balance.isSuccess || balance.data?.usdc != null) return;
     attemptedSigner.current = true;
     addSigners({ address: signerAddress, signers: [{ signerId, policyIds: [] }] })
@@ -92,20 +92,23 @@ export function useAutoWalletSetup(): { status: WalletSetupStatus } {
         if (__DEV__) console.warn('[wallet] automatic signer consent failed', error);
         setFailed(true);
       });
-  }, [address, createdAddress, signerId, balance.isSuccess, balance.data, addSigners, queryClient]);
+  }, [address, signerId, balance.isSuccess, balance.data, addSigners, queryClient]);
 
   // Guest mode has no real wallet to create or signer consent to grant —
   // the sandbox wallet is already "connected" (see `useWallet`).
   if (isGuest) return { status: 'ready' };
   if (!isAuthenticated) return { status: 'ready' };
+  // Let the user reach the app after the short gate timeout, while keeping
+  // setup incomplete until signer consent or a verified balance confirms it.
   if (setupTimedOut) return { status: 'ready' };
   if (failed) return { status: 'error' };
   if (!isConnected || !address) return { status: 'preparing' };
 
   // Ready once the wallet exists and either signing already works
-  // (`usdc` readable), no signer is configured, consent just succeeded,
-  // or the balance read itself errored — in that last case there is
-  // nothing more this automatic path can do.
-  const signerReady = !signerId || signerGranted || balance.data?.usdc != null || balance.isError;
+  // (`usdc` readable), no signer is configured, consent just succeeded, or
+  // the balance read itself errored — in that last case there is nothing
+  // more this automatic path can do, so waiting on it would just block
+  // readiness until the 30s setup timeout for no benefit.
+  const signerReady = !signerId || signerGranted || (balance.isSuccess && balance.data?.usdc != null) || balance.isError;
   return { status: signerReady ? 'ready' : 'preparing' };
 }

@@ -1,15 +1,20 @@
 import { useQuery } from '@tanstack/react-query';
+import { usePrivy } from '@privy-io/expo';
 import { getMarketPosition } from '@/features/portfolio/services/positionService';
 import { useWallet } from '@/hooks/useWallet';
+import { useAuth } from '@/hooks/useAuth';
 
 /** Market Detail's "My Position" section — the current user's position
  * (if any) in one specific market. Same wallet-gating as `usePositions`. */
 export function useMarketPosition(marketId: string, options?: { enabled?: boolean }) {
   const { isConnected } = useWallet();
+  const { isAuthenticated, isGuest } = useAuth();
+  const { user } = usePrivy();
+  const accountKey = isAuthenticated ? user?.id ?? null : isGuest ? 'guest' : null;
 
   return useQuery({
-    queryKey: ['positions', marketId],
+    queryKey: ['positions', accountKey, marketId],
     queryFn: () => getMarketPosition(marketId),
-    enabled: isConnected && (options?.enabled ?? true),
+    enabled: isConnected && Boolean(accountKey) && (options?.enabled ?? true),
   });
 }

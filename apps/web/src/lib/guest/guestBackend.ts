@@ -667,7 +667,7 @@ function sellPosition(state: GuestState, body: unknown) {
 
   return {
     order,
-    cashOut: { status: 'sent' as const, amountUsd: proceeds, error: null },
+    proceedsUsd: proceeds,
   };
 }
 
