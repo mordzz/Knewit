@@ -172,7 +172,8 @@ export interface UserProfile extends User {
 }
 
 /** Editable profile fields. `handle` must be lowercase, 3-20 chars,
- * `a-z0-9_` only; the backend enforces uniqueness (`409 handle_taken`).
+ * `a-z0-9_` only; the backend enforces uniqueness against Knewit accounts
+ * and Polymarket leaderboard names.
  * `avatarUrl`/`bannerUrl` are optional: omit to keep the current image,
  * `null` to clear it — only URLs from this app's own profile-image
  * storage are accepted (docs/API.md). */

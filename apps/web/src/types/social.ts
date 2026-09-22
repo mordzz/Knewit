@@ -228,7 +228,7 @@ export interface UserProfile extends User {
 export interface UpdateProfileInput {
   displayName: string;
   /** Lowercase, 3-20 chars, `a-z0-9_` only; the backend enforces
-   * uniqueness (409 `handle_taken`). */
+   * uniqueness against Knewit accounts and Polymarket leaderboard names. */
   handle: string;
   bio: string;
   /** Optional: omit to keep the current image, `null`/`''` to clear it.

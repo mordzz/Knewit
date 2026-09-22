@@ -16,7 +16,7 @@ const config: ExpoConfig = {
   // email-OTP flow, which never leaves the app.
   scheme: 'knewit',
   ios: {
-    bundleIdentifier: 'com.dzakaal10.knewit', // Disarankan tambahkan juga untuk iOS
+    bundleIdentifier: 'com.knewit.app', // Disarankan tambahkan juga untuk iOS
   },
   android: {
     package: 'com.dzakaal10.knewit', // <-- Ditambahkan di sini

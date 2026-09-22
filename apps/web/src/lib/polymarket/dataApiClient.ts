@@ -9,16 +9,15 @@ import { normalizeWalletAddress } from '@/lib/polymarket/address';
  * (Gamma has no rankings endpoint at all; verified live). Same rules as
  * the Gamma client: public, no key, read-only, no Supabase involvement.
  *
- * `data-api.polymarket.com` has no published OpenAPI document; every
- * parameter and field below was verified against the live endpoint:
+ * The documented v1 endpoint was also verified against the live service:
  * `GET /v1/leaderboard?timePeriod=ALL&orderBy=VOL&category=OVERALL&limit=3&offset=0`
  * returns an **array** of rows in rank order
  * (`rank` as a *string*, `proxyWallet`, `userName`, `xUsername`,
  * `verifiedBadge`, `vol`, `pnl`, `profileImage`), `user=<address>` filters
  * to one trader (still an array, `[]` when the address has no ranked
- * volume), and `user=` accepts a **comma-separated list** — which is what
- * makes the "Following" scope one upstream call instead of one per
- * followed trader. `offset` pages in rank order (verified past 1000).
+ * volume), `user=` accepts a **comma-separated list**, and `userName=`
+ * filters to one leaderboard username. `offset` pages in rank order
+ * (verified past 1000).
  */
 
 export interface PolymarketLeaderboardRow {
@@ -91,6 +90,34 @@ export async function fetchLeaderboardPage(limit: number, offset: number): Promi
     offset,
   });
   return toRows(payload);
+}
+
+/** Look up one username in the same all-time, overall leaderboard used by
+ * the app. The upstream `userName` filter avoids downloading and scanning
+ * leaderboard pages when validating a profile handle. */
+export async function fetchLeaderboardRowsForUsername(
+  userName: string
+): Promise<PolymarketLeaderboardRow[]> {
+  const payload = await dataGet<unknown>('/v1/leaderboard', {
+    ...LEADERBOARD_WINDOW,
+    userName,
+  });
+
+  const isRow = (row: unknown): row is PolymarketLeaderboardRow =>
+    typeof row === 'object' &&
+    row !== null &&
+    'userName' in row &&
+    typeof row.userName === 'string';
+
+  if (Array.isArray(payload)) {
+    if (!payload.every(isRow)) {
+      throw upstreamError('Polymarket returned an invalid username search response.');
+    }
+    return payload as PolymarketLeaderboardRow[];
+  }
+  if (isRow(payload)) return [payload];
+
+  throw upstreamError('Polymarket returned an invalid username search response.');
 }
 
 /** The ranked rows for a specific set of wallets — used by

@@ -358,6 +358,8 @@ function friendlyEditError(message: string | null): string {
   if (/network/i.test(message)) {
     return 'Network error — check your connection and try again.';
   }
-  if (/username is already taken/i.test(message)) return message;
+  if (/username is already taken|already used by a polymarket trader|couldn't verify username with polymarket/i.test(message)) {
+    return message;
+  }
   return "Couldn't save your changes right now. Please try again.";
 }

@@ -7,7 +7,6 @@ import { LoadingState } from '@/components/feedback/LoadingState';
 import { EmptyState } from '@/components/feedback/EmptyState';
 import { ErrorState } from '@/components/feedback/ErrorState';
 import { LeaderboardUserCard } from '@/features/leaderboard/components/LeaderboardUserCard';
-import { TopPerformers } from '@/features/leaderboard/components/TopPerformers';
 import { useLeaderboard } from '@/features/leaderboard/hooks/useLeaderboard';
 import { colors, typography } from '@/theme';
 import type { LeaderboardEntry } from '@/types/leaderboard';
@@ -43,12 +42,6 @@ export function LeaderboardScreen() {
     () => leaderboard.data?.pages.flatMap((page) => page.items) ?? [],
     [leaderboard.data]
   );
-  const topThree =
-    items.length >= 3
-      ? (items.slice(0, 3) as [LeaderboardEntry, LeaderboardEntry, LeaderboardEntry])
-      : null;
-  const rest = topThree ? items.slice(3) : items;
-
   const renderItem = useCallback(
     ({ item }: { item: LeaderboardEntry }) => <LeaderboardUserCard entry={item} />,
     []
@@ -65,10 +58,6 @@ export function LeaderboardScreen() {
       </Text>
       <Divider />
     </View>
-  );
-
-  const header = (
-    <View className="pt-3">{topThree ? <TopPerformers entries={topThree} /> : null}</View>
   );
 
   if (leaderboard.status === 'pending') {
@@ -96,10 +85,10 @@ export function LeaderboardScreen() {
       {titleBlock}
       <FlatList
         className="flex-1"
-        data={rest}
+        data={items}
         keyExtractor={(item) => item.user.id}
         renderItem={renderItem}
-        ListHeaderComponent={header}
+        ListHeaderComponent={<View className="pt-3" />}
         // Bottom clearance so the last row never sits flush against the
         // tab bar.
         contentContainerStyle={{ paddingBottom: 24 }}

@@ -7,17 +7,15 @@ import { LoadingState } from '@/components/feedback/LoadingState';
 import { EmptyState } from '@/components/feedback/EmptyState';
 import { ErrorState } from '@/components/feedback/ErrorState';
 import { LeaderboardUserCard } from '@/components/LeaderboardUserCard';
-import { TopPerformers } from '@/components/TopPerformers';
 import { useLeaderboard } from '@/hooks/useLeaderboard';
-import type { LeaderboardEntry } from '@/types/leaderboard';
 import { PageHeader } from '@/components/ui/PageHeader';
 
 /**
  * Direct conversion of `apps/mobile`'s `LeaderboardScreen` — Polymarket's
  * own global ranking, read-only (docs/DECISIONS.md, "Round 6"): no
  * Follow button, no profile links, a row is a ranked Polymarket trader
- * identified by proxy wallet, never a Knewit account. Same Top
- * Performers podium for the first 3 real ranked entries.
+ * identified by proxy wallet, never a Knewit account. Every rank uses the
+ * same row layout, with a subtle gold/silver/bronze treatment for the top 3.
  *
  * No viewer-relative row at all: the old "Your Rank" self-standing line
  * was removed by request, UI and backend alike (docs/DECISIONS.md, "Your
@@ -27,8 +25,6 @@ export default function LeaderboardPage() {
   const leaderboard = useLeaderboard();
 
   const items = useMemo(() => leaderboard.data?.pages.flatMap((page) => page.items) ?? [], [leaderboard.data]);
-  const topThree = items.length >= 3 ? (items.slice(0, 3) as [LeaderboardEntry, LeaderboardEntry, LeaderboardEntry]) : null;
-  const rest = topThree ? items.slice(3) : items;
 
   const mobileTitleBlock = (
     <div>
@@ -71,13 +67,8 @@ export default function LeaderboardPage() {
   return (
     <main className="w-full lg:py-8">
       {titleBlock}
-      {topThree ? (
-        <div className="pt-3">
-          <TopPerformers entries={topThree} />
-        </div>
-      ) : null}
 
-      {rest.length === 0 && !topThree ? (
+      {items.length === 0 ? (
         <div className="px-4">
           <EmptyState
             icon="trophy-outline"
@@ -86,8 +77,8 @@ export default function LeaderboardPage() {
           />
         </div>
       ) : (
-        <>
-          {rest.map((entry) => (
+        <div className="pt-3">
+          {items.map((entry) => (
             <LeaderboardUserCard key={entry.user.id} entry={entry} />
           ))}
           <InfiniteScrollSentinel
@@ -95,7 +86,7 @@ export default function LeaderboardPage() {
             isFetchingNextPage={leaderboard.isFetchingNextPage}
             onLoadMore={() => leaderboard.fetchNextPage()}
           />
-        </>
+        </div>
       )}
 
       {/* Bottom clearance so the last row never sits flush against the
