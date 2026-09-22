@@ -36,6 +36,7 @@ export function LandingHeader({ anchorPrefix = '' }: { anchorPrefix?: '' | '/' }
           <a className={cn('hover:opacity-60', FOCUS)} href={href('#markets')}>Markets</a>
           <a className={cn('hover:opacity-60', FOCUS)} href={href('#how-it-works')}>How it works</a>
           <a className={cn('hover:opacity-60', FOCUS)} href={href('#faq')}>FAQ</a>
+          <Link className={cn('hover:opacity-60', FOCUS)} href="/docs">Docs</Link>
         </nav>
         <div className="flex items-center gap-3">
           <Link href="/download" className={cn('hidden px-3 py-2 text-sm font-semibold sm:inline-flex', FOCUS)}>
@@ -78,6 +79,7 @@ export function LandingHeader({ anchorPrefix = '' }: { anchorPrefix?: '' | '/' }
             </a>
           ))}
           <Link href="/download" className={cn('block border-b border-landing-ink/10 py-3 text-sm font-medium', FOCUS)}>Download</Link>
+          <Link href="/docs" className={cn('block border-b border-landing-ink/10 py-3 text-sm font-medium', FOCUS)} onClick={() => setMenuOpen(false)}>Docs</Link>
           <Link href="/sign-in" className={cn('block py-3 text-sm font-medium', FOCUS)}>Explore app</Link>
         </nav>
       ) : null}

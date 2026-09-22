@@ -11,6 +11,7 @@ export function LandingFooter() {
           <Link className={cn('hover:text-white', FOCUS)} href="/#markets">Markets</Link>
           <Link className={cn('hover:text-white', FOCUS)} href="/#how-it-works">How it works</Link>
           <Link className={cn('hover:text-white', FOCUS)} href="/#faq">FAQ</Link>
+          <Link className={cn('hover:text-white', FOCUS)} href="/docs">Docs</Link>
           <Link className={cn('hover:text-white', FOCUS)} href="/download">Download</Link>
           <Link className={cn('hover:text-white', FOCUS)} href="/privacy">Privacy</Link>
           <Link className={cn('hover:text-white', FOCUS)} href="/terms">Terms</Link>

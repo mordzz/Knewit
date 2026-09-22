@@ -75,17 +75,17 @@ const faqs = [
   {
     question: 'What is Knew It?',
     answer:
-      'Knew It brings prediction markets, crypto, memecoins, perpetual futures, and tokenized stocks into one product experience. Start by exploring the web demo.',
+      'Knewit brings Polymarket prediction markets together with a community for sharing position-backed Callouts. Browse markets, manage supported positions, and follow public trader rankings.',
   },
   {
     question: 'Can I trade with real money yet?',
     answer:
-      'The current experience is a design demo with illustrative market data. Authentication and real-money trading are not connected.',
+      'Knewit includes a Polymarket trading flow for eligible, configured accounts, but end-to-end execution has not yet been verified. Trading depends on wallet setup, funding, market availability, and Polymarket eligibility. Guest mode simulates wallets and trades and never uses real funds.',
   },
   {
     question: 'Is there a mobile app?',
     answer:
-      'A mobile app is planned. For now, you can explore the responsive web demo on your phone or desktop.',
+      'A native mobile app is in development, and public App Store and Google Play downloads are not available yet. The web app is available today.',
   },
   {
     question: 'What are prediction markets?',

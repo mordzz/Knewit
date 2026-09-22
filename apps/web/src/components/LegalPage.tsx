@@ -23,7 +23,7 @@ export function LegalPage({
   children,
 }: {
   title: string;
-  effectiveDate?: string;
+  effectiveDate?: string | null;
   children: React.ReactNode;
 }) {
   const [activeId, setActiveId] = useState<string | null>(null);
@@ -48,14 +48,16 @@ export function LegalPage({
           <h1 className="text-5xl font-semibold leading-[1.02] tracking-[-0.03em] sm:text-6xl">
             {title}
           </h1>
-          <p className="mt-4 text-sm font-medium text-landing-ink/45">Effective date: {effectiveDate}</p>
+          {effectiveDate ? (
+            <p className="mt-4 text-sm font-medium text-landing-ink/45">Effective date: {effectiveDate}</p>
+          ) : null}
         </div>
       </section>
 
       <article className="mx-auto max-w-[1180px] px-5 py-12 sm:px-8 sm:py-16">
         <div className="grid grid-cols-1 gap-10 lg:grid-cols-[240px_minmax(0,1fr)] lg:gap-16">
           <aside className="lg:sticky lg:top-28 lg:h-fit">
-            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-landing-ink/40">On this page</p>
+            <p className="hidden text-xs font-semibold uppercase tracking-[0.18em] text-landing-ink/40 lg:block">On this page</p>
             <nav className="mt-4 hidden max-h-[70vh] flex-col gap-0.5 overflow-y-auto border-l border-landing-ink/10 pr-2 lg:flex" aria-label="Table of contents">
               {sections.map((s) => (
                 <a
@@ -73,32 +75,15 @@ export function LegalPage({
               ))}
             </nav>
 
-            <details className="group mt-2 rounded-2xl border border-landing-ink/10 bg-white p-4 lg:hidden">
-              <summary className={cn('cursor-pointer list-none text-sm font-semibold text-landing-ink', FOCUS)}>
-                Contents
-              </summary>
-              <nav className="mt-3 flex flex-col gap-0.5" aria-label="Table of contents">
-                {sections.map((s) => (
-                  <a
-                    key={s.id}
-                    href={`#${s.id}`}
-                    className={cn('rounded-lg px-2 py-1.5 text-sm text-landing-ink/60 hover:bg-landing-ink/5 hover:text-landing-ink', FOCUS)}
-                  >
-                    {s.title}
-                  </a>
-                ))}
-              </nav>
-            </details>
           </aside>
 
           <div className="min-w-0 max-w-[720px] space-y-11 text-[15px] leading-7 text-landing-muted">
             {children}
 
             <nav className="flex flex-wrap items-center gap-x-6 gap-y-2 border-t border-landing-ink/10 pt-6 text-sm font-semibold text-landing-muted">
+              <Link href="/docs" className={cn('hover:text-landing-ink', FOCUS)}>Docs</Link>
               <Link href="/privacy" className={cn('hover:text-landing-ink', FOCUS)}>Privacy Policy</Link>
               <Link href="/terms" className={cn('hover:text-landing-ink', FOCUS)}>Terms of Service</Link>
-              <span className="text-landing-ink/25">·</span>
-              <Link href="/#faq" className={cn('hover:text-landing-ink', FOCUS)}>FAQ</Link>
             </nav>
           </div>
         </div>
@@ -106,11 +91,11 @@ export function LegalPage({
         <div className="mt-16 flex flex-col items-start gap-5 rounded-[28px] bg-landing-ink px-8 py-10 text-landing-paper sm:mt-20 sm:flex-row sm:items-center sm:justify-between sm:px-12">
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.18em] text-white/45">Ready when you are</p>
-            <h2 className="mt-2 text-2xl font-semibold tracking-[-0.02em] sm:text-3xl">Get Knew it on your phone</h2>
-            <p className="mt-2 max-w-md text-sm text-white/60">Track markets, share calls, and follow the leaderboard from your pocket.</p>
+            <h2 className="mt-2 text-2xl font-semibold tracking-[-0.02em] sm:text-3xl">Explore Knew it on the web</h2>
+            <p className="mt-2 max-w-md text-sm text-white/60">Browse markets, manage positions, and join the community in the web app.</p>
           </div>
-          <Link href="/download" className={cn(PRIMARY_BUTTON, 'shrink-0 bg-landing-yellow text-landing-ink hover:bg-landing-yellow/90')}>
-            Download the app <ArrowUpRight size={16} />
+          <Link href="/sign-in" className={cn(PRIMARY_BUTTON, 'shrink-0 bg-landing-yellow text-landing-ink hover:bg-landing-yellow/90')}>
+            Explore Knew it <ArrowUpRight size={16} />
           </Link>
         </div>
       </article>
