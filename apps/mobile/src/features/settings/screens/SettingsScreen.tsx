@@ -9,6 +9,8 @@ import { env } from '@/app/config/env';
 import { Modal } from '@/components/ui/Modal';
 import { solidPanel } from '@/theme';
 import { useDeposit } from '@/features/wallet/hooks/useDeposit';
+import { isUserCancelledFunding } from '@/features/wallet/utils/privyErrors';
+import { getDepositErrorMessage, logDepositFailure } from '@/features/wallet/utils/depositErrors';
 import { useWithdraw } from '@/features/wallet/hooks/useWithdraw';
 
 function Row({
@@ -93,9 +95,9 @@ export function SettingsScreen() {
             try {
               await deposit();
             } catch (error) {
-              setDepositNotice(
-                error instanceof Error ? error.message : 'Could not open the deposit flow.'
-              );
+              if (isUserCancelledFunding(error)) return;
+              logDepositFailure(error);
+              setDepositNotice(getDepositErrorMessage(error));
             }
           }}
         />

@@ -24,10 +24,9 @@ export type WalletSetupStatus = 'preparing' | 'ready' | 'error';
  *    balance read proves it isn't attached yet (`usdc === null` on a
  *    successful read) — docs/WALLET.md, "Backend Signing".
  *
- * `RootNavigator` renders the setup screen while this is not `ready`, so
- * a fresh login never lands mid-setup. Failures are real and surfaced
- * (`error`), never retried in a loop: the next app open gets a fresh
- * attempt, and the Wallet screen states plainly what's missing.
+ * `RootNavigator` keeps this hook mounted while the app is usable, so a
+ * fresh login can continue into the app as provider setup runs in the
+ * background. Failures are recorded (`error`) without blocking navigation.
  */
 export function useAutoWalletSetup(): { status: WalletSetupStatus } {
   const { isAuthenticated } = useAuth();
@@ -39,6 +38,7 @@ export function useAutoWalletSetup(): { status: WalletSetupStatus } {
   const queryClient = useQueryClient();
   const attemptedCreation = useRef(false);
   const attemptedSigner = useRef(false);
+  const [createdAddress, setCreatedAddress] = useState<string | null>(null);
   const [setupTimedOut, setSetupTimedOut] = useState(false);
   const [failed, setFailed] = useState(false);
   const [signerGranted, setSignerGranted] = useState(false);
@@ -57,10 +57,14 @@ export function useAutoWalletSetup(): { status: WalletSetupStatus } {
   useEffect(() => {
     if (!isAuthenticated || isConnected || attemptedCreation.current) return;
     attemptedCreation.current = true;
-    createWallet().catch((error) => {
-      if (__DEV__) console.warn('[wallet] embedded wallet creation failed', error);
-      setFailed(true);
-    });
+    createWallet()
+      .then((wallet) => {
+        if (wallet?.address) setCreatedAddress(wallet.address);
+      })
+      .catch((error) => {
+        if (__DEV__) console.warn('[wallet] embedded wallet creation failed', error);
+        setFailed(true);
+      });
   }, [isAuthenticated, isConnected, createWallet]);
 
   // Check the backend balance while Privy's local wallet list catches up.
@@ -75,10 +79,11 @@ export function useAutoWalletSetup(): { status: WalletSetupStatus } {
   }, [isAuthenticated, isConnected, queryClient]);
 
   useEffect(() => {
-    if (attemptedSigner.current || !isConnected || !address || !signerId) return;
+    const signerAddress = address ?? createdAddress;
+    if (attemptedSigner.current || !signerAddress || !signerId) return;
     if (!balance.isSuccess || balance.data?.usdc != null) return;
     attemptedSigner.current = true;
-    addSigners({ address, signers: [{ signerId, policyIds: [] }] })
+    addSigners({ address: signerAddress, signers: [{ signerId, policyIds: [] }] })
       .then(() => {
         setSignerGranted(true);
         return queryClient.invalidateQueries({ queryKey: ['wallet-balance'] });
@@ -87,7 +92,7 @@ export function useAutoWalletSetup(): { status: WalletSetupStatus } {
         if (__DEV__) console.warn('[wallet] automatic signer consent failed', error);
         setFailed(true);
       });
-  }, [isConnected, address, signerId, balance.isSuccess, balance.data, addSigners, queryClient]);
+  }, [address, createdAddress, signerId, balance.isSuccess, balance.data, addSigners, queryClient]);
 
   // Guest mode has no real wallet to create or signer consent to grant —
   // the sandbox wallet is already "connected" (see `useWallet`).

@@ -4,7 +4,6 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { MainTabNavigator } from '@/app/navigation/MainTabNavigator';
 import { AuthNavigator } from '@/app/navigation/AuthNavigator';
 import { CreateCallScreen } from '@/features/home/screens/CreateCallScreen';
-import { AccountSetupScreen } from '@/features/wallet/screens/AccountSetupScreen';
 import { useAutoWalletSetup } from '@/features/wallet/hooks/useAutoWalletSetup';
 import { useAuth } from '@/hooks/useAuth';
 import { colors } from '@/theme';
@@ -36,12 +35,9 @@ const Stack = createNativeStackNavigator<AppParamList>();
  */
 export function RootNavigator() {
   const { isAuthenticated, isGuest, isReady, hasHydrated } = useAuth();
-  // Owns the whole automatic setup (wallet creation + signing consent) at
-  // this level so it can gate the app: a fresh login sees the setup
-  // screen until both steps are done, instead of landing mid-setup with
-  // manual Connect/Enable buttons — docs/DECISIONS.md, "Automatic Wallet
-  // & Trading Setup — No Manual Buttons".
-  const setup = useAutoWalletSetup();
+  // Owns automatic wallet creation and signer consent for the app session.
+  // Keep provisioning active in the background; it must not gate navigation.
+  useAutoWalletSetup();
 
   if (!isGuest && (!isReady || !hasHydrated)) {
     return (
@@ -49,10 +45,6 @@ export function RootNavigator() {
         <ActivityIndicator color={colors.accent} />
       </View>
     );
-  }
-
-  if (isAuthenticated && !isGuest && setup.status !== 'ready') {
-    return <AccountSetupScreen status={setup.status} />;
   }
 
   return (

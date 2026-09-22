@@ -6,7 +6,6 @@ import { BottomTabBar } from '@/components/BottomTabBar';
 import { Fab } from '@/components/Fab';
 import { SideNav } from '@/components/SideNav';
 import { TopHeader } from '@/components/TopHeader';
-import { Text } from '@/components/ui/Text';
 import { useAutoWalletSetup } from '@/features/wallet/hooks/useAutoWalletSetup';
 import { useSession } from '@/hooks/useSession';
 import { useGuestStore } from '@/lib/guest/guestStore';
@@ -28,18 +27,17 @@ import { useGuestStore } from '@/lib/guest/guestStore';
  * which deliberately sits *outside* this route group (`app/sign-in/`,
  * not `app/(app)/sign-in/`) so it never gets this chrome.
  *
- * **Setup gate**: `useAutoWalletSetup` creates the embedded wallet and
- * grants the backend signing key automatically, and until it reports
- * `ready` this renders a "Setting up your account" state instead of the
- * tabs — the user never lands mid-setup, and no manual buttons exist
- * for either step any more (docs/DECISIONS.md, "Automatic Wallet &
- * Trading Setup — No Manual Buttons").
+ * **Background wallet setup**: useAutoWalletSetup creates the embedded
+ * wallet and grants the backend signing key automatically. Navigation is
+ * available while those provider steps finish; wallet-dependent actions
+ * continue to check the actual wallet state.
  */
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const { ready, canUseApp, isGuest, privyUser } = useSession();
   const exitGuest = useGuestStore((state) => state.exitGuest);
-  const setup = useAutoWalletSetup();
+  // Keep wallet provisioning active without blocking app navigation.
+  useAutoWalletSetup();
 
   useEffect(() => {
     if (ready && !canUseApp) {
@@ -56,33 +54,6 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
   if (!ready || !canUseApp) {
     return null;
-  }
-
-  if (!isGuest && setup.status !== 'ready') {
-    return (
-      <div className="relative mx-auto flex h-screen w-full max-w-2xl flex-col items-center justify-center gap-3 border-x border-border px-6 text-center lg:max-w-none lg:border-x-0">
-        {setup.status === 'error' ? (
-          <>
-            <Text variant="bodyStrong" className="block">
-              We couldn&apos;t finish setting up your account
-            </Text>
-            <Text variant="caption" color="textSecondary" className="block">
-              We&apos;ll try again next time you open the app — your wallet and funds are safe.
-            </Text>
-          </>
-        ) : (
-          <>
-            <div className="h-6 w-6 animate-spin rounded-full border-2 border-accent border-t-transparent" />
-            <Text variant="bodyStrong" className="block">
-              Setting up your account…
-            </Text>
-            <Text variant="caption" color="textSecondary" className="block">
-              Creating your wallet and enabling trading. This only happens once.
-            </Text>
-          </>
-        )}
-      </div>
-    );
   }
 
   return (

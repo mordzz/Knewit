@@ -4,13 +4,13 @@ import { useAddFunds } from '@privy-io/react-auth';
 import { useQueryClient } from '@tanstack/react-query';
 import { useWalletBalance } from '@/features/wallet/hooks/useWalletBalance';
 import { useSession } from '@/hooks/useSession';
-import { POLYGON_CAIP2, POLYGON_USDC_E } from '@/features/wallet/lib/walletService';
+import { getDepositWallet, POLYGON_CAIP2, POLYGON_USDC_E } from '@/features/wallet/lib/walletService';
 import { creditGuestFunds } from '@/lib/guest/guestBackend';
 import { tradingEnabled, tradingUnavailableMessage } from '@/lib/tradingAvailability';
 
 /**
  * Opens Privy's own funding flow (`useAddFunds` — fiat card on-ramp and
- * crypto deposit in one modal) with this app's embedded wallet on Polygon
+ * crypto deposit in one modal) with this app's Polymarket Deposit Wallet
  * as the destination, in USDC.e — the collateral the trading flow spends
  * (docs/WALLET.md, "Deposit"). After the flow resolves, the balance and
  * positions queries are invalidated so the new funds appear as soon as
@@ -42,9 +42,13 @@ export function useDeposit() {
       return;
     }
     if (!address) throw new Error('Connect a wallet before depositing.');
+    const depositWallet = await getDepositWallet();
+    if (depositWallet.unavailable || !depositWallet.address) {
+      throw new Error('Your trading wallet is not ready yet. Please wait a moment and try again.');
+    }
     await addFunds({
-      destination: { address, chain: POLYGON_CAIP2, asset: collateral },
-      fiat: { source: { assets: ['usd'] } },
+      destination: { address: depositWallet.address, chain: POLYGON_CAIP2, asset: collateral },
+      fiat: {},
       crypto: {},
     });
     await queryClient.invalidateQueries({ queryKey: ['wallet-balance'] });

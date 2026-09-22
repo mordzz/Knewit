@@ -18,6 +18,7 @@ import { useWalletBalance } from '@/features/wallet/hooks/useWalletBalance';
 import { useDeposit } from '@/features/wallet/hooks/useDeposit';
 import { useWithdraw } from '@/features/wallet/hooks/useWithdraw';
 import { isUserCancelledFunding } from '@/features/wallet/utils/privyErrors';
+import { getDepositErrorMessage, logDepositFailure } from '@/features/wallet/utils/depositErrors';
 import { usePositions } from '@/features/portfolio/hooks/usePositions';
 import { useSellPosition } from '@/features/portfolio/hooks/useSellPosition';
 import { useWallet } from '@/hooks/useWallet';
@@ -101,8 +102,8 @@ export function WalletScreen() {
       await deposit();
     } catch (depositFailure) {
       if (isUserCancelledFunding(depositFailure)) return; // closing Privy's modal is not a failure
-      if (__DEV__) console.warn('[wallet] deposit flow failed', depositFailure);
-      setDepositError("Couldn't open the deposit flow. Please try again.");
+      logDepositFailure(depositFailure);
+      setDepositError(getDepositErrorMessage(depositFailure));
     } finally {
       setIsDepositing(false);
     }

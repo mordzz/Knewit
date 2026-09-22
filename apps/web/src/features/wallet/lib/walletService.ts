@@ -18,9 +18,20 @@ export interface WalletBalance {
   unavailable?: boolean;
 }
 
+export interface DepositWallet {
+  address: string | null;
+  walletType: number | null;
+  unavailable?: boolean;
+}
+
 /** Web equivalent of `apps/mobile/src/features/wallet/services/walletService.ts`. */
 export async function getWalletBalance(): Promise<WalletBalance> {
   return apiRequest<WalletBalance>('/api/wallet/balance');
+}
+
+/** Resolves the Polymarket account that actually holds trading collateral. */
+export async function getDepositWallet(): Promise<DepositWallet> {
+  return apiRequest<DepositWallet>('/api/wallet/deposit-wallet');
 }
 
 /** Polygon mainnet, CAIP-2 — the deposit destination chain. */

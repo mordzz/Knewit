@@ -21,6 +21,7 @@ export const endpoints = {
   position: (marketId: string) => `/positions/${marketId}`,
   tradingOrders: '/trading/orders',
   walletBalance: '/wallet/balance',
+  walletDeposit: '/wallet/deposit-wallet',
   feed: '/feed',
   feedFollowing: '/feed/following',
   feedTrending: '/feed/trending',

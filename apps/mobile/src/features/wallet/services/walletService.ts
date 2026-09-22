@@ -18,9 +18,20 @@ export interface WalletBalance {
   unavailable?: boolean;
 }
 
+export interface DepositWallet {
+  address: string | null;
+  walletType: number | null;
+  unavailable?: boolean;
+}
+
 /** Mobile client for the wallet API in `apps/web`. */
 export async function getWalletBalance(): Promise<WalletBalance> {
   return apiRequest<WalletBalance>(endpoints.walletBalance);
+}
+
+/** Resolves the Polymarket wallet that holds the user's trading collateral. */
+export async function getDepositWallet(): Promise<DepositWallet> {
+  return apiRequest<DepositWallet>(endpoints.walletDeposit);
 }
 
 /** USDC.e on Polygon — the collateral the trading flow spends. Same value

@@ -15,6 +15,7 @@ import { useFollowingFeed } from '@/features/home/hooks/useFollowingFeed';
 import { useWalletBalance } from '@/features/wallet/hooks/useWalletBalance';
 import { useDeposit } from '@/features/wallet/hooks/useDeposit';
 import { isUserCancelledFunding } from '@/features/wallet/utils/privyErrors';
+import { getDepositErrorMessage, logDepositFailure } from '@/features/wallet/utils/depositErrors';
 import { navigateToMarketDetail } from '@/features/markets/utils/openMarketDetail';
 import { useAuth } from '@/hooks/useAuth';
 import { useWallet } from '@/hooks/useWallet';
@@ -282,8 +283,8 @@ function Header() {
       await deposit();
     } catch (depositFailure) {
       if (isUserCancelledFunding(depositFailure)) return; // closing Privy's modal is not a failure
-      if (__DEV__) console.warn('[home] deposit flow failed', depositFailure);
-      setDepositError("Couldn't open the deposit flow. Please try again.");
+      logDepositFailure(depositFailure);
+      setDepositError(getDepositErrorMessage(depositFailure));
     } finally {
       setIsDepositing(false);
     }

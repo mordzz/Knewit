@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useDeposit } from '@/features/wallet/hooks/useDeposit';
 import { isUserCancelledFunding } from '@/features/auth/lib/privyErrors';
+import { getDepositErrorMessage, logDepositFailure } from '@/features/wallet/lib/depositErrors';
 
 /**
  * The loading/error wrapper around `useDeposit`'s bare `deposit()` call —
@@ -21,8 +22,8 @@ export function useDepositFlow() {
       await deposit();
     } catch (error) {
       if (isUserCancelledFunding(error)) return; // closing Privy's modal is not a failure
-      console.error('Deposit flow failed:', error);
-      setDepositError("Couldn't open the deposit flow. Please try again.");
+      logDepositFailure(error);
+      setDepositError(getDepositErrorMessage(error));
     } finally {
       setIsDepositing(false);
     }
