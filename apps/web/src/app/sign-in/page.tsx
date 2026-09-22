@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useLoginWithEmail, useLoginWithOAuth, usePrivy } from '@privy-io/react-auth';
+import { useLoginWithEmail, useLoginWithOAuth } from '@privy-io/react-auth';
 import { FcGoogle } from 'react-icons/fc';
 import { FaXTwitter } from 'react-icons/fa6';
 import { CodeInput } from '@/components/ui/CodeInput';
@@ -50,7 +50,6 @@ import { useGuestStore } from '@/lib/guest/guestStore';
  */
 export default function SignInPage() {
   const router = useRouter();
-  const { user } = usePrivy();
   const enterGuest = useGuestStore((state) => state.enterGuest);
   const isGuest = useGuestStore((state) => state.isGuest);
   const [email, setEmail] = useState('');
@@ -64,22 +63,20 @@ export default function SignInPage() {
     return () => clearTimeout(timer);
   }, [resendSeconds]);
 
-  // Login succeeded but the wallet may still be being created (Privy's
-  // `createOnLogin` runs as part of the login) — stay on this screen and
-  // say so instead of redirecting into the app mid-setup (docs/DECISIONS.md,
-  // "Sign-In Waits for Account Setup Before Entering").
-  useEffect(() => {
-    if (!isPreparing) return;
-    if (user?.wallet?.address) router.replace('/callouts');
-  }, [isPreparing, user?.wallet?.address, router]);
-
   // Guest mode is a session too — leave this screen as soon as it starts,
   // the same way a completed Privy login does.
   useEffect(() => {
     if (isGuest) router.replace('/callouts');
   }, [isGuest, router]);
 
-  const beginSetup = () => setIsPreparing(true);
+  // The authenticated app shell owns the wallet setup gate. Route there as
+  // soon as login completes so it can reconcile Privy's wallet state and
+  // continue setup without relying on this screen's potentially stale user
+  // snapshot to update.
+  const beginSetup = () => {
+    setIsPreparing(true);
+    router.replace('/callouts');
+  };
 
   const { state, sendCode, loginWithCode } = useLoginWithEmail({
     onComplete: beginSetup,

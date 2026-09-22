@@ -1,21 +1,22 @@
 'use client';
 
 import { useState } from 'react';
+import Image from 'next/image';
 import Link from 'next/link';
 import {
   ArrowRight,
   ArrowUpRight,
   BarChart3,
   Bitcoin,
+  BatteryFull,
   ChevronDown,
-  CircleDollarSign,
   Globe2,
-  Search,
+  SignalHigh,
   ShieldCheck,
   TrendingUp,
-  Trophy,
   Users,
   WalletCards,
+  Wifi,
   Zap,
 } from 'lucide-react';
 import { cn } from '@/lib/cn';
@@ -113,137 +114,41 @@ function Chart({ className, yellow = false }: { className?: string; yellow?: boo
   );
 }
 
-function PhoneShell({ children, className, label }: { children: React.ReactNode; className: string; label: string }) {
+function PhoneMockup({ src, alt, className }: { src: string; alt: string; className: string }) {
   return (
     <div
       className={cn(
-        'absolute min-h-[640px] w-[304px] overflow-hidden rounded-[38px] border-[7px] border-landing-ink bg-black text-white',
+        'absolute w-[304px] overflow-hidden rounded-[38px] border-[7px] border-landing-ink bg-black',
         'shadow-[0_24px_60px_oklch(.28_.08_90/.24),0_5px_0_oklch(.33_.02_83)]',
         className
       )}
-      aria-label={label}
     >
-      <div className="flex h-10 items-center justify-between px-5 text-[9px] font-semibold">
-        <span>9:41</span>
-        <span className="h-5 w-[74px] rounded-full bg-white" />
-        <span className="tracking-[-1px]">5G 100%</span>
+      <div
+        aria-hidden="true"
+        className="relative flex h-8 items-center justify-between rounded-t-[31px] bg-[#08090c] px-3 text-white"
+      >
+        <span className="text-[10px] font-semibold leading-none tracking-[0.01em]">9:41</span>
+        <span className="absolute left-1/2 top-1/2 grid h-[19px] w-[76px] -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full border border-white/10 bg-black">
+          <span className="mr-[-40px] size-[6px] rounded-full bg-[#111318] ring-1 ring-white/5" />
+        </span>
+        <span className="flex items-center gap-[3px]">
+          <SignalHigh size={13} strokeWidth={2.2} />
+          <Wifi size={13} strokeWidth={2.2} />
+          <span className="text-[9px] font-semibold leading-none">100%</span>
+          <BatteryFull size={16} strokeWidth={2} />
+        </span>
       </div>
-      {children}
+      <div className="px-[7px] pb-[7px]">
+        <Image
+          src={src}
+          alt={alt}
+          width={393}
+          height={852}
+          sizes="276px"
+          className="block h-auto w-full rounded-b-[24px]"
+        />
+      </div>
     </div>
-  );
-}
-
-function MarketPhone() {
-  return (
-    <PhoneShell
-      className="left-[251px] top-6 z-[2] rotate-[3deg]"
-      label="Knew it market feed preview"
-    >
-      <div className="px-4 pb-4">
-        <div className="flex items-center justify-between border-b border-white/10 pb-3 pt-2">
-          <span className="text-lg font-bold tracking-[-0.03em]">Markets</span>
-          <span className="grid size-8 place-items-center rounded-lg bg-white/10">
-            <Search size={15} />
-          </span>
-        </div>
-        <div className="flex gap-5 border-b border-white/10 py-3 text-[9px] text-white/45">
-          <span className="border-b-2 border-landing-yellow pb-2 font-semibold text-white">Trending</span>
-          <span>Crypto</span>
-          <span>Sports</span>
-          <span>Politics</span>
-        </div>
-        <div className="py-4">
-          <div className="flex items-start gap-3">
-            <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-landing-yellow text-landing-ink">
-              <Bitcoin size={22} />
-            </span>
-            <div>
-              <p className="text-[13px] font-semibold leading-[1.35]">Will Bitcoin reach $150K before 2027?</p>
-              <p className="mt-1 text-[8px] text-white/45">$28.4m volume</p>
-            </div>
-          </div>
-          <div className="mt-4 flex items-end justify-between">
-            <div>
-              <strong className="block text-[32px] leading-none tracking-[-0.04em]">67%</strong>
-              <span className="text-[8px] text-white/45">current chance</span>
-            </div>
-            <Chart className="w-[112px]" yellow />
-          </div>
-          <div className="mt-4 grid grid-cols-2 gap-2 text-center text-[10px] font-semibold">
-            <span className="rounded-lg bg-yes px-3 py-2.5 text-black">Yes 67¢</span>
-            <span className="rounded-lg bg-no px-3 py-2.5">No 33¢</span>
-          </div>
-        </div>
-        <div className="border-t border-white/10 py-4">
-          <div className="flex items-center gap-2">
-            <span className="grid size-8 place-items-center rounded-full bg-white/10 text-[10px] font-bold">AM</span>
-            <div>
-              <p className="text-[9px] font-semibold">Alex Morgan</p>
-              <p className="text-[8px] text-white/40">@alexm · 2h</p>
-            </div>
-          </div>
-          <p className="mt-3 text-[10px] leading-4 text-white/80">Momentum is holding. I&apos;m backing yes while the market is still below 70%.</p>
-          <div className="mt-3 flex gap-5 text-[8px] text-white/40">
-            <span>18 comments</span>
-            <span>126 likes</span>
-          </div>
-        </div>
-        <div className="mt-1 flex justify-around border-t border-white/10 pt-3 text-white/45">
-          <Globe2 size={16} />
-          <BarChart3 size={16} />
-          <Trophy size={16} />
-          <Users size={16} />
-        </div>
-      </div>
-    </PhoneShell>
-  );
-}
-
-function PortfolioPhone() {
-  const positions = [
-    ['Bitcoin $150K', 'YES', '+$284.20'],
-    ['Fed rate cut', 'YES', '+$91.40'],
-    ['Lakers title', 'NO', '-$28.60'],
-  ];
-
-  return (
-    <PhoneShell
-      className="left-[21px] top-[100px] z-[1] min-h-[600px] rotate-[-4deg] opacity-95"
-      label="Knew it portfolio preview"
-    >
-      <div className="px-4 pb-5">
-        <div className="flex items-center justify-between pb-2 pt-2">
-          <span className="text-lg font-bold tracking-[-0.03em]">Portfolio</span>
-          <span className="grid size-8 place-items-center rounded-lg bg-white/10">
-            <WalletCards size={16} />
-          </span>
-        </div>
-        <p className="mt-5 text-[9px] text-white/45">Total balance</p>
-        <p className="mt-1 text-[31px] font-semibold tracking-[-0.04em]">$24,680.42</p>
-        <p className="mt-1 flex items-center gap-1 text-[9px] text-yes">
-          <TrendingUp size={11} /> +$1,240.80 this month
-        </p>
-        <Chart className="mb-3 mt-6" yellow />
-        <div className="flex gap-5 border-b border-white/10 pb-3 text-[9px]">
-          <span className="font-semibold text-white">Positions</span>
-          <span className="text-white/40">Activity</span>
-        </div>
-        <div>
-          {positions.map(([name, side, pnl]) => (
-            <div key={name} className="flex items-center border-b border-white/10 py-3">
-              <span className="grid size-8 place-items-center rounded-lg bg-white/10">
-                <CircleDollarSign size={15} />
-              </span>
-              <div className="ml-2.5">
-                <p className="text-[9px] font-semibold">{name}</p>
-                <p className="mt-0.5 text-[7px] text-white/40">{side} position</p>
-              </div>
-              <strong className={cn('ml-auto text-[9px]', pnl.startsWith('+') ? 'text-yes' : 'text-no')}>{pnl}</strong>
-            </div>
-          ))}
-        </div>
-      </div>
-    </PhoneShell>
   );
 }
 
@@ -251,8 +156,16 @@ function ProductPreview() {
   return (
     <div className="relative h-[670px] w-[580px] shrink-0 max-[1280px]:origin-top max-[1280px]:scale-[.9] max-[1100px]:scale-[.78] max-[900px]:mb-[-65px] max-[640px]:mb-[-190px] max-[640px]:mt-[-45px] max-[640px]:scale-[.62] max-[380px]:mb-[-220px] max-[380px]:scale-[.55]">
       <div className="absolute inset-x-10 bottom-12 h-20 rounded-full bg-[oklch(.48_.08_85/.18)] blur-2xl" aria-hidden="true" />
-      <PortfolioPhone />
-      <MarketPhone />
+      <PhoneMockup
+        src="/mockup1.png"
+        alt="Knewit mobile Callouts feed showing position-backed community posts"
+        className="left-[21px] top-[100px] z-[1] rotate-[-4deg] opacity-95"
+      />
+      <PhoneMockup
+        src="/mockup2.png"
+        alt="Knewit mobile Markets screen showing market categories and outcomes"
+        className="left-[251px] top-6 z-[2] rotate-[3deg]"
+      />
       <div className="absolute bottom-12 left-1/2 z-[3] -translate-x-1/2 flex items-center gap-3 rounded-2xl border border-landing-ink/10 bg-landing-paper px-4 py-3 shadow-[0_16px_35px_oklch(.38_.08_93/.18)]">
         <span className="grid size-9 place-items-center rounded-xl bg-landing-yellow">
           <ShieldCheck size={18} />

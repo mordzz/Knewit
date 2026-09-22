@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { usePrivy, useCreateWallet, useSigners } from '@privy-io/react-auth';
+import { usePrivy, useCreateWallet, useSigners, useUser } from '@privy-io/react-auth';
 import { useQueryClient } from '@tanstack/react-query';
 import { publicEnv } from '@/lib/publicEnv';
 import { useWalletBalance } from '@/features/wallet/hooks/useWalletBalance';
@@ -50,6 +50,7 @@ function markSetupComplete(address: string) {
  */
 export function useAutoWalletSetup(): { status: WalletSetupStatus } {
   const { ready, authenticated, user } = usePrivy();
+  const { refreshUser } = useUser();
   const { createWallet } = useCreateWallet();
   const { addSigners } = useSigners();
   const balance = useWalletBalance();
@@ -58,6 +59,7 @@ export function useAutoWalletSetup(): { status: WalletSetupStatus } {
   const attemptedSigner = useRef(false);
   const [failed, setFailed] = useState(false);
   const [signerGranted, setSignerGranted] = useState(false);
+  const [signerAttempted, setSignerAttempted] = useState(false);
 
   const address = user?.wallet?.address ?? null;
   const signerId = publicEnv.privySignerId;
@@ -65,16 +67,39 @@ export function useAutoWalletSetup(): { status: WalletSetupStatus } {
   useEffect(() => {
     if (!ready || !authenticated || address || attemptedCreation.current) return;
     attemptedCreation.current = true;
-    createWallet().catch((error) => {
-      console.error('Embedded wallet creation failed:', error);
-      setFailed(true);
-    });
-  }, [ready, authenticated, address, createWallet]);
+    let active = true;
+
+    // Privy can finish creating the wallet before the user snapshot exposed
+    // by usePrivy refreshes. Re-read it while setup is active, and once more
+    // when createWallet settles, so the shell gate can observe that wallet
+    // without requiring a full page reload.
+    const refreshTimer = window.setInterval(() => {
+      void refreshUser().catch(() => undefined);
+    }, 3000);
+
+    createWallet()
+      .then(() => refreshUser())
+      .catch(async (error) => {
+        console.error('Embedded wallet creation failed:', error);
+        try {
+          const refreshedUser = await refreshUser();
+          if (active && !refreshedUser.wallet?.address) setFailed(true);
+        } catch {
+          if (active) setFailed(true);
+        }
+      });
+
+    return () => {
+      active = false;
+      window.clearInterval(refreshTimer);
+    };
+  }, [ready, authenticated, address, createWallet, refreshUser]);
 
   useEffect(() => {
     if (attemptedSigner.current || !authenticated || !address || !signerId) return;
     if (!balance.isSuccess || balance.data?.usdc != null) return;
     attemptedSigner.current = true;
+    setSignerAttempted(true);
     addSigners({ address, signers: [{ signerId }] })
       .then(() => {
         setSignerGranted(true);
@@ -85,6 +110,17 @@ export function useAutoWalletSetup(): { status: WalletSetupStatus } {
         setFailed(true);
       });
   }, [authenticated, address, signerId, balance.isSuccess, balance.data, addSigners, queryClient]);
+
+  // If the signer consent call completes on Privy's side but its promise or
+  // the first balance response is stale, re-check the backend authorization
+  // state until the gate sees a usable balance or signerGranted resolves it.
+  useEffect(() => {
+    if (!signerAttempted || !address || signerGranted || balance.data?.usdc != null) return;
+    const refreshTimer = window.setInterval(() => {
+      void queryClient.invalidateQueries({ queryKey: ['wallet-balance'] });
+    }, 4000);
+    return () => window.clearInterval(refreshTimer);
+  }, [signerAttempted, address, signerGranted, balance.data?.usdc, queryClient]);
 
   // A wallet that finished setup before is let straight in; the checks
   // above keep running in the background (a failure then only warns).
@@ -99,6 +135,7 @@ export function useAutoWalletSetup(): { status: WalletSetupStatus } {
 
   let status: WalletSetupStatus;
   if (!authenticated || alreadySetUp) status = 'ready';
+  else if (balance.data?.usdc != null) status = 'ready';
   else if (failed) status = 'error';
   else if (!address) status = 'preparing';
   else status = setupReady ? 'ready' : 'preparing';
