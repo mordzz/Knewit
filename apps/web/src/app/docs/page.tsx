@@ -3,9 +3,9 @@ import Link from 'next/link';
 import { LegalPage, LegalSection } from '@/components/LegalPage';
 
 export const metadata: Metadata = {
-  title: 'Knewit Product Documentation',
+  title: 'Knewit Documentation',
   description:
-    'Complete Knewit product documentation: markets, Callouts, account setup, wallet deposits, portfolio, architecture, and troubleshooting.',
+    'Knewit user guide for markets, Callouts, account setup, wallet deposits, portfolio, and troubleshooting.',
 };
 
 const List = ({ children }: { children: React.ReactNode }) => (
@@ -43,14 +43,13 @@ function DataTable({ headers, rows }: { headers: string[]; rows: React.ReactNode
     </div>
   );
 }
-
 const subheadingClass = 'font-semibold text-landing-ink';
 
 export default function DocsPage() {
   return (
-    <LegalPage title="Knewit Product Documentation" effectiveDate={null}>
+    <LegalPage title="Documentation" effectiveDate={null}>
       <p>
-        Product guide, user workflows, feature status, and a technical overview for the Knewit team.
+        A complete guide to using Knewit, from discovering markets to managing your wallet and sharing a Callout.
         Knewit brings prediction markets, trading positions, a wallet, and social conversation into
         one web experience. Its defining idea is the position-backed Callout: a public opinion with
         visible market context attached.
@@ -59,9 +58,9 @@ export default function DocsPage() {
       <DataTable
         headers={['Document information', 'Details']}
         rows={[
-          ['Version', '0.1'],
-          ['Document date', 'September 22, 2026'],
-          ['Prepared for', 'Product development, product presentation, and team onboarding'],
+          ['Guide scope', 'Markets, positions, Callouts, wallet actions, profiles, and account help.'],
+          ['Who this is for', 'People exploring Knewit, signed-in members, and users with eligible trading access.'],
+          ['How to use this guide', 'Start with the overview, then use the navigation section and troubleshooting table when you need a specific answer.'],
           [
             'Web application',
             <a
@@ -105,6 +104,21 @@ export default function DocsPage() {
             ['Settings and legal', 'Profile editing, wallet actions, Privacy Policy, Terms, and FAQ access.'],
           ]}
         />
+        <h3 className={subheadingClass}>What you will see in a market</h3>
+        <DataTable
+          headers={['Information', 'How to read it']}
+          rows={[
+            ['Question', 'The event or statement the market is asking about. Read it in full before choosing an outcome.'],
+            ['Outcome', 'A possible answer to the market question, such as Yes or No.'],
+            ['Price', 'The current market price for an outcome. It can be viewed as the market’s current probability-style estimate.'],
+            ['Activity', 'Recent interest and movement around the market. Activity can help show how actively a market is being discussed or traded.'],
+            ['Resolution rules', 'The rules and source used to determine the final outcome when they are available.'],
+          ]}
+        />
+        <p>
+          Knewit helps you read and discuss market information. It does not tell you what outcome to choose.
+          Take time to read the question, the resolution rules, and the information shown before you act.
+        </p>
       </LegalSection>
 
       <LegalSection title="2. Users and Access Modes">
@@ -113,8 +127,7 @@ export default function DocsPage() {
           rows={[
             ['Guest', 'Explore the interface and use supported demo flows.', 'Wallet, positions, trades, and supported posts are simulated and are not real transactions.'],
             ['Authenticated user', 'Use account-backed profile and social features.', 'Email, Google, and X sign-in are presented in the UI; successful use depends on Privy deployment and provider configuration.'],
-            ['Trading user', 'Use wallet, balance, position, and trade actions where enabled.', 'Availability depends on wallet setup, backend and market services, regional eligibility, and provider rules.'],
-            ['Admin or operator', 'Operate or monitor application services.', 'An admin panel is not present in the inspected web application.'],
+            ['Trading user', 'Use wallet, balance, position, and trade actions where enabled.', 'Availability depends on wallet setup, market availability, regional eligibility, and provider rules.'],
           ]}
         />
         <h3 className={subheadingClass}>Sign-in flow</h3>
@@ -129,6 +142,20 @@ export default function DocsPage() {
           Guest mode is for product exploration. It does not represent account data or ownership of
           funds or market positions. Public App Store and Google Play downloads are not currently
           available; the responsive web application can be used in a mobile browser.
+        </p>
+        <h3 className={subheadingClass}>Choose the right access mode</h3>
+        <DataTable
+          headers={['If you want to…', 'Use this mode']}
+          rows={[
+            ['Learn the layout and explore example flows', 'Guest mode. Its activity is simulated and can be used to understand the product.'],
+            ['Create a profile, follow people, and participate with your account', 'Sign in with an available provider.'],
+            ['Use wallet or trading actions', 'Sign in, complete any required wallet setup, and confirm that the action is available to you.'],
+          ]}
+        />
+        <p>
+          If wallet setup is still in progress, keep Knewit open briefly. If it does not finish, restart the
+          session and use any safe error code shown by the app when seeking support. Never share passwords,
+          recovery phrases, private keys, or one-time codes.
         </p>
       </LegalSection>
 
@@ -157,6 +184,13 @@ export default function DocsPage() {
           A price near 60¢ is approximately a 60% implied probability, not a guarantee or objective
           forecast. Prices move with market activity; liquidity and order size affect execution.
         </p>
+        <h3 className={subheadingClass}>Before choosing an outcome</h3>
+        <List>
+          <li>Read the wording carefully. Small details such as a date, threshold, location, or source can change what the market resolves to.</li>
+          <li>Review every available outcome so you understand the alternatives.</li>
+          <li>Check the current price and the estimate for your selected amount. A displayed price can change before an order executes.</li>
+          <li>Use only funds and positions you understand. Market prices can move quickly and the value of a position can decrease.</li>
+        </List>
         <h3 className={subheadingClass}>Place or sell a position</h3>
         <List>
           <li>Select a tradeable outcome and enter an amount.</li>
@@ -166,9 +200,14 @@ export default function DocsPage() {
           <li>Selling submits the whole displayed position for market execution; final fill and proceeds can differ from an estimate. Proceeds stay in the trading balance for another trade or withdrawal.</li>
         </List>
         <p>
-          The web trading flow is implemented but has not been verified end-to-end for production
-          execution. Do not assume an order filled unless Knewit and the connected provider report its
-          status. In guest mode, trades only change simulated demo data.
+          Do not assume an order filled until Knewit and the connected provider report its status. In guest mode,
+          trades only change simulated demonstration data.
+        </p>
+        <h3 className={subheadingClass}>After you submit</h3>
+        <p>
+          Submission is not the same as completion. Wait for the status shown by Knewit and the connected service.
+          When a position is visible in Wallet, review its outcome, size, entry price, and current value. Estimated
+          P/L is informational and can change with market price; it is not a promise of the amount you will receive.
         </p>
         <h3 className={subheadingClass}>Publish a Callout and join a discussion</h3>
         <List>
@@ -182,194 +221,275 @@ export default function DocsPage() {
           An attached position supplies context; it is not independent verification, a promise of
           performance, or financial advice. A position may change or close after publication.
         </p>
-        <h3 className={subheadingClass}>Wallet, search, and social features</h3>
+        <h3 className={subheadingClass}>Write useful Callouts</h3>
+        <List>
+          <li>State the idea or evidence behind your view in clear language.</li>
+          <li>Use the attached market and outcome to give readers the context they need.</li>
+          <li>Remember that a Callout remains a personal view, even when it is backed by a position.</li>
+          <li>Keep discussion constructive. Open the Callout to reply, visit the author’s profile, or add a comment to the thread.</li>
+        </List>
+        <h3 className={subheadingClass}>Fund your wallet</h3>
         <p>
-          The Deposit action opens Privy’s card/bank on-ramp directly, without an intermediate
-          deposit-method chooser. It buys native USDC to the user’s embedded wallet, then Knewit
-          converts that asset to Polygon USDC.e and sends it to the Polymarket Deposit Wallet. That is
-          the wallet read by Knewit’s trading balance endpoint. Whether Stripe, MoonPay, or another
-          provider is offered depends on Privy configuration, geography, identity checks, and the
-          selected amount and currency. The embedded signer wallet and Polymarket Deposit Wallet serve
-          different roles; raw embedded-wallet balance is not the trading balance shown in Knewit.
-          On mobile, the Privy Expo flow defaults to card and prefers MoonPay; the provider still has
-          to be enabled for the app and available for the user’s region.
+          Select Deposit from Wallet, Settings, or the app header. Knewit opens the available card or bank
+          purchase flow. The funding provider, payment method, quote, fees, and available currency depend on
+          your location, account eligibility, and the options currently available in the funding screen.
         </p>
         <List>
-          <li>Open Wallet or Settings, or use Deposit in the app header.</li>
-          <li>Select Deposit; the app opens the Privy card/bank purchase flow directly.</li>
-          <li>Review the provider, currency, network, destination, fees, and quote expiration in the provider flow, then confirm there.</li>
-          <li>After purchase, Knewit waits for native USDC to arrive, converts it to USDC.e, and refreshes trading balance. Provider settlement, swap confirmation, and trading-account indexing may take additional time.</li>
+          <li>Open Wallet, Settings, or use Deposit in the app header.</li>
+          <li>Choose Deposit and review the provider, amount, currency, fees, destination, and quote expiration.</li>
+          <li>Confirm the purchase in the funding provider’s flow.</li>
+          <li>Return to Knewit and refresh your Wallet after the provider shows the payment as complete.</li>
         </List>
         <p>
-          A Privy quote request returning HTTP 400 means the provider could not create that quote; it
-          does not by itself mean funds were transferred. Check account/region eligibility and ensure
-          card/bank on-ramp providers are enabled for the Privy app. Browser messages about Apple Pay or Google Pay
-          payment manifests are separate capability warnings and are not proof of a successful or
-          failed blockchain transfer. Never retry a payment if the provider shows it as submitted or
-          pending; first confirm its status to avoid duplicate funding.
+          Your embedded-wallet balance and trading balance can be different because they serve different purposes.
+          Funding, conversion, and balance updates may take time after payment. If the provider shows a payment as
+          submitted or pending, check its status before trying again to avoid a duplicate payment.
         </p>
+        <h3 className={subheadingClass}>Withdraw funds</h3>
         <p>
-          Withdraw asks for a recipient EVM address and USDC amount, then the authenticated backend
-          checks the live Polymarket collateral balance and submits a USDC.e transfer from the
-          Polymarket Deposit Wallet through the official secure client. The delegated Privy signer
-          authorizes the Deposit Wallet transaction; the embedded EOA is not used as the source of
-          trading funds. The app waits for the relayer/Polygon result and displays a confirmed or
-          pending status with a transaction reference when available. Verify the network and recipient
-          carefully; the server validates the address and checks EIP-55 when mixed-case formatting is used, and the user
-          must review the full destination in a final confirmation step. This confirms address format,
-          not ownership or the recipient's ability to access USDC.e. Transfers may be public and irreversible. Embedded wallet balance and trading
-          balance are separate concepts and can differ.
+          Withdraw asks for a recipient wallet address and USDC amount. Review the full destination, network, and
+          amount before you confirm. Knewit can check whether an address is formatted correctly, but that cannot prove
+          who owns it or whether the recipient can access the funds. Transfers may be public and irreversible.
         </p>
+        <h3 className={subheadingClass}>Search, profiles, and following</h3>
         <p>
           Profile usernames must be unique and are separate from display names. Search combines Knewit
           people with Polymarket markets. Following Knewit accounts affects the Following feed; it does
           not subscribe to or copy Polymarket wallet activity. Recent searches are session-scoped, not
           a permanent search history.
         </p>
+        <List>
+          <li>Use Search when you know the market question or person you are looking for.</li>
+          <li>Open a profile to see public information, Callouts, activity, followers, and following.</li>
+          <li>Follow an account to include its Callouts in the Following feed.</li>
+          <li>Open Activity to return to related markets, Callouts, or people you have interacted with.</li>
+        </List>
       </LegalSection>
 
-      <LegalSection title="4. Feature Status">
+      <LegalSection title="4. Reading a Market">
+        <h3 className={subheadingClass}>Start with the question</h3>
         <p>
-          This table describes the web implementation inspected for this document. A route or visible
-          control does not by itself guarantee that every provider, environment, or real-funds flow is
-          configured and available.
+          The market question is the source of truth for what is being discussed. Read the whole sentence before
+          looking at a price. Pay attention to the date, location, threshold, named person or organization, and any
+          condition in the wording. A market can sound familiar while asking a more specific question than expected.
+        </p>
+        <h3 className={subheadingClass}>Review the outcomes</h3>
+        <p>
+          Outcomes are the possible answers offered by the market. Select an outcome only after you understand how
+          it relates to every other option. The displayed price reflects current market activity and may move before
+          an order completes. It is useful context for a decision, but it does not promise a future result.
+        </p>
+        <h3 className={subheadingClass}>Check the resolution rules</h3>
+        <List>
+          <li>Find the rule or source used to determine the outcome, when it is available on the market.</li>
+          <li>Check whether the market is still open and whether the selected outcome is tradeable.</li>
+          <li>Review the current activity and price without assuming that recent movement will continue.</li>
+          <li>Return to the full market detail whenever a card or search result does not give enough context.</li>
+        </List>
+      </LegalSection>
+
+      <LegalSection title="5. Placing a Trade">
+        <h3 className={subheadingClass}>Choose an amount</h3>
+        <p>
+          After selecting a tradeable outcome, enter the amount you want to use. Knewit shows an estimate based on
+          the information available at that time. Review the amount, selected outcome, estimated shares, and price
+          before continuing. Estimates help you understand an order; the final result can differ when the market moves
+          or when there is limited trading interest at that price.
+        </p>
+        <h3 className={subheadingClass}>Review and confirm</h3>
+        <List>
+          <li>Confirm that the market question and outcome match the view you intend to express.</li>
+          <li>Check the amount against your available trading balance.</li>
+          <li>Read the estimate and any confirmation details before authorizing the action.</li>
+          <li>Wait for the displayed status to update. Do not repeat the order while it is pending.</li>
+        </List>
+        <h3 className={subheadingClass}>What happens next</h3>
+        <p>
+          A successful confirmation sends the order for processing. Knewit can show submitted, pending, confirmed,
+          or failed information when it is available. If an order does not complete, use the status shown by Knewit
+          and the connected service to decide what to do next. In guest mode, the same actions update demonstration
+          data only.
+        </p>
+      </LegalSection>
+
+      <LegalSection title="6. Managing Positions">
+        <h3 className={subheadingClass}>Use Wallet to review open positions</h3>
+        <p>
+          Each open position can show the market, outcome, size, entry price, current price when available, and
+          estimated unrealized P/L. These values are designed to help you understand your current exposure. They can
+          change with the market and should not be treated as a final settlement amount.
+        </p>
+        <h3 className={subheadingClass}>Selling a position</h3>
+        <p>
+          Open the relevant position and use the sell action where it is available. Review the market, outcome, and
+          estimate before confirming. A sell order is still subject to market execution, so the final fill and proceeds
+          can differ from the initial estimate. Proceeds remain in the trading balance for another eligible action or
+          withdrawal.
+        </p>
+        <h3 className={subheadingClass}>When a market resolves</h3>
+        <p>
+          A market resolves according to its stated rules and source. A resolved market is no longer a normal open
+          trading decision. Review the final outcome and any resulting position or balance update in Knewit after the
+          connected service reports it.
+        </p>
+      </LegalSection>
+
+      <LegalSection title="7. Creating Callouts">
+        <h3 className={subheadingClass}>What makes a Callout different</h3>
+        <p>
+          A Callout connects a short public view to a position held by its author. The attached market and outcome
+          help readers see the context behind the post. It does not prove that a view is correct, and it does not
+          guarantee that a position remains open after publication.
+        </p>
+        <h3 className={subheadingClass}>Publish step by step</h3>
+        <List>
+          <li>Open the Callout composer after signing in.</li>
+          <li>Write a clear message of up to 280 characters.</li>
+          <li>Select a valid position you hold. Publishing remains unavailable until a position is attached.</li>
+          <li>Read the attached market and outcome one more time, then publish.</li>
+        </List>
+        <h3 className={subheadingClass}>Write for other readers</h3>
+        <p>
+          Explain the observation, question, or reasoning behind your view in language another person can understand.
+          Avoid presenting a market price, a past result, or a Callout as financial advice. Readers can open the
+          attached market, comment, and decide what they think independently.
+        </p>
+      </LegalSection>
+
+      <LegalSection title="8. Community and Profiles">
+        <h3 className={subheadingClass}>Participate in discussion</h3>
+        <p>
+          Open a Callout to like it, comment, reply to another comment, or visit its author’s profile. Comments and
+          replies keep the conversation connected to the original view. Use them to add context, ask a question, or
+          share a considered response.
+        </p>
+        <h3 className={subheadingClass}>Follow people and read feeds</h3>
+        <List>
+          <li>The Trending feed helps you discover active Callouts.</li>
+          <li>The Following feed shows Callouts from Knewit accounts you follow.</li>
+          <li>Following affects Knewit’s social experience only. It does not copy, track, or subscribe to another person’s market activity.</li>
+          <li>Use a public profile to review someone’s Callouts, activity, followers, and following before deciding whether to follow them.</li>
+        </List>
+        <h3 className={subheadingClass}>Your public profile</h3>
+        <p>
+          Your username is unique and separate from your display name. Review profile edits carefully because public
+          profile information can be seen by other Knewit users. You can use Settings to update supported profile
+          details and Activity to revisit actions connected to your account.
+        </p>
+      </LegalSection>
+
+      <LegalSection title="9. Depositing Funds">
+        <h3 className={subheadingClass}>Before you begin</h3>
+        <p>
+          Confirm that you are signed in, your wallet setup is ready, and Deposit is available to your account. The
+          payment options shown in Knewit are determined by the connected provider and can vary by region, currency,
+          payment method, identity checks, and the amount selected.
+        </p>
+        <h3 className={subheadingClass}>Deposit step by step</h3>
+        <List>
+          <li>Open Wallet or Settings, or choose Deposit from the app header.</li>
+          <li>Select the amount and review the provider, currency, fees, destination, and quote expiry.</li>
+          <li>Complete the confirmation in the provider’s payment flow.</li>
+          <li>Check the provider’s final status, then return to Knewit and refresh Wallet.</li>
+        </List>
+        <p>
+          A payment can be completed by the provider before the trading balance updates in Knewit. Allow time for
+          processing and avoid creating another payment while the first one is pending. A quote error does not by
+          itself mean that funds left your account.
+        </p>
+      </LegalSection>
+
+      <LegalSection title="10. Withdrawing Funds">
+        <h3 className={subheadingClass}>Check the destination first</h3>
+        <p>
+          A withdrawal sends USDC to the wallet address you provide. Enter the recipient address and amount, then
+          review every character of the destination and the network shown before confirming. An address can be valid
+          in format without belonging to the person you intended to pay.
+        </p>
+        <h3 className={subheadingClass}>Confirm the transfer</h3>
+        <List>
+          <li>Open Withdraw from the available Wallet or Settings action.</li>
+          <li>Enter the recipient wallet address and requested USDC amount.</li>
+          <li>Review the destination, amount, network, and any confirmation information.</li>
+          <li>Wait for the status and reference shown by Knewit before considering the transfer complete.</li>
+        </List>
+        <p>
+          A blockchain transfer may be public and irreversible. Never withdraw to an address you do not understand
+          or have not verified. If a transfer is pending, keep the reference and wait for the final status rather than
+          submitting the same transfer again.
+        </p>
+      </LegalSection>
+
+      <LegalSection title="11. Search, Activity, and Leaderboard">
+        <h3 className={subheadingClass}>Search</h3>
+        <p>
+          Global search can return both Knewit people and prediction markets. Use a distinctive word from a market
+          question or a username to narrow the result. Recent searches help with the current session and are not a
+          permanent history of everything you searched for.
+        </p>
+        <h3 className={subheadingClass}>Activity</h3>
+        <p>
+          Activity brings related account actions into one place. Open an item from Activity to return to its market,
+          Callout, comment, or profile. Use it as a way to retrace a recent action when you need more context.
+        </p>
+        <h3 className={subheadingClass}>Leaderboard</h3>
+        <p>
+          The Leaderboard is a read-only view of Polymarket’s global all-time volume ranking. Rows represent
+          Polymarket traders rather than Knewit profiles, so the page does not provide Knewit follow actions or a
+          personal profit-and-loss ranking.
+        </p>
+      </LegalSection>
+
+      <LegalSection title="12. Available Features">
+        <p>
+          Knewit features may depend on your account, location, wallet status, and connected service availability.
         </p>
         <DataTable
-          headers={['Feature', 'Status', 'Implementation notes']}
+          headers={['Feature', 'Availability', 'What it does']}
           rows={[
             ['Landing page', 'Available', 'Introduces Knewit, market concepts, product flow, FAQ, and entry points.'],
-            ['Email, Google, and X sign-in', 'UI available; provider-dependent', 'Real authentication requires valid Privy credentials and enabled provider configuration.'],
+            ['Sign-in', 'Provider-dependent', 'Use an available email or social sign-in method to create an account.'],
             ['Guest mode', 'Available as a demonstration', 'Wallet, trade, and supported social activity is simulated; it is not real account or transaction data.'],
-            ['Callouts and social interactions', 'Implemented', 'Feed, position-backed publishing, likes, comments/replies, and following use account-backed services; guest behavior is simulated where supported.'],
-            ['Markets and search', 'Implemented with upstream data', 'Market list and detail depend on Polymarket data and availability; categories follow provider taxonomy.'],
-            ['Wallet and portfolio', 'Implemented; provider-dependent', 'Deposit opens the card/bank on-ramp directly, then converts native USDC to USDC.e in the Polymarket Deposit Wallet. Provider quotes and real trade execution depend on configuration and end-to-end verification.'],
-            ['Activity and profiles', 'Implemented', 'Routes display account activity and profile information backed by application services.'],
+            ['Callouts and social interactions', 'Available', 'Read or publish Callouts, like, comment, reply, and follow other Knewit accounts.'],
+            ['Markets and search', 'Available with live data', 'Browse markets, open details, and search for markets or Knewit people.'],
+            ['Wallet and portfolio', 'Provider-dependent', 'Review balances and positions, then use deposit, withdrawal, and trade actions where enabled.'],
+            ['Activity and profiles', 'Available', 'Review account activity and public profile information.'],
             ['Leaderboard', 'Available; read-only', 'Polymarket global all-time ranking by trading volume; rows are Polymarket traders, not Knewit profiles.'],
             ['Settings and legal pages', 'Available', 'Profile editing, wallet actions, Privacy Policy, Terms, and FAQ link are present.'],
-            ['Admin panel', 'Not present in inspected web app', 'Operations and moderation tools are not exposed as an admin dashboard here.'],
           ]}
         />
-        <h3 className={subheadingClass}>Important validation rules</h3>
+        <h3 className={subheadingClass}>Before you act</h3>
         <List>
-          <li>A Callout needs non-empty text within the character limit and a position owned by the signed-in user.</li>
-          <li>Guest activity must remain distinct from authenticated account and transaction data.</li>
-          <li>Order and transfer success must reflect provider or backend status, not an optimistic UI-only change.</li>
-          <li>Missing wallet values must not be represented as a confirmed zero balance.</li>
-          <li>Market prices, P/L, and balances can change and depend on data freshness and provider availability.</li>
+          <li>Market prices, P/L, and balances can change and depend on data freshness and service availability.</li>
+          <li>Only treat an order, deposit, or withdrawal as complete after Knewit and the connected service show a confirmed status.</li>
+          <li>Guest activity is a simulation and does not represent a real account or transaction.</li>
         </List>
-      </LegalSection>
-
-      <LegalSection title="5. System Architecture">
-        <DataTable
-          headers={['Component', 'Current role']}
-          rows={[
-            ['Web client', 'Next.js App Router and React pages for landing, authentication, markets, social feeds, wallet, and profiles.'],
-            ['Backend for frontend', 'Next.js API routes authenticate requests, apply application rules, normalize upstream data, and return client-facing responses.'],
-            ['Privy', 'Authentication, embedded wallet lifecycle, and wallet authorization/signing flows.'],
-            ['Polymarket services', 'Gamma and related endpoints supply market metadata; CLOB-related services support order-book estimates and trading; Data API supplies the leaderboard; the Deposit Wallet holds trading collateral.'],
-            ['Funding providers', 'Privy on-ramp integrations (such as Stripe or MoonPay when configured) provide account- and region-dependent card/bank quotes; the app converts native USDC to trading collateral after funding.'],
-            ['Supabase', 'Server-side application storage for profiles, Callouts, comments, likes, follows, activity, and related records.'],
-            ['TanStack Query', 'Client-side request state, caching, pagination, and refresh for server data.'],
-            ['Mobile application', 'A separate native client exists in the repository; public app-store release is not available at the time of this document.'],
-          ]}
-        />
-        <h3 className={subheadingClass}>Typical data flow</h3>
-        <List>
-          <li>The client requests application data from a Knewit API route.</li>
-          <li>The server validates the session and checks the caller’s access to the requested action or record.</li>
-          <li>For market data, the server reads or normalizes provider data; social data is read from application storage.</li>
-          <li>For a trade, the server validates the market, outcome, amount, wallet authorization, and applicable availability.</li>
-          <li>The wallet authorizes actions requiring user consent; the backend and provider determine the resulting status.</li>
-          <li>For card/bank purchases, Privy sends native USDC to the embedded wallet; Knewit then swaps it to USDC.e and routes collateral to the Polymarket Deposit Wallet.</li>
-          <li>For withdrawals, the authenticated API validates the recipient, precision, and live collateral balance, then asks the secure Polymarket client to transfer USDC.e from the Deposit Wallet and waits for settlement.</li>
-          <li>After the funding flow resolves, the client invalidates the wallet balance query; provider settlement and blockchain confirmation may take additional time before the trading balance changes.</li>
-          <li>The client refreshes affected balance, position, market, and activity views from authoritative responses.</li>
-        </List>
+        <h3 className={subheadingClass}>Understanding your account views</h3>
         <p>
-          Keep social application logic separate from market data and trade execution. Polymarket’s
-          leaderboard is an external, read-only global ranking: it uses all-time volume only, exposes
-          no Knewit follow state or profile links, and does not rank Knewit users by P/L.
+          The same action can appear in more than one place. Wallet focuses on balances and positions. Activity
+          shows recent actions connected to your account. Your Profile presents the public side of your Knewit
+          identity. Use the view that matches the question you are trying to answer, then open a related item for
+          its full details.
         </p>
       </LegalSection>
 
-      <LegalSection title="6. Data and Security">
-        <h3 className={subheadingClass}>Conceptual data model</h3>
-        <p>This table is a product-level model for discussion, not a promise of exact database column names or schema.</p>
-        <DataTable
-          headers={['Entity', 'Typical information']}
-          rows={[
-            ['User', 'Application identity, unique username, display name, avatar, biography, and timestamps.'],
-            ['Wallet', 'Provider, public wallet address, network, and setup or connection state.'],
-            ['Market cache', 'Provider market ID, question, category, outcomes, prices, status, and update time.'],
-            ['Position and order', 'User, market, outcome, entry or order details, size, provider identifiers, status, and timestamps.'],
-            ['Callout', 'Author, required position reference, text, market context, and creation time.'],
-            ['Comment, like, and follow', 'User relationships and social interaction records with timestamps.'],
-            ['Activity', 'User, activity type, related record, metadata, and creation time.'],
-          ]}
-        />
-        <h3 className={subheadingClass}>Security principles</h3>
+      <LegalSection title="13. Help and Troubleshooting">
+        <h3 className={subheadingClass}>A safe way to troubleshoot</h3>
         <List>
-          <li>Privy manages embedded user wallets; Knewit must not request or expose a user’s private key or recovery phrase.</li>
-          <li>Keep Supabase service-role credentials, Privy server authorization keys, Polymarket builder credentials, and provider secrets in backend environment configuration only.</li>
-          <li>Authenticate and authorize sensitive API actions, including ownership checks for positions and user content.</li>
-          <li>Validate and sanitize Callout, comment, username, and search inputs; apply rate limits and operational logging where appropriate.</li>
-          <li>Verify provider and webhook results before changing order or portfolio state; calculate sensitive transaction values on the server.</li>
-          <li>Public blockchain records can be permanent and cannot be removed by Knewit.</li>
-          <li>Explain market, wallet, legal eligibility, and financial risks before enabling real-money features.</li>
-        </List>
-        <h3 className={subheadingClass}>Order lifecycle reference</h3>
-        <p>
-          The following is a recommended vocabulary for product and engineering discussions. It is a
-          conceptual lifecycle, not a claim that every state is currently surfaced in the Knewit UI.
-        </p>
-        <DataTable
-          headers={['State', 'Meaning']}
-          rows={[
-            ['Draft', 'Order details are being prepared.'],
-            ['Awaiting signature', 'The wallet is waiting for user authorization.'],
-            ['Submitted', 'The order was sent to the market venue.'],
-            ['Partial fill', 'Some, but not all, of the order has executed.'],
-            ['Filled', 'The order has completed execution.'],
-            ['Cancelled or failed', 'The order did not complete; show a safe, useful reason when available.'],
-            ['Resolved', 'The market resolved and the resulting position or payout was reconciled.'],
-          ]}
-        />
-      </LegalSection>
-
-      <LegalSection title="7. Testing and Development Roadmap">
-        <h3 className={subheadingClass}>Minimum verification scenarios</h3>
-        <DataTable
-          headers={['Area', 'Scenarios to cover', 'Expected result']}
-          rows={[
-            ['Authentication', 'Email, configured social providers, guest, logout, expired session.', 'Correct account/session state; no guest data presented as real account data.'],
-            ['Markets', 'Load, category, search, pagination, empty response, and provider error.', 'Current data or clear loading, empty, and retryable error states.'],
-            ['Trading', 'Tradeable outcome, invalid/minimum amount, insufficient funds, retry, and uncertain submission.', 'No duplicate order; UI follows backend/provider status.'],
-            ['Callouts', 'Empty text, 280 characters, over limit, no position, and a position not owned by the user.', 'Invalid submissions are blocked and ownership is enforced server-side.'],
-            ['Wallet and funding', 'Card/bank quote failure, cancellation, pending purchase, native USDC arrival, conversion failure, withdrawal, sale, and balance refresh.', 'Correct destination and network; actionable provider error; no fabricated balance or success; pending actions are not duplicated.'],
-            ['Social', 'Like/unlike, comment/reply, follow/unfollow, and unavailable content.', 'Changes persist once and access rules are respected.'],
-            ['Responsive and accessibility', 'Desktop, tablet, mobile, keyboard navigation, and screen-reader labels.', 'Content remains readable and actions are reachable at each viewport.'],
-            ['Security', 'Unauthenticated requests, wrong-owner access, malicious text, rate limiting, and tampered transaction input.', 'Requests are rejected safely without exposing credentials or secrets.'],
-          ]}
-        />
-        <h3 className={subheadingClass}>Suggested development sequence</h3>
-        <List>
-          <li>Continue stabilizing authentication, wallet setup, and session transitions across web and mobile.</li>
-          <li>Maintain reliable market discovery, detail, search, pagination, and clear loading/empty/error states.</li>
-          <li>Complete and verify the trading pipeline end-to-end in an appropriate environment with traceable order status.</li>
-          <li>Reconcile wallet balances, positions, and transactions against authoritative providers.</li>
-          <li>Strengthen persistence and operational behavior for Callouts, comments, likes, follows, and activity.</li>
-          <li>Define leaderboard scope and metrics before introducing any Knewit-specific ranking.</li>
-          <li>Expand moderation, reporting, audit trails, monitoring, and regional/legal review before broader real-money release.</li>
+          <li>Check the visible status first: pending, confirmed, cancelled, or failed.</li>
+          <li>Refresh the relevant Knewit view after a confirmed action, rather than repeating it immediately.</li>
+          <li>For a payment or transfer, check the provider’s own status and any transaction reference before trying again.</li>
+          <li>If you contact support, include the platform, approximate time, the action you were taking, and any safe error code shown by Knewit.</li>
         </List>
         <h3 className={subheadingClass}>Deposit troubleshooting</h3>
         <DataTable
-          headers={['Symptom', 'Likely area', 'Recommended action']}
+          headers={['What you may see', 'What it usually means', 'What to do']}
           rows={[
-            ['Trading wallet is not ready', 'Polymarket Deposit Wallet provisioning or backend configuration.', 'Wait briefly and retry. If repeated, check backend wallet/relayer configuration and the safe error code; do not send funds to a different address as a workaround.'],
-            ['Privy fiat quote returns 400', 'No supported quote for the current currency, amount, region, destination token/network, or enabled provider.', 'Try a method/currency offered in the funding UI and verify provider enablement and regional eligibility in Privy configuration.'],
-            ['USDC conversion fails after purchase', 'Swap route, signer authorization, gas/relayer availability, or temporary venue issue.', 'Native USDC remains in the embedded wallet; press Deposit again to retry conversion without starting another card purchase.'],
-            ['Payment is pending but balance is unchanged', 'Provider settlement, blockchain confirmation, or trading-account indexing delay.', 'Check the funding provider status and transaction reference; refresh balance after confirmed completion. Avoid creating a duplicate payment while pending.'],
-            ['Apple Pay or Google Pay manifest warning', 'Browser wallet/payment capability check.', 'Treat this as separate from quote status; use the funding provider’s visible result to determine whether payment is available or failed.'],
+            ['Trading wallet is not ready', 'Wallet setup is still in progress.', 'Wait briefly and retry. If it continues, use the safe error code when contacting support; do not send funds to a different address as a workaround.'],
+            ['No funding quote is available', 'The selected amount, currency, region, payment method, or account may not be supported.', 'Try an option shown in the funding screen or check your eligibility with the provider.'],
+            ['A balance has not updated after payment', 'The payment, conversion, or balance update may still be processing.', 'Check the provider status and refresh after it is confirmed. Avoid creating a second payment while the first is pending.'],
+            ['A transfer is pending', 'The transfer has been submitted but is not yet final.', 'Keep the transaction reference, wait for the status to update, and do not submit the same transfer again.'],
+            ['A browser payment warning appears', 'Your browser may be checking whether a payment feature is available.', 'Use the funding provider’s visible result to determine whether a payment succeeded or failed.'],
           ]}
         />
         <p>
@@ -378,19 +498,15 @@ export default function DocsPage() {
           send passwords, one-time codes, private keys, recovery phrases, full payment-card details, or
           unredacted identity documents.
         </p>
-        <h3 className={subheadingClass}>Definition of done</h3>
-        <List>
-          <li>Acceptance criteria and applicable scenarios have been tested.</li>
-          <li>Loading, success, empty, and error states are clear.</li>
-          <li>No secrets or sensitive values appear in client bundles or logs.</li>
-          <li>Desktop and mobile layouts have been checked.</li>
-          <li>API contracts and database changes are documented when applicable.</li>
-          <li>Monitoring and error reporting are in place for production-critical flows.</li>
-          <li>Features involving funds or eligibility show the appropriate disclosures.</li>
-        </List>
+        <h3 className={subheadingClass}>When a market or Callout is unavailable</h3>
+        <p>
+          Markets can close, resolve, or stop accepting new orders. A Callout or profile can also become unavailable
+          if the related content no longer exists or cannot be loaded. Return to the previous screen, refresh once,
+          and search again. If the issue remains, record the title or link of the item before contacting support.
+        </p>
       </LegalSection>
 
-      <LegalSection title="8. Glossary and Further Reading">
+      <LegalSection title="14. Glossary and Further Reading">
         <DataTable
           headers={['Term', 'Definition']}
           rows={[
@@ -404,20 +520,12 @@ export default function DocsPage() {
             ['Trading balance', 'Funds available in the trading system, which can be reported separately from the embedded wallet balance.'],
             ['Transaction hash', 'A public identifier for a submitted blockchain transaction; it does not alone prove successful completion.'],
             ['Guest mode', 'A local product demonstration with simulated wallet and supported trading/social activity.'],
+            ['Market resolution', 'The process that determines the final outcome using the market’s stated rules and source.'],
+            ['Pending', 'An action was submitted and is still waiting for a final result.'],
+            ['Confirmed', 'Knewit and the connected service report that an action completed.'],
+            ['Provider', 'A connected service that may offer sign-in, wallet, payment, or market functionality.'],
           ]}
         />
-        <p>
-          Knewit provides product information and social features, not financial, investment, legal,
-          or tax advice. Market and wallet services have their own terms, eligibility rules, and
-          availability. Use them only where you are legally eligible and review the market rules and
-          transaction details before acting.
-        </p>
-        <p>
-          Read the <Link className="font-semibold text-landing-ink underline" href="/privacy">Privacy Policy</Link>{' '}
-          and <Link className="font-semibold text-landing-ink underline" href="/terms">Terms of Service</Link>.
-          For account or service questions, use an official Knewit support contact if one is provided
-          in the application or on the website.
-        </p>
       </LegalSection>
     </LegalPage>
   );
