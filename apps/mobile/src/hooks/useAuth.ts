@@ -55,11 +55,23 @@ export function useAuth() {
  * or there's no active session, so a missing token degrades to an
  * unauthenticated request rather than failing the whole call.
  */
+const TOKEN_TIMEOUT_MS = 10_000;
+
 export async function getSessionToken(): Promise<string | null> {
   if (!isPrivyConfigured) return null;
+  let timer: ReturnType<typeof setTimeout> | undefined;
   try {
-    return await getPrivyAccessToken();
+    // A session refresh that never settles (e.g. right after a cold
+    // start) would otherwise block every API request behind it.
+    return await Promise.race([
+      getPrivyAccessToken(),
+      new Promise<null>((resolve) => {
+        timer = setTimeout(() => resolve(null), TOKEN_TIMEOUT_MS);
+      }),
+    ]);
   } catch {
     return null;
+  } finally {
+    clearTimeout(timer);
   }
 }

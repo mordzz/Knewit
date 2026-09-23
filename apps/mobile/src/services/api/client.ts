@@ -4,6 +4,10 @@ import { GuestApiError, guestRequest } from '@/services/guest/guestBackend';
 import { isGuestSession } from '@/store/guest/guestStore';
 import type { ApiError } from '@/types/api';
 
+// Without a ceiling, a stalled connection keeps a query in `loading`
+// forever instead of failing into its retry/error state.
+const REQUEST_TIMEOUT_MS = 20_000;
+
 export class ApiRequestError extends Error {
   constructor(
     public status: number,
@@ -38,14 +42,28 @@ export async function apiRequest<T>(path: string, init?: RequestInit): Promise<T
   // `application/json` on it would corrupt the upload.
   const isFormData = typeof FormData !== 'undefined' && init?.body instanceof FormData;
 
-  const response = await fetch(`${env.apiBaseUrl}${path}`, {
-    ...init,
-    headers: {
-      ...(isFormData ? {} : { 'Content-Type': 'application/json' }),
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      ...init?.headers,
-    },
-  });
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+  const callerSignal = init?.signal;
+  const abortFromCaller = () => controller.abort();
+  if (callerSignal?.aborted) controller.abort();
+  callerSignal?.addEventListener('abort', abortFromCaller);
+
+  let response: Response;
+  try {
+    response = await fetch(`${env.apiBaseUrl}${path}`, {
+      ...init,
+      signal: controller.signal,
+      headers: {
+        ...(isFormData ? {} : { 'Content-Type': 'application/json' }),
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        ...init?.headers,
+      },
+    });
+  } finally {
+    clearTimeout(timeout);
+    callerSignal?.removeEventListener('abort', abortFromCaller);
+  }
 
   if (!response.ok) {
     const body = (await response.json().catch(() => null)) as ApiError | null;

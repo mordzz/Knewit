@@ -15,7 +15,7 @@ import { colors, typography } from '@/theme';
 import type { MainTabParamList } from '@/types/navigation';
 import type { MarketListItem } from '@/types/social';
 
-const SKELETON_ROWS = [0, 1, 2, 3];
+const SKELETON_ROWS = [0, 1, 2, 3, 4, 5];
 
 function itemKey(item: MarketListItem): string {
   return item.kind === 'market' ? item.market.id : item.group.id;

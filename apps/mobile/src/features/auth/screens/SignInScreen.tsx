@@ -346,16 +346,10 @@ export function SignInScreen() {
                   label="Sign in as guest"
                   variant="secondary"
                   onPress={enterGuest}
-                  disabled={isOAuthLoading}
                   accessibilityLabel="Sign in as guest"
                   className="w-full bg-white/10"
                 />
               </View>
-
-              <Text variant="micro" color="textTertiary" className="text-center">
-                Guest mode runs a local demo — trades and posts are simulated and nothing is saved
-                to a real account.
-              </Text>
 
               {errorMessage ? (
                 <Text variant="caption" color="danger" className="text-center">
@@ -367,10 +361,10 @@ export function SignInScreen() {
                 Your wallet is securely managed for you. We never see or store your private keys.
               </Text>
               <View className="flex-row justify-center gap-4">
-                <Pressable onPress={() => Linking.openURL(`${env.apiBaseUrl}/terms`)} accessibilityRole="link">
+                <Pressable onPress={() => Linking.openURL(`${env.webBaseUrl}/terms`)} accessibilityRole="link">
                   <Text variant="micro" color="textTertiary" className="underline">Terms</Text>
                 </Pressable>
-                <Pressable onPress={() => Linking.openURL(`${env.apiBaseUrl}/privacy`)} accessibilityRole="link">
+                <Pressable onPress={() => Linking.openURL(`${env.webBaseUrl}/privacy`)} accessibilityRole="link">
                   <Text variant="micro" color="textTertiary" className="underline">Privacy</Text>
                 </Pressable>
               </View>

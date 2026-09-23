@@ -28,7 +28,11 @@ export interface BottomSheetProps {
  */
 export function BottomSheet({ visible, onClose, children }: BottomSheetProps) {
   const { height } = useWindowDimensions();
-  const sheetHeight = height * 0.75;
+  // The sheet is as tall as its content, up to 75% of the screen; past
+  // that the content scrolls. Every layer below only shrinks (never
+  // grows), so the ScrollView takes its content's height until this cap
+  // forces it to scroll.
+  const maxSheetHeight = height * 0.75;
   const [translateY] = useState(() => new Animated.Value(Dimensions.get('window').height));
 
   useEffect(() => {
@@ -46,20 +50,26 @@ export function BottomSheet({ visible, onClose, children }: BottomSheetProps) {
         onPress={onClose}
         accessibilityLabel="Close"
       >
-        <Animated.View className="w-full" style={{ height: sheetHeight, transform: [{ translateY }] }}>
-          <Pressable onPress={(e) => e.stopPropagation()}>
+        <Animated.View
+          className="w-full"
+          style={[
+            { maxHeight: maxSheetHeight },
+            { transform: [{ translateY }] },
+          ]}
+        >
+          <Pressable className="shrink" onPress={(e) => e.stopPropagation()}>
             <View
-              className="p-6"
+              className="shrink p-6"
               style={[
                 solidPanel,
                 { borderTopLeftRadius: 20, borderTopRightRadius: 20, borderBottomWidth: 0 },
               ]}
             >
-              <SafeAreaView edges={['bottom']} className="flex-1">
+              <SafeAreaView edges={['bottom']} className="shrink">
                 <View className="mb-3 h-1 w-9 self-center rounded-full bg-white/20" />
                 <ScrollView
-                  className="flex-1"
-                  contentContainerStyle={{ paddingBottom: 8, flexGrow: 1 }}
+                  className="shrink grow-0"
+                  contentContainerStyle={{ paddingBottom: 8 }}
                   keyboardShouldPersistTaps="handled"
                   showsVerticalScrollIndicator={false}
                 >

@@ -206,12 +206,7 @@ export function MarketDetailScreen() {
             <EventHero event={event.data} onBack={() => navigation.goBack()} />
             <EventPriceChart markets={event.data.markets} />
 
-            <View className="gap-1">
-              <Text variant="bodyStrong">All markets</Text>
-              {event.data.markets.map((child) => (
-                <EventMarketRow key={child.id} market={child} onTrade={() => openTrade(child.id)} />
-              ))}
-            </View>
+            <EventChildMarkets markets={event.data.markets} onTrade={openTrade} limit={6} />
           </View>
 
           <TabRow options={DETAIL_TAB_OPTIONS} value={tab} onChange={setTab} />
@@ -239,6 +234,40 @@ export function MarketDetailScreen() {
         onClose={() => setTradeMarketId(null)}
       />
     </Screen>
+  );
+}
+
+/** "All markets" list of an event — a long list collapses behind
+ * "Show more markets", same as the web detail page on a phone. */
+function EventChildMarkets({
+  markets,
+  onTrade,
+  limit,
+}: {
+  markets: MarketSummary[];
+  onTrade: (childId: string) => void;
+  limit: number;
+}) {
+  const [expanded, setExpanded] = useState(false);
+  const collapsible = markets.length > limit;
+  const visible = collapsible && !expanded ? markets.slice(0, limit) : markets;
+
+  return (
+    <View className="gap-1">
+      <Text variant="bodyStrong" className="pb-1">
+        All markets
+      </Text>
+      {visible.map((child) => (
+        <EventMarketRow key={child.id} market={child} onTrade={() => onTrade(child.id)} />
+      ))}
+      {collapsible ? (
+        <Button
+          variant="ghost"
+          label={expanded ? 'Show fewer markets' : `Show more markets (+${markets.length - limit})`}
+          onPress={() => setExpanded((current) => !current)}
+        />
+      ) : null}
+    </View>
   );
 }
 

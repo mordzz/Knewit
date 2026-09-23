@@ -9,6 +9,8 @@ import { Icon } from "@/components/ui/Icon";
 import { Text } from "@/components/ui/Text";
 import { Modal } from "@/components/ui/Modal";
 import { SOLID_PANEL_CLASS } from "@/components/ui/solidPanel";
+import { useSession } from "@/hooks/useSession";
+import { useGuestStore } from "@/lib/guest/guestStore";
 
 function SettingRow({
   label,
@@ -50,9 +52,29 @@ function SettingRow({
 
 export default function SettingsPage() {
   const { logout } = useLogout();
+  const { isGuest } = useSession();
+  const exitGuest = useGuestStore((state) => state.exitGuest);
   const [logoutOpen, setLogoutOpen] = useState(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [withdrawOpen, setWithdrawOpen] = useState(false);
   const { isBuying, stage, buyError, handleBuyWithCard } = useBuyWithCardFlow();
+
+  const handleLogout = async () => {
+    if (isLoggingOut) return;
+
+    setIsLoggingOut(true);
+    try {
+      if (isGuest) {
+        exitGuest();
+      } else {
+        await logout();
+      }
+      setLogoutOpen(false);
+    } finally {
+      setIsLoggingOut(false);
+    }
+  };
+
   return (
     <main className="mx-auto flex w-full max-w-none flex-col gap-3 px-4 pb-12 pt-4 lg:gap-6 lg:px-0 lg:py-10">
       <div className="flex items-end justify-between gap-4 pb-3 lg:pb-6">
@@ -136,10 +158,11 @@ export default function SettingsPage() {
           </button>
           <button
             type="button"
-            onClick={() => logout()}
-            className="rounded-md bg-danger px-4 py-2 text-sm font-semibold text-white"
+            onClick={handleLogout}
+            disabled={isLoggingOut}
+            className="rounded-md bg-danger px-4 py-2 text-sm font-semibold text-white disabled:opacity-50"
           >
-            Log out
+            {isLoggingOut ? "Logging out…" : "Log out"}
           </button>
         </div>
       </Modal>

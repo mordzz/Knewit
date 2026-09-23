@@ -67,12 +67,14 @@ export function useAutoWalletSetup(): { status: WalletSetupStatus } {
   // This query is enabled by authentication in useWalletBalance above, and
   // invalidation prompts React Query to reconcile transient unavailable data.
   useEffect(() => {
-    if (!isAuthenticated || isConnected) return;
+    // Stops once setup has timed out or failed — otherwise this keeps
+    // re-hitting the backend every 3s for the rest of the session.
+    if (!isAuthenticated || isConnected || setupTimedOut || failed) return;
     const timer = setInterval(() => {
       void queryClient.invalidateQueries({ queryKey: ['wallet-balance'] });
     }, 3000);
     return () => clearInterval(timer);
-  }, [isAuthenticated, isConnected, queryClient]);
+  }, [isAuthenticated, isConnected, setupTimedOut, failed, queryClient]);
 
   useEffect(() => {
     const signerAddress = address;

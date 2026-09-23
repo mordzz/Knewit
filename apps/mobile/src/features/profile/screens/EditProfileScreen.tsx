@@ -1,15 +1,10 @@
 import { useState } from 'react';
-import {
-  ActivityIndicator,
-  Image,
-  KeyboardAvoidingView,
-  Platform,
-  Pressable,
-  View,
-} from 'react-native';
+import { ActivityIndicator, Image, Pressable, View } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
+import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
 import * as ImagePicker from 'expo-image-picker';
 import { Screen } from '@/components/layout/Screen';
+import { useKeyboardPadding } from '@/hooks/useKeyboardPadding';
 import { Text } from '@/components/ui/Text';
 import { Icon } from '@/components/ui/Icon';
 import { Input } from '@/components/ui/Input';
@@ -20,6 +15,7 @@ import { LoadingState } from '@/components/feedback/LoadingState';
 import { useProfile } from '@/features/profile/hooks/useProfile';
 import { useUpdateProfile } from '@/features/profile/hooks/useUpdateProfile';
 import { useUploadProfileImage } from '@/features/profile/hooks/useUploadProfileImage';
+import { UsernameSheet } from '@/features/profile/components/UsernameSheet';
 import { solidPanel } from '@/theme';
 
 const MAX_BIO_LENGTH = 160;
@@ -38,9 +34,16 @@ const HANDLE_RE = /^[a-z0-9_]{3,20}$/;
  */
 export function EditProfileScreen() {
   const navigation = useNavigation();
+  // Always rendered inside a tab stack, so the tab bar already fills the
+  // bottom of the screen under this content.
+  const keyboardPadding = useKeyboardPadding(useBottomTabBarHeight());
   const profile = useProfile();
   const mutation = useUpdateProfile();
   const upload = useUploadProfileImage();
+  // Its own mutation so the username panel's saving/error state never
+  // mixes with the main Save button's.
+  const usernameMutation = useUpdateProfile();
+  const [usernameOpen, setUsernameOpen] = useState(false);
   const [displayName, setDisplayName] = useState('');
   const [handle, setHandle] = useState('');
   const [bio, setBio] = useState('');
@@ -115,6 +118,27 @@ export function EditProfileScreen() {
     );
   }
 
+  /** Saves only the new username — name/bio are sent as they are on the
+   * server, so unsaved edits in the form stay unsaved until Save. */
+  function saveUsername(newHandle: string) {
+    if (profile.status !== 'success') return;
+    usernameMutation.mutate(
+      {
+        displayName: profile.data.displayName,
+        handle: newHandle,
+        bio: profile.data.bio ?? '',
+        avatarUrl,
+        bannerUrl,
+      },
+      {
+        onSuccess: () => {
+          setHandle(newHandle);
+          setUsernameOpen(false);
+        },
+      }
+    );
+  }
+
   function handleSave() {
     if (!canSave) return;
     mutation.mutate(
@@ -124,10 +148,9 @@ export function EditProfileScreen() {
   }
 
   return (
-    <KeyboardAvoidingView
-      className="flex-1"
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-    >
+    // Shrinks the scroll area above the keyboard so lower fields (bio)
+    // can be scrolled into view instead of staying covered.
+    <View className="flex-1 bg-background" style={{ paddingBottom: keyboardPadding }}>
       <Screen scroll contentContainerClassName="gap-3 px-4 pb-8 pt-4">
         <View className="flex-row items-center justify-between">
           <View className="flex-1 flex-row items-center gap-2">
@@ -247,31 +270,32 @@ export function EditProfileScreen() {
 
               <View className="border-b border-white/10" />
 
-              <View>
-                <Text variant="caption" color="textSecondary" className="mb-1">
-                  Username
-                </Text>
-                <View className="flex-row items-center gap-1">
-                  <Text variant="body" color="textTertiary">
-                    @
+              {/* A large, clearly labelled row — the actual editing happens in
+                  UsernameSheet, docked above the keyboard. */}
+              <Pressable
+                onPress={() => {
+                  usernameMutation.reset();
+                  setUsernameOpen(true);
+                }}
+                className="min-h-14 flex-row items-center gap-3 py-1 active:opacity-70"
+                accessibilityRole="button"
+                accessibilityLabel={`Username @${handle}. Change username`}
+              >
+                <View className="flex-1 gap-0.5">
+                  <Text variant="caption" color="textSecondary">
+                    Username
                   </Text>
-                  <Input
-                    value={handle}
-                    onChangeText={(value) => setHandle(value.toLowerCase())}
-                    placeholder="username"
-                    autoCapitalize="none"
-                    autoCorrect={false}
-                    className="flex-1 border-0 bg-transparent px-0"
-                    accessibilityLabel="Username"
-                  />
+                  <Text variant="bodyStrong" numberOfLines={1}>
+                    @{handle}
+                  </Text>
                 </View>
-                <Text
-                  variant="micro"
-                  color={normalizedHandle.length > 0 && !isHandleValid ? 'danger' : 'textTertiary'}
-                >
-                  3-20 lowercase letters, numbers, or underscores.
-                </Text>
-              </View>
+                <View className="flex-row items-center gap-1 rounded-full bg-white/10 px-3.5 py-2">
+                  <Text variant="caption" color="textPrimary">
+                    Change
+                  </Text>
+                  <Icon name="chevron-forward" size={14} color="textSecondary" />
+                </View>
+              </Pressable>
 
               <View className="border-b border-white/10" />
 
@@ -335,19 +359,42 @@ export function EditProfileScreen() {
         <Modal visible={deleteOpen} onClose={() => setDeleteOpen(false)}>
           <Text variant="heading">Delete account?</Text>
           <Text variant="body" color="textSecondary" className="mt-2">
-            This requests deletion of your Knewit account. Blockchain, Privy, and Polymarket records cannot be deleted by Knewit.
+            This requests deletion of your Knewit account. Blockchain, Privy, and Polymarket records
+            cannot be deleted by Knewit.
           </Text>
           <View className="mt-6 flex-row justify-end gap-3">
             <Pressable onPress={() => setDeleteOpen(false)} className="px-4 py-2">
-              <Text variant="body" color="textSecondary">Cancel</Text>
+              <Text variant="body" color="textSecondary">
+                Cancel
+              </Text>
             </Pressable>
-            <Pressable onPress={() => setDeleteOpen(false)} className="rounded-lg bg-danger px-4 py-2">
-              <Text variant="bodyStrong" className="text-white">Request deletion</Text>
+            <Pressable
+              onPress={() => setDeleteOpen(false)}
+              className="rounded-lg bg-danger px-4 py-2"
+            >
+              <Text variant="bodyStrong" className="text-white">
+                Request deletion
+              </Text>
             </Pressable>
           </View>
         </Modal>
       </Screen>
-    </KeyboardAvoidingView>
+
+      {usernameOpen ? (
+        <UsernameSheet
+          currentHandle={handle}
+          saving={usernameMutation.isPending}
+          errorMessage={
+            usernameMutation.isError
+              ? friendlyEditError(usernameMutation.error?.message ?? null)
+              : null
+          }
+          bottomOffset={keyboardPadding}
+          onSave={saveUsername}
+          onClose={() => setUsernameOpen(false)}
+        />
+      ) : null}
+    </View>
   );
 }
 
@@ -358,7 +405,11 @@ function friendlyEditError(message: string | null): string {
   if (/network/i.test(message)) {
     return 'Network error — check your connection and try again.';
   }
-  if (/username is already taken|already used by a polymarket trader|couldn't verify username with polymarket/i.test(message)) {
+  if (
+    /username is already taken|already used by a polymarket trader|couldn't verify username with polymarket/i.test(
+      message
+    )
+  ) {
     return message;
   }
   return "Couldn't save your changes right now. Please try again.";

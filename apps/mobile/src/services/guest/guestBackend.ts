@@ -13,6 +13,7 @@ import type {
   CreateCallInput,
   CreateCommentInput,
   FeedItem,
+  HandleAvailability,
   UpdateProfileInput,
 } from '@/types/social';
 import type { CreateTradeInput } from '@/types/trading';
@@ -277,6 +278,9 @@ function route(
   if (pathname === '/users/suggestions' && method === 'GET') {
     return data.paginate(data.guestSuggestions(state), params.get('cursor') ?? undefined);
   }
+  if (pathname === '/users/handle-available' && method === 'GET') {
+    return guestHandleAvailability(state, params.get('handle') ?? '');
+  }
   if (pathname === '/users/me/images' && method === 'POST') {
     return uploadProfileImage(state, params.get('kind'), rawBody);
   }
@@ -479,7 +483,8 @@ function createComment(state: GuestState, postId: string, body: unknown): Commen
   if (input.parentCommentId) {
     const parent = data.findCommentById(state, input.parentCommentId);
     if (!parent) fail(404, 'not_found', 'Parent comment not found.');
-    if (parent.postId !== postId) fail(400, 'invalid_parent', 'Parent comment must belong to this call.');
+    if (parent.postId !== postId)
+      fail(400, 'invalid_parent', 'Parent comment must belong to this call.');
     parentCommentId = parent.id;
   }
 
@@ -716,6 +721,37 @@ function toggleFollow(state: GuestState, userId: string, following: boolean) {
 
   const followerCount = 128 + (state.followerDeltas[userId] ?? 0) + deltaChange;
   return { following, followerCount };
+}
+
+/** Guest counterpart of `GET /users/handle-available` — same rules as
+ * `updateProfile` below, checked against the sandbox's mock people. */
+function guestHandleAvailability(state: GuestState, rawHandle: string): HandleAvailability {
+  const handle = rawHandle.trim().toLowerCase();
+  if (!/^[a-z0-9_]{3,20}$/.test(handle)) {
+    return {
+      handle,
+      available: false,
+      reason: 'invalid',
+      message: 'Use 3-20 lowercase letters, numbers, or underscores.',
+    };
+  }
+  if (handle === state.profile.handle) {
+    return {
+      handle,
+      available: true,
+      reason: 'current',
+      message: 'This is your current username.',
+    };
+  }
+  if (MOCK_PEOPLE.some((person) => person.handle === handle)) {
+    return {
+      handle,
+      available: false,
+      reason: 'taken',
+      message: 'That username is already taken.',
+    };
+  }
+  return { handle, available: true, reason: null, message: 'Username is available.' };
 }
 
 function updateProfile(state: GuestState, userId: string, body: unknown) {

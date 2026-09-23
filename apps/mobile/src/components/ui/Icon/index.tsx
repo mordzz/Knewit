@@ -25,6 +25,8 @@ export type IconName =
   | 'close'
   | 'checkmark'
   | 'checkmark-circle'
+  | 'close-circle'
+  | 'ellipse-outline'
   | 'chevron-forward'
   | 'chevron-back'
   | 'search'

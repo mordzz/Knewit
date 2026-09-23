@@ -4,12 +4,11 @@ import { getOrCreateUser, resolveTargetUserId } from '@/lib/users';
 import { getSupabase } from '@/lib/supabase';
 import { buildUserProfile, fetchUserProfile } from '@/lib/social';
 import { env } from '@/lib/env';
-import { fetchLeaderboardRowsForUsername } from '@/lib/polymarket/dataApiClient';
+import { HANDLE_RE, isHandleUsedByPolymarketTrader } from '@/lib/handles';
 import type { UpdateProfileInput } from '@/types/social';
 
 const MAX_DISPLAY_NAME_LENGTH = 50;
 const MAX_BIO_LENGTH = 160;
-const HANDLE_RE = /^[a-z0-9_]{3,20}$/;
 
 /** `GET /users/:id` — `:id` accepts the literal `"me"` (docs/API.md).
  * Public read: an unauthenticated caller gets `isFollowing: false`,
@@ -88,27 +87,12 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     const avatarUrl = parseImageField(body.avatarUrl, 'avatarUrl', viewer.avatar_url);
     const bannerUrl = parseImageField(body.bannerUrl, 'bannerUrl', viewer.banner_url);
 
-    if (handle !== viewer.handle) {
-      const leaderboardRows = await fetchLeaderboardRowsForUsername(handle).catch((error: unknown) => {
-        console.warn('[profile] Polymarket username check failed:', error);
-        throw new ApiError(
-          503,
-          'leaderboard_username_check_failed',
-          "Couldn't verify username with Polymarket right now. Please try again."
-        );
-      });
-
-      const normalizedHandle = handle.toLowerCase();
-      const isUsedByTrader = leaderboardRows.some(
-        (row) => row.userName.trim().toLowerCase() === normalizedHandle
+    if (handle !== viewer.handle && (await isHandleUsedByPolymarketTrader(handle))) {
+      throw new ApiError(
+        409,
+        'leaderboard_username_taken',
+        'That username is already used by a Polymarket trader.'
       );
-      if (isUsedByTrader) {
-        throw new ApiError(
-          409,
-          'leaderboard_username_taken',
-          'That username is already used by a Polymarket trader.'
-        );
-      }
     }
 
     const supabase = getSupabase();

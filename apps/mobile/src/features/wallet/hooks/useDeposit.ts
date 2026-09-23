@@ -1,5 +1,5 @@
 import { useFundWallet } from '@privy-io/expo/ui';
-import { polygon } from '@privy-io/expo';
+import { polygon } from '@/app/config/chains';
 import { useQueryClient } from '@tanstack/react-query';
 import { useEffect, useRef, useState } from 'react';
 import { useWallet } from '@/hooks/useWallet';

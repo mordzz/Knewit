@@ -185,6 +185,17 @@ export interface UpdateProfileInput {
   bannerUrl?: string | null;
 }
 
+/** `GET /users/handle-available?handle=` — whether the caller could
+ * switch to this username right now. Advisory: `PATCH /users/me` still
+ * decides, since a handle can be claimed between the check and a save.
+ * `available: null` means the Polymarket name check couldn't run. */
+export interface HandleAvailability {
+  handle: string;
+  available: boolean | null;
+  reason: 'current' | 'invalid' | 'taken' | 'polymarket_trader' | 'unverified' | null;
+  message: string;
+}
+
 /**
  * One row of a Followers/Following list — a smaller shape than
  * `UserProfile` (no bio/counts), since a list of dozens of rows only

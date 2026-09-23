@@ -50,5 +50,7 @@ export const endpoints = {
   following: (id: string) => `/users/${id}/following`,
   follow: (userId: string) => `/users/${userId}/follow`,
   userSuggestions: '/users/suggestions',
+  handleAvailable: (handle: string) =>
+    `/users/handle-available?handle=${encodeURIComponent(handle)}`,
   leaderboard: '/leaderboard',
 } as const;

@@ -80,7 +80,7 @@ export function WalletScreen() {
   const statusMeta = STATUS_COPY[status] ?? STATUS_COPY.disconnected;
 
   const balance = useWalletBalance();
-  const tradingAddress = isGuest ? address : balance.data?.address ?? null;
+  const tradingAddress = isGuest ? address : (balance.data?.address ?? null);
   const positionsQuery = usePositions();
   const positions = positionsQuery.data ?? [];
 
@@ -98,6 +98,21 @@ export function WalletScreen() {
             0
           )
         : null;
+
+  const balanceLabel =
+    balance.isPending && tradingAddress
+      ? '···'
+      : balance.data?.usdc != null
+        ? formatUsd(balance.data.usdc)
+        : '—';
+  const pnlLabel =
+    totalPnl == null
+      ? '—'
+      : totalPnl === 0
+        ? formatUsd(0)
+        : `${totalPnl > 0 ? '+' : '−'}${formatUsd(Math.abs(totalPnl))}`;
+  const pnlColor =
+    totalPnl == null || totalPnl === 0 ? 'textSecondary' : totalPnl > 0 ? 'yes' : 'no';
 
   const handleDeposit = async () => {
     setDepositError(null);
@@ -146,7 +161,7 @@ export function WalletScreen() {
 
   return (
     <Screen scroll className="gap-3 px-0 pt-4">
-      <View className="flex-row items-center gap-2 px-4 pb-3">
+      <View className="flex-row items-center gap-2 px-4">
         <Pressable
           onPress={() => navigation.goBack()}
           accessibilityRole="button"
@@ -164,43 +179,60 @@ export function WalletScreen() {
         </Text>
       </View>
 
-      <View className="flex-row items-center gap-3 border-b border-border px-4 py-3">
-        <Icon
-          name={status === 'connected' ? 'checkmark-circle' : 'alert-circle-outline'}
-          size={18}
-          color={statusMeta.color}
-        />
-        <View className="min-w-0 flex-1 gap-0.5">
-          <Text variant="bodyStrong" color={statusMeta.color} accessibilityLiveRegion="polite">
-            {(isAuthenticated || isGuest) && status === 'connected'
-              ? 'Wallet Connected'
-              : statusMeta.label}
-          </Text>
-          {status === 'connected' && tradingAddress ? (
-            <WalletAddress address={tradingAddress} compact />
-          ) : (
-            <Text variant="caption" color="textSecondary">
-              Setting up automatically — no action needed.
-            </Text>
-          )}
+      {/* Same composition as the web wallet page on a phone: a full-width
+          Balance card, then Open Positions / Unrealized PnL side by side. */}
+      <View className="gap-3 px-4">
+        <StatCard label="Balance" value={balanceLabel} />
+        <View className="flex-row gap-3">
+          <StatCard label="Open Positions" value={String(positions.length)} className="flex-1" />
+          <StatCard
+            label="Unrealized PnL"
+            value={pnlLabel}
+            valueColor={pnlColor}
+            className="flex-1"
+          />
         </View>
-        {status === 'connected' ? (
-          <View className="flex-shrink-0 flex-row gap-2">
+      </View>
+
+      {/* Buttons get their own row: beside the address they squeezed the
+          caption into a narrow multi-line column on phone widths. */}
+      <View className="gap-3 border-y border-border px-4 py-3">
+        <View className="flex-row items-center gap-3">
+          <Icon name="wallet-outline" color={tradingAddress ? 'yes' : 'textTertiary'} />
+          <View className="min-w-0 flex-1">
+            {tradingAddress ? (
+              <WalletAddress address={tradingAddress} compact />
+            ) : (
+              <Text variant="bodyStrong" accessibilityLiveRegion="polite">
+                {status === 'error' ? statusMeta.label : 'Setting up your wallet…'}
+              </Text>
+            )}
+            <Text variant="caption" color="textSecondary">
+              {tradingAddress
+                ? 'Polymarket trading wallet · balance and funds shown here'
+                : 'Resolving your trading wallet…'}
+            </Text>
+          </View>
+        </View>
+        {tradingAddress ? (
+          <View className="flex-row gap-2">
             <Button
-              label={isGuest ? 'Add demo funds' :
-                depositStage === 'converting'
-                  ? 'Converting…'
-                  : depositStage === 'waiting'
-                    ? 'Waiting…'
-                    : depositStage === 'buying'
-                      ? 'Depositing…'
-                      : 'Deposit'
+              label={
+                isGuest
+                  ? 'Add demo funds'
+                  : depositStage === 'converting'
+                    ? 'Converting…'
+                    : depositStage === 'waiting'
+                      ? 'Waiting…'
+                      : depositStage === 'buying'
+                        ? 'Depositing…'
+                        : 'Deposit'
               }
               variant="primary"
               loading={isDepositing}
               onPress={handleDeposit}
               accessibilityLabel={isGuest ? 'Add demo funds' : 'Deposit'}
-              className="min-h-0 px-3 py-2"
+              className="min-h-0 flex-1 px-3 py-2"
             />
             <Button
               label="Withdraw"
@@ -212,7 +244,7 @@ export function WalletScreen() {
                 setWithdrawOpen(true);
               }}
               accessibilityLabel="Withdraw"
-              className="min-h-0 px-3 py-2"
+              className="min-h-0 flex-1 px-3 py-2"
             />
           </View>
         ) : null}
@@ -224,72 +256,80 @@ export function WalletScreen() {
         </Text>
       ) : null}
 
-      <View className="flex-row items-start justify-between gap-3 border-b border-border px-4 py-3">
-        <View className="flex-1 gap-0.5">
-          <Text variant="caption" color="textSecondary">
-            Balance
-          </Text>
-          <Text variant="title" className="text-3xl font-bold">
-            {balance.isPending && status === 'connected'
-              ? '···'
-              : balance.data?.usdc != null
-                ? formatUsd(balance.data.usdc)
-                : '—'}
-          </Text>
-          {status === 'connected' && balance.data?.usdc == null && !balance.isPending ? (
-            <Text variant="micro" color="textTertiary">
-              Trading setup is still finishing — it completes automatically.
-            </Text>
-          ) : null}
-        </View>
-      </View>
-
       {depositError ? (
         <Text variant="caption" color="danger" className="px-4">
           {depositError}
         </Text>
       ) : null}
 
-      <Modal visible={withdrawOpen} onClose={() => { setWithdrawOpen(false); setConfirmingWithdraw(false); }}>
+      <Modal
+        visible={withdrawOpen}
+        onClose={() => {
+          setWithdrawOpen(false);
+          setConfirmingWithdraw(false);
+        }}
+      >
         <Text variant="heading">Withdraw USDC</Text>
         <Text variant="body" color="textSecondary" className="mt-2">
           Send funds from your trading balance to a Polygon wallet.
         </Text>
-        {!confirmingWithdraw && !withdrawResult ? <TextInput
-          value={recipient}
-          onChangeText={setRecipient}
-          placeholder="Polygon wallet address"
-          placeholderTextColor="#6B7280"
-          autoCapitalize="none"
-          className="mt-5 rounded-lg border border-border bg-surface px-3 py-3 text-white"
-        /> : null}
+        {!confirmingWithdraw && !withdrawResult ? (
+          <TextInput
+            value={recipient}
+            onChangeText={setRecipient}
+            placeholder="Polygon wallet address"
+            placeholderTextColor="#6B7280"
+            autoCapitalize="none"
+            className="mt-5 rounded-lg border border-border bg-surface px-3 py-3 text-white"
+          />
+        ) : null}
         {confirmingWithdraw && !withdrawResult ? (
           <View className="mt-5 gap-2 rounded-lg border border-border bg-surface p-3">
             <Text variant="bodyStrong">Review withdrawal</Text>
-            <Text variant="caption" color="textSecondary">Network: Polygon</Text>
-            <Text variant="caption" color="textSecondary">Asset: USDC.e</Text>
-            <Text variant="caption" className="font-mono">{recipient.trim()}</Text>
-            <Text variant="caption" color="textSecondary">Amount: {amount.trim()} USDC.e</Text>
-            <Text variant="caption" color="danger">Check the address and network. Transfers can't be reversed.</Text>
+            <Text variant="caption" color="textSecondary">
+              Network: Polygon
+            </Text>
+            <Text variant="caption" color="textSecondary">
+              Asset: USDC.e
+            </Text>
+            <Text variant="caption" className="font-mono">
+              {recipient.trim()}
+            </Text>
+            <Text variant="caption" color="textSecondary">
+              Amount: {amount.trim()} USDC.e
+            </Text>
+            <Text variant="caption" color="danger">
+              Check the address and network. Transfers can&apos;t be reversed.
+            </Text>
           </View>
         ) : null}
-        {!confirmingWithdraw && !withdrawResult ? <TextInput
-          value={amount}
-          onChangeText={setAmount}
-          placeholder="Amount (USDC.e)"
-          placeholderTextColor="#6B7280"
-          keyboardType="decimal-pad"
-          className="mt-3 rounded-lg border border-border bg-surface px-3 py-3 text-white"
-        /> : null}
+        {!confirmingWithdraw && !withdrawResult ? (
+          <TextInput
+            value={amount}
+            onChangeText={setAmount}
+            placeholder="Amount (USDC.e)"
+            placeholderTextColor="#6B7280"
+            keyboardType="decimal-pad"
+            className="mt-3 rounded-lg border border-border bg-surface px-3 py-3 text-white"
+          />
+        ) : null}
         {withdrawError ? (
           <Text variant="caption" color="danger" className="mt-3">
             {withdrawError}
           </Text>
         ) : null}
         {withdrawResult ? (
-          <Text variant="caption" color={withdrawResult.status === 'confirmed' ? 'yes' : 'accent'} className="mt-3">
-            {withdrawResult.status === 'confirmed' ? 'Withdrawal confirmed.' : 'Withdrawal pending. Wait for confirmation before trying again.'}
-            {withdrawResult.transactionHash ? ` Transaction: ${withdrawResult.transactionHash}` : ''}
+          <Text
+            variant="caption"
+            color={withdrawResult.status === 'confirmed' ? 'yes' : 'accent'}
+            className="mt-3"
+          >
+            {withdrawResult.status === 'confirmed'
+              ? 'Withdrawal confirmed.'
+              : 'Withdrawal pending. Wait for confirmation before trying again.'}
+            {withdrawResult.transactionHash
+              ? ` Transaction: ${withdrawResult.transactionHash}`
+              : ''}
             {withdrawResult.transactionId ? ` Relayer ID: ${withdrawResult.transactionId}` : ''}
           </Text>
         ) : null}
@@ -306,7 +346,9 @@ export function WalletScreen() {
             }}
             className="px-4 py-2"
           >
-            <Text variant="body" color="textSecondary">{withdrawResult ? 'Close' : confirmingWithdraw ? 'Back' : 'Cancel'}</Text>
+            <Text variant="body" color="textSecondary">
+              {withdrawResult ? 'Close' : confirmingWithdraw ? 'Back' : 'Cancel'}
+            </Text>
           </Pressable>
           <Pressable
             disabled={isWithdrawing || Boolean(withdrawResult)}
@@ -314,7 +356,9 @@ export function WalletScreen() {
               if (isWithdrawing) return;
               if (!confirmingWithdraw) {
                 if (!/^0x[a-fA-F0-9]{40}$/.test(recipient.trim())) {
-                  setWithdrawError('Enter a valid Polygon wallet address. Check the address and its checksum.');
+                  setWithdrawError(
+                    'Enter a valid Polygon wallet address. Check the address and its checksum.'
+                  );
                   return;
                 }
                 setWithdrawError(null);
@@ -335,7 +379,13 @@ export function WalletScreen() {
             className={`rounded-lg bg-accent px-4 py-2 ${isWithdrawing ? 'opacity-50' : ''}`}
           >
             <Text variant="bodyStrong" className="text-black">
-              {isWithdrawing ? 'Submitting…' : withdrawResult ? 'Submitted' : confirmingWithdraw ? 'Confirm withdrawal' : 'Review withdrawal'}
+              {isWithdrawing
+                ? 'Submitting…'
+                : withdrawResult
+                  ? 'Submitted'
+                  : confirmingWithdraw
+                    ? 'Confirm withdrawal'
+                    : 'Review withdrawal'}
             </Text>
           </Pressable>
         </View>
@@ -345,6 +395,12 @@ export function WalletScreen() {
         <Text variant="caption" color={sellNotice.tone} className="px-4">
           {sellNotice.message}
         </Text>
+      ) : null}
+
+      {status === 'connected' && positions.length > 0 ? (
+        <View className="px-4">
+          <AllocationPanel positions={positions} />
+        </View>
       ) : null}
 
       {status !== 'connected' ? (
@@ -358,63 +414,32 @@ export function WalletScreen() {
           message="Couldn't load your positions."
           onRetry={() => positionsQuery.refetch()}
         />
+      ) : positionsQuery.isPending ? (
+        <View className="items-center py-12">
+          <ActivityIndicator accessibilityLabel="Loading positions" />
+        </View>
+      ) : positions.length === 0 ? (
+        <EmptyState
+          icon="trending-up-outline"
+          title="No positions yet"
+          message="Positions you take on markets will show up here."
+        />
       ) : (
-        <>
-          <View className="flex-row border-b border-border px-4 py-3">
-            <View className="flex-1 gap-0.5">
-              <Text variant="caption" color="textSecondary">
-                Open Positions
-              </Text>
-              <Text variant="title" className="text-3xl font-bold">{positions.length}</Text>
+        <View>
+          {positions.map((position, index) => (
+            <View key={position.id}>
+              <PositionRow
+                position={position}
+                onSell={() => {
+                  setSellNotice(null);
+                  sell.reset();
+                  setSellTarget(position);
+                }}
+              />
+              {index < positions.length - 1 ? <Divider /> : null}
             </View>
-            <View className="flex-1 gap-0.5">
-              <Text variant="caption" color="textSecondary">
-                Unrealized PnL
-              </Text>
-              <Text
-                variant="title"
-                className="text-3xl font-bold"
-                color={
-                  totalPnl == null || totalPnl === 0 ? 'textSecondary' : totalPnl > 0 ? 'yes' : 'no'
-                }
-              >
-                {totalPnl == null
-                  ? '—'
-                  : totalPnl === 0
-                    ? formatUsd(0)
-                    : `${totalPnl > 0 ? '+' : '−'}${formatUsd(Math.abs(totalPnl))}`}
-              </Text>
-            </View>
-          </View>
-
-          {positions.length > 0 ? <AllocationPanel positions={positions} /> : null}
-
-          {positionsQuery.isPending ? (
-            <View className="items-center py-12">
-              <ActivityIndicator accessibilityLabel="Loading positions" />
-            </View>
-          ) : positions.length === 0 ? (
-            <EmptyState
-              icon="trending-up-outline"
-              title="No positions yet"
-              message="Positions you take on markets will show up here."
-            />
-          ) : (
-            positions.map((position, index) => (
-              <View key={position.id}>
-                <PositionRow
-                  position={position}
-                  onSell={() => {
-                    setSellNotice(null);
-                    sell.reset();
-                    setSellTarget(position);
-                  }}
-                />
-                {index < positions.length - 1 ? <Divider /> : null}
-              </View>
-            ))
-          )}
-        </>
+          ))}
+        </View>
       )}
 
       {isGuest ? (
@@ -473,8 +498,8 @@ export function WalletScreen() {
               </View>
             </View>
             <Text variant="caption" color="textSecondary">
-              Sells the whole position at market. Final price is set when it fills; proceeds stay
-              in your trading balance for another trade or withdrawal.
+              Sells the whole position at market. Final price is set when it fills; proceeds stay in
+              your trading balance for another trade or withdrawal.
             </Text>
             {sell.isError ? (
               <Text variant="caption" color="danger">
@@ -514,40 +539,118 @@ export function WalletScreen() {
   );
 }
 
+/** Web's `CARD_SURFACE_CLASS`: rounded, faint white edge, near-black fill. */
+const cardSurface = {
+  overflow: 'hidden' as const,
+  borderRadius: 18,
+  borderWidth: 1,
+  borderColor: 'rgba(255,255,255,0.14)',
+  backgroundColor: 'rgba(14,15,19,0.88)',
+};
+
+function StatCard({
+  label,
+  value,
+  valueColor,
+  className,
+}: {
+  label: string;
+  value: string;
+  valueColor?: 'yes' | 'no' | 'textSecondary';
+  className?: string;
+}) {
+  return (
+    <View style={cardSurface} className={`p-5 ${className ?? ''}`}>
+      <Text variant="caption" color="textSecondary">
+        {label}
+      </Text>
+      <Text
+        variant="title"
+        color={valueColor}
+        className="mt-1 text-3xl"
+        numberOfLines={1}
+        adjustsFontSizeToFit
+        style={{ fontFamily: typography.family.extrabold, fontVariant: ['tabular-nums'] }}
+      >
+        {value}
+      </Text>
+    </View>
+  );
+}
+
+const ALLOCATION_TOP_N = 4;
+
+/** Each open position's share of total position value (current price
+ * when known, entry otherwise) — the largest few plus "+N more". */
 function AllocationPanel({ positions }: { positions: UserPosition[] }) {
-  const values = positions
+  const valued = positions
     .map((position) => ({
       position,
       value: ((position.currentPrice ?? position.entryPrice) / 100) * position.size,
     }))
     .sort((a, b) => b.value - a.value);
-  const total = values.reduce((sum, item) => sum + item.value, 0);
-  if (total <= 0) return null;
-  const top = values.slice(0, 3);
+  const total = valued.reduce((sum, entry) => sum + entry.value, 0);
+  const top = valued.slice(0, ALLOCATION_TOP_N);
+  const restValue = valued.slice(ALLOCATION_TOP_N).reduce((sum, entry) => sum + entry.value, 0);
+  const restCount = valued.length - top.length;
+
   return (
-    <Card contentClassName="gap-3">
+    <View style={cardSurface} className="p-4">
       <View className="flex-row items-center gap-3">
         <Icon name="stats-chart-outline" color="textSecondary" />
         <Text variant="bodyStrong">Allocation</Text>
       </View>
-      <View className="h-3 flex-row overflow-hidden rounded-full bg-surface-elevated">
-        {top.map((item, index) => (
-          <View
-            key={item.position.id}
-            className="h-full bg-accent"
-            style={{ flex: item.value / total, opacity: 1 - index * 0.18 }}
-          />
-        ))}
-      </View>
-      {top.map((item) => (
-        <View key={item.position.id} className="flex-row items-center justify-between gap-2">
-          <Text variant="caption" color="textSecondary" numberOfLines={1} className="flex-1">
-            {item.position.marketQuestion}
-          </Text>
-          <Text variant="caption">{Math.round((item.value / total) * 100)}%</Text>
-        </View>
-      ))}
-    </Card>
+      {total > 0 ? (
+        <>
+          <View className="mt-5 h-3 flex-row overflow-hidden rounded-full bg-surface-elevated">
+            {top.map((entry, index) => (
+              <View
+                key={entry.position.id}
+                className="h-full bg-accent"
+                style={{ flex: entry.value / total, opacity: 1 - index * 0.18 }}
+              />
+            ))}
+            {restCount > 0 ? (
+              <View
+                className="h-full bg-accent"
+                style={{ flex: restValue / total, opacity: 0.25 }}
+              />
+            ) : null}
+          </View>
+          <View className="mt-5 gap-2">
+            {top.map((entry) => (
+              <View key={entry.position.id} className="flex-row items-center justify-between gap-3">
+                <Text
+                  variant="caption"
+                  color="textSecondary"
+                  numberOfLines={1}
+                  className="min-w-0 flex-1"
+                >
+                  {entry.position.marketQuestion}
+                </Text>
+                <Text variant="caption" color="textPrimary">
+                  {Math.round((entry.value / total) * 100)}%
+                </Text>
+              </View>
+            ))}
+            {restCount > 0 ? (
+              <View className="flex-row items-center justify-between gap-3">
+                <Text variant="caption" color="textSecondary">
+                  +{restCount} more
+                </Text>
+                <Text variant="caption" color="textPrimary">
+                  {Math.round((restValue / total) * 100)}%
+                </Text>
+              </View>
+            ) : null}
+          </View>
+        </>
+      ) : (
+        <Text variant="caption" color="textTertiary" className="mt-3">
+          No priced positions yet.
+        </Text>
+      )}
+    </View>
   );
 }
 
@@ -557,68 +660,74 @@ function PositionRow({ position, onSell }: { position: UserPosition; onSell: () 
       ? ((position.currentPrice - position.entryPrice) / 100) * position.size
       : null;
 
+  // Web's phone layout: a 3-column grid — Position / Entry / P/L on the
+  // first row, Size / Current / Sell on the second.
   return (
-    <View className="gap-2 px-4 py-3">
+    <View className="gap-3 px-4 py-3">
       <Text variant="bodyStrong" numberOfLines={2}>
         {position.marketQuestion}
       </Text>
-      <View className="flex-row items-start justify-between gap-4">
-        <View className="flex-1 flex-row flex-wrap gap-3">
-          <View className="w-[28%] gap-0.5">
-            <Text variant="caption" color="textTertiary">
-              Position
-            </Text>
-            <Text
-              variant="bodyStrong"
-              color={choiceTextColor(
-                choiceTone({ index: position.choiceIndex, label: position.outcome })
-              )}
-            >
-              {position.outcome}
-            </Text>
-          </View>
-          <View className="w-[28%] gap-0.5">
-            <Text variant="caption" color="textTertiary">
-              Entry
-            </Text>
-            <Text variant="bodyStrong">{formatProbability(position.entryPrice)}</Text>
-          </View>
-          <View className="w-[28%] gap-0.5">
-            <Text variant="caption" color="textTertiary">
-              Current
-            </Text>
-            <Text variant="bodyStrong">
-              {position.currentPrice != null ? formatProbability(position.currentPrice) : '—'}
-            </Text>
-          </View>
-          <View className="w-[28%] gap-0.5">
-            <Text variant="caption" color="textTertiary">
-              Size
-            </Text>
-            <Text variant="bodyStrong">{position.size}</Text>
-          </View>
-        </View>
-        <View className="items-end gap-0.5">
-          <Text variant="caption" color="textTertiary">
-            P/L
+      <View className="flex-row gap-4">
+        <PositionCell label="Position">
+          <Text
+            variant="bodyStrong"
+            color={choiceTextColor(
+              choiceTone({ index: position.choiceIndex, label: position.outcome })
+            )}
+          >
+            {position.outcome}
           </Text>
+        </PositionCell>
+        <PositionCell label="Entry">
+          <Text variant="bodyStrong">{formatProbability(position.entryPrice)}</Text>
+        </PositionCell>
+        <PositionCell label="P/L" alignEnd>
           <Text
             variant="bodyStrong"
             color={pnl == null ? 'textSecondary' : pnl >= 0 ? 'yes' : 'no'}
           >
             {pnl == null ? '—' : `${pnl >= 0 ? '+' : '−'}${formatUsd(Math.abs(pnl))}`}
           </Text>
+        </PositionCell>
+      </View>
+      <View className="flex-row gap-4">
+        <PositionCell label="Size">
+          <Text variant="bodyStrong">{position.size}</Text>
+        </PositionCell>
+        <PositionCell label="Current">
+          <Text variant="bodyStrong">
+            {position.currentPrice != null ? formatProbability(position.currentPrice) : '—'}
+          </Text>
+        </PositionCell>
+        <View className="flex-1 items-end justify-end">
+          <Button
+            label="Sell"
+            variant="no"
+            onPress={onSell}
+            className="min-h-0 px-4 py-2"
+            accessibilityLabel={`Sell ${position.outcome} position`}
+          />
         </View>
       </View>
-      <View className="flex-row justify-end">
-        <Button
-          label="Sell"
-          variant="no"
-          onPress={onSell}
-          className="min-h-0 px-4 py-2"
-          accessibilityLabel={`Sell ${position.outcome} position`}
-        />
-      </View>
+    </View>
+  );
+}
+
+function PositionCell({
+  label,
+  alignEnd = false,
+  children,
+}: {
+  label: string;
+  alignEnd?: boolean;
+  children: React.ReactNode;
+}) {
+  return (
+    <View className={`flex-1 gap-0.5 ${alignEnd ? 'items-end' : ''}`}>
+      <Text variant="caption" color="textTertiary">
+        {label}
+      </Text>
+      {children}
     </View>
   );
 }

@@ -22,7 +22,8 @@ import { useUserCalls } from '@/features/profile/hooks/useUserCalls';
 import { useUserActivity } from '@/features/profile/hooks/useUserActivity';
 import { useWalletBalance } from '@/features/wallet/hooks/useWalletBalance';
 import { formatUsd } from '@/utils/formatCurrency';
-import { solidPanel } from '@/theme';
+import Svg, { Defs, LinearGradient, Rect, Stop } from 'react-native-svg';
+import { colors, solidPanel, typography } from '@/theme';
 import { navigateToMarketDetail } from '@/features/markets/utils/openMarketDetail';
 import { useAuth } from '@/hooks/useAuth';
 import { ApiRequestError } from '@/services/api/client';
@@ -162,9 +163,12 @@ export function ProfileScreen() {
     else replies.refetch();
   };
 
+  // Same header as the web profile on a phone: full-bleed banner,
+  // overlapping avatar, plain name/handle row (no panel), and a
+  // full-width divider + tab row under the padded content.
   const header = (
-    <View className="gap-3 px-4 pb-3">
-      <View className="z-0 -mx-4 h-32 overflow-hidden bg-surface">
+    <View>
+      <View className="z-0 h-36 w-full overflow-hidden bg-background">
         {user.bannerUrl ? (
           <Image
             source={{ uri: user.bannerUrl }}
@@ -173,16 +177,18 @@ export function ProfileScreen() {
             accessibilityLabel="Profile banner"
           />
         ) : (
-          <>
-            <View
-              className="absolute -left-10 -top-10 h-40 w-40 rounded-full bg-accent"
-              style={{ opacity: 0.12 }}
-            />
-            <View
-              className="absolute -bottom-12 right-0 h-44 w-44 rounded-full bg-accent"
-              style={{ opacity: 0.08 }}
-            />
-          </>
+          <Svg width="100%" height="100%">
+            <Defs>
+              <LinearGradient id="profile-banner" x1="0" y1="0" x2="1" y2="1">
+                {/* react-native-svg ignores rgba alpha in stopColor, so
+                    `accentMuted`'s 15% goes through stopOpacity instead. */}
+                <Stop offset="0%" stopColor={colors.accent} stopOpacity={0.15} />
+                <Stop offset="50%" stopColor={colors.surface} />
+                <Stop offset="100%" stopColor={colors.surfaceElevated} />
+              </LinearGradient>
+            </Defs>
+            <Rect width="100%" height="100%" fill="url(#profile-banner)" />
+          </Svg>
         )}
       </View>
 
@@ -193,11 +199,11 @@ export function ProfileScreen() {
           accessibilityRole="button"
           accessibilityLabel="Open Settings"
         >
-          <Icon name="options-outline" size={22} color="textPrimary" />
+          <Icon name="options-outline" size={20} color="textPrimary" />
         </Pressable>
       ) : null}
 
-      <View className="flex-row items-start justify-between">
+      <View className="flex-row items-start justify-between gap-3 px-4">
         <View className="z-10 -mt-12 rounded-full border-4 border-background bg-background">
           <Avatar uri={user.avatarUrl} fallbackLabel={user.displayName} size={96} />
         </View>
@@ -213,87 +219,88 @@ export function ProfileScreen() {
         ) : null}
       </View>
 
-      <View style={[solidPanel, { borderRadius: 16 }]} className="flex-row items-start justify-between gap-3 p-4">
-        <View className="flex-1 gap-0.5">
-          <Text variant="title">{user.displayName}</Text>
-          <Text variant="caption" color="textSecondary">
-            @{user.handle}
-          </Text>
+      <View className="px-4 pt-2">
+        <View className="flex-row items-start justify-between gap-3">
+          <View className="min-w-0 flex-1">
+            <Text variant="title">{user.displayName}</Text>
+            <Text variant="caption" color="textSecondary">
+              @{user.handle}
+            </Text>
+          </View>
+          {user.isSelf ? (
+            <Pressable
+              onPress={() => navigation.navigate('Wallet')}
+              className="mt-0.5 shrink-0 items-end"
+              accessibilityRole="button"
+              accessibilityLabel="Wallet balance"
+            >
+              <Text
+                variant="bodyStrong"
+                className="text-2xl"
+                style={{ fontFamily: typography.family.extrabold, fontVariant: ['tabular-nums'] }}
+              >
+                {walletBalance.data?.usdc != null ? formatUsd(walletBalance.data.usdc) : '—'}
+              </Text>
+            </Pressable>
+          ) : null}
         </View>
+
+        <Text variant="body" color="textSecondary" className="mt-2">
+          {user.bio ?? 'No bio yet.'}
+        </Text>
+
+        <View className="mt-3 flex-row gap-4 pb-4">
+          <Pressable
+            onPress={() => navigation.navigate('Following', { userId: user.id })}
+            className="flex-row items-baseline gap-1"
+            accessibilityRole="button"
+            accessibilityLabel={`${user.followingCount} following`}
+          >
+            <Text variant="bodyStrong">{formatCompactNumber(user.followingCount)}</Text>
+            <Text variant="caption" color="textSecondary">
+              Following
+            </Text>
+          </Pressable>
+          <Pressable
+            onPress={() => navigation.navigate('Followers', { userId: user.id })}
+            className="flex-row items-baseline gap-1"
+            accessibilityRole="button"
+            accessibilityLabel={`${user.followerCount} followers`}
+          >
+            <Text variant="bodyStrong">{formatCompactNumber(user.followerCount)}</Text>
+            <Text variant="caption" color="textSecondary">
+              Followers
+            </Text>
+          </Pressable>
+        </View>
+
         {user.isSelf ? (
           <Pressable
             onPress={() => navigation.navigate('Wallet')}
-            className="mt-0.5 shrink-0 items-end"
+            className="flex-row items-center gap-3 border-y border-border py-3 active:opacity-90"
             accessibilityRole="button"
-            accessibilityLabel="Wallet balance"
+            accessibilityLabel="Open Wallet & Portfolio"
           >
-            <Text variant="bodyStrong" className="text-xl font-inter-extrabold tabular-nums">
-              {walletBalance.isPending
-                ? '—'
-                : walletBalance.data?.usdc != null
-                  ? formatUsd(walletBalance.data.usdc)
-                  : '—'}
-            </Text>
+            <Icon name="wallet-outline" color="accent" />
+            <View className="flex-1">
+              <Text variant="bodyStrong">Wallet &amp; Portfolio</Text>
+              <Text variant="caption" color="textSecondary">
+                Positions and PnL
+              </Text>
+            </View>
+            <Icon name="chevron-forward" size={18} color="textTertiary" />
           </Pressable>
+        ) : user.walletAddress ? (
+          <View style={[solidPanel, { borderRadius: 16 }]} className="mt-3 gap-1 p-4">
+            <Text variant="caption" color="textSecondary">
+              Wallet
+            </Text>
+            <WalletAddress address={user.walletAddress} />
+          </View>
         ) : null}
       </View>
 
-      <Text variant="body" color="textSecondary">
-        {user.bio ?? 'No bio yet.'}
-      </Text>
-
-      <View className="flex-row gap-4 pb-4">
-        <Pressable
-          onPress={() => navigation.navigate('Following', { userId: user.id })}
-          className="flex-row items-baseline gap-1"
-          accessibilityRole="button"
-          accessibilityLabel={`${user.followingCount} following`}
-        >
-          <Text variant="bodyStrong">{formatCompactNumber(user.followingCount)}</Text>
-          <Text variant="caption" color="textSecondary">
-            Following
-          </Text>
-        </Pressable>
-        <Pressable
-          onPress={() => navigation.navigate('Followers', { userId: user.id })}
-          className="flex-row items-baseline gap-1"
-          accessibilityRole="button"
-          accessibilityLabel={`${user.followerCount} followers`}
-        >
-          <Text variant="bodyStrong">{formatCompactNumber(user.followerCount)}</Text>
-          <Text variant="caption" color="textSecondary">
-            Followers
-          </Text>
-        </Pressable>
-      </View>
-
-      {user.isSelf ? (
-        <Pressable
-          onPress={() => navigation.navigate('Wallet')}
-          className="flex-row items-center gap-3 border-y border-border py-3 active:opacity-90"
-          accessibilityRole="button"
-          accessibilityLabel="Open Wallet & Portfolio"
-        >
-          <Icon name="wallet-outline" color="accent" />
-          <View className="flex-1">
-            <Text variant="bodyStrong">Wallet &amp; Portfolio</Text>
-            <Text variant="caption" color="textSecondary">
-              Positions and PnL
-            </Text>
-          </View>
-          <Icon name="chevron-forward" size={18} color="textTertiary" />
-        </Pressable>
-      ) : user.walletAddress ? (
-        <View style={[solidPanel, { borderRadius: 16 }]} className="gap-1 p-4">
-          <Text variant="caption" color="textSecondary">
-            Wallet
-          </Text>
-          <WalletAddress address={user.walletAddress} />
-        </View>
-      ) : null}
-
       <Divider />
-
       <TabRow options={PROFILE_TAB_OPTIONS} value={tab} onChange={setTab} />
     </View>
   );

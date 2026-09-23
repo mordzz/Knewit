@@ -4,7 +4,11 @@ import { Text } from '@/components/ui/Text';
 import { Icon } from '@/components/ui/Icon';
 import { MarketVisual } from '@/components/ui/MarketVisual';
 import { Skeleton } from '@/components/ui/Skeleton';
+import { Sparkline } from '@/components/ui/Sparkline';
+import { useQuery } from '@tanstack/react-query';
+import { getMarketPriceHistory } from '@/features/markets/services/marketService';
 import { formatCompactUsd } from '@/utils/formatCurrency';
+import { formatTimeRemaining } from '@/utils/formatDate';
 import { typography } from '@/theme';
 import type { MarketChoice } from '@/types/market';
 import type {
@@ -130,11 +134,7 @@ function SingleMarketCard({
       </View>
 
       {market.choices.length === 2 ? (
-        <View className="flex-row gap-2">
-          {market.choices.map((choice) => (
-            <ChoiceBlock key={choice.index} label={choice.label} variant={choice.index % 2 === 0 ? 'primary' : 'secondary'} />
-          ))}
-        </View>
+        <BinaryMarketPreview market={market} />
       ) : (
         <ChoiceList choices={market.choices} />
       )}
@@ -255,21 +255,58 @@ function OutcomeRow({ row, large }: { row: MarketOutcomeRow; large: boolean }) {
 }
 
 /**
- * The binary single-market card's choice-type display — big, square-
- * cornered, and exactly half-width each (`flex-1`), showing only the
- * choice label (Yes/No or a market-specific override), never a price —
- * see docs/DECISIONS.md ("Price Only in Market Detail"). Deliberately
- * not `MiniPill` (small, pill-rounded, meant for a dense outcome-row
- * list) — this card only ever shows one pair of these, so it can afford
- * to be the bigger, more square-cornered treatment the request asked
- * for.
+ * The binary single-market card's preview — same layout as the web
+ * Markets list (`apps/web` `MarketCard`'s `BinaryMarketPreview`): the
+ * first choice's chance and a 1D sparkline side by side, then the two
+ * choice labels as half-width blocks (label only, no price).
  */
-function ChoiceBlock({ label, variant }: { label: string; variant: 'primary' | 'secondary' }) {
+function BinaryMarketPreview({ market }: { market: MarketSummary }) {
+  const firstChoice = market.choices[0];
+  const secondChoice = market.choices[1];
+  const history = useQuery({
+    queryKey: ['market-price-history', market.id, '1D', firstChoice?.price, firstChoice?.index],
+    queryFn: () => getMarketPriceHistory(market.id, '1D', firstChoice!.price, firstChoice!.index),
+    enabled: firstChoice != null,
+    staleTime: 60_000,
+  });
+  if (!firstChoice || !secondChoice) return null;
+
+  const points = history.data?.map((point) => point.price) ?? [];
+  const chance = Math.round(firstChoice.price);
+
   return (
-    <View className={`flex-1 items-center rounded-md px-3 py-2.5 ${variant === 'primary' ? 'bg-accent' : 'border border-border bg-surface-elevated'}`}>
-      <Text variant="bodyStrong" color={variant === 'primary' ? 'textInverse' : 'textPrimary'}>
-        {label}
-      </Text>
+    <View className="gap-2.5">
+      <View className="flex-row items-center gap-3">
+        <View className="min-w-0" style={{ flex: 2 }}>
+          <Text variant="title" style={{ fontVariant: ['tabular-nums'] }}>
+            {chance}%
+          </Text>
+          <Text variant="micro" color="textTertiary">
+            chance
+          </Text>
+        </View>
+        <View className="min-w-0" style={{ flex: 8 }}>
+          {points.length >= 2 ? (
+            <Sparkline points={points} positive={points[points.length - 1]! >= points[0]!} height={48} />
+          ) : market.endDate ? (
+            <Text variant="micro" color="textTertiary" className="text-right">
+              {formatTimeRemaining(market.endDate)}
+            </Text>
+          ) : null}
+        </View>
+      </View>
+      <View className="flex-row gap-2">
+        <View className="flex-1 items-center rounded-md bg-accent px-3 py-2">
+          <Text variant="caption" color="textInverse" numberOfLines={1} style={{ fontFamily: typography.family.semibold }}>
+            {firstChoice.label}
+          </Text>
+        </View>
+        <View className="flex-1 items-center rounded-md border border-white/15 bg-black px-3 py-2">
+          <Text variant="caption" color="textPrimary" numberOfLines={1} style={{ fontFamily: typography.family.semibold }}>
+            {secondChoice.label}
+          </Text>
+        </View>
+      </View>
     </View>
   );
 }

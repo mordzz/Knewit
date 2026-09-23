@@ -10,6 +10,7 @@ import { Modal } from '@/components/ui/Modal';
 import { solidPanel } from '@/theme';
 import { useDeposit } from '@/features/wallet/hooks/useDeposit';
 import { useAuth } from '@/hooks/useAuth';
+import { useGuestStore } from '@/store/guest/guestStore';
 import { isUserCancelledFunding } from '@/features/wallet/utils/privyErrors';
 import { getDepositErrorMessage, logDepositFailure } from '@/features/wallet/utils/depositErrors';
 import { useWithdraw } from '@/features/wallet/hooks/useWithdraw';
@@ -56,7 +57,9 @@ export function SettingsScreen() {
   const navigation = useNavigation();
   const { logout } = usePrivy();
   const { isGuest } = useAuth();
+  const exitGuest = useGuestStore((state) => state.exitGuest);
   const [logoutOpen, setLogoutOpen] = useState(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [depositNotice, setDepositNotice] = useState<string | null>(null);
   const [isDepositing, setIsDepositing] = useState(false);
   const [withdrawOpen, setWithdrawOpen] = useState(false);
@@ -68,7 +71,23 @@ export function SettingsScreen() {
   const [confirmingWithdraw, setConfirmingWithdraw] = useState(false);
   const { deposit } = useDeposit();
   const { withdraw } = useWithdraw();
-  const openWeb = (path: string) => Linking.openURL(`${env.apiBaseUrl}${path}`);
+  const openWeb = (path: string) => Linking.openURL(`${env.webBaseUrl}${path}`);
+
+  const handleLogout = async () => {
+    if (isLoggingOut) return;
+
+    setIsLoggingOut(true);
+    try {
+      if (isGuest) {
+        exitGuest();
+      } else {
+        await logout();
+      }
+      setLogoutOpen(false);
+    } finally {
+      setIsLoggingOut(false);
+    }
+  };
 
   return (
     <Screen scroll contentContainerClassName="gap-6 px-4 pb-10 pt-5">
@@ -162,9 +181,13 @@ export function SettingsScreen() {
               Cancel
             </Text>
           </Pressable>
-          <Pressable onPress={() => logout()} className="rounded-lg bg-danger px-4 py-2">
+          <Pressable
+            onPress={handleLogout}
+            disabled={isLoggingOut}
+            className={`rounded-lg bg-danger px-4 py-2 ${isLoggingOut ? 'opacity-50' : ''}`}
+          >
             <Text variant="bodyStrong" className="text-white">
-              Log out
+              {isLoggingOut ? 'Logging out…' : 'Log out'}
             </Text>
           </Pressable>
         </View>

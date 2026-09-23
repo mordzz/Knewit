@@ -47,15 +47,23 @@ export function RootNavigator() {
     );
   }
 
+  const canUseApp = isAuthenticated || isGuest;
+
   return (
     <NavigationContainer>
       <Stack.Navigator screenOptions={{ headerShown: false }}>
-        {isAuthenticated || isGuest ? (
+        {canUseApp ? (
           <>
             <Stack.Screen name="Main" component={MainTabNavigator} />
+            {/* `Auth` is registered in both branches, so without a
+                changing `navigationKey` React Navigation would keep the
+                focused login-gate route after sign-in instead of moving
+                to `Main` — the user stayed stuck on SignIn until a cold
+                start. */}
             <Stack.Screen
               name="Auth"
               component={AuthNavigator}
+              navigationKey="signed-in"
               options={{ presentation: 'modal' }}
             />
             <Stack.Screen
@@ -65,7 +73,7 @@ export function RootNavigator() {
             />
           </>
         ) : (
-          <Stack.Screen name="Auth" component={AuthNavigator} />
+          <Stack.Screen name="Auth" component={AuthNavigator} navigationKey="signed-out" />
         )}
       </Stack.Navigator>
     </NavigationContainer>

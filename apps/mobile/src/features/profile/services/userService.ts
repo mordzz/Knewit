@@ -7,7 +7,13 @@ import {
   MOCK_FOLLOW_LIST_TOTAL,
 } from '@/features/profile/fixtures/followList.mock';
 import type { Paginated } from '@/types/common';
-import type { FollowListItem, FollowResult, UpdateProfileInput, UserProfile } from '@/types/social';
+import type {
+  FollowListItem,
+  FollowResult,
+  HandleAvailability,
+  UpdateProfileInput,
+  UserProfile,
+} from '@/types/social';
 
 /**
  * Real endpoint first, dev-mock fallback on failure (read-only). `id`
@@ -37,6 +43,12 @@ export async function getUserProfile(id: string): Promise<UserProfile> {
  * in `EditProfileScreen` is UX only, never the actual integrity boundary
  * — see docs/DECISIONS.md.
  */
+/** Advisory username check (`GET /users/handle-available`) — the PATCH
+ * below still decides. See docs/API.md. */
+export async function checkHandleAvailability(handle: string): Promise<HandleAvailability> {
+  return apiRequest<HandleAvailability>(endpoints.handleAvailable(handle));
+}
+
 export async function updateMyProfile(input: UpdateProfileInput): Promise<UserProfile> {
   return apiRequest<UserProfile>(endpoints.users('me'), {
     method: 'PATCH',

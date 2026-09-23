@@ -12,6 +12,7 @@ import {
   onlineManager,
 } from '@tanstack/react-query';
 import { env } from '@/app/config/env';
+import { polygon } from '@/app/config/chains';
 import { PrivySessionBridge } from '@/app/providers/PrivySessionBridge';
 import { ApiRequestError } from '@/services/api/client';
 
@@ -54,8 +55,12 @@ export function AppProviders({ children }: PropsWithChildren) {
             // route that isn't sure yet whether an id is a market or an
             // event) would otherwise sit on a loading state through the
             // full retry backoff first.
+            // 401/403 likewise won't fix themselves on an immediate retry —
+            // the session token has to refresh first.
             retry: (failureCount, error) =>
-              error instanceof ApiRequestError && error.status === 404 ? false : failureCount < 2,
+              error instanceof ApiRequestError && [401, 403, 404].includes(error.status)
+                ? false
+                : failureCount < 2,
             refetchOnReconnect: true,
           },
         },
@@ -77,7 +82,11 @@ export function AppProviders({ children }: PropsWithChildren) {
   return (
     <SafeAreaProvider>
       <QueryClientProvider client={queryClient}>
-        <PrivyProvider appId={env.privyAppId} clientId={env.privyClientId || undefined}>
+        <PrivyProvider
+          appId={env.privyAppId}
+          clientId={env.privyClientId || undefined}
+          supportedChains={[polygon]}
+        >
           <PrivySessionBridge />
           {/* Privy's UI layer for the card funding flow. Dark + brand
               accent so its MoonPay screens match the app. */}

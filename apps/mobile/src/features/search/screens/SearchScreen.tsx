@@ -2,6 +2,8 @@ import { useMemo, useState } from 'react';
 import { Keyboard, Pressable, ScrollView, SectionList, View } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { Screen } from '@/components/layout/Screen';
+import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
+import { useKeyboardPadding } from '@/hooks/useKeyboardPadding';
 import { Text } from '@/components/ui/Text';
 import { Icon } from '@/components/ui/Icon';
 import { Divider } from '@/components/ui/Divider';
@@ -48,6 +50,9 @@ type ResultItem =
  */
 export function SearchScreen() {
   const navigation = useNavigation();
+  // The tab bar already fills the bottom of the screen, so the keyboard
+  // only needs to be cleared by whatever of it rises above the tab bar.
+  const keyboardPadding = useKeyboardPadding(useBottomTabBarHeight());
   const [query, setQuery] = useState('');
   const debouncedQuery = useDebounce(query, SEARCH_DEBOUNCE_MS);
   const trimmed = debouncedQuery.trim();
@@ -98,94 +103,100 @@ export function SearchScreen() {
 
   return (
     <Screen className="px-0 pt-4" edges={['top']}>
-      <Text
-        variant="heading"
-        className="px-4 pb-3 pt-2 text-4xl"
-        style={{ fontFamily: typography.family.extrabold }}
-      >
-        Search
-      </Text>
-      <Divider />
-      <View className="flex-1">
-        {!hasQuery ? (
-          recent.length > 0 ? (
-            <ScrollView keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
-              <View className="mb-2 mt-2 flex-row items-center justify-between px-4">
-                <Text variant="title">Recents</Text>
-                <Pressable
-                  onPress={clearRecent}
-                  accessibilityRole="button"
-                  accessibilityLabel="Clear recent searches"
-                  hitSlop={8}
-                >
-                  <Text variant="caption" color="accent">
-                    Clear
-                  </Text>
-                </Pressable>
+      {/* The search box sits at the bottom of the screen, so it's lifted
+          above the keyboard (see `useKeyboardPadding`). */}
+      <View className="flex-1 bg-background" style={{ paddingBottom: keyboardPadding }}>
+        <Text
+          variant="heading"
+          className="px-4 pb-3 pt-2 text-4xl"
+          style={{ fontFamily: typography.family.extrabold }}
+        >
+          Search
+        </Text>
+        <Divider />
+        <View className="flex-1">
+          {!hasQuery ? (
+            recent.length > 0 ? (
+              <ScrollView keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
+                <View className="mb-2 mt-2 flex-row items-center justify-between px-4">
+                  <Text variant="title">Recents</Text>
+                  <Pressable
+                    onPress={clearRecent}
+                    accessibilityRole="button"
+                    accessibilityLabel="Clear recent searches"
+                    hitSlop={8}
+                  >
+                    <Text variant="caption" color="accent">
+                      Clear
+                    </Text>
+                  </Pressable>
+                </View>
+                {recent.map((item) => (
+                  <RecentSearchRow
+                    key={item}
+                    query={item}
+                    onPress={() => setQuery(item)}
+                    onRemove={() => removeRecent(item)}
+                  />
+                ))}
+              </ScrollView>
+            ) : (
+              <View className="flex-1 items-center justify-center">
+                <EmptyState icon="time-outline" title="No recent searches" />
               </View>
-              {recent.map((item) => (
-                <RecentSearchRow
-                  key={item}
-                  query={item}
-                  onPress={() => setQuery(item)}
-                  onRemove={() => removeRecent(item)}
-                />
-              ))}
-            </ScrollView>
-          ) : (
-            <View className="flex-1 items-center justify-center">
-              <EmptyState icon="time-outline" title="No recent searches" />
-            </View>
-          )
-        ) : isTooShort ? (
-          <EmptyState
-            icon="search"
-            title="Keep typing"
-            message={`Enter at least ${MIN_QUERY_LENGTH} characters to search.`}
-          />
-        ) : search.status === 'pending' ? (
-          <ScrollView keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
-            <Text variant="title" className="mb-2 mt-2 px-4">
-              People
-            </Text>
-            <LoadingState rows={2} />
-          </ScrollView>
-        ) : search.status === 'error' ? (
-          <ErrorState message="Unable to search. Try again." onRetry={() => search.refetch()} />
-        ) : noResultsAtAll ? (
-          <EmptyState icon="search" title="No results found" message="Try another search term." />
-        ) : (
-          <SectionList
-            sections={sections}
-            keyExtractor={(item) => item.key}
-            keyboardShouldPersistTaps="handled"
-            showsVerticalScrollIndicator={false}
-            stickySectionHeadersEnabled={false}
-            contentContainerStyle={{ paddingBottom: 24 }}
-            renderSectionHeader={({ section }) => (
-              <Text variant="title" className="mb-2 mt-4 px-4">
-                {section.title}
+            )
+          ) : isTooShort ? (
+            <EmptyState
+              icon="search"
+              title="Keep typing"
+              message={`Enter at least ${MIN_QUERY_LENGTH} characters to search.`}
+            />
+          ) : search.status === 'pending' ? (
+            <ScrollView keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
+              <Text variant="title" className="mb-2 mt-2 px-4">
+                People
               </Text>
-            )}
-            renderItem={({ item }) => {
-              if (item.kind === 'person') {
-                return <PersonResult user={item.user} onPress={() => openProfile(item.user.id)} />;
-              }
-              if (item.kind === 'market') {
-                return <MarketCard item={item.item} onOpenMarket={openMarket} />;
-              }
-              return (
-                <Text variant="caption" color="textSecondary" className="px-4 py-2">
-                  {item.message}
+              <LoadingState rows={2} />
+            </ScrollView>
+          ) : search.status === 'error' ? (
+            <ErrorState message="Unable to search. Try again." onRetry={() => search.refetch()} />
+          ) : noResultsAtAll ? (
+            <EmptyState icon="search" title="No results found" message="Try another search term." />
+          ) : (
+            <SectionList
+              sections={sections}
+              keyExtractor={(item) => item.key}
+              keyboardShouldPersistTaps="handled"
+              showsVerticalScrollIndicator={false}
+              stickySectionHeadersEnabled={false}
+              contentContainerStyle={{ paddingBottom: 24 }}
+              renderSectionHeader={({ section }) => (
+                <Text variant="title" className="mb-2 mt-4 px-4">
+                  {section.title}
                 </Text>
-              );
-            }}
-          />
-        )}
-      </View>
+              )}
+              renderItem={({ item }) => {
+                if (item.kind === 'person') {
+                  return (
+                    <PersonResult user={item.user} onPress={() => openProfile(item.user.id)} />
+                  );
+                }
+                if (item.kind === 'market') {
+                  return <MarketCard item={item.item} onOpenMarket={openMarket} />;
+                }
+                return (
+                  <Text variant="caption" color="textSecondary" className="px-4 py-2">
+                    {item.message}
+                  </Text>
+                );
+              }}
+            />
+          )}
+        </View>
 
-      <View className="px-4 pb-6 pt-2">
-        <SearchInput value={query} onChangeText={setQuery} onSubmit={handleSubmit} />
+        <View className="px-4 pb-6 pt-2">
+          <SearchInput value={query} onChangeText={setQuery} onSubmit={handleSubmit} />
+        </View>
       </View>
     </Screen>
   );

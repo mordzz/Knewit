@@ -153,6 +153,13 @@ function buildSmoothPath(points: Point[]): string {
   return path;
 }
 
+/** Short gridline label — the full 4-decimal `formatProbability`
+ * ("12.5000%") doesn't fit the `VALUE_GUTTER` and gets clipped. */
+function formatAxisPercent(value: number): string {
+  const digits = value >= 10 ? 0 : value >= 1 ? 1 : 2;
+  return `${value.toFixed(digits)}%`;
+}
+
 function formatAxisTime(iso: string, range: PriceRange): string {
   const date = new Date(iso);
   if (range === '1H' || range === '6H' || range === '1D') {
@@ -288,7 +295,7 @@ export function MultiLineChart({ series, loading, range, onChangeRange }: MultiL
                       fontSize={9}
                       fill={AXIS_LABEL_COLOR}
                     >
-                      {formatProbability(step.value)}
+                      {formatAxisPercent(step.value)}
                     </SvgText>
                   </G>
                 );
