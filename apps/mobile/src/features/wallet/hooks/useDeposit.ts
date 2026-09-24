@@ -11,6 +11,10 @@ import {
 import { creditGuestFunds, isGuestSession } from '@/services/guest/guestBackend';
 import { env } from '@/app/config/env';
 
+/** Pre-filled card purchase — just above MoonPay's minimum order; the
+ * user can still change it on MoonPay's screen. */
+const DEFAULT_CARD_DEPOSIT_USDC = '20';
+
 /**
  * Opens Privy's own funding flow (`useFundWallet` from
  * `@privy-io/expo/ui` — requires `<PrivyElements />`, mounted once in
@@ -72,6 +76,10 @@ export function useDeposit() {
         address,
         chain: polygon,
         asset: { tokenAddress: POLYGON_USDC_NATIVE },
+        // Without this, Privy falls back to the dashboard's default
+        // recommended amount (0.00033, meant for ETH), which MoonPay shows
+        // as an order below its ~18 USDC minimum.
+        amount: DEFAULT_CARD_DEPOSIT_USDC,
         defaultPaymentMethod: 'card',
         card: { preferredProvider: 'moonpay' },
         moonpay: { uiConfig: { accentColor: '#FFE506', theme: 'dark' } },

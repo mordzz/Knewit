@@ -119,6 +119,9 @@ async function addAddressesToAlchemyWebhook(addresses: string[]): Promise<void> 
     headers: {
       'Content-Type': 'application/json',
       'X-Alchemy-Token': env.alchemyNotifyAuthToken ?? '',
+      // Alchemy's dashboard API sits behind Cloudflare, which rejects
+      // requests without a User-Agent (error 1010).
+      'User-Agent': 'knewit-backend/1.0',
     },
     body: JSON.stringify({
       webhook_id: env.alchemyWebhookId,
