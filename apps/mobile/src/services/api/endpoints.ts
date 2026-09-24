@@ -23,9 +23,12 @@ export const endpoints = {
   walletBalance: '/wallet/balance',
   walletDeposit: '/wallet/deposit-wallet',
   walletCryptoDeposit: '/wallet/crypto-deposit',
-  walletNativeBalance: '/wallet/native-balance',
   walletConvertToCollateral: '/wallet/convert-to-collateral',
   walletWithdraw: '/wallet/withdraw',
+  walletWithdrawOptions: '/wallet/withdraw-options',
+  walletWithdrawQuote: '/wallet/withdraw-quote',
+  walletWithdrawStatus: (bridgeAddress: string) =>
+    `/wallet/withdraw-status?address=${encodeURIComponent(bridgeAddress)}`,
   feed: '/feed',
   feedFollowing: '/feed/following',
   feedTrending: '/feed/trending',

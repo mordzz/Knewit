@@ -4,25 +4,41 @@ import { usePrivy } from '@privy-io/expo';
 import {
   convertToCollateral,
   getCryptoDepositInfo,
+  type BridgeTransaction,
   type ConvertToCollateralResult,
 } from '@/features/wallet/services/walletService';
 import { ApiRequestError } from '@/services/api/client';
 
-/** Below this, an arrival is dust — not worth a swap/wrap round trip. */
+/** Below this, USDC.e in the Deposit Wallet is dust — not worth a wrap. */
 const MIN_CONVERTIBLE_USDC = 0.01;
 const POLL_MS = 10_000;
+/** Bridge transactions older than this aren't "the deposit you just sent". */
+const RECENT_BRIDGE_MS = 60 * 60 * 1000;
+const BRIDGE_IN_FLIGHT = new Set([
+  'DEPOSIT_DETECTED',
+  'PROCESSING',
+  'ORIGIN_TX_CONFIRMED',
+  'SUBMITTED',
+]);
 
 export type CryptoDepositStatus =
-  'loading' | 'error' | 'waiting' | 'converting' | 'converted' | 'processing';
+  | 'loading'
+  | 'error'
+  | 'waiting'
+  | 'bridging'
+  | 'bridge_failed'
+  | 'converting'
+  | 'converted'
+  | 'processing';
 
 /**
- * Crypto deposit screen state. While `active` (the screen is open), it
- * re-reads the deposit addresses' balances every 10s and, as soon as USDC
- * or USDC.e has arrived, asks the backend to convert it into trading
- * balance (`POST /wallet/convert-to-collateral` — the same conversion the
- * card flow and the Alchemy webhook use, so an arrival can't be
- * converted twice). Each arrival is attempted once automatically;
- * `checkNow` re-reads and retries on demand.
+ * Crypto deposit screen state. While `active`, it re-reads the deposit
+ * info every 10s: the Polymarket bridge's own status for anything sent
+ * to the bridge addresses, and the USDC.e balance of the Deposit Wallet
+ * (where bridged funds, or USDC.e sent directly, land). As soon as USDC.e
+ * is there it asks the backend to wrap it into pUSD (the same conversion
+ * the card flow and the Alchemy webhook use, so it can't run twice).
+ * Each arrival is attempted once automatically; `checkNow` retries.
  */
 export function useCryptoDeposit(active: boolean) {
   const queryClient = useQueryClient();
@@ -46,10 +62,8 @@ export function useCryptoDeposit(active: boolean) {
     },
   });
 
-  const usdc = info.data?.usdc.balance ?? 0;
   const usdcE = info.data?.usdcE.balance ?? 0;
-  const arrived = usdc >= MIN_CONVERTIBLE_USDC || usdcE >= MIN_CONVERTIBLE_USDC;
-  const arrivalKey = arrived ? `${usdc}:${usdcE}` : null;
+  const arrivalKey = usdcE >= MIN_CONVERTIBLE_USDC ? String(usdcE) : null;
 
   useEffect(() => {
     if (!active || !arrivalKey || convert.isPending) return;
@@ -63,6 +77,11 @@ export function useCryptoDeposit(active: boolean) {
     void info.refetch();
   };
 
+  const latestBridge = recentBridgeTransaction(
+    info.data?.bridge?.transactions ?? [],
+    info.dataUpdatedAt
+  );
+
   let status: CryptoDepositStatus;
   let message: string | null = null;
   if (convert.isPending) {
@@ -72,6 +91,10 @@ export function useCryptoDeposit(active: boolean) {
   } else if (convert.isError || convert.data) {
     status = 'processing';
     message = convertMessage(convert.error, convert.data);
+  } else if (latestBridge && BRIDGE_IN_FLIGHT.has(latestBridge.status)) {
+    status = 'bridging';
+  } else if (latestBridge?.status === 'FAILED') {
+    status = 'bridge_failed';
   } else if (info.isPending) {
     status = 'loading';
   } else if (info.isError || info.data?.unavailable) {
@@ -90,8 +113,18 @@ export function useCryptoDeposit(active: boolean) {
   };
 }
 
+function recentBridgeTransaction(
+  transactions: BridgeTransaction[],
+  fetchedAt: number
+): BridgeTransaction | null {
+  const latest = transactions[0];
+  if (!latest) return null;
+  if (latest.createdAtMs != null && fetchedAt - latest.createdAtMs > RECENT_BRIDGE_MS) return null;
+  return latest;
+}
+
 function convertMessage(error: unknown, data: ConvertToCollateralResult | undefined): string {
   if (data?.errorMessage) return data.errorMessage;
   if (error instanceof ApiRequestError) return error.body.message;
-  return "We couldn't convert your deposit yet. Your funds are safe in your wallet — tap Check again.";
+  return "We couldn't convert your deposit yet. Your funds are safe — tap Check now.";
 }

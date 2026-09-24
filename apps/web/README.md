@@ -13,16 +13,12 @@ sharing this one Next.js project and deploy.
    - `PRIVY_APP_ID` / `PRIVY_APP_SECRET` — from the Privy dashboard's API Keys page (same app as the mobile client's `EXPO_PUBLIC_PRIVY_APP_ID`).
    - `NEXT_PUBLIC_PRIVY_APP_ID` — same value as `PRIVY_APP_ID`, just re-exposed under Next.js's required `NEXT_PUBLIC_` prefix for the web app's client-side Privy provider.
    - Optional, both defaulting to Polymarket's real public endpoints: `POLYMARKET_GAMMA_BASE_URL` (markets/events/categories) and `POLYMARKET_DATA_BASE_URL` (the leaderboard ranking — a different Polymarket service, `data-api.polymarket.com`).
-2. Run **one file**: `supabase/all_in_one.sql` — every migration
-   (`0001` … `0011`) in order, generated from the numbered files in
-   `supabase/migrations/` (the canonical source, kept for history and
-   referenced by code comments). Paste it into the Supabase SQL editor,
-   or apply via the Supabase CLI once one is set up — not done in this
-   pass. It also creates the public `profile-images` storage bucket
-   (`0008`). The file is **re-runnable**: tables/indexes use
-   `IF NOT EXISTS` and functions are dropped before being recreated when
-   their return type changes, so a partially-applied run can simply be
-   executed again (no need to drop the database).
+2. Run **one file** on a fresh Supabase project: `supabase/schema.sql`
+   (paste into the SQL editor). It creates every table, index, read
+   function and trigger, locks all tables to the service role (RLS on,
+   anon/authenticated revoked) and creates the public `profile-images`
+   storage bucket. It is the final schema, not a migration chain — run
+   it once on an empty database.
 3. `npm install && npm run dev`
 
 ## Implemented
@@ -206,10 +202,9 @@ project. This repo is **not** an npm workspace — `apps/web` has its own
    optional (public defaults). `NEXT_PUBLIC_*` values are inlined at
    **build time**, so set them before the first deploy; never commit
    `.env` (`.env.example` is the tracked template).
-5. **Apply the Supabase SQL** — `supabase/all_in_one.sql` (migrations
-   `0001` … `0011`, see Setup above). The latest endpoints depend on the
-   SQL functions in `0009` / `0010` — without them, profile reads and
-   follow lists answer `internal_error`.
+5. **Apply the Supabase SQL** — `supabase/schema.sql` (see Setup above).
+   Profile reads, follow lists, activity and the trending feed depend on
+   its SQL functions — without them they answer `internal_error`.
 6. **Privy dashboard**: add the production domain to *Allowed Origins*
    so email/Google/X sign-in and the embedded-wallet consent step work
    on the deployed URL (same app id as the mobile client).

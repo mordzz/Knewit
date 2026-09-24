@@ -9,7 +9,7 @@ import { CARD_SURFACE_CLASS } from '@/components/ui/cardSurface';
 import { PersonResult } from '@/components/PersonResult';
 import { MarketCard } from '@/features/markets/components/MarketCard';
 import { useWalletBalance } from '@/features/wallet/hooks/useWalletBalance';
-import { useBuyWithCardFlow } from '@/features/wallet/hooks/useBuyWithCardFlow';
+import { useDepositEntry } from '@/features/wallet/hooks/useDepositEntry';
 import { WithdrawModal } from '@/features/wallet/components/WithdrawModal';
 import { useSession } from '@/hooks/useSession';
 import { useSearch, MIN_QUERY_LENGTH } from '@/hooks/useSearch';
@@ -33,7 +33,7 @@ export function TopHeader() {
   const router = useRouter();
   const { canUseApp, walletConnected } = useSession();
   const balance = useWalletBalance();
-  const { isBuying, stage: buyStage, buyError, handleBuyWithCard } = useBuyWithCardFlow();
+  const { isBuying, stage: buyStage, buyError, startDeposit, depositModal } = useDepositEntry();
 
   const [query, setQuery] = useState('');
   const [open, setOpen] = useState(false);
@@ -65,7 +65,7 @@ export function TopHeader() {
       router.push('/sign-in');
       return;
     }
-    void handleBuyWithCard();
+    startDeposit();
   };
 
   const isDepositBusy = isBuying;
@@ -181,6 +181,7 @@ export function TopHeader() {
       </div>
     </header>
     <WithdrawModal visible={withdrawOpen} onClose={() => setWithdrawOpen(false)} />
+    {depositModal}
     </>
   );
 }

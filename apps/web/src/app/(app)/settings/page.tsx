@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useLogout } from "@privy-io/react-auth";
-import { useBuyWithCardFlow } from "@/features/wallet/hooks/useBuyWithCardFlow";
+import { useDepositEntry } from '@/features/wallet/hooks/useDepositEntry';
 import { WithdrawModal } from "@/features/wallet/components/WithdrawModal";
 import { Icon } from "@/components/ui/Icon";
 import { Text } from "@/components/ui/Text";
@@ -57,7 +57,7 @@ export default function SettingsPage() {
   const [logoutOpen, setLogoutOpen] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [withdrawOpen, setWithdrawOpen] = useState(false);
-  const { isBuying, stage, buyError, handleBuyWithCard } = useBuyWithCardFlow();
+  const { isBuying, stage, buyError, startDeposit, depositModal } = useDepositEntry();
 
   const handleLogout = async () => {
     if (isLoggingOut) return;
@@ -113,7 +113,7 @@ export default function SettingsPage() {
         <SettingRow
           icon="arrow-down-circle-outline"
           label={stage === 'converting' ? 'Converting…' : stage === 'waiting' ? 'Waiting for USDC…' : isBuying ? 'Depositing…' : 'Deposit'}
-          onClick={handleBuyWithCard}
+          onClick={startDeposit}
           disabled={isBuying}
         />
         {buyError ? (
@@ -167,6 +167,7 @@ export default function SettingsPage() {
         </div>
       </Modal>
       <WithdrawModal visible={withdrawOpen} onClose={() => setWithdrawOpen(false)} />
+      {depositModal}
     </main>
   );
 }

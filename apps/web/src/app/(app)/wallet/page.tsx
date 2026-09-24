@@ -16,7 +16,7 @@ import { formatProbability, formatUsd } from '@/lib/formatters';
 import { ApiRequestError } from '@/lib/apiClient';
 import { usePositions } from '@/features/wallet/hooks/usePositions';
 import { useWalletBalance } from '@/features/wallet/hooks/useWalletBalance';
-import { useBuyWithCardFlow } from '@/features/wallet/hooks/useBuyWithCardFlow';
+import { useDepositEntry } from '@/features/wallet/hooks/useDepositEntry';
 import { useSellPosition } from '@/features/wallet/hooks/useSellPosition';
 import { WithdrawModal } from '@/features/wallet/components/WithdrawModal';
 import { useSession } from '@/hooks/useSession';
@@ -54,7 +54,7 @@ export default function WalletPage() {
   const tradingAddress = isGuest ? address : balance.data?.address ?? null;
   const positionsQuery = usePositions();
   const positions = positionsQuery.data ?? [];
-  const { isBuying, stage: buyStage, buyError, handleBuyWithCard } = useBuyWithCardFlow();
+  const { isBuying, stage: buyStage, buyError, startDeposit, depositModal } = useDepositEntry();
 
   // Unrealized PnL per position: (current − entry) cents × shares. No
   // positions is a real $0.00; positions whose live price is missing make
@@ -122,7 +122,7 @@ export default function WalletPage() {
               label={buyStage === 'converting' ? 'Converting…' : buyStage === 'waiting' ? 'Waiting for USDC…' : isBuying ? 'Depositing…' : 'Deposit'}
               variant="primary"
               loading={isBuying}
-              onClick={() => void handleBuyWithCard()}
+              onClick={() => startDeposit()}
               className="min-h-0 px-3 py-2"
             />
             <Button label="Withdraw" variant="secondary" onClick={() => setWithdrawOpen(true)} className="min-h-0 px-3 py-2" />
@@ -287,6 +287,7 @@ export default function WalletPage() {
           Logging out ends your app session only — it doesn&apos;t delete your embedded wallet.
         </Text>
       ) : null}
+      {depositModal}
     </main>
   );
 }

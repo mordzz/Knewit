@@ -56,6 +56,12 @@ export const env = {
   get polymarketBuilderPassphrase() {
     return process.env.POLYMARKET_BUILDER_PASSPHRASE;
   },
+  /** Builder code (Polymarket → Settings → Builders), sent as
+   * `X-Builder-Code` to the bridge so deposits are attributed to this
+   * app. Optional — the bridge works without it. */
+  get polymarketBuilderCode() {
+    return process.env.POLYMARKET_BUILDER_CODE;
+  },
   /** Polygon JSON-RPC endpoint (e.g. an Alchemy/Infura app URL) used to
    * read on-chain balances directly (native USDC on a user's embedded
    * wallet — not tracked by the CLOB's own balance endpoint, which only

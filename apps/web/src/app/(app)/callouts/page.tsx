@@ -14,7 +14,7 @@ import { TrendingMarketsPanel } from '@/components/TrendingMarketsPanel';
 import { useHomeFeed } from '@/hooks/useHomeFeed';
 import { useFollowingFeed } from '@/hooks/useFollowingFeed';
 import { useWalletBalance } from '@/features/wallet/hooks/useWalletBalance';
-import { useBuyWithCardFlow } from '@/features/wallet/hooks/useBuyWithCardFlow';
+import { useDepositEntry } from '@/features/wallet/hooks/useDepositEntry';
 import { useSession } from '@/hooks/useSession';
 import { useIsDesktop } from '@/hooks/useIsDesktop';
 import { formatUsd } from '@/lib/formatters';
@@ -230,7 +230,7 @@ function Header({ isDesktop }: { isDesktop: boolean }) {
   const router = useRouter();
   const { canUseApp, walletConnected } = useSession();
   const balance = useWalletBalance();
-  const { isBuying, buyError, handleBuyWithCard } = useBuyWithCardFlow();
+  const { isBuying, buyError, startDeposit, depositModal } = useDepositEntry();
 
   const balanceLabel = balance.data?.usdc != null ? formatUsd(balance.data.usdc) : '—';
 
@@ -239,7 +239,7 @@ function Header({ isDesktop }: { isDesktop: boolean }) {
       router.push('/sign-in');
       return;
     }
-    void handleBuyWithCard();
+    startDeposit();
   };
 
   // Desktop's `TopHeader` already shows balance + Deposit above every page.
@@ -261,6 +261,7 @@ function Header({ isDesktop }: { isDesktop: boolean }) {
           {buyError}
         </Text>
       ) : null}
+      {depositModal}
     </div>
   );
 }

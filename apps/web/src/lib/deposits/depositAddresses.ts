@@ -6,15 +6,28 @@ import { getSupabase } from '@/lib/supabase';
 import { getOrCreateUser, getPrimaryEthereumWallet } from '@/lib/users';
 import { buildSecureClientForUser } from '@/lib/trading/client';
 import { POLYGON_USDC_E, POLYGON_USDC_NATIVE } from '@/features/wallet/lib/walletService';
+import {
+  getBridgeDepositAddresses,
+  getBridgeTransactions,
+  type BridgeDepositAddresses,
+  type BridgeTransaction,
+} from '@/lib/deposits/polymarketBridge';
 
 const ALCHEMY_UPDATE_ADDRESSES_URL = 'https://dashboard.alchemy.com/api/update-webhook-addresses';
 
 export interface CryptoDepositInfo {
   network: 'polygon';
-  /** Native USDC goes to the user's embedded wallet (it's swapped on arrival). */
-  usdc: { address: string; balance: number };
-  /** USDC.e goes straight to the Polymarket Deposit Wallet (wrapped on arrival). */
+  /** Polymarket bridge addresses (USDC, USDT, … on many chains → USDC.e
+   * in the Deposit Wallet, gas paid by Polymarket). `null` when the
+   * bridge couldn't be reached — USDC.e direct still works then. */
+  bridge: (BridgeDepositAddresses & { transactions: BridgeTransaction[] }) | null;
+  /** USDC.e sent straight to the Polymarket Deposit Wallet (wrapped on
+   * arrival, no minimum). */
   usdcE: { address: string; balance: number };
+  /** Native USDC sitting in the embedded wallet (e.g. from before
+   * deposits went through the bridge). Reported only — it isn't a deposit
+   * route, since moving it would need gas the wallet doesn't have. */
+  usdc: { address: string; balance: number };
   /** Whether arrivals convert in the background (Alchemy webhook set up)
    * or only when the app checks. */
   autoConvert: boolean;
@@ -56,6 +69,20 @@ export async function getCryptoDepositInfo(privyUserId: string): Promise<CryptoD
     }),
   ]);
 
+  const bridge = await getBridgeDepositAddresses(client.account.wallet)
+    .then(async (addresses) => {
+      const sources = [addresses.evm, addresses.svm, addresses.btc, addresses.tron].filter(
+        (address): address is string => Boolean(address)
+      );
+      const results = await Promise.all(sources.map((address) => getBridgeTransactions(address).catch(() => [])));
+      const transactions = results.flat().sort((a, b) => (b.createdAtMs ?? 0) - (a.createdAtMs ?? 0));
+      return { ...addresses, transactions };
+    })
+    .catch((error) => {
+      console.warn('[deposits] Polymarket bridge unavailable:', error);
+      return null;
+    });
+
   await rememberDepositAddresses(privyUserId, [
     { address: embedded, kind: 'embedded' },
     { address: depositWallet, kind: 'deposit_wallet' },
@@ -63,6 +90,7 @@ export async function getCryptoDepositInfo(privyUserId: string): Promise<CryptoD
 
   return {
     network: 'polygon',
+    bridge,
     usdc: { address: wallet.address, balance: Number(usdcRaw) / 1e6 },
     usdcE: { address: client.account.wallet, balance: Number(usdcERaw) / 1e6 },
     autoConvert: isAlchemyWebhookConfigured(),

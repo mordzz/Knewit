@@ -16,7 +16,7 @@ export function useWithdraw() {
     };
   }, []);
 
-  const withdraw = async (recipient: string, amount: string) => {
+  const withdraw = async (recipient: string, amount: string, destination?: string) => {
     if (isGuest) throw new Error('Withdraw is unavailable in guest mode.');
     if (!address) throw new Error('Connect a wallet before withdrawing.');
     if (!/^\d+(?:\.\d{1,6})?$/.test(amount.trim()) || Number(amount) <= 0) {
@@ -26,7 +26,7 @@ export function useWithdraw() {
     // deposit, or a withdrawal from another device), and validating
     // against it without refreshing can wrongly allow or deny the
     // withdrawal.
-    const result = await withdrawTradingBalance({ recipient, amount: amount.trim() });
+    const result = await withdrawTradingBalance({ recipient, amount: amount.trim(), destination });
     // On-chain confirmation lags behind the request resolving, the same as
     // the deposit flow — poll for a short window instead of a single
     // immediate invalidate so the balance UI catches the update.

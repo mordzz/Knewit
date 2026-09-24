@@ -5,7 +5,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useWallet } from '@/hooks/useWallet';
 import {
   convertToCollateral,
-  getNativeUsdcBalance,
+  getCryptoDepositInfo,
   POLYGON_USDC_NATIVE,
 } from '@/features/wallet/services/walletService';
 import { creditGuestFunds, isGuestSession } from '@/services/guest/guestBackend';
@@ -14,13 +14,22 @@ import { env } from '@/app/config/env';
 /** Pre-filled card purchase — just above MoonPay's minimum order; the
  * user can still change it on MoonPay's screen. */
 const DEFAULT_CARD_DEPOSIT_USDC = '20';
+/** Below this, USDC.e in the Deposit Wallet is dust — not worth a wrap. */
+const MIN_CONVERTIBLE_USDC = 0.01;
+/** MoonPay + the bridge usually finish within a few minutes. */
+const LANDING_POLL_MS = 10_000;
+const LANDING_POLL_ATTEMPTS = 36;
 
 /**
  * Opens Privy's own funding flow (`useFundWallet` from
  * `@privy-io/expo/ui` — requires `<PrivyElements />`, mounted once in
  * `AppProviders`) with card as the payment method and MoonPay as the preferred
- * provider. It buys native USDC into the embedded wallet, then converts it to
- * USDC.e in the Polymarket Deposit Wallet, matching the web card flow.
+ * provider. The route is: card → MoonPay → native USDC in the user's
+ * embedded wallet → forwarded to their Polymarket bridge address (backend,
+ * Privy-sponsored gas) → USDC.e in the Deposit Wallet → wrapped into pUSD.
+ * The forward needs gas, so card deposits only run with
+ * `EXPO_PUBLIC_CARD_DEPOSIT_ENABLED=true` (and Privy gas sponsorship on);
+ * otherwise Deposit opens crypto deposit instead (`DepositSheet`).
  *
  * Requires the funding feature + payment methods to be enabled in the
  * Privy Dashboard; without that, `fundWallet` rejects with Privy's real
@@ -54,20 +63,21 @@ export function useDeposit() {
         await queryClient.invalidateQueries({ queryKey: ['positions'] });
         return;
       }
+      if (!env.cardDepositEnabled) throw new Error('Card deposits are not available yet.');
       if (!address) throw new Error('Connect a wallet before depositing.');
-      const startingBalance = await getNativeUsdcBalance();
-      if (startingBalance.usdc > 0) {
-        // Reuse Deposit for a purchase that arrived after the previous wait
-        // ended. Converting first also prevents accidentally starting a second
-        // card purchase while funds are already waiting in the embedded wallet.
+      const info = await getCryptoDepositInfo();
+      if (info.unavailable) {
+        throw new Error(
+          'Your trading wallet is not ready yet. Please wait a moment and try again.'
+        );
+      }
+      const startingUsdcE = info.usdcE.balance;
+      if (startingUsdcE >= MIN_CONVERTIBLE_USDC || info.usdc.balance >= MIN_CONVERTIBLE_USDC) {
+        // Funds from an earlier purchase are still on their way (in the
+        // embedded wallet or already in the Deposit Wallet) — move them on
+        // instead of opening another card purchase.
         setStage('converting');
-        const conversion = await convertToCollateral();
-        if (conversion.status !== 'converted') {
-          throw new Error(
-            conversion.errorMessage ??
-              'Conversion could not be confirmed. Check your wallet and trading balance before trying again.'
-          );
-        }
+        await convertOrThrow();
         await refreshBalances();
         return;
       }
@@ -77,55 +87,52 @@ export function useDeposit() {
         chain: polygon,
         asset: { tokenAddress: POLYGON_USDC_NATIVE },
         // Without this, Privy falls back to the dashboard's default
-        // recommended amount (0.00033, meant for ETH), which MoonPay shows
-        // as an order below its ~18 USDC minimum.
+        // recommended amount, which MoonPay can show below its ~18 USDC minimum.
         amount: DEFAULT_CARD_DEPOSIT_USDC,
         defaultPaymentMethod: 'card',
         card: { preferredProvider: 'moonpay' },
         moonpay: { uiConfig: { accentColor: '#FFE506', theme: 'dark' } },
       });
 
+      // Wait for the purchase: once native USDC is in the embedded wallet,
+      // ask the backend to forward it to the bridge; once USDC.e reaches the
+      // Deposit Wallet, it's ready to wrap.
       setStage('waiting');
-      let attempts = 0;
-      const landed = await new Promise<boolean>((resolve) => {
-        const pollTimer = setInterval(async () => {
-          if (!activeRef.current) {
-            clearInterval(pollTimer);
-            resolve(false);
-            return;
-          }
-          attempts += 1;
-          const currentBalance = await getNativeUsdcBalance().catch(() => null);
-          if (!activeRef.current) {
-            clearInterval(pollTimer);
-            resolve(false);
-            return;
-          }
-          if ((currentBalance?.usdc ?? 0) > startingBalance.usdc || attempts >= 15) {
-            clearInterval(pollTimer);
-            resolve((currentBalance?.usdc ?? 0) > startingBalance.usdc);
-          }
-        }, 4000);
-      });
+      let landed = false;
+      for (let attempt = 0; attempt < LANDING_POLL_ATTEMPTS && !landed; attempt += 1) {
+        await new Promise((resolve) => setTimeout(resolve, LANDING_POLL_MS));
+        if (!activeRef.current) return;
+        const current = await getCryptoDepositInfo().catch(() => null);
+        if (!current) continue;
+        if (current.usdc.balance >= MIN_CONVERTIBLE_USDC) {
+          await convertToCollateral().catch(() => null);
+        }
+        landed = current.usdcE.balance > startingUsdcE;
+      }
       if (!activeRef.current) return;
       if (!landed) {
         throw new Error(
-          'Your purchase is still processing. When USDC arrives, tap Deposit again to add it to your trading balance.'
+          info.autoConvert
+            ? 'Your purchase is still processing. It will be added to your trading balance automatically when it arrives.'
+            : 'Your purchase is still processing. When it arrives, tap Deposit again to add it to your trading balance.'
         );
       }
 
       setStage('converting');
-      const conversion = await convertToCollateral();
-      if (conversion.status !== 'converted') {
-        throw new Error(
-          conversion.errorMessage ??
-            'Conversion could not be confirmed. Check your wallet and trading balance before trying again.'
-        );
-      }
-
+      await convertOrThrow();
       await refreshBalances();
     } finally {
       if (activeRef.current) setStage('idle');
+    }
+  };
+
+  const convertOrThrow = async () => {
+    const conversion = await convertToCollateral();
+    if (conversion.status !== 'converted') {
+      throw new Error(
+        conversion.errorMessage ??
+          'Conversion could not be confirmed. Check your wallet and trading balance before trying again.'
+      );
     }
   };
 

@@ -1,4 +1,4 @@
-import { Linking, Pressable, TextInput, View } from 'react-native';
+import { Linking, Pressable, View } from 'react-native';
 import { useState } from 'react';
 import { useNavigation } from '@react-navigation/native';
 import { usePrivy } from '@privy-io/expo';
@@ -10,12 +10,11 @@ import { Modal } from '@/components/ui/Modal';
 import { solidPanel } from '@/theme';
 import { useDeposit } from '@/features/wallet/hooks/useDeposit';
 import { DepositSheet } from '@/features/wallet/components/DepositSheet';
+import { WithdrawSheet } from '@/features/wallet/components/WithdrawSheet';
 import { useAuth } from '@/hooks/useAuth';
 import { useGuestStore } from '@/store/guest/guestStore';
 import { isUserCancelledFunding } from '@/features/wallet/utils/privyErrors';
 import { getDepositErrorMessage, logDepositFailure } from '@/features/wallet/utils/depositErrors';
-import { useWithdraw } from '@/features/wallet/hooks/useWithdraw';
-import type { WithdrawResult } from '@/features/wallet/services/walletService';
 
 function Row({
   icon,
@@ -65,12 +64,6 @@ export function SettingsScreen() {
   const [isDepositing, setIsDepositing] = useState(false);
   const [depositSheetOpen, setDepositSheetOpen] = useState(false);
   const [withdrawOpen, setWithdrawOpen] = useState(false);
-  const [recipient, setRecipient] = useState('');
-  const [amount, setAmount] = useState('');
-  const [withdrawNotice, setWithdrawNotice] = useState<string | null>(null);
-  const [withdrawResult, setWithdrawResult] = useState<WithdrawResult | null>(null);
-  const [isWithdrawing, setIsWithdrawing] = useState(false);
-  const [confirmingWithdraw, setConfirmingWithdraw] = useState(false);
   const { deposit } = useDeposit();
   // Card/bank funding (or demo funds for a guest).
   const buyWithCard = async () => {
@@ -87,7 +80,6 @@ export function SettingsScreen() {
       setIsDepositing(false);
     }
   };
-  const { withdraw } = useWithdraw();
   const openWeb = (path: string) => Linking.openURL(`${env.webBaseUrl}${path}`);
 
   const handleLogout = async () => {
@@ -142,12 +134,7 @@ export function SettingsScreen() {
         <Row
           icon="arrow-up-circle-outline"
           label="Withdraw"
-          onPress={() => {
-            setWithdrawNotice(null);
-            setWithdrawResult(null);
-            setConfirmingWithdraw(false);
-            setWithdrawOpen(true);
-          }}
+          onPress={() => setWithdrawOpen(true)}
         />
       </View>
       <View style={[solidPanel, { borderRadius: 16 }]} className="p-4">
@@ -215,132 +202,7 @@ export function SettingsScreen() {
           </Text>
         </Pressable>
       </Modal>
-      <Modal
-        visible={withdrawOpen}
-        onClose={() => {
-          setWithdrawOpen(false);
-          setConfirmingWithdraw(false);
-        }}
-      >
-        <Text variant="heading">Withdraw USDC</Text>
-        <Text variant="body" color="textSecondary" className="mt-2">
-          Send funds from your trading balance to a Polygon wallet.
-        </Text>
-        {!confirmingWithdraw && !withdrawResult ? (
-          <TextInput
-            value={recipient}
-            onChangeText={setRecipient}
-            placeholder="Polygon wallet address"
-            placeholderTextColor="#6B7280"
-            autoCapitalize="none"
-            className="mt-5 rounded-lg border border-border bg-surface px-3 py-3 text-white"
-          />
-        ) : null}
-        {confirmingWithdraw && !withdrawResult ? (
-          <View className="mt-5 gap-2 rounded-lg border border-border bg-surface p-3">
-            <Text variant="bodyStrong">Review withdrawal</Text>
-            <Text variant="caption" color="textSecondary">
-              Network: Polygon
-            </Text>
-            <Text variant="caption" color="textSecondary">
-              Asset: USDC.e
-            </Text>
-            <Text variant="caption" className="font-mono">
-              {recipient.trim()}
-            </Text>
-            <Text variant="caption" color="textSecondary">
-              Amount: {amount.trim()} USDC.e
-            </Text>
-            <Text variant="caption" color="danger">
-              Check the address and network. Transfers can&apos;t be reversed.
-            </Text>
-          </View>
-        ) : null}
-        {!confirmingWithdraw && !withdrawResult ? (
-          <TextInput
-            value={amount}
-            onChangeText={setAmount}
-            placeholder="Amount (USDC.e)"
-            placeholderTextColor="#6B7280"
-            keyboardType="decimal-pad"
-            className="mt-3 rounded-lg border border-border bg-surface px-3 py-3 text-white"
-          />
-        ) : null}
-        {withdrawNotice ? (
-          <Text variant="caption" color="danger" className="mt-3">
-            {withdrawNotice}
-          </Text>
-        ) : null}
-        {withdrawResult ? (
-          <Text
-            variant="caption"
-            color={withdrawResult.status === 'confirmed' ? 'yes' : 'accent'}
-            className="mt-3"
-          >
-            {withdrawResult.status === 'confirmed'
-              ? 'Withdrawal confirmed.'
-              : 'Withdrawal pending. Wait for confirmation before trying again.'}
-            {withdrawResult.transactionHash
-              ? ` Transaction: ${withdrawResult.transactionHash}`
-              : ''}
-            {withdrawResult.transactionId ? ` Relayer ID: ${withdrawResult.transactionId}` : ''}
-          </Text>
-        ) : null}
-        <View className="mt-5 flex-row justify-end gap-3">
-          <Pressable
-            onPress={() => {
-              if (confirmingWithdraw && !withdrawResult) setConfirmingWithdraw(false);
-              else {
-                setWithdrawOpen(false);
-                setWithdrawResult(null);
-                setConfirmingWithdraw(false);
-              }
-            }}
-            className="px-4 py-2"
-          >
-            <Text variant="body" color="textSecondary">
-              {withdrawResult ? 'Close' : 'Cancel'}
-            </Text>
-          </Pressable>
-          <Pressable
-            disabled={isWithdrawing || Boolean(withdrawResult)}
-            onPress={async () => {
-              if (isWithdrawing) return;
-              if (!confirmingWithdraw) {
-                if (!/^0x[a-fA-F0-9]{40}$/.test(recipient.trim())) {
-                  setWithdrawNotice(
-                    'Enter a valid Polygon wallet address. Check the address and its checksum.'
-                  );
-                  return;
-                }
-                setWithdrawNotice(null);
-                setConfirmingWithdraw(true);
-                return;
-              }
-              setIsWithdrawing(true);
-              try {
-                setWithdrawNotice(null);
-                setWithdrawResult(await withdraw(recipient.trim(), amount.trim()));
-              } catch (error) {
-                setWithdrawNotice(error instanceof Error ? error.message : 'Withdrawal failed.');
-              } finally {
-                setIsWithdrawing(false);
-              }
-            }}
-            className={`rounded-lg bg-accent px-4 py-2 ${isWithdrawing || withdrawResult ? 'opacity-50' : ''}`}
-          >
-            <Text variant="bodyStrong" className="text-black">
-              {isWithdrawing
-                ? 'Submitting…'
-                : withdrawResult
-                  ? 'Submitted'
-                  : confirmingWithdraw
-                    ? 'Confirm withdrawal'
-                    : 'Review withdrawal'}
-            </Text>
-          </Pressable>
-        </View>
-      </Modal>
+      <WithdrawSheet visible={withdrawOpen} onClose={() => setWithdrawOpen(false)} />
     </Screen>
   );
 }

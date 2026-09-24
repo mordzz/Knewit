@@ -51,25 +51,9 @@ export const POLYGON_USDC_E = '0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174';
  * `POLYGON_USDC_E`. Card/bank onramp providers (Stripe, MoonPay) only sell
  * this one; they reject `POLYGON_USDC_E` outright ("Unsupported asset for
  * Stripe onramp"), confirmed against a real response. The "Buy with card
- * or bank" flow lands funds here in the user's own embedded wallet, then
- * a backend swap (`/api/wallet/convert-to-collateral`) converts to
- * `POLYGON_USDC_E` in the Deposit Wallet. */
+ * or bank" flow buys it into the user's Polymarket bridge address, which
+ * turns it into `POLYGON_USDC_E` in the Deposit Wallet. */
 export const POLYGON_USDC_NATIVE = '0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359';
-
-export interface NativeUsdcBalance {
-  /** Raw base units (6 decimals), as a decimal string to avoid float
-   * precision loss for large balances. */
-  raw: string;
-  /** Decimal USDC amount. */
-  usdc: number;
-}
-
-/** Reads the caller's embedded-wallet native USDC balance on Polygon —
- * the "Buy with card or bank" flow polls this after the onramp resolves,
- * since funds can take a few minutes to land. */
-export async function getNativeUsdcBalance(): Promise<NativeUsdcBalance> {
-  return apiRequest<NativeUsdcBalance>('/api/wallet/native-balance');
-}
 
 export interface ConvertToCollateralResult {
   status: 'converted' | 'pending' | 'failed';
@@ -80,18 +64,33 @@ export interface ConvertToCollateralResult {
   errorMessage: string | null;
 }
 
-/** Swaps the caller's embedded-wallet native USDC balance to USDC.e and
- * sends it directly to their Polymarket Deposit Wallet, via Privy's
- * Uniswap-backed swap resource, signed by the same delegated backend
- * signer that already signs trading orders. */
+/** `GET /api/wallet/crypto-deposit` — the user's Polymarket bridge
+ * addresses and the USDC.e that has landed in their Deposit Wallet. */
+export interface CryptoDepositInfo {
+  bridge: {
+    evm: string;
+    svm: string | null;
+    btc: string | null;
+    tron: string | null;
+    transactions: { status: string; createdAtMs: number | null }[];
+  } | null;
+  usdcE: { address: string; balance: number };
+  /** Native USDC in the embedded wallet (a card purchase on its way). */
+  usdc: { address: string; balance: number };
+  autoConvert: boolean;
+  unavailable?: boolean;
+}
+
+export async function getCryptoDepositInfo(): Promise<CryptoDepositInfo> {
+  return apiRequest<CryptoDepositInfo>('/api/wallet/crypto-deposit');
+}
+
+/** Wraps the USDC.e that has landed in the caller's Deposit Wallet into
+ * pUSD trading balance (gasless, via Polymarket's relayer). */
 export async function convertToCollateral(): Promise<ConvertToCollateralResult> {
   return apiRequest<ConvertToCollateralResult>('/api/wallet/convert-to-collateral', {
     method: 'POST',
   });
-}
-
-export async function wrapDepositCollateral(): Promise<ConvertToCollateralResult> {
-  return apiRequest<ConvertToCollateralResult>('/api/wallet/wrap-collateral', { method: 'POST' });
 }
 
 export interface WithdrawResult {
@@ -99,15 +98,55 @@ export interface WithdrawResult {
   amountUsdc: number;
   transactionHash: string | null;
   transactionId: string | null;
+  destination?: string;
+  /** Set for bridge destinations — track delivery with `getWithdrawStatus`. */
+  bridgeAddress?: string | null;
 }
 
-/** Withdraws collateral from the Polymarket Deposit Wallet via our backend. */
+/** Withdraws collateral from the Polymarket Deposit Wallet via our backend:
+ * directly as USDC.e on Polygon, or through the Polymarket bridge to another
+ * network/token (`destination`, a `WithdrawOption` id). */
 export async function withdrawTradingBalance(input: {
   recipient: string;
   amount: string;
+  destination?: string;
 }): Promise<WithdrawResult> {
   return apiRequest<WithdrawResult>('/api/wallet/withdraw', {
     method: 'POST',
     body: JSON.stringify(input),
   });
+}
+
+export type RecipientKind = 'evm' | 'solana' | 'tron';
+
+export interface WithdrawOption {
+  id: string;
+  network: string;
+  token: string;
+  recipientKind: RecipientKind;
+  viaBridge: boolean;
+  minimumUsd: number;
+}
+
+export async function getWithdrawOptions(): Promise<WithdrawOption[]> {
+  const data = await apiRequest<{ options: WithdrawOption[] }>('/api/wallet/withdraw-options');
+  return data.options;
+}
+
+export interface WithdrawQuote {
+  estimatedReceived: number;
+  minReceived: number;
+  totalCostUsd: number;
+  estimatedSeconds: number;
+}
+
+export async function getWithdrawQuote(input: { destination: string; recipient: string; amount: string }): Promise<WithdrawQuote> {
+  return apiRequest<WithdrawQuote>('/api/wallet/withdraw-quote', { method: 'POST', body: JSON.stringify(input) });
+}
+
+export async function getWithdrawStatus(bridgeAddress: string): Promise<{ status: string }[]> {
+  const data = await apiRequest<{ transactions: { status: string }[] }>(
+    `/api/wallet/withdraw-status?address=${encodeURIComponent(bridgeAddress)}`
+  );
+  return data.transactions;
 }

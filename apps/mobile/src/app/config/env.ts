@@ -5,7 +5,10 @@
  */
 // Endpoint paths (`/feed`, `/markets`, …) are relative to the API root,
 // so the base URL must end in `/api` (e.g. `https://example.com/api`).
-const apiBaseUrl = (process.env.EXPO_PUBLIC_API_BASE_URL ?? 'http://localhost:3000/api').replace(/\/+$/, '');
+const apiBaseUrl = (process.env.EXPO_PUBLIC_API_BASE_URL ?? 'http://localhost:3000/api').replace(
+  /\/+$/,
+  ''
+);
 
 export const env = {
   apiBaseUrl,
@@ -24,8 +27,15 @@ export const env = {
    * Signing"). Public by design; the private key stays on the backend. */
   privySignerId: process.env.EXPO_PUBLIC_PRIVY_SIGNER_ID ?? '',
   /** Public Polygon JSON-RPC used by Privy's client-side chain reads. */
-  polygonRpcUrl: process.env.EXPO_PUBLIC_POLYGON_RPC_URL || 'https://polygon-bor-rpc.publicnode.com',
+  polygonRpcUrl:
+    process.env.EXPO_PUBLIC_POLYGON_RPC_URL || 'https://polygon-bor-rpc.publicnode.com',
   tradingEnabled: process.env.EXPO_PUBLIC_TRADING_ENABLED === 'true',
+  /** Card deposits (MoonPay → embedded wallet → Polymarket bridge). The
+   * embedded-wallet → bridge transfer needs gas, so keep this off until
+   * Privy gas sponsorship is enabled (and the backend's
+   * `NEXT_PUBLIC_CARD_DEPOSIT_ENABLED` is on). Off: Deposit opens crypto
+   * deposit directly; on: Deposit asks card or crypto. */
+  cardDepositEnabled: process.env.EXPO_PUBLIC_CARD_DEPOSIT_ENABLED === 'true',
   isDev: __DEV__,
 } as const;
 

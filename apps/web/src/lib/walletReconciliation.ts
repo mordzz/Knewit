@@ -2,7 +2,6 @@ import { createPublicClient, http } from 'viem';
 import { polygon } from 'viem/chains';
 import { env } from '@/lib/env';
 import { getSupabase } from '@/lib/supabase';
-import { getPrivyClient } from '@/lib/privyClient';
 import { getAndCacheMarketSummary } from '@/features/markets/lib/marketCache';
 import type { WalletOperation } from '@/lib/walletOperations';
 
@@ -28,16 +27,6 @@ export async function reconcileUserWalletOperations(userId: string): Promise<voi
   for (const raw of rows ?? []) {
     const operation = raw as WalletOperation;
     try {
-      if (operation.operation_type === 'deposit_swap' && operation.provider_action_id && operation.provider_wallet_id) {
-        const action = await getPrivyClient().wallets().actions.get(operation.provider_action_id, { wallet_id: operation.provider_wallet_id });
-        if (action.status === 'succeeded') {
-          await updateOperation(supabase, operation.id, { status: 'confirmed', result: { actionId: action.id }, reconciled_at: new Date().toISOString() });
-        } else if (action.status === 'failed' || action.status === 'rejected') {
-          await updateOperation(supabase, operation.id, { status: 'failed', error_code: action.status, reconciled_at: new Date().toISOString() });
-        }
-        continue;
-      }
-
       if (operation.transaction_hash) {
         let receipt;
         try {

@@ -5,7 +5,7 @@ import { useAddFunds } from '@privy-io/react-auth';
 import { useQueryClient } from '@tanstack/react-query';
 import { useWalletBalance } from '@/features/wallet/hooks/useWalletBalance';
 import { useSession } from '@/hooks/useSession';
-import { getDepositWallet, wrapDepositCollateral, POLYGON_CAIP2, POLYGON_USDC_E } from '@/features/wallet/lib/walletService';
+import { convertToCollateral, getDepositWallet, POLYGON_CAIP2, POLYGON_USDC_E } from '@/features/wallet/lib/walletService';
 import { creditGuestFunds } from '@/lib/guest/guestBackend';
 import { tradingEnabled, tradingUnavailableMessage } from '@/lib/tradingAvailability';
 
@@ -72,7 +72,7 @@ export function useDeposit() {
     let wrapped = false;
     for (let attempt = 0; attempt < 15; attempt += 1) {
       if (!activeRef.current) return;
-      const result = await wrapDepositCollateral();
+      const result = await convertToCollateral();
       if (result.status === 'converted') {
         wrapped = true;
         break;

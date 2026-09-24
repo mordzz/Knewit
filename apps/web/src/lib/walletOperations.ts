@@ -2,7 +2,7 @@ import { createHash, randomUUID } from 'node:crypto';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { ApiError } from '@/lib/apiError';
 
-export type WalletOperationType = 'deposit_swap' | 'deposit_wrap' | 'withdraw' | 'buy' | 'sell';
+export type WalletOperationType = 'deposit_forward' | 'deposit_wrap' | 'withdraw' | 'buy' | 'sell';
 export type WalletOperationStatus = 'pending' | 'submitted' | 'confirmed' | 'failed' | 'reconciliation_required';
 
 export interface WalletOperation {
@@ -12,8 +12,6 @@ export interface WalletOperation {
   idempotency_key: string;
   request_hash: string;
   status: WalletOperationStatus;
-  provider_action_id: string | null;
-  provider_wallet_id: string | null;
   provider_order_id: string | null;
   transaction_id: string | null;
   transaction_hash: string | null;
