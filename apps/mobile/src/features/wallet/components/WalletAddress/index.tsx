@@ -47,7 +47,11 @@ export function WalletAddress({ address, compact = false }: WalletAddressProps) 
         accessibilityRole="button"
         accessibilityLabel={`Wallet address ${address}. Double tap to copy.`}
       >
-        <Text variant={compact ? 'bodyStrong' : 'body'} numberOfLines={1} className="min-w-0 flex-shrink truncate">
+        <Text
+          variant={compact ? 'bodyStrong' : 'body'}
+          numberOfLines={1}
+          className="min-w-0 flex-shrink truncate"
+        >
           {shortenAddress(address)}
         </Text>
         <Icon name={copied ? 'checkmark' : 'layers-outline'} size={16} color="textSecondary" />

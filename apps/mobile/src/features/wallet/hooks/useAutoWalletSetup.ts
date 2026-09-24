@@ -56,11 +56,10 @@ export function useAutoWalletSetup(): { status: WalletSetupStatus } {
   useEffect(() => {
     if (!isAuthenticated || isConnected || attemptedCreation.current) return;
     attemptedCreation.current = true;
-    createWallet()
-      .catch((error) => {
-        if (__DEV__) console.warn('[wallet] embedded wallet creation failed', error);
-        setFailed(true);
-      });
+    createWallet().catch((error) => {
+      if (__DEV__) console.warn('[wallet] embedded wallet creation failed', error);
+      setFailed(true);
+    });
   }, [isAuthenticated, isConnected, createWallet]);
 
   // Check the backend balance while Privy's local wallet list catches up.
@@ -111,6 +110,10 @@ export function useAutoWalletSetup(): { status: WalletSetupStatus } {
   // the balance read itself errored — in that last case there is nothing
   // more this automatic path can do, so waiting on it would just block
   // readiness until the 30s setup timeout for no benefit.
-  const signerReady = !signerId || signerGranted || (balance.isSuccess && balance.data?.usdc != null) || balance.isError;
+  const signerReady =
+    !signerId ||
+    signerGranted ||
+    (balance.isSuccess && balance.data?.usdc != null) ||
+    balance.isError;
   return { status: signerReady ? 'ready' : 'preparing' };
 }

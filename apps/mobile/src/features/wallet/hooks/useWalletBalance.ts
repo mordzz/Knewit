@@ -8,7 +8,7 @@ import { useAuth } from '@/hooks/useAuth';
 export function useWalletBalance() {
   const { isAuthenticated, isGuest } = useAuth();
   const { user: privyUser } = usePrivy();
-  const accountKey = isAuthenticated ? privyUser?.id ?? null : isGuest ? 'guest' : null;
+  const accountKey = isAuthenticated ? (privyUser?.id ?? null) : isGuest ? 'guest' : null;
 
   return useQuery({
     // Financial data must never be reused across authenticated accounts.

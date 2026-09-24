@@ -14,6 +14,7 @@ import { useHomeFeed } from '@/features/home/hooks/useHomeFeed';
 import { useFollowingFeed } from '@/features/home/hooks/useFollowingFeed';
 import { useWalletBalance } from '@/features/wallet/hooks/useWalletBalance';
 import { useDeposit } from '@/features/wallet/hooks/useDeposit';
+import { DepositSheet } from '@/features/wallet/components/DepositSheet';
 import { isUserCancelledFunding } from '@/features/wallet/utils/privyErrors';
 import { getDepositErrorMessage, logDepositFailure } from '@/features/wallet/utils/depositErrors';
 import { navigateToMarketDetail } from '@/features/markets/utils/openMarketDetail';
@@ -269,6 +270,7 @@ function Header() {
   const { deposit, stage: depositStage } = useDeposit();
   const [isDepositing, setIsDepositing] = useState(false);
   const [depositError, setDepositError] = useState<string | null>(null);
+  const [depositSheetOpen, setDepositSheetOpen] = useState(false);
 
   const balanceLabel = balance.data?.usdc != null ? formatUsd(balance.data.usdc) : '—';
 
@@ -295,17 +297,23 @@ function Header() {
       <View className="flex-row items-center justify-between">
         <Text className="text-4xl font-bold">{balanceLabel}</Text>
         <Button
-          label={isGuest ? 'Add demo funds' :
-            depositStage === 'converting'
-              ? 'Converting…'
-              : depositStage === 'waiting'
-                ? 'Waiting…'
-                : depositStage === 'buying'
-                  ? 'Depositing…'
-                  : 'Deposit'
+          label={
+            isGuest
+              ? 'Add demo funds'
+              : depositStage === 'converting'
+                ? 'Converting…'
+                : depositStage === 'waiting'
+                  ? 'Waiting…'
+                  : depositStage === 'buying'
+                    ? 'Depositing…'
+                    : 'Deposit'
           }
           loading={isDepositing}
-          onPress={handleDeposit}
+          onPress={() =>
+            // Real accounts choose crypto or card; a guest (or a signed-out
+            // visitor, routed to sign-in) keeps the one-tap behaviour.
+            isGuest || !canUseApp || !isConnected ? handleDeposit() : setDepositSheetOpen(true)
+          }
           className="min-h-0 px-4 py-2"
         />
       </View>
@@ -314,6 +322,11 @@ function Header() {
           {depositError}
         </Text>
       ) : null}
+      <DepositSheet
+        visible={depositSheetOpen}
+        onClose={() => setDepositSheetOpen(false)}
+        onBuyWithCard={handleDeposit}
+      />
     </View>
   );
 }

@@ -22,6 +22,7 @@ export const endpoints = {
   tradingOrders: '/trading/orders',
   walletBalance: '/wallet/balance',
   walletDeposit: '/wallet/deposit-wallet',
+  walletCryptoDeposit: '/wallet/crypto-deposit',
   walletNativeBalance: '/wallet/native-balance',
   walletConvertToCollateral: '/wallet/convert-to-collateral',
   walletWithdraw: '/wallet/withdraw',

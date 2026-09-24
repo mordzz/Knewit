@@ -16,6 +16,7 @@ import { ErrorState } from '@/components/feedback/ErrorState';
 import { WalletAddress } from '@/features/wallet/components/WalletAddress';
 import { useWalletBalance } from '@/features/wallet/hooks/useWalletBalance';
 import { useDeposit } from '@/features/wallet/hooks/useDeposit';
+import { DepositSheet } from '@/features/wallet/components/DepositSheet';
 import { useWithdraw } from '@/features/wallet/hooks/useWithdraw';
 import { isUserCancelledFunding } from '@/features/wallet/utils/privyErrors';
 import { getDepositErrorMessage, logDepositFailure } from '@/features/wallet/utils/depositErrors';
@@ -65,6 +66,7 @@ export function WalletScreen() {
   const sell = useSellPosition();
   const [isDepositing, setIsDepositing] = useState(false);
   const [depositError, setDepositError] = useState<string | null>(null);
+  const [depositSheetOpen, setDepositSheetOpen] = useState(false);
   const [withdrawOpen, setWithdrawOpen] = useState(false);
   const [recipient, setRecipient] = useState('');
   const [amount, setAmount] = useState('');
@@ -230,7 +232,7 @@ export function WalletScreen() {
               }
               variant="primary"
               loading={isDepositing}
-              onPress={handleDeposit}
+              onPress={() => (isGuest ? handleDeposit() : setDepositSheetOpen(true))}
               accessibilityLabel={isGuest ? 'Add demo funds' : 'Deposit'}
               className="min-h-0 flex-1 px-3 py-2"
             />
@@ -452,6 +454,12 @@ export function WalletScreen() {
           Logging out ends your app session only — it doesn&apos;t delete your embedded wallet.
         </Text>
       ) : null}
+
+      <DepositSheet
+        visible={depositSheetOpen}
+        onClose={() => setDepositSheetOpen(false)}
+        onBuyWithCard={handleDeposit}
+      />
 
       <BottomSheet
         visible={sellTarget != null}

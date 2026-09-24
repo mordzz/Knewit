@@ -40,6 +40,23 @@ export async function getDepositWallet(): Promise<DepositWallet> {
   return apiRequest<DepositWallet>(endpoints.walletDeposit);
 }
 
+/** `GET /wallet/crypto-deposit` — where to send each token on Polygon and
+ * what has already arrived there (docs/API.md). */
+export interface CryptoDepositInfo {
+  network: 'polygon';
+  /** Native USDC → the embedded wallet (swapped on arrival). */
+  usdc: { address: string; balance: number };
+  /** USDC.e → the Polymarket Deposit Wallet (wrapped on arrival). */
+  usdcE: { address: string; balance: number };
+  /** True when arrivals convert in the background (Alchemy webhook). */
+  autoConvert: boolean;
+  unavailable?: boolean;
+}
+
+export async function getCryptoDepositInfo(): Promise<CryptoDepositInfo> {
+  return apiRequest<CryptoDepositInfo>(endpoints.walletCryptoDeposit);
+}
+
 export interface NativeUsdcBalance {
   raw: string;
   usdc: number;

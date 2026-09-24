@@ -63,4 +63,21 @@ export const env = {
   get polygonRpcUrl() {
     return required('POLYGON_RPC_URL', process.env.POLYGON_RPC_URL);
   },
+  /** Alchemy "Address Activity" webhook for crypto deposits (all three
+   * optional — without them, deposits still convert when the app checks,
+   * just not automatically in the background). Signing key: shown on the
+   * webhook in the Alchemy dashboard; used to verify `X-Alchemy-Signature`. */
+  get alchemyWebhookSigningKey() {
+    return process.env.ALCHEMY_WEBHOOK_SIGNING_KEY;
+  },
+  /** The webhook's id (e.g. `wh_...`) — addresses are added to it as users
+   * open the crypto deposit screen. */
+  get alchemyWebhookId() {
+    return process.env.ALCHEMY_WEBHOOK_ID;
+  },
+  /** Alchemy "Auth Token" (Notify API, top of the webhooks dashboard) —
+   * needed to add addresses to the webhook. */
+  get alchemyNotifyAuthToken() {
+    return process.env.ALCHEMY_NOTIFY_AUTH_TOKEN;
+  },
 };

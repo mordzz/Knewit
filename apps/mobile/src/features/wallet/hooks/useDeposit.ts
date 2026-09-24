@@ -41,75 +41,81 @@ export function useDeposit() {
     if (stage !== 'idle') return;
     setStage('buying');
     try {
-    if (!env.tradingEnabled) throw new Error('Trading is temporarily unavailable.');
-    // No Privy funding flow exists for a guest account — Deposit credits
-    // demo funds so the trade → position → callout loop stays testable.
-    if (isGuestSession()) {
-      creditGuestFunds(500);
-      await queryClient.invalidateQueries({ queryKey: ['wallet-balance'] });
-      await queryClient.invalidateQueries({ queryKey: ['positions'] });
-      return;
-    }
-    if (!address) throw new Error('Connect a wallet before depositing.');
-    const startingBalance = await getNativeUsdcBalance();
-    if (startingBalance.usdc > 0) {
-      // Reuse Deposit for a purchase that arrived after the previous wait
-      // ended. Converting first also prevents accidentally starting a second
-      // card purchase while funds are already waiting in the embedded wallet.
+      if (!env.tradingEnabled) throw new Error('Trading is temporarily unavailable.');
+      // No Privy funding flow exists for a guest account — Deposit credits
+      // demo funds so the trade → position → callout loop stays testable.
+      if (isGuestSession()) {
+        creditGuestFunds(500);
+        await queryClient.invalidateQueries({ queryKey: ['wallet-balance'] });
+        await queryClient.invalidateQueries({ queryKey: ['positions'] });
+        return;
+      }
+      if (!address) throw new Error('Connect a wallet before depositing.');
+      const startingBalance = await getNativeUsdcBalance();
+      if (startingBalance.usdc > 0) {
+        // Reuse Deposit for a purchase that arrived after the previous wait
+        // ended. Converting first also prevents accidentally starting a second
+        // card purchase while funds are already waiting in the embedded wallet.
+        setStage('converting');
+        const conversion = await convertToCollateral();
+        if (conversion.status !== 'converted') {
+          throw new Error(
+            conversion.errorMessage ??
+              'Conversion could not be confirmed. Check your wallet and trading balance before trying again.'
+          );
+        }
+        await refreshBalances();
+        return;
+      }
+
+      await fundWallet({
+        address,
+        chain: polygon,
+        asset: { tokenAddress: POLYGON_USDC_NATIVE },
+        defaultPaymentMethod: 'card',
+        card: { preferredProvider: 'moonpay' },
+        moonpay: { uiConfig: { accentColor: '#FFE506', theme: 'dark' } },
+      });
+
+      setStage('waiting');
+      let attempts = 0;
+      const landed = await new Promise<boolean>((resolve) => {
+        const pollTimer = setInterval(async () => {
+          if (!activeRef.current) {
+            clearInterval(pollTimer);
+            resolve(false);
+            return;
+          }
+          attempts += 1;
+          const currentBalance = await getNativeUsdcBalance().catch(() => null);
+          if (!activeRef.current) {
+            clearInterval(pollTimer);
+            resolve(false);
+            return;
+          }
+          if ((currentBalance?.usdc ?? 0) > startingBalance.usdc || attempts >= 15) {
+            clearInterval(pollTimer);
+            resolve((currentBalance?.usdc ?? 0) > startingBalance.usdc);
+          }
+        }, 4000);
+      });
+      if (!activeRef.current) return;
+      if (!landed) {
+        throw new Error(
+          'Your purchase is still processing. When USDC arrives, tap Deposit again to add it to your trading balance.'
+        );
+      }
+
       setStage('converting');
       const conversion = await convertToCollateral();
       if (conversion.status !== 'converted') {
-        throw new Error(conversion.errorMessage ?? 'Conversion could not be confirmed. Check your wallet and trading balance before trying again.');
+        throw new Error(
+          conversion.errorMessage ??
+            'Conversion could not be confirmed. Check your wallet and trading balance before trying again.'
+        );
       }
+
       await refreshBalances();
-      return;
-    }
-
-    await fundWallet({
-      address,
-      chain: polygon,
-      asset: { tokenAddress: POLYGON_USDC_NATIVE },
-      defaultPaymentMethod: 'card',
-      card: { preferredProvider: 'moonpay' },
-      moonpay: { uiConfig: { accentColor: '#FFE506', theme: 'dark' } },
-    });
-
-    setStage('waiting');
-    let attempts = 0;
-    const landed = await new Promise<boolean>((resolve) => {
-      const pollTimer = setInterval(async () => {
-        if (!activeRef.current) {
-          clearInterval(pollTimer);
-          resolve(false);
-          return;
-        }
-        attempts += 1;
-        const currentBalance = await getNativeUsdcBalance().catch(() => null);
-        if (!activeRef.current) {
-          clearInterval(pollTimer);
-          resolve(false);
-          return;
-        }
-        if ((currentBalance?.usdc ?? 0) > startingBalance.usdc || attempts >= 15) {
-          clearInterval(pollTimer);
-          resolve((currentBalance?.usdc ?? 0) > startingBalance.usdc);
-        }
-      }, 4000);
-    });
-    if (!activeRef.current) return;
-    if (!landed) {
-      throw new Error(
-        'Your purchase is still processing. When USDC arrives, tap Deposit again to add it to your trading balance.'
-      );
-    }
-
-    setStage('converting');
-    const conversion = await convertToCollateral();
-    if (conversion.status !== 'converted') {
-      throw new Error(conversion.errorMessage ?? 'Conversion could not be confirmed. Check your wallet and trading balance before trying again.');
-    }
-
-    await refreshBalances();
     } finally {
       if (activeRef.current) setStage('idle');
     }
