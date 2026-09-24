@@ -7,6 +7,8 @@ import type { ApiError } from '@/types/api';
 // Without a ceiling, a stalled connection keeps a query in `loading`
 // forever instead of failing into its retry/error state.
 const REQUEST_TIMEOUT_MS = 20_000;
+// Uploads (profile images) carry a body and can be slow on mobile data.
+const UPLOAD_TIMEOUT_MS = 60_000;
 
 export class ApiRequestError extends Error {
   constructor(
@@ -43,7 +45,10 @@ export async function apiRequest<T>(path: string, init?: RequestInit): Promise<T
   const isFormData = typeof FormData !== 'undefined' && init?.body instanceof FormData;
 
   const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+  const timeout = setTimeout(
+    () => controller.abort(),
+    isFormData ? UPLOAD_TIMEOUT_MS : REQUEST_TIMEOUT_MS
+  );
   const callerSignal = init?.signal;
   const abortFromCaller = () => controller.abort();
   if (callerSignal?.aborted) controller.abort();
@@ -73,11 +78,12 @@ export async function apiRequest<T>(path: string, init?: RequestInit): Promise<T
     );
   }
 
-  const data = await response.json() as T & { status?: string; code?: string; message?: string };
+  const data = (await response.json()) as T & { status?: string; code?: string; message?: string };
   if (data?.status === 'reconciliation_required') {
     throw new ApiRequestError(202, {
       code: data.code ?? 'trade_reconciliation_required',
-      message: data.message ?? 'The transaction may have executed. Check your wallet before trying again.',
+      message:
+        data.message ?? 'The transaction may have executed. Check your wallet before trying again.',
     });
   }
   return data;

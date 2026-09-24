@@ -284,6 +284,9 @@ function route(
   if (pathname === '/users/me/images' && method === 'POST') {
     return uploadProfileImage(state, params.get('kind'), rawBody);
   }
+  if (pathname === '/users/me/images' && method === 'DELETE') {
+    return removeProfileImage(state, params.get('kind'));
+  }
 
   const userMatch = /^\/users\/([^/]+)(\/.*)?$/.exec(pathname);
   if (userMatch) {
@@ -755,6 +758,12 @@ function updateProfile(state: GuestState, userId: string, body: unknown) {
       bannerUrl: input.bannerUrl === undefined ? state.profile.bannerUrl : input.bannerUrl,
     },
   });
+  return data.guestProfile(useGuestStore.getState());
+}
+
+function removeProfileImage(state: GuestState, kind: string | null) {
+  const field = kind === 'banner' ? 'bannerUrl' : 'avatarUrl';
+  useGuestStore.setState({ profile: { ...state.profile, [field]: null } });
   return data.guestProfile(useGuestStore.getState());
 }
 

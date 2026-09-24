@@ -5,5 +5,5 @@
 .prettierjson
 
 /android
-
+/.gradle-user
 /node_modules

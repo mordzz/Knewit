@@ -15,12 +15,14 @@ import { LoadingState } from '@/components/feedback/LoadingState';
 import { useProfile } from '@/features/profile/hooks/useProfile';
 import { useUpdateProfile } from '@/features/profile/hooks/useUpdateProfile';
 import { useUploadProfileImage } from '@/features/profile/hooks/useUploadProfileImage';
+import { useRemoveProfileImage } from '@/features/profile/hooks/useRemoveProfileImage';
+import { prepareProfileImage } from '@/features/profile/utils/prepareProfileImage';
+import { ApiRequestError } from '@/services/api/client';
 import { UsernameSheet } from '@/features/profile/components/UsernameSheet';
 import { solidPanel } from '@/theme';
 
 const MAX_BIO_LENGTH = 160;
 const MAX_DISPLAY_NAME_LENGTH = 50;
-const MAX_IMAGE_BYTES = 2 * 1024 * 1024;
 const HANDLE_RE = /^[a-z0-9_]{3,20}$/;
 
 /**
@@ -40,6 +42,7 @@ export function EditProfileScreen() {
   const profile = useProfile();
   const mutation = useUpdateProfile();
   const upload = useUploadProfileImage();
+  const remove = useRemoveProfileImage();
   // Its own mutation so the username panel's saving/error state never
   // mixes with the main Save button's.
   const usernameMutation = useUpdateProfile();
@@ -75,47 +78,57 @@ export function EditProfileScreen() {
   const isNameValid = trimmedName.length > 0 && displayName.length <= MAX_DISPLAY_NAME_LENGTH;
   const isHandleValid = HANDLE_RE.test(normalizedHandle);
   const isBioValid = bio.length <= MAX_BIO_LENGTH;
-  const canSave =
-    isNameValid && isHandleValid && isBioValid && !mutation.isPending && !upload.isPending;
+  const imageBusy = upload.isPending || remove.isPending;
+  const canSave = isNameValid && isHandleValid && isBioValid && !mutation.isPending && !imageBusy;
 
   async function handlePickImage(kind: 'avatar' | 'banner') {
+    if (imageBusy) return;
     setImageError(null);
-    const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (!permission.granted) {
-      setImageError('Allow photo library access in Settings to change your profile image.');
-      return;
-    }
+    // No permission prompt: the system photo picker grants access to just
+    // the chosen photo, so a denied library permission never blocks it.
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ['images'],
       allowsEditing: true,
       aspect: kind === 'banner' ? [3, 1] : [1, 1],
-      quality: 0.85,
+      quality: 1,
     });
     if (result.canceled || !result.assets?.[0]) return;
 
-    const asset = result.assets[0];
-    if (asset.fileSize && asset.fileSize > MAX_IMAGE_BYTES) {
-      setImageError('Image must be 2MB or smaller.');
+    let file;
+    try {
+      file = await prepareProfileImage(result.assets[0], kind);
+    } catch {
+      setImageError("Couldn't read that photo. Please pick another one.");
       return;
     }
-    const extension = asset.mimeType?.split('/')[1] ?? 'jpg';
+
     upload.mutate(
-      {
-        kind,
-        file: {
-          uri: asset.uri,
-          name: asset.fileName ?? `${kind}.${extension}`,
-          type: asset.mimeType ?? 'image/jpeg',
-        },
-      },
+      { kind, file },
       {
         onSuccess: (updated) => {
           setAvatarUrl(updated.avatarUrl);
           setBannerUrl(updated.bannerUrl);
         },
-        onError: () => setImageError("Couldn't upload that image. Please try again."),
+        onError: (error) => setImageError(friendlyImageError(error, 'upload')),
       }
     );
+  }
+
+  const isImageBusy = (kind: 'avatar' | 'banner') =>
+    (upload.isPending && upload.variables?.kind === kind) ||
+    (remove.isPending && remove.variables === kind);
+
+  /** Removes the image on the server immediately, like an upload. */
+  function handleRemoveImage(kind: 'avatar' | 'banner') {
+    if (imageBusy) return;
+    setImageError(null);
+    remove.mutate(kind, {
+      onSuccess: (updated) => {
+        setAvatarUrl(updated.avatarUrl);
+        setBannerUrl(updated.bannerUrl);
+      },
+      onError: (error) => setImageError(friendlyImageError(error, 'remove')),
+    });
   }
 
   /** Saves only the new username — name/bio are sent as they are on the
@@ -183,12 +196,14 @@ export function EditProfileScreen() {
         {profile.status === 'success' ? (
           <>
             <View style={[solidPanel, { borderRadius: 16 }]} className="gap-3 p-3.5">
-              <Pressable
-                onPress={() => handlePickImage('banner')}
-                accessibilityRole="button"
-                accessibilityLabel="Change cover"
-              >
-                <View className="h-32 w-full overflow-hidden rounded-xl bg-surface">
+              <View className="h-32 w-full overflow-hidden rounded-xl bg-surface">
+                <Pressable
+                  onPress={() => handlePickImage('banner')}
+                  disabled={imageBusy}
+                  className="h-full w-full"
+                  accessibilityRole="button"
+                  accessibilityLabel="Change cover"
+                >
                   {bannerUrl ? (
                     <Image
                       source={{ uri: bannerUrl }}
@@ -208,44 +223,66 @@ export function EditProfileScreen() {
                       />
                     </>
                   )}
-                  {upload.isPending && upload.variables?.kind === 'banner' ? (
-                    <View className="absolute inset-0 items-center justify-center bg-black/50">
-                      <ActivityIndicator color="#FFFFFF" />
-                    </View>
-                  ) : (
-                    <View className="absolute bottom-2 right-2 rounded-full bg-black/60 px-3 py-1">
-                      <Text variant="micro" className="font-semibold text-white">
-                        Change cover
-                      </Text>
-                    </View>
-                  )}
-                </View>
-              </Pressable>
+                </Pressable>
+                {isImageBusy('banner') ? (
+                  <View
+                    pointerEvents="none"
+                    className="absolute inset-0 items-center justify-center bg-black/50"
+                  >
+                    <ActivityIndicator color="#FFFFFF" />
+                  </View>
+                ) : (
+                  <View className="absolute bottom-2 right-2 flex-row gap-2">
+                    {bannerUrl ? (
+                      <ImagePill
+                        label="Remove"
+                        tone="danger"
+                        onPress={() => handleRemoveImage('banner')}
+                        disabled={imageBusy}
+                        accessibilityLabel="Remove cover"
+                      />
+                    ) : null}
+                    <ImagePill
+                      label={bannerUrl ? 'Change cover' : 'Add cover'}
+                      onPress={() => handlePickImage('banner')}
+                      disabled={imageBusy}
+                    />
+                  </View>
+                )}
+              </View>
 
               <View className="border-b border-white/10" />
 
               <View className="flex-row items-center gap-3">
-                <Avatar uri={avatarUrl} fallbackLabel={trimmedName || '?'} size={56} />
-                <Button
-                  label="Change photo"
-                  variant="secondary"
+                <Pressable
                   onPress={() => handlePickImage('avatar')}
-                  loading={upload.isPending && upload.variables?.kind === 'avatar'}
-                  className="min-h-0 rounded-xl px-3 py-1.5"
+                  disabled={imageBusy}
+                  accessibilityRole="button"
                   accessibilityLabel="Change photo"
-                />
-                {avatarUrl ? (
-                  <Pressable
-                    onPress={() => setAvatarUrl(null)}
-                    accessibilityRole="button"
-                    accessibilityLabel="Remove photo"
-                    hitSlop={8}
-                  >
-                    <Text variant="caption" color="textSecondary">
-                      Remove
-                    </Text>
-                  </Pressable>
-                ) : null}
+                >
+                  <Avatar uri={avatarUrl} fallbackLabel={trimmedName || '?'} size={56} />
+                  {isImageBusy('avatar') ? (
+                    <View className="absolute inset-0 items-center justify-center rounded-full bg-black/50">
+                      <ActivityIndicator color="#FFFFFF" />
+                    </View>
+                  ) : null}
+                </Pressable>
+                <View className="flex-1 flex-row flex-wrap gap-2">
+                  <ImageButton
+                    label={avatarUrl ? 'Change photo' : 'Add photo'}
+                    onPress={() => handlePickImage('avatar')}
+                    disabled={imageBusy}
+                  />
+                  {avatarUrl ? (
+                    <ImageButton
+                      label="Remove"
+                      tone="danger"
+                      onPress={() => handleRemoveImage('avatar')}
+                      disabled={imageBusy}
+                      accessibilityLabel="Remove photo"
+                    />
+                  ) : null}
+                </View>
               </View>
             </View>
 
@@ -413,4 +450,93 @@ function friendlyEditError(message: string | null): string {
     return message;
   }
   return "Couldn't save your changes right now. Please try again.";
+}
+
+/** The backend's own 4xx messages (format, size, invalid image) are
+ * already user-facing; a timeout or network drop gets a connection hint
+ * instead of a generic "try again". */
+function friendlyImageError(error: unknown, action: 'upload' | 'remove'): string {
+  if (error instanceof ApiRequestError && error.status >= 400 && error.status < 500) {
+    return error.body.message;
+  }
+  if (
+    error instanceof Error &&
+    (error.name === 'AbortError' || /network|abort/i.test(error.message))
+  ) {
+    return 'That took too long. Check your connection and try again.';
+  }
+  return action === 'upload'
+    ? "Couldn't upload that image. Please try again."
+    : "Couldn't remove that image. Please try again.";
+}
+
+/** Pills over the banner: dark glass so they read on any image. */
+function ImagePill({
+  label,
+  tone = 'default',
+  onPress,
+  disabled,
+  accessibilityLabel,
+}: {
+  label: string;
+  tone?: 'default' | 'danger';
+  onPress: () => void;
+  disabled?: boolean;
+  accessibilityLabel?: string;
+}) {
+  return (
+    <Pressable
+      onPress={onPress}
+      disabled={disabled}
+      hitSlop={6}
+      className={`rounded-full bg-black/60 px-3 py-1.5 active:bg-black/80 ${disabled ? 'opacity-50' : ''}`}
+      accessibilityRole="button"
+      accessibilityLabel={accessibilityLabel ?? label}
+    >
+      <Text
+        variant="micro"
+        color={tone === 'danger' ? 'danger' : 'textPrimary'}
+        className="font-semibold"
+      >
+        {label}
+      </Text>
+    </Pressable>
+  );
+}
+
+/** Avatar actions: one size, so Change and Remove line up as a pair. */
+function ImageButton({
+  label,
+  tone = 'default',
+  onPress,
+  disabled,
+  accessibilityLabel,
+}: {
+  label: string;
+  tone?: 'default' | 'danger';
+  onPress: () => void;
+  disabled?: boolean;
+  accessibilityLabel?: string;
+}) {
+  return (
+    <Pressable
+      onPress={onPress}
+      disabled={disabled}
+      className={`min-h-9 justify-center rounded-xl border px-3.5 ${
+        tone === 'danger'
+          ? 'border-danger/30 bg-danger/5 active:bg-danger/15'
+          : 'border-border bg-surface-elevated active:bg-white/10'
+      } ${disabled ? 'opacity-50' : ''}`}
+      accessibilityRole="button"
+      accessibilityLabel={accessibilityLabel ?? label}
+    >
+      <Text
+        variant="caption"
+        color={tone === 'danger' ? 'danger' : 'textPrimary'}
+        className="font-semibold"
+      >
+        {label}
+      </Text>
+    </Pressable>
+  );
 }

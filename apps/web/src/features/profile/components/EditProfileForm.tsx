@@ -11,13 +11,16 @@ import { SOLID_PANEL_CLASS } from '@/components/ui/solidPanel';
 import { useProfile } from '@/features/profile/hooks/useProfile';
 import { useUpdateProfile } from '@/features/profile/hooks/useUpdateProfile';
 import { useUploadProfileImage } from '@/features/profile/hooks/useUploadProfileImage';
+import { useRemoveProfileImage } from '@/features/profile/hooks/useRemoveProfileImage';
+import { prepareProfileImage } from '@/features/profile/lib/prepareProfileImage';
+import { ApiRequestError } from '@/lib/apiClient';
 import type { ProfileImageKind } from '@/features/profile/lib/userService';
 
 const MAX_BIO_LENGTH = 160;
 const MAX_DISPLAY_NAME_LENGTH = 50;
-const MAX_IMAGE_BYTES = 2 * 1024 * 1024;
 const HANDLE_RE = /^[a-z0-9_]{3,20}$/;
-const IMAGE_ACCEPT = 'image/png,image/jpeg,image/webp';
+// Any image the browser can decode — it's re-encoded to JPEG before upload.
+const IMAGE_ACCEPT = 'image/*';
 
 /**
  * Edit Profile, laid out like the Callout composer (same solid-panel
@@ -31,6 +34,7 @@ export function EditProfileForm({ onSaved }: { onSaved: () => void }) {
   const profile = useProfile();
   const mutation = useUpdateProfile();
   const upload = useUploadProfileImage();
+  const remove = useRemoveProfileImage();
   const [displayName, setDisplayName] = useState('');
   const [handle, setHandle] = useState('');
   const [bio, setBio] = useState('');
@@ -56,29 +60,42 @@ export function EditProfileForm({ onSaved }: { onSaved: () => void }) {
   const isNameValid = trimmedName.length > 0 && displayName.length <= MAX_DISPLAY_NAME_LENGTH;
   const isHandleValid = HANDLE_RE.test(normalizedHandle);
   const isBioValid = bio.length <= MAX_BIO_LENGTH;
-  const canSave = isNameValid && isHandleValid && isBioValid && !mutation.isPending && !upload.isPending;
+  const imageBusy = upload.isPending || remove.isPending;
+  const canSave = isNameValid && isHandleValid && isBioValid && !mutation.isPending && !imageBusy;
 
-  function handleFile(kind: ProfileImageKind, file: File | undefined) {
-    if (!file) return;
+  async function handleFile(kind: ProfileImageKind, file: File | undefined) {
+    if (!file || imageBusy) return;
     setImageError(null);
-    if (file.size > MAX_IMAGE_BYTES) {
-      setImageError('Image must be 2MB or smaller.');
-      return;
-    }
-    if (!IMAGE_ACCEPT.split(',').includes(file.type)) {
-      setImageError('Only PNG, JPEG, or WebP images are supported.');
+    let prepared: File;
+    try {
+      prepared = await prepareProfileImage(file, kind);
+    } catch {
+      setImageError("Couldn't read that image. Please pick a PNG, JPEG, or WebP photo.");
       return;
     }
     upload.mutate(
-      { kind, file },
+      { kind, file: prepared },
       {
         onSuccess: (updated) => {
           setAvatarUrl(updated.avatarUrl);
           setBannerUrl(updated.bannerUrl);
         },
-        onError: () => setImageError("Couldn't upload that image. Please try again."),
+        onError: (error) => setImageError(friendlyImageError(error, 'upload')),
       }
     );
+  }
+
+  /** Removes the image on the server immediately, like an upload. */
+  function handleRemove(kind: ProfileImageKind) {
+    if (imageBusy) return;
+    setImageError(null);
+    remove.mutate(kind, {
+      onSuccess: (updated) => {
+        setAvatarUrl(updated.avatarUrl);
+        setBannerUrl(updated.bannerUrl);
+      },
+      onError: (error) => setImageError(friendlyImageError(error, 'remove')),
+    });
   }
 
   function handleSave() {
@@ -102,49 +119,90 @@ export function EditProfileForm({ onSaved }: { onSaved: () => void }) {
       {profile.status === 'success' ? (
         <>
           <div className={`${SOLID_PANEL_CLASS} flex flex-col gap-3 rounded-2xl p-3.5`}>
-            <button
-              type="button"
-              onClick={() => bannerInputRef.current?.click()}
-              aria-label="Change cover"
-              className="relative block h-32 w-full overflow-hidden rounded-xl"
-            >
-              {bannerUrl ? (
-                // eslint-disable-next-line @next/next/no-img-element -- uploaded storage URL, not a bundled asset
-                <img src={bannerUrl} alt="Profile banner" className="h-full w-full object-cover" />
-              ) : (
-                <div className="h-full w-full bg-gradient-to-br from-accent-muted via-surface to-surface-elevated" />
-              )}
-              {upload.isPending && upload.variables?.kind === 'banner' ? (
-                <div className="absolute inset-0 flex items-center justify-center bg-black/50">
+            <div className="relative h-32 w-full overflow-hidden rounded-xl">
+              <button
+                type="button"
+                onClick={() => bannerInputRef.current?.click()}
+                disabled={imageBusy}
+                aria-label="Change cover"
+                className="block h-full w-full"
+              >
+                {bannerUrl ? (
+                  // eslint-disable-next-line @next/next/no-img-element -- uploaded storage URL, not a bundled asset
+                  <img src={bannerUrl} alt="Profile banner" className="h-full w-full object-cover" />
+                ) : (
+                  <div className="h-full w-full bg-gradient-to-br from-accent-muted via-surface to-surface-elevated" />
+                )}
+              </button>
+              {(upload.isPending && upload.variables?.kind === 'banner') ||
+              (remove.isPending && remove.variables === 'banner') ? (
+                <div className="pointer-events-none absolute inset-0 flex items-center justify-center bg-black/50">
                   <div className="h-5 w-5 animate-spin rounded-full border-2 border-accent border-t-transparent" />
                 </div>
               ) : (
-                <span className="absolute bottom-2 right-2 rounded-full bg-black/60 px-3 py-1 text-xs font-semibold text-white">
-                  Change cover
-                </span>
+                <div className="absolute bottom-2 right-2 flex gap-2">
+                  {bannerUrl ? (
+                    <button
+                      type="button"
+                      onClick={() => handleRemove('banner')}
+                      disabled={imageBusy}
+                      aria-label="Remove cover"
+                      className={`${IMAGE_PILL_CLASS} text-danger`}
+                    >
+                      Remove
+                    </button>
+                  ) : null}
+                  <button
+                    type="button"
+                    onClick={() => bannerInputRef.current?.click()}
+                    disabled={imageBusy}
+                    className={`${IMAGE_PILL_CLASS} text-white`}
+                  >
+                    {bannerUrl ? 'Change cover' : 'Add cover'}
+                  </button>
+                </div>
               )}
-            </button>
+            </div>
 
             <div className="border-b border-white/10" />
 
             <div className="flex items-center gap-3">
-              <Avatar uri={avatarUrl} fallbackLabel={trimmedName || '?'} size={56} />
-              <Button
-                label="Change photo"
-                variant="secondary"
+              <button
+                type="button"
                 onClick={() => avatarInputRef.current?.click()}
-                loading={upload.isPending && upload.variables?.kind === 'avatar'}
-                className="min-h-0 rounded-xl px-3 py-1.5"
-              />
-              {avatarUrl ? (
+                disabled={imageBusy}
+                aria-label="Change photo"
+                className="relative shrink-0 rounded-full"
+              >
+                <Avatar uri={avatarUrl} fallbackLabel={trimmedName || '?'} size={56} />
+                {(upload.isPending && upload.variables?.kind === 'avatar') ||
+                (remove.isPending && remove.variables === 'avatar') ? (
+                  <span className="absolute inset-0 flex items-center justify-center rounded-full bg-black/50">
+                    <span className="h-5 w-5 animate-spin rounded-full border-2 border-accent border-t-transparent" />
+                  </span>
+                ) : null}
+              </button>
+              <div className="flex flex-wrap gap-2">
                 <button
                   type="button"
-                  onClick={() => setAvatarUrl(null)}
-                  className="text-xs font-semibold text-text-secondary hover:opacity-80"
+                  onClick={() => avatarInputRef.current?.click()}
+                  disabled={imageBusy}
+                  className={`${IMAGE_BUTTON_CLASS} border-border bg-surface-elevated text-text-primary hover:bg-white/10`}
                 >
-                  Remove
+                  {avatarUrl ? 'Change photo' : 'Add photo'}
                 </button>
-              ) : null}
+                {avatarUrl ? (
+                  <button
+                    type="button"
+                    onClick={() => handleRemove('avatar')}
+                    disabled={imageBusy}
+                    aria-label="Remove photo"
+                    className={`${IMAGE_BUTTON_CLASS} border-danger/30 bg-danger/5 text-danger hover:bg-danger/15`}
+                  >
+                    Remove
+                  </button>
+                ) : null}
+              </div>
             </div>
           </div>
 
@@ -283,6 +341,24 @@ export function EditProfileForm({ onSaved }: { onSaved: () => void }) {
       />
     </div>
   );
+}
+
+/** Pills over the banner: dark glass so they read on any image. */
+const IMAGE_PILL_CLASS =
+  'rounded-full bg-black/60 px-3 py-1.5 text-xs font-semibold backdrop-blur-sm transition-colors hover:bg-black/75 disabled:opacity-50';
+/** Avatar actions: one size, so Change and Remove line up as a pair. */
+const IMAGE_BUTTON_CLASS =
+  'min-h-9 rounded-xl border px-3.5 text-sm font-semibold transition-colors disabled:opacity-50';
+
+/** The backend's own 4xx messages (format, size, invalid image) are
+ * already user-facing; anything else becomes one generic line. */
+function friendlyImageError(error: unknown, action: 'upload' | 'remove'): string {
+  if (error instanceof ApiRequestError && error.status >= 400 && error.status < 500) {
+    return error.body.message;
+  }
+  return action === 'upload'
+    ? "Couldn't upload that image. Please try again."
+    : "Couldn't remove that image. Please try again.";
 }
 
 function friendlyEditError(message: string | null): string {

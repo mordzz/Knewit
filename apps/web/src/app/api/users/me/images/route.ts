@@ -111,3 +111,45 @@ export async function POST(request: Request) {
     return Response.json(await buildUserProfile(updated, viewer.id));
   });
 }
+
+/**
+ * `DELETE /users/me/images?kind=avatar|banner` — removes the caller's
+ * avatar or banner right away (clears the column and deletes the stored
+ * object when it's ours), the counterpart of the immediate upload above.
+ * Returns the updated `UserProfile`. Removing an image that isn't set is
+ * a no-op, not an error.
+ */
+export async function DELETE(request: Request) {
+  return withErrorHandling(async () => {
+    const kind = new URL(request.url).searchParams.get('kind');
+    if (kind !== 'avatar' && kind !== 'banner') {
+      throw badRequest('Expected ?kind=avatar|banner.');
+    }
+
+    const { privyUserId } = await requireAuth(request);
+    const viewer = await getOrCreateUser(privyUserId);
+
+    const column = kind === 'avatar' ? 'avatar_url' : 'banner_url';
+    const previous = kind === 'avatar' ? viewer.avatar_url : viewer.banner_url;
+
+    const supabase = getSupabase();
+    const { data: updated, error } = await supabase
+      .from('users')
+      .update({ [column]: null })
+      .eq('id', viewer.id)
+      .select('*')
+      .single();
+    if (error) throw error;
+
+    // Same best-effort cleanup as a replacement upload.
+    const prefix = `${env.supabaseStoragePublicUrlBase}${BUCKET}/`;
+    if (previous && previous.startsWith(prefix)) {
+      await supabase.storage
+        .from(BUCKET)
+        .remove([previous.slice(prefix.length)])
+        .catch(() => undefined);
+    }
+
+    return Response.json(await buildUserProfile(updated, viewer.id));
+  });
+}

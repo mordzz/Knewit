@@ -81,6 +81,12 @@ export async function uploadProfileImage(
   });
 }
 
+/** Removes the avatar or banner immediately (`DELETE /users/me/images`)
+ * and returns the updated profile. */
+export async function removeProfileImage(kind: 'avatar' | 'banner'): Promise<UserProfile> {
+  return apiRequest<UserProfile>(endpoints.userImages(kind), { method: 'DELETE' });
+}
+
 async function getFollowList(
   endpoint: string,
   cursor: string | undefined,

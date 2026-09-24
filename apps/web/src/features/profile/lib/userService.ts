@@ -32,6 +32,12 @@ export async function uploadProfileImage(
   });
 }
 
+/** Removes the avatar or banner immediately (`DELETE /users/me/images`)
+ * and returns the updated profile. */
+export async function removeProfileImage(kind: ProfileImageKind): Promise<UserProfile> {
+  return apiRequest<UserProfile>(`/api/users/me/images?kind=${kind}`, { method: 'DELETE' });
+}
+
 export function getFollowers(userId: string, cursor?: string): Promise<Paginated<FollowListItem>> {
   const query = cursor ? `?cursor=${encodeURIComponent(cursor)}` : '';
   return apiRequest<Paginated<FollowListItem>>(`/api/users/${userId}/followers${query}`);
