@@ -1,5 +1,4 @@
 import type { Metadata } from 'next';
-import Link from 'next/link';
 import { LegalPage, LegalSection } from '@/components/LegalPage';
 
 export const metadata: Metadata = {
@@ -58,13 +57,15 @@ export default function DocsPage() {
       <DataTable
         headers={['Document information', 'Details']}
         rows={[
-          ['Guide scope', 'Markets, positions, Callouts, wallet actions, profiles, and account help.'],
+          ['Guide scope', 'Markets, positions, Callouts, deposits and withdrawals, profiles, and account help.'],
+          ['Last updated', 'September 25, 2026'],
           ['Who this is for', 'People exploring Knewit, signed-in members, and users with eligible trading access.'],
           ['How to use this guide', 'Start with the overview, then use the navigation section and troubleshooting table when you need a specific answer.'],
           [
             'Web application',
             <a
-              href="https://dekstop-pd32sv76a-dzakaals-projects.vercel.app/"
+              key="web-app"
+              href="https://dekstop-ten.vercel.app/"
               target="_blank"
               rel="noreferrer"
               className="font-semibold text-landing-ink underline"
@@ -197,7 +198,8 @@ export default function DocsPage() {
           <li>Review the order-book estimate, selected outcome, amount, estimated shares, and price.</li>
           <li>Confirm through the wallet flow and wait for a provider result before treating the order as complete.</li>
           <li>In Wallet, review entry price, current price when available, size, and estimated unrealized P/L.</li>
-          <li>Selling submits the whole displayed position for market execution; final fill and proceeds can differ from an estimate. Proceeds stay in the trading balance for another trade or withdrawal.</li>
+          <li>Selling submits everything you hold in that outcome for market execution; final fill and proceeds can differ from an estimate. Proceeds stay in your trading balance (pUSD) for another trade or withdrawal.</li>
+          <li>When a market resolves in your favour, the position shows Redeem instead of Sell. Redeeming turns the winning shares into trading balance.</li>
         </List>
         <p>
           Do not assume an order filled until Knewit and the connected provider report its status. In guest mode,
@@ -230,26 +232,27 @@ export default function DocsPage() {
         </List>
         <h3 className={subheadingClass}>Fund your wallet</h3>
         <p>
-          Select Deposit from Wallet, Settings, or the app header. Knewit opens the available card or bank
-          purchase flow. The funding provider, payment method, quote, fees, and available currency depend on
-          your location, account eligibility, and the options currently available in the funding screen.
+          Select Deposit from Wallet, Settings, or the app header. Pick a Token and a Chain from the two dropdowns —
+          each chain lists its minimum deposit — then send exactly that token on that chain to the address shown (copy
+          it or scan the QR code). Deposits go through Polymarket’s bridge and arrive as pUSD, your trading balance,
+          usually within a minute or two.
         </p>
         <List>
           <li>Open Wallet, Settings, or use Deposit in the app header.</li>
-          <li>Choose Deposit and review the provider, amount, currency, fees, destination, and quote expiration.</li>
-          <li>Confirm the purchase in the funding provider’s flow.</li>
-          <li>Return to Knewit and refresh your Wallet after the provider shows the payment as complete.</li>
+          <li>Choose the Token and Chain you will send from, and check the minimum for that chain.</li>
+          <li>Send from your exchange or wallet to the deposit address shown, on the same chain.</li>
+          <li>Keep the sheet open to follow the status, or close it; your balance updates when the deposit completes.</li>
         </List>
         <p>
-          Your embedded-wallet balance and trading balance can be different because they serve different purposes.
-          Funding, conversion, and balance updates may take time after payment. If the provider shows a payment as
-          submitted or pending, check its status before trying again to avoid a duplicate payment.
+          Sending a different token, using a different chain, or sending less than the minimum can mean the deposit is
+          not processed. Bridge costs are taken from the deposited amount.
         </p>
         <h3 className={subheadingClass}>Withdraw funds</h3>
         <p>
-          Withdraw asks for a recipient wallet address and USDC amount. Review the full destination, network, and
-          amount before you confirm. Knewit can check whether an address is formatted correctly, but that cannot prove
-          who owns it or whether the recipient can access the funds. Transfers may be public and irreversible.
+          Withdraw uses the same Token and Chain pickers. Enter the recipient address on that chain and an amount in
+          USD; Knewit shows what the recipient should receive and the route cost before you confirm. Review the full
+          address and chain — Knewit can check an address’s format, but not who owns it. Transfers are public and
+          irreversible.
         </p>
         <h3 className={subheadingClass}>Search, profiles, and following</h3>
         <p>
@@ -321,16 +324,17 @@ export default function DocsPage() {
         </p>
         <h3 className={subheadingClass}>Selling a position</h3>
         <p>
-          Open the relevant position and use the sell action where it is available. Review the market, outcome, and
-          estimate before confirming. A sell order is still subject to market execution, so the final fill and proceeds
-          can differ from the initial estimate. Proceeds remain in the trading balance for another eligible action or
-          withdrawal.
+          Open the relevant position and use the sell action where it is available. Selling closes everything you hold
+          in that outcome. Review the market, outcome, and estimate before confirming. A sell order is still subject to
+          market execution, so the final fill and proceeds can differ from the initial estimate. Proceeds remain in the
+          trading balance for another eligible action or withdrawal.
         </p>
         <h3 className={subheadingClass}>When a market resolves</h3>
         <p>
           A market resolves according to its stated rules and source. A resolved market is no longer a normal open
-          trading decision. Review the final outcome and any resulting position or balance update in Knewit after the
-          connected service reports it.
+          trading decision. If your outcome won, the position shows a Redeem action: redeeming turns the winning
+          shares into trading balance. Losing positions are worth nothing and disappear from the portfolio. Positions,
+          prices and P/L are read from Polymarket, so they also reflect activity made outside Knewit.
         </p>
       </LegalSection>
 
@@ -381,42 +385,52 @@ export default function DocsPage() {
       <LegalSection title="9. Depositing Funds">
         <h3 className={subheadingClass}>Before you begin</h3>
         <p>
-          Confirm that you are signed in, your wallet setup is ready, and Deposit is available to your account. The
-          payment options shown in Knewit are determined by the connected provider and can vary by region, currency,
-          payment method, identity checks, and the amount selected.
+          Confirm that you are signed in and your wallet setup is ready. Deposits use Polymarket’s bridge: every token
+          and chain it supports is listed in the Deposit pickers, together with its minimum. Everything you send is
+          converted and credited as pUSD, Polymarket’s trading balance.
         </p>
         <h3 className={subheadingClass}>Deposit step by step</h3>
         <List>
           <li>Open Wallet or Settings, or choose Deposit from the app header.</li>
-          <li>Select the amount and review the provider, currency, fees, destination, and quote expiry.</li>
-          <li>Complete the confirmation in the provider’s payment flow.</li>
-          <li>Check the provider’s final status, then return to Knewit and refresh Wallet.</li>
+          <li>Choose the Token you hold and the Chain you will send it on. The Chain list shows each minimum.</li>
+          <li>Copy the deposit address (or scan the QR code) and send the token from your exchange or wallet.</li>
+          <li>Wait for the status to change from “Deposit detected” to “Deposit added to your balance”.</li>
         </List>
+        <DataTable
+          headers={['Address type', 'Used for']}
+          rows={[
+            ['EVM (0x…)', 'Ethereum, Polygon, Base, Arbitrum, Optimism, BNB Smart Chain and other EVM chains in the list.'],
+            ['Solana', 'Solana tokens such as USDC, USDT or SOL.'],
+            ['Bitcoin', 'BTC on the Bitcoin network.'],
+            ['Tron', 'USDT or TRX on Tron.'],
+          ]}
+        />
         <p>
-          A payment can be completed by the provider before the trading balance updates in Knewit. Allow time for
-          processing and avoid creating another payment while the first one is pending. A quote error does not by
-          itself mean that funds left your account.
+          Only send the token and chain you selected, and at least the minimum. Bridge costs come out of the deposit.
+          If a deposit fails or you sent the wrong token, contact support with the transaction hash — Polymarket
+          provides a recovery process for some mistakes, but recovery is not guaranteed.
         </p>
       </LegalSection>
 
       <LegalSection title="10. Withdrawing Funds">
         <h3 className={subheadingClass}>Check the destination first</h3>
         <p>
-          A withdrawal sends USDC to the wallet address you provide. Enter the recipient address and amount, then
-          review every character of the destination and the network shown before confirming. An address can be valid
-          in format without belonging to the person you intended to pay.
+          A withdrawal sends your trading balance through Polymarket’s bridge and delivers the Token and Chain you
+          choose to the address you enter. Review every character of the address and the chain before confirming. An
+          address can be valid in format without belonging to the person you intended to pay.
         </p>
         <h3 className={subheadingClass}>Confirm the transfer</h3>
         <List>
-          <li>Open Withdraw from the available Wallet or Settings action.</li>
-          <li>Enter the recipient wallet address and requested USDC amount.</li>
-          <li>Review the destination, amount, network, and any confirmation information.</li>
-          <li>Wait for the status and reference shown by Knewit before considering the transfer complete.</li>
+          <li>Open Withdraw from Wallet, Settings, or the app header.</li>
+          <li>Choose the Token and Chain to receive; the Chain list shows the minimum.</li>
+          <li>Enter the recipient address on that chain and the amount in USD.</li>
+          <li>Check “You receive” and the route cost, review, then confirm.</li>
+          <li>Wait until the status shows the funds were delivered before considering the transfer complete.</li>
         </List>
         <p>
-          A blockchain transfer may be public and irreversible. Never withdraw to an address you do not understand
-          or have not verified. If a transfer is pending, keep the reference and wait for the final status rather than
-          submitting the same transfer again.
+          A blockchain transfer is public and irreversible. Never withdraw to an address you do not understand or have
+          not verified. If a transfer is pending, keep the transaction reference and wait for the final status rather
+          than submitting the same transfer again.
         </p>
       </LegalSection>
 
@@ -486,15 +500,15 @@ export default function DocsPage() {
           headers={['What you may see', 'What it usually means', 'What to do']}
           rows={[
             ['Trading wallet is not ready', 'Wallet setup is still in progress.', 'Wait briefly and retry. If it continues, use the safe error code when contacting support; do not send funds to a different address as a workaround.'],
-            ['No funding quote is available', 'The selected amount, currency, region, payment method, or account may not be supported.', 'Try an option shown in the funding screen or check your eligibility with the provider.'],
-            ['A balance has not updated after payment', 'The payment, conversion, or balance update may still be processing.', 'Check the provider status and refresh after it is confirmed. Avoid creating a second payment while the first is pending.'],
+            ['“Deposit detected” for a while', 'The bridge is processing the transfer.', 'Wait a few minutes. Bitcoin and busy networks can take longer.'],
+            ['Bridge couldn’t process it', 'The token, chain, or amount was not supported, or the amount was below the minimum.', 'Contact support with the transaction hash; do not send the same deposit again.'],
+            ['A balance has not updated', 'The deposit or its balance update may still be processing.', 'Use Check now, then refresh. Avoid sending a second deposit while the first is pending.'],
             ['A transfer is pending', 'The transfer has been submitted but is not yet final.', 'Keep the transaction reference, wait for the status to update, and do not submit the same transfer again.'],
-            ['A browser payment warning appears', 'Your browser may be checking whether a payment feature is available.', 'Use the funding provider’s visible result to determine whether a payment succeeded or failed.'],
           ]}
         />
         <p>
-          Support diagnostics should include platform (web/mobile), approximate time, selected funding
-          method, currency and network, app version, and the safe error code shown by Knewit. Do not
+          Support diagnostics should include platform (web/mobile), approximate time, the token and chain
+          used, the transaction hash, app version, and the safe error code shown by Knewit. Do not
           send passwords, one-time codes, private keys, recovery phrases, full payment-card details, or
           unredacted identity documents.
         </p>
@@ -517,13 +531,16 @@ export default function DocsPage() {
             ['Order book', 'Buy and sell interest used to estimate a market order’s execution price.'],
             ['Position', 'An outcome exposure held in a connected trading account or represented in demo data.'],
             ['Unrealized P/L', 'Estimated profit or loss on an open position that has not been sold.'],
-            ['Trading balance', 'Funds available in the trading system, which can be reported separately from the embedded wallet balance.'],
+            ['Trading balance (pUSD)', 'Polymarket USD held in your Polymarket Deposit Wallet — what trades spend and what deposits are credited as.'],
+            ['Deposit Wallet', 'Your Polymarket trading wallet. It is controlled by your Knewit (Privy) embedded wallet and holds your trading balance and positions.'],
+            ['Bridge', 'Polymarket’s service that converts supported tokens from other chains into pUSD for deposits, and pUSD into your chosen token for withdrawals.'],
+            ['Redeem', 'Turning winning shares in a resolved market into trading balance.'],
             ['Transaction hash', 'A public identifier for a submitted blockchain transaction; it does not alone prove successful completion.'],
             ['Guest mode', 'A local product demonstration with simulated wallet and supported trading/social activity.'],
             ['Market resolution', 'The process that determines the final outcome using the market’s stated rules and source.'],
             ['Pending', 'An action was submitted and is still waiting for a final result.'],
             ['Confirmed', 'Knewit and the connected service report that an action completed.'],
-            ['Provider', 'A connected service that may offer sign-in, wallet, payment, or market functionality.'],
+            ['Provider', 'A connected service that may offer sign-in, wallet, bridge, or market functionality.'],
           ]}
         />
       </LegalSection>
