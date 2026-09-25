@@ -3,7 +3,7 @@ import { requireAuth } from '@/lib/privy';
 import { getOrCreateUser } from '@/lib/users';
 import { getSupabase } from '@/lib/supabase';
 import { getAndCacheMarketSummary } from '@/features/markets/lib/marketCache';
-import { placeMarketOrder } from '@/lib/trading/orders';
+import { isRejectedBeforeSubmit, placeMarketOrder } from '@/lib/trading/orders';
 import type { Order } from '@/types/market';
 import { beginWalletOperation, operationInProgress, updateWalletOperation } from '@/lib/walletOperations';
 import { reconcileUserWalletOperations } from '@/lib/walletReconciliation';
@@ -65,6 +65,13 @@ export async function POST(request: Request) {
     try {
       result = await placeMarketOrder({ privyUserId, marketId: body.marketId, choiceIndex, usdAmount: body.usdAmount });
     } catch (error) {
+      // Rejected before anything reached the venue (bad input, not enough
+      // balance/shares, approvals couldn't be set up): a plain failure, not
+      // an unknown outcome — release the lock and surface the real reason.
+      if (isRejectedBeforeSubmit(error)) {
+        await updateWalletOperation(supabase, operation.id, { status: 'failed', error_code: error.code, reconciled_at: new Date().toISOString() });
+        throw error;
+      }
       await updateWalletOperation(supabase, operation.id, { status: 'reconciliation_required' });
       console.error('[trading/orders] order outcome requires backend reconciliation:', error);
       return Response.json({ code: 'trade_reconciliation_required', message: 'The trade result is being checked. Check your positions and balance before submitting another order.', status: 'reconciliation_required' }, { status: 202 });

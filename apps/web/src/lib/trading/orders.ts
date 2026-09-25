@@ -21,6 +21,12 @@ export interface PlaceOrderResult {
   errorMessage: string | null;
 }
 
+/** Errors raised before an order is sent to the CLOB — nothing was placed,
+ * so the caller can record a plain failure instead of an unknown outcome. */
+export function isRejectedBeforeSubmit(error: unknown): error is ApiError {
+  return error instanceof ApiError && (error.status < 500 || error.code === 'approvals_failed');
+}
+
 /** Builder attribution on every order (volume + builder fees credit the
  * app's Polymarket builder profile). */
 function builderCode(): { builderCode?: string } {
