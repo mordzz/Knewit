@@ -11,6 +11,7 @@ import { BottomSheet } from '@/components/ui/BottomSheet';
 import { CARD_SURFACE_CLASS } from '@/components/ui/cardSurface';
 import { LoadingState } from '@/components/feedback/LoadingState';
 import { WalletAddress } from '@/features/wallet/components/WalletAddress';
+import { useWalletBalance } from '@/features/wallet/hooks/useWalletBalance';
 import { useCreateTrade } from '@/hooks/useCreateTrade';
 import { useSession } from '@/hooks/useSession';
 import { useTradeEstimate } from '@/hooks/useTradeEstimate';
@@ -86,7 +87,11 @@ export function TradingPanel({ market }: { market: MarketDetail }) {
  * real "Trade failed" state.
  */
 function useTradeFlow(market: MarketDetail | null, onClose: () => void) {
-  const { address, walletConnected: isConnected } = useSession();
+  const { address, isGuest, walletConnected: isConnected } = useSession();
+  // Trades spend from the Polymarket Deposit Wallet, so that's the address
+  // the confirm step shows (guest mode has only its demo address).
+  const balance = useWalletBalance();
+  const tradingAddress = isGuest ? address : (balance.data?.address ?? null);
   const [choiceIndex, setChoiceIndex] = useState(0);
   const [amountText, setAmountText] = useState('');
   const [step, setStep] = useState<'pick' | 'confirm'>('pick');
@@ -143,6 +148,7 @@ function useTradeFlow(market: MarketDetail | null, onClose: () => void) {
   return {
     market,
     address,
+    tradingAddress,
     choice,
     choiceIndex,
     setChoiceIndex,
@@ -200,7 +206,7 @@ function TradeFlowContent({ flow }: { flow: TradeFlow }) {
       amount={flow.amount}
       shares={flow.shares}
       price={flow.displayPrice}
-      address={flow.address}
+      address={flow.tradingAddress}
       isValidating={flow.isValidating}
       mutationStatus={flow.mutation.status}
       errorMessage={flow.mutation.error?.message ?? null}

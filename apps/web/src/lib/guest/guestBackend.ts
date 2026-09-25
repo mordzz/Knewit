@@ -8,7 +8,7 @@ import {
   useGuestStore,
   type GuestState,
 } from '@/lib/guest/guestStore';
-import type { CommentItem, CreateCallInput, CreateCommentInput, FeedItem, UpdateProfileInput } from '@/types/social';
+import type { CommentItem, CreateCallInput, CreateCommentInput, FeedItem, HandleAvailability, UpdateProfileInput } from '@/types/social';
 import type { CreateTradeInput } from '@/types/trading';
 import type { Order } from '@/types/market';
 
@@ -282,6 +282,9 @@ function route(
   // --- users -------------------------------------------------------------
   if (pathname === '/users/suggestions' && method === 'GET') {
     return data.paginate(data.guestSuggestions(state), params.get('cursor') ?? undefined);
+  }
+  if (pathname === '/users/handle-available' && method === 'GET') {
+    return guestHandleAvailability(state, params.get('handle') ?? '');
   }
   if (pathname === '/users/me/images' && method === 'POST') {
     return uploadProfileImage(state, params.get('kind'), rawBody);
@@ -802,4 +805,20 @@ function extractFormFileUri(body: unknown): string | null {
     }
   }
   return null;
+}
+
+/** Guest counterpart of `GET /users/handle-available`, checked against the
+ * sandbox's mock people (same as mobile). */
+function guestHandleAvailability(state: GuestState, rawHandle: string): HandleAvailability {
+  const handle = rawHandle.trim().toLowerCase();
+  if (!/^[a-z0-9_]{3,20}$/.test(handle)) {
+    return { handle, available: false, reason: 'invalid', message: 'Use 3-20 lowercase letters, numbers, or underscores.' };
+  }
+  if (handle === state.profile.handle) {
+    return { handle, available: true, reason: 'current', message: 'This is your current username.' };
+  }
+  if (MOCK_PEOPLE.some((person) => person.handle === handle)) {
+    return { handle, available: false, reason: 'taken', message: 'That username is already taken.' };
+  }
+  return { handle, available: true, reason: null, message: 'Username is available.' };
 }

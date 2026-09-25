@@ -1,12 +1,17 @@
 import { apiRequest } from '@/lib/apiClient';
 import type { Paginated } from '@/types/common';
-import type { FollowListItem, FollowResult, UpdateProfileInput, UserProfile } from '@/types/social';
+import type { FollowListItem, FollowResult, HandleAvailability, UpdateProfileInput, UserProfile } from '@/types/social';
 
 /** Web equivalent of `apps/mobile/src/features/profile/services/userService.ts`
  * — `id` accepts the literal `"me"`, used for both the current user's
  * own profile and any other user's. */
 export async function getUserProfile(id: string): Promise<UserProfile> {
   return apiRequest<UserProfile>(`/api/users/${id}`);
+}
+
+/** Advisory username check (`GET /users/handle-available`) — saving still decides. */
+export async function checkHandleAvailability(handle: string): Promise<HandleAvailability> {
+  return apiRequest<HandleAvailability>(`/api/users/handle-available?handle=${encodeURIComponent(handle)}`);
 }
 
 export async function updateMyProfile(input: UpdateProfileInput): Promise<UserProfile> {

@@ -15,6 +15,8 @@ import { useRemoveProfileImage } from '@/features/profile/hooks/useRemoveProfile
 import { prepareProfileImage } from '@/features/profile/lib/prepareProfileImage';
 import { ApiRequestError } from '@/lib/apiClient';
 import type { ProfileImageKind } from '@/features/profile/lib/userService';
+import { useHandleAvailability } from '@/features/profile/hooks/useHandleAvailability';
+import type { HandleAvailability } from '@/types/social';
 
 const MAX_BIO_LENGTH = 160;
 const MAX_DISPLAY_NAME_LENGTH = 50;
@@ -59,9 +61,12 @@ export function EditProfileForm({ onSaved }: { onSaved: () => void }) {
   const normalizedHandle = handle.trim().toLowerCase();
   const isNameValid = trimmedName.length > 0 && displayName.length <= MAX_DISPLAY_NAME_LENGTH;
   const isHandleValid = HANDLE_RE.test(normalizedHandle);
+  const availability = useHandleAvailability(normalizedHandle, profile.data?.handle ?? '');
+  const handleTaken = availability.result?.available === false;
   const isBioValid = bio.length <= MAX_BIO_LENGTH;
   const imageBusy = upload.isPending || remove.isPending;
-  const canSave = isNameValid && isHandleValid && isBioValid && !mutation.isPending && !imageBusy;
+  const canSave =
+    isNameValid && isHandleValid && isBioValid && !mutation.isPending && !imageBusy && !availability.isChecking && !handleTaken;
 
   async function handleFile(kind: ProfileImageKind, file: File | undefined) {
     if (!file || imageBusy) return;
@@ -243,13 +248,12 @@ export function EditProfileForm({ onSaved }: { onSaved: () => void }) {
                   className="min-h-12 flex-1 border-0 bg-transparent px-0 py-3 text-body text-text-primary placeholder:text-text-tertiary focus:outline-none"
                 />
               </div>
-              <Text
-                variant="micro"
-                color={normalizedHandle.length > 0 && !isHandleValid ? 'danger' : 'textTertiary'}
-                className="block"
-              >
-                3-20 lowercase letters, numbers, or underscores.
-              </Text>
+              <HandleStatus
+                valid={normalizedHandle.length === 0 || isHandleValid}
+                checking={availability.isChecking}
+                failed={availability.failed}
+                result={availability.result}
+              />
             </div>
 
             <div className="border-b border-white/10" />
@@ -370,4 +374,44 @@ function friendlyEditError(message: string | null): string {
     return message;
   }
   return "Couldn't save your changes right now. Please try again.";
+}
+
+/** The line under the username field: format rule, then the live check. */
+function HandleStatus({
+  valid,
+  checking,
+  failed,
+  result,
+}: {
+  valid: boolean;
+  checking: boolean;
+  failed: boolean;
+  result: HandleAvailability | null;
+}) {
+  if (!valid) {
+    return (
+      <Text variant="micro" color="danger" className="block">
+        3-20 lowercase letters, numbers, or underscores.
+      </Text>
+    );
+  }
+  if (checking) {
+    return (
+      <Text variant="micro" color="textTertiary" className="block">
+        Checking availability…
+      </Text>
+    );
+  }
+  if (failed || !result || result.available == null || result.reason === 'current') {
+    return (
+      <Text variant="micro" color="textTertiary" className="block">
+        3-20 lowercase letters, numbers, or underscores.
+      </Text>
+    );
+  }
+  return (
+    <Text variant="micro" color={result.available ? 'yes' : 'danger'} className="block">
+      {result.message}
+    </Text>
+  );
 }
