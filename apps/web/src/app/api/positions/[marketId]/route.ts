@@ -1,47 +1,22 @@
 import { notFound, withErrorHandling } from '@/lib/apiError';
 import { requireAuth } from '@/lib/privy';
 import { getOrCreateUser } from '@/lib/users';
-import { getSupabase } from '@/lib/supabase';
-import { getCachedOrLiveMarketSummary } from '@/features/markets/lib/marketCache';
-import type { UserPosition } from '@/types/social';
+import { fetchMarketById } from '@/lib/polymarket/gammaClient';
+import { getUserPortfolio } from '@/lib/trading/portfolio';
 
-/** `GET /positions/:marketId` — the authenticated user's position in
- * one market, or 404 if none (docs/API.md). If the user has taken
- * multiple fills in the same market/outcome (Phase 3 doesn't merge
- * them into one row — see `trading/orders/route.ts`), this returns
- * the most recent one; there's no documented "merge" semantics to
- * build against yet. */
+/** `GET /positions/:marketId` — the authenticated user's largest holding
+ * in one market (live from Polymarket's Data API), or 404 if none. */
 export async function GET(request: Request, { params }: { params: Promise<{ marketId: string }> }) {
   return withErrorHandling(async () => {
     const { marketId } = await params;
     const { privyUserId } = await requireAuth(request);
     const viewer = await getOrCreateUser(privyUserId);
 
-    const { data: row, error } = await getSupabase()
-      .from('positions')
-      .select('id, market_id, outcome, choice_index, entry_price, size, opened_at')
-      .eq('user_id', viewer.id)
-      .eq('market_id', marketId)
-      .order('opened_at', { ascending: false })
-      .limit(1)
-      .maybeSingle();
-
-    if (error) throw error;
-
-    if (!row) throw notFound(`No position for market ${marketId}.`);
-
-    const market = await getCachedOrLiveMarketSummary(row.market_id);
-    const position: UserPosition = {
-      id: row.id,
-      marketId: row.market_id,
-      marketQuestion: market?.question ?? '(market unavailable)',
-      outcome: row.outcome,
-      choiceIndex: row.choice_index,
-      entryPrice: row.entry_price,
-      currentPrice: market?.choices?.[row.choice_index]?.price ?? null,
-      size: row.size,
-      openedAt: row.opened_at,
-    };
-    return Response.json(position);
+    const market = /^\d+$/.test(marketId) ? await fetchMarketById(marketId) : null;
+    if (!market) throw notFound(`No position for market ${marketId}.`);
+    const positions = await getUserPortfolio(viewer.id, privyUserId, market.conditionId);
+    const position = positions.sort((a, b) => b.size - a.size)[0];
+    if (!position) throw notFound(`No position for market ${marketId}.`);
+    return Response.json({ ...position, marketId });
   });
 }

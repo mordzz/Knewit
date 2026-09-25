@@ -1,4 +1,3 @@
-import { POLYGON_USDC_E } from '@/features/wallet/services/walletService';
 import { MOCK_PEOPLE } from '@/features/search/fixtures/people.mock';
 import * as data from '@/services/guest/guestData';
 import {
@@ -18,6 +17,9 @@ import type {
 } from '@/types/social';
 import type { CreateTradeInput } from '@/types/trading';
 import type { Order } from '@/types/market';
+
+/** pUSD — Polymarket's trading collateral (same token the real balance reads). */
+const POLYMARKET_PUSD = '0xC011a7E12a19f7B1f670d46F03B03f3342E82DFB';
 
 export { isGuestSession };
 
@@ -206,7 +208,7 @@ function route(
     return {
       usdc: state.balanceUsdc,
       allowances: {},
-      collateral: POLYGON_USDC_E,
+      collateral: POLYMARKET_PUSD,
       unavailable: false,
     };
   }

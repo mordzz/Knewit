@@ -2,10 +2,10 @@ import { env } from '@/lib/env';
 
 const BRIDGE_URL = 'https://bridge.polymarket.com';
 
-/** Per-wallet deposit addresses from Polymarket's bridge — anything sent
- * to them is bridged/swapped to USDC.e and delivered to the Polymarket
- * Deposit Wallet on Polygon (Polymarket pays the gas; bridge/swap costs
- * come out of the deposit itself). */
+/** Per-wallet deposit addresses from Polymarket's bridge
+ * (docs.polymarket.com/trading/bridge/deposit) — anything sent to them is
+ * bridged/swapped to pUSD and delivered to the Polymarket Deposit Wallet
+ * on Polygon, ready to trade (bridge/swap costs come out of the deposit). */
 export interface BridgeDepositAddresses {
   evm: string;
   svm: string | null;
@@ -22,25 +22,30 @@ export type BridgeDepositStatus =
   | 'FAILED'
   | string;
 
+/** One transfer from `GET /status/{address}` (docs.polymarket.com/api-reference). */
 export interface BridgeTransaction {
   status: BridgeDepositStatus;
   fromChainId: string | null;
-  fromAmountUsd: number | null;
+  toChainId: string | null;
+  /** Destination transaction hash — only once `COMPLETED`. */
+  txHash: string | null;
+  /** Only present once the transfer has started processing. */
   createdAtMs: number | null;
 }
 
-function headers(): Record<string, string> {
+/** `X-Builder-Code` is defined only on `POST /deposit` and `POST /withdraw`
+ * (optional; attributes the transfer to this app's builder profile). */
+function headers(withBuilderCode: boolean): Record<string, string> {
   return {
     'Content-Type': 'application/json',
     Accept: 'application/json',
     'User-Agent': 'knewit-backend/1.0',
-    // Attributes deposits to this app's Polymarket builder profile.
-    ...(env.polymarketBuilderCode ? { 'X-Builder-Code': env.polymarketBuilderCode } : {}),
+    ...(withBuilderCode && env.polymarketBuilderCode ? { 'X-Builder-Code': env.polymarketBuilderCode } : {}),
   };
 }
 
-async function bridgeFetch<T>(path: string, init?: RequestInit): Promise<T> {
-  const response = await fetch(`${BRIDGE_URL}${path}`, { ...init, headers: headers(), cache: 'no-store' });
+async function bridgeFetch<T>(path: string, init?: RequestInit, withBuilderCode = false): Promise<T> {
+  const response = await fetch(`${BRIDGE_URL}${path}`, { ...init, headers: headers(withBuilderCode), cache: 'no-store' });
   if (!response.ok) {
     const detail = await response.text().catch(() => '');
     throw new Error(`Polymarket bridge ${path} failed: ${response.status} ${detail.slice(0, 200)}`);
@@ -59,7 +64,8 @@ export async function getBridgeDepositAddresses(polymarketWallet: string): Promi
 
   const data = await bridgeFetch<{ address?: Partial<Record<'evm' | 'svm' | 'btc' | 'tron', string>> }>(
     '/deposit',
-    { method: 'POST', body: JSON.stringify({ address: polymarketWallet }) }
+    { method: 'POST', body: JSON.stringify({ address: polymarketWallet }) },
+    true
   );
   if (!data.address?.evm) throw new Error('Polymarket bridge returned no EVM deposit address.');
   const addresses: BridgeDepositAddresses = {
@@ -72,9 +78,8 @@ export async function getBridgeDepositAddresses(polymarketWallet: string): Promi
   return addresses;
 }
 
-/** Recent bridge transactions into one deposit address, newest first.
- * Field names beyond `status` are read defensively — the bridge's payload
- * isn't fully documented. */
+/** Recent bridge transactions into one bridge address (`/status`), newest
+ * first. `createdTimeMs` is only present once processing has started. */
 export async function getBridgeTransactions(depositAddress: string): Promise<BridgeTransaction[]> {
   const data = await bridgeFetch<{ transactions?: Record<string, unknown>[] }>(
     `/status/${encodeURIComponent(depositAddress)}`
@@ -83,8 +88,9 @@ export async function getBridgeTransactions(depositAddress: string): Promise<Bri
     .map((tx) => ({
       status: String(tx.status ?? 'PROCESSING'),
       fromChainId: tx.fromChainId != null ? String(tx.fromChainId) : null,
-      fromAmountUsd: numberOrNull(tx.fromAmountUsd ?? tx.estInputUsd),
-      createdAtMs: numberOrNull(tx.createdTimeMs ?? tx.createdAtMs ?? tx.createdAt),
+      toChainId: tx.toChainId != null ? String(tx.toChainId) : null,
+      txHash: tx.txHash != null ? String(tx.txHash) : null,
+      createdAtMs: numberOrNull(tx.createdTimeMs),
     }))
     .sort((a, b) => (b.createdAtMs ?? 0) - (a.createdAtMs ?? 0));
 }
@@ -94,55 +100,69 @@ function numberOrNull(value: unknown): number | null {
   return typeof parsed === 'number' && Number.isFinite(parsed) ? parsed : null;
 }
 
-/** Withdrawal: the bridge returns a Polygon address; USDC.e sent there is
- * bridged/swapped to `toTokenAddress` on `toChainId` and delivered to
- * `recipient`. Only create one when the user is ready to send — the
- * bridge's own guidance is not to pre-generate withdrawal addresses. */
+/** Withdrawal (docs.polymarket.com/trading/bridge/withdraw): the bridge
+ * returns a Polygon address; pUSD sent there is bridged/swapped to
+ * `toTokenAddress` on `toChainId` and delivered to `recipient`. Only create
+ * one when the user is ready to send — the bridge's own guidance is not to
+ * pre-generate withdrawal addresses. */
 export async function createBridgeWithdrawal(params: {
   polymarketWallet: string;
   toChainId: string;
   toTokenAddress: string;
   recipient: string;
 }): Promise<string> {
-  const data = await bridgeFetch<{ address?: { evm?: string } }>('/withdraw', {
-    method: 'POST',
-    body: JSON.stringify({
-      address: params.polymarketWallet,
-      toChainId: params.toChainId,
-      toTokenAddress: params.toTokenAddress,
-      recipientAddr: params.recipient,
-    }),
-  });
+  const data = await bridgeFetch<{ address?: { evm?: string } }>(
+    '/withdraw',
+    {
+      method: 'POST',
+      body: JSON.stringify({
+        address: params.polymarketWallet,
+        toChainId: params.toChainId,
+        toTokenAddress: params.toTokenAddress,
+        recipientAddr: params.recipient,
+      }),
+    },
+    true
+  );
   if (!data.address?.evm) throw new Error('Polymarket bridge returned no withdrawal address.');
   return data.address.evm;
 }
 
 export interface BridgeQuote {
-  /** What the recipient should get, at least (in the destination token). */
-  minReceived: number;
+  /** Destination-token amount expected (`estToTokenBaseUnit`, in whole units). */
   estimatedReceived: number;
-  /** Everything the route costs: gas, fill cost, swap impact. */
+  /** Its USD value (`estOutputUsd`). */
+  estimatedReceivedUsd: number;
+  /** USD value after max slippage (`estFeeBreakdown.minReceived`). */
+  minReceivedUsd: number;
+  /** Everything the route costs, in USD (`estFeeBreakdown.totalImpactUsd` —
+   * already includes gas, fill cost, swap impact and app fee). */
   totalCostUsd: number;
   estimatedSeconds: number;
 }
 
-/** Indicative cost of moving `amountUsdcE` USDC.e from Polygon to a
- * destination token/chain. */
+/**
+ * `POST /quote` — the cost of moving `amount` pUSD (6 decimals) from
+ * Polygon to a destination token/chain. `toDecimals` is the destination
+ * token's decimals (from `/supported-assets`) to read `estToTokenBaseUnit`.
+ */
 export async function getBridgeQuote(params: {
-  amountUsdcE: number;
+  amount: number;
   fromTokenAddress: string;
   toChainId: string;
   toTokenAddress: string;
+  toDecimals: number;
   recipient: string;
 }): Promise<BridgeQuote> {
   const data = await bridgeFetch<{
     estCheckoutTimeMs?: number;
     estOutputUsd?: number;
-    estFeeBreakdown?: { minReceived?: number; totalImpactUsd?: number; gasUsd?: number; appFeeUsd?: number };
+    estToTokenBaseUnit?: string;
+    estFeeBreakdown?: { minReceived?: number; totalImpactUsd?: number };
   }>('/quote', {
     method: 'POST',
     body: JSON.stringify({
-      fromAmountBaseUnit: String(Math.round(params.amountUsdcE * 1e6)),
+      fromAmountBaseUnit: String(Math.round(params.amount * 1e6)),
       fromChainId: '137',
       fromTokenAddress: params.fromTokenAddress,
       recipientAddress: params.recipient,
@@ -152,31 +172,81 @@ export async function getBridgeQuote(params: {
   });
   const fees = data.estFeeBreakdown ?? {};
   return {
-    minReceived: fees.minReceived ?? 0,
-    estimatedReceived: data.estOutputUsd ?? fees.minReceived ?? 0,
-    totalCostUsd: (fees.totalImpactUsd ?? 0) + (fees.gasUsd ?? 0) + (fees.appFeeUsd ?? 0),
+    estimatedReceived: Number(data.estToTokenBaseUnit ?? 0) / 10 ** params.toDecimals,
+    estimatedReceivedUsd: data.estOutputUsd ?? 0,
+    minReceivedUsd: fees.minReceived ?? 0,
+    totalCostUsd: fees.totalImpactUsd ?? 0,
     estimatedSeconds: Math.round((data.estCheckoutTimeMs ?? 0) / 1000),
   };
 }
 
 interface SupportedAsset {
   chainId: string;
-  token: { address: string };
+  chainName: string;
+  token: { name: string; symbol: string; address: string; decimals: number };
   minCheckoutUsd: number;
 }
 
-let supportedAssetsCache: { at: number; assets: SupportedAsset[] } | null = null;
+/** Which of the bridge's addresses a chain uses — the `/deposit` and
+ * `/withdraw` responses carry one per type. */
+export type BridgeAddressType = 'evm' | 'svm' | 'btc' | 'tron';
 
-/** The bridge's own minimum (USD) for a chain/token, refreshed every 10
- * minutes; `null` when the pair isn't listed (i.e. not supported). */
-export async function getBridgeMinimumUsd(chainId: string, tokenAddress: string): Promise<number | null> {
-  if (!supportedAssetsCache || Date.now() - supportedAssetsCache.at > 10 * 60 * 1000) {
-    const data = await bridgeFetch<SupportedAsset[] | { supportedAssets?: SupportedAsset[] }>('/supported-assets');
-    const assets = Array.isArray(data) ? data : (data.supportedAssets ?? []);
-    supportedAssetsCache = { at: Date.now(), assets };
+/** One token on one chain the bridge supports, from `/supported-assets`. */
+export interface BridgeAsset {
+  chainId: string;
+  chainName: string;
+  addressType: BridgeAddressType;
+  symbol: string;
+  name: string;
+  tokenAddress: string;
+  decimals: number;
+  /** The bridge's minimum for this token/chain, in USD. */
+  minUsd: number;
+}
+
+const NON_EVM_CHAINS: Record<string, BridgeAddressType> = { Solana: 'svm', Bitcoin: 'btc', Tron: 'tron' };
+/** Chains whose deposits don't go to one of the four address types. */
+const UNSUPPORTED_CHAINS = new Set(['Lightning', 'Hypercore']);
+
+let assetsCache: { at: number; assets: BridgeAsset[] } | null = null;
+
+/** `/supported-assets`, normalized and refreshed every 10 minutes — the
+ * list and its minimums change over time, so nothing here is hardcoded.
+ * One entry per symbol per chain (the list repeats a few, e.g. native SOL
+ * under two addresses). */
+export async function getBridgeAssets(): Promise<BridgeAsset[]> {
+  if (assetsCache && Date.now() - assetsCache.at < 10 * 60 * 1000) return assetsCache.assets;
+  const data = await bridgeFetch<SupportedAsset[] | { supportedAssets?: SupportedAsset[] }>('/supported-assets');
+  const raw = Array.isArray(data) ? data : (data.supportedAssets ?? []);
+  const seen = new Set<string>();
+  const assets: BridgeAsset[] = [];
+  for (const asset of raw) {
+    if (UNSUPPORTED_CHAINS.has(asset.chainName)) continue;
+    const key = `${asset.chainId}:${asset.token.symbol}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    assets.push({
+      chainId: String(asset.chainId),
+      chainName: asset.chainName,
+      addressType: NON_EVM_CHAINS[asset.chainName] ?? 'evm',
+      symbol: asset.token.symbol,
+      name: asset.token.name,
+      tokenAddress: asset.token.address,
+      decimals: asset.token.decimals,
+      minUsd: asset.minCheckoutUsd,
+    });
   }
-  const match = supportedAssetsCache.assets.find(
-    (asset) => asset.chainId === chainId && asset.token.address.toLowerCase() === tokenAddress.toLowerCase()
+  assetsCache = { at: Date.now(), assets };
+  return assets;
+}
+
+/** The supported asset for a chain/token pair, or `null` if the bridge
+ * doesn't list it. */
+export async function findBridgeAsset(chainId: string, tokenAddress: string): Promise<BridgeAsset | null> {
+  const assets = await getBridgeAssets();
+  return (
+    assets.find(
+      (asset) => asset.chainId === chainId && asset.tokenAddress.toLowerCase() === tokenAddress.toLowerCase()
+    ) ?? null
   );
-  return match ? match.minCheckoutUsd : null;
 }

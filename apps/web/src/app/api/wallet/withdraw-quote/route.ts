@@ -1,41 +1,37 @@
 import { badRequest, withErrorHandling } from '@/lib/apiError';
 import { requireAuth } from '@/lib/privy';
-import { getBridgeQuote } from '@/lib/deposits/polymarketBridge';
-import { POLYGON_USDC_E } from '@/lib/trading/collateral';
-import { findWithdrawDestination, isValidRecipient, recipientHint } from '@/lib/deposits/withdrawDestinations';
+import { findBridgeAsset, getBridgeQuote } from '@/lib/deposits/polymarketBridge';
+import { isValidRecipient, recipientHint } from '@/lib/deposits/recipients';
+import { POLYMARKET_PUSD } from '@/lib/trading/collateral';
 
 /**
- * `POST /wallet/withdraw-quote` `{ destination, recipient, amount }` — what
- * the recipient will receive and what the route costs, before the user
- * confirms. The direct USDC.e route costs nothing; bridge routes use the
- * Polymarket bridge's own quote (fees vary a lot by network).
+ * `POST /wallet/withdraw-quote` `{ chainId, tokenAddress, recipient, amount }`
+ * — what the recipient will receive and what the route costs, from the
+ * bridge's `/quote` (pUSD on Polygon → the chosen token/chain).
  */
 export async function POST(request: Request) {
   return withErrorHandling(async () => {
     await requireAuth(request);
     const body = (await request.json().catch(() => null)) as {
-      destination?: string;
+      chainId?: string;
+      tokenAddress?: string;
       recipient?: string;
       amount?: string;
     } | null;
-    const destination = findWithdrawDestination(body?.destination);
-    if (!destination) throw badRequest('Choose a supported withdrawal network.');
+    const asset = await findBridgeAsset(String(body?.chainId ?? ''), String(body?.tokenAddress ?? ''));
+    if (!asset) throw badRequest('Choose a supported token and chain.');
     const recipient = (body?.recipient ?? '').trim();
-    if (!isValidRecipient(destination.recipientKind, recipient)) {
-      throw badRequest(recipientHint(destination.recipientKind));
-    }
+    if (!isValidRecipient(asset.addressType, recipient)) throw badRequest(recipientHint(asset.addressType));
     const amount = Number(body?.amount);
     if (!Number.isFinite(amount) || amount <= 0) throw badRequest('Enter a withdrawal amount greater than zero.');
 
-    if (!destination.viaBridge) {
-      return Response.json({ estimatedReceived: amount, minReceived: amount, totalCostUsd: 0, estimatedSeconds: 10 });
-    }
     return Response.json(
       await getBridgeQuote({
-        amountUsdcE: amount,
-        fromTokenAddress: POLYGON_USDC_E,
-        toChainId: destination.chainId,
-        toTokenAddress: destination.tokenAddress,
+        amount,
+        fromTokenAddress: POLYMARKET_PUSD,
+        toChainId: asset.chainId,
+        toTokenAddress: asset.tokenAddress,
+        toDecimals: asset.decimals,
         recipient,
       })
     );

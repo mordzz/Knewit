@@ -28,6 +28,7 @@ export type IconName =
   | 'close-circle'
   | 'ellipse-outline'
   | 'chevron-forward'
+  | 'copy-outline'
   | 'chevron-back'
   | 'search'
   | 'heart'

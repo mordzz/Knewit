@@ -1,6 +1,5 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { sellPosition } from '@/lib/tradingService';
-import { tradingEnabled, tradingUnavailableMessage } from '@/lib/tradingAvailability';
 
 /**
  * Sells one whole position and applies every cache a fill can change:
@@ -15,7 +14,6 @@ export function useSellPosition() {
 
   return useMutation({
     mutationFn: (positionId: string) => {
-      if (!tradingEnabled) throw new Error(tradingUnavailableMessage);
       return sellPosition(positionId);
     },
     onSuccess: (result) => {

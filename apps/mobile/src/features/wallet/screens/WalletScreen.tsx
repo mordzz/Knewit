@@ -21,6 +21,7 @@ import { isUserCancelledFunding } from '@/features/wallet/utils/privyErrors';
 import { getDepositErrorMessage, logDepositFailure } from '@/features/wallet/utils/depositErrors';
 import { usePositions } from '@/features/portfolio/hooks/usePositions';
 import { useSellPosition } from '@/features/portfolio/hooks/useSellPosition';
+import { useRedeemPosition } from '@/features/portfolio/hooks/useRedeemPosition';
 import { useWallet } from '@/hooks/useWallet';
 import { useAuth } from '@/hooks/useAuth';
 import { isPrivyConfigured } from '@/app/config/env';
@@ -61,6 +62,7 @@ export function WalletScreen() {
   const { isReady } = usePrivy();
   const { deposit, stage: depositStage } = useDeposit();
   const sell = useSellPosition();
+  const redeem = useRedeemPosition();
   const [isDepositing, setIsDepositing] = useState(false);
   const [depositError, setDepositError] = useState<string | null>(null);
   const [depositSheetOpen, setDepositSheetOpen] = useState(false);
@@ -77,19 +79,15 @@ export function WalletScreen() {
   const positionsQuery = usePositions();
   const positions = positionsQuery.data ?? [];
 
-  // Unrealized PnL per position: (current − entry) cents × shares. No
-  // positions is a real $0.00; positions whose live price is missing make
-  // the total unavailable ("—") rather than inventing a number.
-  const pricedPositions = positions.filter((position) => position.currentPrice != null);
+  // PnL per position: Polymarket's own figure when present, else
+  // (current − entry) cents × shares. No positions is a real $0.00;
+  // positions whose live price is missing make the total unavailable ("—").
+  const pricedPositions = positions.filter((position) => positionPnl(position) != null);
   const totalPnl =
     positions.length === 0
       ? 0
       : pricedPositions.length
-        ? pricedPositions.reduce(
-            (sum, position) =>
-              sum + ((position.currentPrice! - position.entryPrice) / 100) * position.size,
-            0
-          )
+        ? pricedPositions.reduce((sum, position) => sum + positionPnl(position)!, 0)
         : null;
 
   const balanceLabel =
@@ -293,10 +291,24 @@ export function WalletScreen() {
             <View key={position.id}>
               <PositionRow
                 position={position}
+                redeeming={redeem.isPending && redeem.variables === position.conditionId}
                 onSell={() => {
                   setSellNotice(null);
                   sell.reset();
                   setSellTarget(position);
+                }}
+                onRedeem={() => {
+                  if (!position.conditionId) return;
+                  setSellNotice(null);
+                  redeem.mutate(position.conditionId, {
+                    onSuccess: (result) =>
+                      setSellNotice({
+                        tone: 'yes',
+                        message: `Redeemed — ${formatUsd(result.amountUsd)} added to your balance.`,
+                      }),
+                    onError: (error) =>
+                      setSellNotice({ tone: 'danger', message: friendlySellError(error) }),
+                  });
                 }}
               />
               {index < positions.length - 1 ? <Divider /> : null}
@@ -523,11 +535,25 @@ function AllocationPanel({ positions }: { positions: UserPosition[] }) {
   );
 }
 
-function PositionRow({ position, onSell }: { position: UserPosition; onSell: () => void }) {
-  const pnl =
-    position.currentPrice != null
-      ? ((position.currentPrice - position.entryPrice) / 100) * position.size
-      : null;
+function positionPnl(position: UserPosition): number | null {
+  if (position.pnlUsd != null) return position.pnlUsd;
+  return position.currentPrice != null
+    ? ((position.currentPrice - position.entryPrice) / 100) * position.size
+    : null;
+}
+
+function PositionRow({
+  position,
+  redeeming,
+  onSell,
+  onRedeem,
+}: {
+  position: UserPosition;
+  redeeming: boolean;
+  onSell: () => void;
+  onRedeem: () => void;
+}) {
+  const pnl = positionPnl(position);
 
   // Web's phone layout: a 3-column grid — Position / Entry / P/L on the
   // first row, Size / Current / Sell on the second.
@@ -569,13 +595,24 @@ function PositionRow({ position, onSell }: { position: UserPosition; onSell: () 
           </Text>
         </PositionCell>
         <View className="flex-1 items-end justify-end">
-          <Button
-            label="Sell"
-            variant="no"
-            onPress={onSell}
-            className="min-h-0 px-4 py-2"
-            accessibilityLabel={`Sell ${position.outcome} position`}
-          />
+          {position.redeemable ? (
+            <Button
+              label={redeeming ? 'Redeeming…' : 'Redeem'}
+              variant="yes"
+              loading={redeeming}
+              onPress={onRedeem}
+              className="min-h-0 px-4 py-2"
+              accessibilityLabel={`Redeem ${position.outcome} position`}
+            />
+          ) : (
+            <Button
+              label="Sell"
+              variant="no"
+              onPress={onSell}
+              className="min-h-0 px-4 py-2"
+              accessibilityLabel={`Sell ${position.outcome} position`}
+            />
+          )}
         </View>
       </View>
     </View>
@@ -607,9 +644,14 @@ function PositionCell({
 function friendlySellError(error: unknown): string {
   if (error instanceof ApiRequestError) {
     if (
-      ['insufficient_shares', 'trade_failed', 'approvals_failed', 'no_liquidity'].includes(
-        error.body.code
-      )
+      [
+        'insufficient_shares',
+        'trade_failed',
+        'approvals_failed',
+        'no_liquidity',
+        'nothing_to_redeem',
+        'redeem_failed',
+      ].includes(error.body.code)
     ) {
       return error.body.message;
     }

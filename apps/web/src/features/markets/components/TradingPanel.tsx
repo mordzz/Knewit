@@ -18,7 +18,6 @@ import { formatPrice, formatProbability, formatUsd } from '@/lib/formatters';
 import { choiceTextColor, choiceTone, type ChoiceTone } from '@/lib/choiceTone';
 import type { MarketChoice } from '@/types/market';
 import type { MarketDetail } from '@/types/social';
-import { tradingEnabled, tradingUnavailableMessage } from '@/lib/tradingAvailability';
 
 const AMOUNT_PRESETS = [5, 10, 25, 50];
 
@@ -59,7 +58,6 @@ export function TradingPanel({ market }: { market: MarketDetail }) {
     return <InfoBanner text="Market Closed — Trading is no longer available." />;
   }
   if (market.choices.length === 0) return null;
-  if (!tradingEnabled) return <InfoBanner text={tradingUnavailableMessage} />;
 
   return (
     <>
@@ -224,14 +222,6 @@ export function TradeSheet({
 }) {
   const flow = useTradeFlow(market, onClose);
 
-  if (!tradingEnabled) {
-    return (
-      <BottomSheet visible={visible} onClose={onClose}>
-        <InfoBanner text="Trading is temporarily unavailable." />
-      </BottomSheet>
-    );
-  }
-
   return (
     <BottomSheet visible={visible} onClose={flow.closeSheet}>
       <TradeFlowContent flow={flow} />
@@ -248,8 +238,6 @@ export function TradeCard({ market }: { market: MarketDetail | null }) {
   const router = useRouter();
   const { walletConnected: isConnected } = useSession();
   const flow = useTradeFlow(market, () => {});
-
-  if (!tradingEnabled) return <InfoBanner text="Trading is temporarily unavailable." />;
 
   return (
     <div className={`${CARD_SURFACE_CLASS} p-5`}>

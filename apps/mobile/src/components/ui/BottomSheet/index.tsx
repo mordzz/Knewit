@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Animated, Dimensions, Modal, Pressable, ScrollView, useWindowDimensions, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { solidPanel } from '@/theme';
+import { useKeyboardPadding } from '@/hooks/useKeyboardPadding';
 
 export interface BottomSheetProps {
   visible: boolean;
@@ -32,7 +33,10 @@ export function BottomSheet({ visible, onClose, children }: BottomSheetProps) {
   // that the content scrolls. Every layer below only shrinks (never
   // grows), so the ScrollView takes its content's height until this cap
   // forces it to scroll.
-  const maxSheetHeight = height * 0.75;
+  // With the keyboard open the sheet sits on top of it (inputs stay
+  // visible) and shrinks to the space left above it.
+  const keyboard = useKeyboardPadding();
+  const maxSheetHeight = Math.min(height * 0.75, height - keyboard - 48);
   const [translateY] = useState(() => new Animated.Value(Dimensions.get('window').height));
 
   useEffect(() => {
@@ -53,7 +57,7 @@ export function BottomSheet({ visible, onClose, children }: BottomSheetProps) {
         <Animated.View
           className="w-full"
           style={[
-            { maxHeight: maxSheetHeight },
+            { maxHeight: maxSheetHeight, marginBottom: keyboard },
             { transform: [{ translateY }] },
           ]}
         >

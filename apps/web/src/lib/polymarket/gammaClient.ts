@@ -60,6 +60,35 @@ export async function fetchMarketById(id: string): Promise<GammaMarket | null> {
   return markets[0] ?? null;
 }
 
+/** Markets by CLOB token id or condition id (Gamma accepts repeated
+ * `clob_token_ids` / `condition_ids`). Used to map Data API positions —
+ * which carry token/condition ids, not Gamma ids — back to our markets.
+ * Gamma hides closed markets unless asked, and resolved markets are
+ * exactly where redeemable positions live, so both are fetched. */
+export async function fetchMarketsByIds(
+  kind: 'clob_token_ids' | 'condition_ids',
+  ids: string[]
+): Promise<GammaMarket[]> {
+  if (ids.length === 0) return [];
+  const [open, closed] = await Promise.all([fetchMarketsPage(kind, ids, false), fetchMarketsPage(kind, ids, true)]);
+  return [...open, ...closed];
+}
+
+async function fetchMarketsPage(kind: string, ids: string[], closed: boolean): Promise<GammaMarket[]> {
+  const url = new URL(`${env.polymarketGammaBaseUrl}/markets`);
+  for (const id of ids) url.searchParams.append(kind, id);
+  url.searchParams.set('closed', String(closed));
+  url.searchParams.set('limit', String(ids.length));
+  let response: Response;
+  try {
+    response = await fetch(url, { headers: { Accept: 'application/json' } });
+  } catch {
+    throw upstreamError('Unable to reach Polymarket.');
+  }
+  if (!response.ok) throw upstreamError(`Polymarket request failed (${response.status}).`);
+  return (await response.json()) as GammaMarket[];
+}
+
 /** Polymarket's single-event fetch (unlike the bulk `/events` list)
  * reliably includes `tags` — used to resolve a market's category for
  * `GET /markets/:id`. Returns `null` if the market has no discoverable

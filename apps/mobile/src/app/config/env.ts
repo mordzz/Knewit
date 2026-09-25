@@ -29,7 +29,6 @@ export const env = {
   /** Public Polygon JSON-RPC used by Privy's client-side chain reads. */
   polygonRpcUrl:
     process.env.EXPO_PUBLIC_POLYGON_RPC_URL || 'https://polygon-bor-rpc.publicnode.com',
-  tradingEnabled: process.env.EXPO_PUBLIC_TRADING_ENABLED === 'true',
   /** Card deposits (MoonPay → embedded wallet → Polymarket bridge). The
    * embedded-wallet → bridge transfer needs gas, so keep this off until
    * Privy gas sponsorship is enabled (and the backend's

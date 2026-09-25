@@ -37,7 +37,14 @@ export interface UserPosition {
   entryPrice: number; // cents
   currentPrice: number | null; // cents
   size: number; // shares
+  /** Last activity on the position (Polymarket's `lastEventAt`). */
   openedAt: ISODateString;
+  /** Live values from Polymarket's Data API — absent in guest mode. */
+  conditionId?: string;
+  valueUsd?: number;
+  pnlUsd?: number;
+  /** Resolved in this position's favor — redeem it to get pUSD back. */
+  redeemable?: boolean;
 }
 
 export interface User {

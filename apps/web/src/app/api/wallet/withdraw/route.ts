@@ -6,43 +6,36 @@ import { ApiError, badRequest, withErrorHandling } from '@/lib/apiError';
 import { requireAuth } from '@/lib/privy';
 import { getPrimaryEthereumWallet } from '@/lib/users';
 import { buildSecureClientForUser, signerForUserWallet } from '@/lib/trading/client';
-import { unwrapPusdToUsdcE } from '@/lib/trading/collateral';
+import { transferPusd } from '@/lib/trading/collateral';
 import { env } from '@/lib/env';
 import { getOrCreateUser } from '@/lib/users';
 import { getSupabase } from '@/lib/supabase';
 import { beginWalletOperation, updateWalletOperation } from '@/lib/walletOperations';
 import { reconcileUserWalletOperations } from '@/lib/walletReconciliation';
-import { createBridgeWithdrawal } from '@/lib/deposits/polymarketBridge';
-import {
-  findWithdrawDestination,
-  isValidRecipient,
-  recipientHint,
-  withdrawMinimumUsd,
-} from '@/lib/deposits/withdrawDestinations';
+import { createBridgeWithdrawal, findBridgeAsset } from '@/lib/deposits/polymarketBridge';
+import { isValidRecipient, recipientHint } from '@/lib/deposits/recipients';
 
 export const maxDuration = 60;
 
 interface WithdrawInput {
+  /** Destination token/chain, as listed by `GET /wallet/withdraw-options`. */
+  chainId: string;
+  tokenAddress: string;
   recipient: string;
   amount: string;
-  /** A `WITHDRAW_DESTINATIONS` id; defaults to USDC.e on Polygon. */
-  destination?: string;
 }
 
 /**
- * Unwraps pUSD and sends the resulting USDC.e to the chosen external address
- * — directly for USDC.e on Polygon, or through a Polymarket bridge
- * withdrawal address for any other network/token (the bridge converts and
- * delivers it; its costs come out of the amount). Either way the unwrap is
- * gasless through Polymarket's relayer.
+ * Withdraws the trading balance through the Polymarket bridge
+ * (docs.polymarket.com/trading/bridge/withdraw): a withdrawal address is
+ * created for the chosen token/chain/recipient and the pUSD is sent there
+ * from the Deposit Wallet (gasless, through Polymarket's relayer); the
+ * bridge converts and delivers it, its costs coming out of the amount.
  * The secure Polymarket client uses the user's delegated Privy signer and
  * Builder credentials; the embedded EOA is not the source of trading funds.
  */
 export async function POST(request: Request) {
   return withErrorHandling(async () => {
-    if (process.env.NEXT_PUBLIC_TRADING_ENABLED !== 'true') {
-      throw new ApiError(503, 'trading_unavailable', 'Withdrawals are temporarily unavailable.');
-    }
     if (!env.privyAuthorizationPrivateKey) {
       throw new ApiError(503, 'authorization_key_missing', 'Withdrawals are not configured yet.');
     }
@@ -58,14 +51,14 @@ export async function POST(request: Request) {
       throw badRequest('Expected a recipient address and USDC amount.');
     }
 
-    const destination = findWithdrawDestination(body.destination);
-    if (!destination) throw badRequest('Choose a supported withdrawal network.');
+    const destination = await findBridgeAsset(String(body.chainId ?? ''), String(body.tokenAddress ?? ''));
+    if (!destination) throw badRequest('Choose a supported token and chain.');
     const recipient = body.recipient.trim();
     const amountText = body.amount.trim();
     // EVM addresses use viem's strict mode, which also verifies EIP-55 when
     // the address uses mixed case, catching typos.
-    if (!isValidRecipient(destination.recipientKind, recipient)) {
-      throw badRequest(recipientHint(destination.recipientKind));
+    if (!isValidRecipient(destination.addressType, recipient)) {
+      throw badRequest(recipientHint(destination.addressType));
     }
     if (!/^\d+(?:\.\d{1,6})?$/.test(amountText)) {
       throw badRequest('Enter a valid USDC amount with up to 6 decimal places.');
@@ -73,9 +66,8 @@ export async function POST(request: Request) {
 
     const amount = parseUnits(amountText, 6);
     if (amount <= BigInt(0)) throw badRequest('Enter a withdrawal amount greater than zero.');
-    const minimumUsd = await withdrawMinimumUsd(destination);
-    if (Number(amount) / 1e6 < minimumUsd) {
-      throw badRequest(`The minimum for ${destination.token} on ${destination.network} is $${minimumUsd}.`);
+    if (Number(amount) / 1e6 < destination.minUsd) {
+      throw badRequest(`The minimum for ${destination.symbol} on ${destination.chainName} is $${destination.minUsd}.`);
     }
 
     const client = await buildSecureClientForUser(wallet.id);
@@ -98,9 +90,10 @@ export async function POST(request: Request) {
 
     const operationRequest = {
       walletId: wallet.id,
-      recipient: destination.recipientKind === 'evm' ? recipient.toLowerCase() : recipient,
+      recipient: destination.addressType === 'evm' ? recipient.toLowerCase() : recipient,
       amount: amount.toString(),
-      destination: destination.id,
+      chainId: destination.chainId,
+      tokenAddress: destination.tokenAddress,
     };
     const { operation, started } = await beginWalletOperation(getSupabase(), {
       userId: viewer.id,
@@ -117,28 +110,25 @@ export async function POST(request: Request) {
 
     // Created only now, right before sending — the bridge advises against
     // pre-generating withdrawal addresses.
-    let bridgeAddress: string | null = null;
-    if (destination.viaBridge) {
-      try {
-        bridgeAddress = await createBridgeWithdrawal({
-          polymarketWallet: client.account.wallet,
-          toChainId: destination.chainId,
-          toTokenAddress: destination.tokenAddress,
-          recipient,
-        });
-      } catch (error) {
-        await updateWalletOperation(getSupabase(), operation.id, { status: 'failed', error_code: 'bridge_unavailable', reconciled_at: new Date().toISOString() });
-        console.error('[wallet/withdraw] bridge withdrawal address failed:', error);
-        throw new ApiError(502, 'bridge_unavailable', `Withdrawals to ${destination.network} are unavailable right now. Nothing was sent — try again or choose USDC.e on Polygon.`);
-      }
-      await updateWalletOperation(getSupabase(), operation.id, { request: { ...operationRequest, bridgeAddress } });
+    let bridgeAddress: string;
+    try {
+      bridgeAddress = await createBridgeWithdrawal({
+        polymarketWallet: client.account.wallet,
+        toChainId: destination.chainId,
+        toTokenAddress: destination.tokenAddress,
+        recipient,
+      });
+    } catch (error) {
+      await updateWalletOperation(getSupabase(), operation.id, { status: 'failed', error_code: 'bridge_unavailable', reconciled_at: new Date().toISOString() });
+      console.error('[wallet/withdraw] bridge withdrawal address failed:', error);
+      throw new ApiError(502, 'bridge_unavailable', `Withdrawals to ${destination.chainName} are unavailable right now. Nothing was sent — try again or choose another chain.`);
     }
-    const unwrapTo = (bridgeAddress ?? recipient) as `0x${string}`;
-    const routeInfo = { destination: destination.id, bridgeAddress };
+    await updateWalletOperation(getSupabase(), operation.id, { request: { ...operationRequest, bridgeAddress } });
+    const routeInfo = { chainId: destination.chainId, tokenAddress: destination.tokenAddress, bridgeAddress };
 
     let handle: TransactionHandle;
     try {
-      handle = await unwrapPusdToUsdcE(client, signerForUserWallet(wallet.id), unwrapTo, amount);
+      handle = await transferPusd(client, signerForUserWallet(wallet.id), bridgeAddress as `0x${string}`, amount);
     } catch (error) {
       await updateWalletOperation(getSupabase(), operation.id, { status: 'reconciliation_required' });
       console.error('[wallet/withdraw] transfer submission failed:', error);

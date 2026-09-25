@@ -3,6 +3,7 @@ import { requireAuth } from '@/lib/privy';
 import { getOrCreateUser } from '@/lib/users';
 import { getSupabase } from '@/lib/supabase';
 import { sellMarketPosition } from '@/lib/trading/orders';
+import { getAndCacheMarketSummary } from '@/features/markets/lib/marketCache';
 import type { Order } from '@/types/market';
 import type { SellPositionResponse } from '@/types/trading';
 import { beginWalletOperation, operationInProgress, updateWalletOperation } from '@/lib/walletOperations';
@@ -12,7 +13,8 @@ import { reconcileUserWalletOperations } from '@/lib/walletReconciliation';
 export const maxDuration = 60;
 
 interface SellPositionInput {
-  /** The `positions` row to close — ownership is re-verified server-side. */
+  /** The position's outcome token id (`UserPosition.id`). What's sold is
+   * whatever the caller's own Deposit Wallet holds of it. */
   positionId: string;
 }
 
@@ -28,9 +30,6 @@ interface SellPositionInput {
  */
 export async function POST(request: Request) {
   return withErrorHandling(async () => {
-    if (process.env.NEXT_PUBLIC_TRADING_ENABLED !== 'true') {
-      throw new ApiError(503, 'trading_unavailable', 'Trading is temporarily unavailable.');
-    }
     const { privyUserId } = await requireAuth(request);
     const viewer = await getOrCreateUser(privyUserId);
     await reconcileUserWalletOperations(viewer.id).catch((error) => console.warn('[trading/sell] prior operation reconciliation incomplete:', error));
@@ -71,6 +70,10 @@ export async function POST(request: Request) {
         result: { positionId: body.positionId, marketId: result.marketId, choiceIndex: result.choiceIndex, choiceLabel: result.choiceLabel, soldShares: result.soldShares, remainingShares: result.remainingShares, filledPrice: result.filledPrice, proceedsUsd: result.proceedsUsd, status: result.status },
       });
     }
+    // The order row's FK needs the market cached.
+    await getAndCacheMarketSummary(result.marketId).catch((error) =>
+      console.warn('[trading/sell] market cache refresh failed:', error)
+    );
     const { data: orderRow, error: orderError } = await supabase
       .from('orders')
       .insert({
@@ -100,18 +103,6 @@ export async function POST(request: Request) {
     if (result.status === 'failed') {
       await updateWalletOperation(supabase, operation.id, { status: 'failed', result: { orderId: orderRow.id }, reconciled_at: new Date().toISOString() });
       throw new ApiError(502, 'trade_failed', result.errorMessage ?? 'Sell failed.');
-    }
-
-    // Full-position sell: the row is gone once its shares are sold. The
-    // sell already happened on the venue, so a cleanup failure is logged
-    // rather than answered as a failed sell — the preflight on a later
-    // sell would catch the stale row anyway.
-    const positionMutation = result.remainingShares <= 1e-6
-      ? await supabase.from('positions').delete().eq('id', body.positionId).eq('user_id', viewer.id)
-      : await supabase.from('positions').update({ size: result.remainingShares }).eq('id', body.positionId).eq('user_id', viewer.id);
-    if (positionMutation.error) {
-      console.error('[trading/sell] sold position could not be reconciled:', positionMutation.error);
-      return Response.json({ code: 'trade_reconciliation_required', message: 'The sell completed and your position is syncing. Check your wallet before trying again.', status: 'reconciliation_required' }, { status: 202 });
     }
 
     const order: Order = {

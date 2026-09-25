@@ -6,6 +6,8 @@ import { getAndCacheMarketSummary } from '@/features/markets/lib/marketCache';
 import type { WalletOperation } from '@/lib/walletOperations';
 
 const chainClient = createPublicClient({ chain: polygon, transport: http(env.polygonRpcUrl) });
+/** A trade with no recorded venue answer after this long is released. */
+const UNKNOWN_TRADE_EXPIRY_MS = 10 * 60 * 1000;
 
 /**
  * Best-effort server-side reconciliation for one account. It is invoked by
@@ -38,8 +40,6 @@ export async function reconcileUserWalletOperations(userId: string): Promise<voi
           const amountRaw = operation.request.amount;
           const result = operation.operation_type === 'withdraw'
             ? { status: 'confirmed', amountUsdc: Number(amountRaw ?? 0) / 1e6, transactionHash: receipt.transactionHash, transactionId: operation.transaction_id }
-            : operation.operation_type === 'deposit_wrap'
-              ? { amountUsd: Number(amountRaw ?? 0) / 1e6, transactionHash: receipt.transactionHash }
             : { ...(operation.result ?? {}), transactionHash: receipt.transactionHash };
           await updateOperation(supabase, operation.id, { status: 'confirmed', result, reconciled_at: new Date().toISOString() });
         } else {
@@ -50,6 +50,14 @@ export async function reconcileUserWalletOperations(userId: string): Promise<voi
 
       if ((operation.operation_type === 'buy' || operation.operation_type === 'sell') && operation.result) {
         await reconcileTradeRows(supabase, operation);
+      } else if (
+        (operation.operation_type === 'buy' || operation.operation_type === 'sell') &&
+        Date.now() - new Date(operation.updated_at).getTime() > UNKNOWN_TRADE_EXPIRY_MS
+      ) {
+        // The request died before the venue answered. Holdings are read
+        // live from Polymarket, so the portfolio already shows whether it
+        // filled; release the lock instead of blocking trading forever.
+        await updateOperation(supabase, operation.id, { status: 'failed', error_code: 'outcome_unknown', reconciled_at: new Date().toISOString() });
       }
     } catch (reconcileError) {
       console.error('[wallet/reconcile] operation remains unresolved:', { operationId: operation.id, type: operation.operation_type, error: reconcileError });
@@ -79,34 +87,6 @@ async function reconcileTradeRows(supabase: ReturnType<typeof getSupabase>, oper
     }).select('*').single();
     if (error) throw error;
     order = data;
-  }
-
-  if (operation.operation_type === 'buy') {
-    const { data: position } = await supabase.from('positions').select('id').eq('wallet_operation_id', operation.id).maybeSingle();
-    if (!position) {
-      const { error } = await supabase.from('positions').insert({
-        wallet_operation_id: operation.id,
-        user_id: operation.user_id,
-        market_id: marketId,
-        outcome: String(result.choiceLabel ?? ''),
-        choice_index: Number(result.choiceIndex ?? 0),
-        entry_price: Number(result.filledPrice ?? 0),
-        size: Number(result.filledSize ?? 0),
-      });
-      if (error) throw error;
-    }
-  } else {
-    const positionId = String(result.positionId ?? '');
-    if (positionId) {
-      const { data: position } = await supabase.from('positions').select('id').eq('id', positionId).eq('user_id', operation.user_id).maybeSingle();
-      if (position) {
-        const remaining = Number(result.remainingShares ?? 0);
-        const mutation = remaining <= 1e-6
-          ? await supabase.from('positions').delete().eq('id', positionId).eq('user_id', operation.user_id)
-          : await supabase.from('positions').update({ size: remaining, wallet_operation_id: operation.id }).eq('id', positionId).eq('user_id', operation.user_id);
-        if (mutation.error) throw mutation.error;
-      }
-    }
   }
 
   const orderResult = {

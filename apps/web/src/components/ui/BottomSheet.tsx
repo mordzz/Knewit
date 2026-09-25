@@ -5,6 +5,9 @@ export interface BottomSheetProps {
   visible: boolean;
   onClose: () => void;
   children: ReactNode;
+  /** Size to the content (capped at 75% of the screen, then scroll) instead
+   * of a fixed 75% height — same as mobile's `BottomSheet`. */
+  fitContent?: boolean;
 }
 
 /**
@@ -21,7 +24,7 @@ export interface BottomSheetProps {
  * instead — a viewport-fixed backdrop with a fade/scale panel that also
  * closes on Escape. Phone rendering is unchanged.
  */
-export function BottomSheet({ visible, onClose, children }: BottomSheetProps) {
+export function BottomSheet({ visible, onClose, children, fitContent = false }: BottomSheetProps) {
   useEffect(() => {
     if (!visible) return;
     const onKeyDown = (event: KeyboardEvent) => {
@@ -40,13 +43,13 @@ export function BottomSheet({ visible, onClose, children }: BottomSheetProps) {
       role="presentation"
     >
       <div
-        className={`flex h-[75dvh] max-h-[75dvh] w-full min-h-0 flex-col rounded-t-[20px] ${SOLID_PANEL_CLASS} border-b-0 p-6 transition-transform duration-[250ms] lg:max-h-[85vh] lg:max-w-[460px] lg:rounded-2xl lg:border-b ${
+        className={`flex ${fitContent ? '' : 'h-[75dvh]'} max-h-[75dvh] w-full min-h-0 flex-col rounded-t-[20px] ${SOLID_PANEL_CLASS} border-b-0 p-6 transition-transform duration-[250ms] lg:max-h-[85vh] lg:max-w-[460px] lg:rounded-2xl lg:border-b ${
           visible ? 'translate-y-0 lg:scale-100' : 'translate-y-full lg:translate-y-0 lg:scale-95'
         }`}
         onClick={(e) => e.stopPropagation()}
       >
         <div className="mb-3 h-1 w-9 self-center rounded-full bg-white/20 lg:hidden" />
-        <div className="min-h-0 flex-1 overflow-y-auto lg:overflow-y-auto">{children}</div>
+        <div className={`min-h-0 overflow-y-auto ${fitContent ? 'flex-auto' : 'flex-1'}`}>{children}</div>
       </div>
     </div>
   );

@@ -57,6 +57,8 @@ create table users (
   banner_url text,
   bio text,
   wallet_address text,
+  -- Polymarket Deposit Wallet (holds pUSD; bridge deposits land here).
+  deposit_wallet_address text unique,
   created_at timestamptz not null default now()
 );
 
@@ -77,13 +79,12 @@ create index follows_following_id_idx on follows (following_id);
 -- Written before any on-chain/Polymarket side effect so retries are
 -- idempotent and two actions of the same type can never run at once.
 --   deposit_forward  card funds: embedded wallet → Polymarket bridge
---   deposit_wrap     USDC.e → pUSD in the Deposit Wallet
---   withdraw         pUSD → USDC.e (→ bridge for other chains)
+--   withdraw         pUSD → Polymarket bridge → chosen token/chain
 --   buy / sell       Polymarket orders
 create table wallet_operations (
   id uuid primary key default gen_random_uuid(),
   user_id uuid not null references users (id) on delete cascade,
-  operation_type text not null check (operation_type in ('deposit_forward', 'deposit_wrap', 'withdraw', 'buy', 'sell')),
+  operation_type text not null check (operation_type in ('deposit_forward', 'withdraw', 'buy', 'sell')),
   idempotency_key text not null,
   request_hash text not null,
   status text not null default 'pending'
@@ -106,19 +107,6 @@ create unique index wallet_operations_one_active_per_type_idx
   on wallet_operations (user_id, operation_type)
   where status in ('pending', 'submitted', 'reconciliation_required');
 
--- Every address a user can deposit to, so the Alchemy webhook (which only
--- sees an address) knows whose deposit arrived.
-create table deposit_addresses (
-  address text primary key check (address = lower(address)),
-  user_id uuid not null references users (id) on delete cascade,
-  privy_user_id text not null,
-  kind text not null check (kind in ('embedded', 'deposit_wallet')),
-  webhook_registered_at timestamptz, -- null = not yet added to the Alchemy webhook
-  created_at timestamptz not null default now()
-);
-
-create index deposit_addresses_user_idx on deposit_addresses (user_id);
-
 -- ============================================================
 -- Trading records
 -- ============================================================
@@ -138,20 +126,8 @@ create table orders (
 
 create index orders_user_id_idx on orders (user_id);
 
-create table positions (
-  id uuid primary key default gen_random_uuid(),
-  user_id uuid not null references users (id) on delete cascade,
-  market_id text not null references markets (id) on delete cascade,
-  outcome text not null,
-  choice_index integer not null default 0,
-  entry_price numeric(10, 4) not null,
-  size numeric not null,
-  wallet_operation_id uuid unique references wallet_operations (id),
-  opened_at timestamptz not null default now()
-);
-
-create index positions_user_id_idx on positions (user_id);
-create index positions_market_id_idx on positions (market_id);
+-- Holdings aren't stored: the portfolio is read live from Polymarket's
+-- Data API for the user's Deposit Wallet (src/lib/trading/portfolio.ts).
 
 -- ============================================================
 -- Social: callouts (posts), comments, likes
@@ -449,8 +425,8 @@ do $$
 declare t text;
 begin
   foreach t in array array[
-    'events', 'markets', 'users', 'follows', 'wallet_operations', 'deposit_addresses',
-    'orders', 'positions', 'posts', 'comments', 'likes', 'comment_likes'
+    'events', 'markets', 'users', 'follows', 'wallet_operations',
+    'orders', 'posts', 'comments', 'likes', 'comment_likes'
   ] loop
     execute format('alter table %I enable row level security', t);
     execute format('revoke all on table %I from anon, authenticated', t);

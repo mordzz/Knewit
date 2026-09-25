@@ -17,6 +17,9 @@ import {
   IoCheckmark,
   IoCheckmarkCircle,
   IoChevronForward,
+  IoChevronDown,
+  IoCopyOutline,
+  IoChevronUp,
   IoChevronBack,
   IoSearch,
   IoHeart,
@@ -77,6 +80,9 @@ export type IconName =
   | 'checkmark'
   | 'checkmark-circle'
   | 'chevron-forward'
+  | 'chevron-down'
+  | 'copy-outline'
+  | 'chevron-up'
   | 'chevron-back'
   | 'search'
   | 'heart'
@@ -166,6 +172,9 @@ const ICONS: Record<IconName, IconType> = {
   checkmark: IoCheckmark,
   'checkmark-circle': IoCheckmarkCircle,
   'chevron-forward': IoChevronForward,
+  'chevron-down': IoChevronDown,
+  'copy-outline': IoCopyOutline,
+  'chevron-up': IoChevronUp,
   'chevron-back': IoChevronBack,
   search: IoSearch,
   heart: IoHeart,

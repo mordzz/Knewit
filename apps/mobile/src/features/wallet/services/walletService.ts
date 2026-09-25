@@ -12,8 +12,7 @@ export interface WalletBalance {
    * (docs/WALLET.md, "Approve USDC for Trading"); the map's keys are the
    * exact spenders the CLOB checks, so they're used as-is. */
   allowances?: Record<string, string>;
-  /** Polymarket's collateral token address on Polygon (USDC.e) — the
-   * destination token for deposits and the token `approve` is sent to. */
+  /** Polymarket's collateral token (pUSD) on Polygon. */
   collateral?: string;
   unavailable?: boolean;
   /** Stable authenticated account identifier used to scope private query cache. */
@@ -22,52 +21,40 @@ export interface WalletBalance {
   walletType?: number;
 }
 
-export interface DepositWallet {
-  address: string | null;
-  walletType: number | null;
-  unavailable?: boolean;
-  /** Stable authenticated account identifier used to scope private query cache. */
-  accountId?: string;
-}
-
 /** Mobile client for the wallet API in `apps/web`. */
 export async function getWalletBalance(): Promise<WalletBalance> {
   return apiRequest<WalletBalance>(endpoints.walletBalance);
 }
 
-/** Resolves the Polymarket wallet that holds the user's trading collateral. */
-export async function getDepositWallet(): Promise<DepositWallet> {
-  return apiRequest<DepositWallet>(endpoints.walletDeposit);
+/** Which bridge address a chain uses. */
+export type BridgeAddressType = 'evm' | 'svm' | 'btc' | 'tron';
+
+/** One token on one chain the Polymarket bridge supports (`/supported-assets`). */
+export interface BridgeAsset {
+  chainId: string;
+  chainName: string;
+  addressType: BridgeAddressType;
+  symbol: string;
+  name: string;
+  tokenAddress: string;
+  decimals: number;
+  minUsd: number;
 }
 
-/** `GET /wallet/crypto-deposit` — where to send each token on Polygon and
- * what has already arrived there (docs/API.md). */
 export interface BridgeTransaction {
   status: string;
   fromChainId: string | null;
-  fromAmountUsd: number | null;
+  toChainId: string | null;
+  txHash: string | null;
   createdAtMs: number | null;
 }
 
+/** `GET /wallet/crypto-deposit` — the user's bridge deposit addresses, the
+ * token/chain catalog and recent transfers. Deposits arrive as pUSD. */
 export interface CryptoDepositInfo {
-  network: 'polygon';
-  /** Polymarket bridge addresses: USDC/USDT/… on many chains are bridged
-   * to USDC.e in the Deposit Wallet (Polymarket pays gas). `null` when
-   * the bridge is unreachable. */
-  bridge: {
-    evm: string;
-    svm: string | null;
-    btc: string | null;
-    tron: string | null;
-    transactions: BridgeTransaction[];
-  } | null;
-  /** USDC.e sent straight to the Polymarket Deposit Wallet (no minimum). */
-  usdcE: { address: string; balance: number };
-  /** Native USDC left in the embedded wallet — reported only, not a
-   * deposit route (moving it would need gas). */
-  usdc: { address: string; balance: number };
-  /** True when arrivals convert in the background (Alchemy webhook). */
-  autoConvert: boolean;
+  addresses: Record<BridgeAddressType, string | null>;
+  assets: BridgeAsset[];
+  transactions: BridgeTransaction[];
   unavailable?: boolean;
 }
 
@@ -75,17 +62,22 @@ export async function getCryptoDepositInfo(): Promise<CryptoDepositInfo> {
   return apiRequest<CryptoDepositInfo>(endpoints.walletCryptoDeposit);
 }
 
-export interface ConvertToCollateralResult {
-  status: 'converted' | 'pending' | 'failed';
-  amountUsd: number;
-  /** Check both source and trading balances before retrying after failure. */
-  errorMessage: string | null;
+/** `GET /wallet/card-deposit` — native USDC waiting in the embedded wallet
+ * after a card purchase (card deposits only). */
+export async function getCardDepositState(): Promise<{
+  address: string;
+  usdcBalance: number;
+  unavailable?: boolean;
+}> {
+  return apiRequest(endpoints.walletCardDeposit);
 }
 
-export async function convertToCollateral(): Promise<ConvertToCollateralResult> {
-  return apiRequest<ConvertToCollateralResult>(endpoints.walletConvertToCollateral, {
-    method: 'POST',
-  });
+/** Forwards that USDC to the user's bridge deposit address (→ pUSD). */
+export async function forwardCardDeposit(): Promise<{
+  status: 'forwarded' | 'nothing';
+  amountUsd: number;
+}> {
+  return apiRequest(endpoints.walletCardDeposit, { method: 'POST' });
 }
 
 export interface WithdrawResult {
@@ -93,53 +85,43 @@ export interface WithdrawResult {
   amountUsdc: number;
   transactionHash: string | null;
   transactionId: string | null;
-  destination?: string;
-  /** Set for bridge destinations — track delivery with `getWithdrawStatus`. */
+  /** The bridge withdrawal address — track delivery with `getWithdrawStatus`. */
   bridgeAddress?: string | null;
 }
 
-/** Withdraws trading collateral through the backend's Polymarket client:
- * directly as USDC.e on Polygon, or via the Polymarket bridge to another
- * network/token (`destination`, a `WithdrawOption` id). */
-export async function withdrawTradingBalance(input: {
+/** The destination picked in the withdraw form: a `BridgeAsset`'s chain and
+ * token, plus who receives it and how much (USD, pUSD). */
+export interface WithdrawInput {
+  chainId: string;
+  tokenAddress: string;
   recipient: string;
   amount: string;
-  destination?: string;
-}): Promise<WithdrawResult> {
+}
+
+/** Withdraws pUSD through the Polymarket bridge to the chosen token/chain. */
+export async function withdrawTradingBalance(input: WithdrawInput): Promise<WithdrawResult> {
   return apiRequest<WithdrawResult>(endpoints.walletWithdraw, {
     method: 'POST',
     body: JSON.stringify(input),
   });
 }
 
-export type RecipientKind = 'evm' | 'solana' | 'tron';
-
-export interface WithdrawOption {
-  id: string;
-  network: string;
-  token: string;
-  recipientKind: RecipientKind;
-  viaBridge: boolean;
-  minimumUsd: number;
-}
-
-export async function getWithdrawOptions(): Promise<WithdrawOption[]> {
-  const data = await apiRequest<{ options: WithdrawOption[] }>(endpoints.walletWithdrawOptions);
-  return data.options;
+export async function getWithdrawAssets(): Promise<BridgeAsset[]> {
+  const data = await apiRequest<{ assets: BridgeAsset[] }>(endpoints.walletWithdrawOptions);
+  return data.assets;
 }
 
 export interface WithdrawQuote {
+  /** Destination-token amount expected. */
   estimatedReceived: number;
-  minReceived: number;
+  estimatedReceivedUsd: number;
+  /** USD value after max slippage. */
+  minReceivedUsd: number;
   totalCostUsd: number;
   estimatedSeconds: number;
 }
 
-export async function getWithdrawQuote(input: {
-  destination: string;
-  recipient: string;
-  amount: string;
-}): Promise<WithdrawQuote> {
+export async function getWithdrawQuote(input: WithdrawInput): Promise<WithdrawQuote> {
   return apiRequest<WithdrawQuote>(endpoints.walletWithdrawQuote, {
     method: 'POST',
     body: JSON.stringify(input),
@@ -153,10 +135,5 @@ export async function getWithdrawStatus(bridgeAddress: string): Promise<BridgeTr
   return data.transactions;
 }
 
-/** USDC.e on Polygon — the collateral the trading flow spends. Same value
- * the backend returns from the CLOB's contract config; this constant is
- * the pre-read fallback for the deposit destination. */
-export const POLYGON_USDC_E = '0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174';
-
-/** Native USDC on Polygon, the asset card on-ramps can purchase. */
+/** Native USDC on Polygon — what card on-ramps sell into the embedded wallet. */
 export const POLYGON_USDC_NATIVE = '0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359';

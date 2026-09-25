@@ -1,9 +1,10 @@
-import { ApiError, badRequest, notFound, withErrorHandling } from '@/lib/apiError';
+import { badRequest, notFound, withErrorHandling } from '@/lib/apiError';
 import { requireAuth } from '@/lib/privy';
 import { getOrCreateUser } from '@/lib/users';
 import { getSupabase } from '@/lib/supabase';
 import { getAndCacheMarketSummary } from '@/features/markets/lib/marketCache';
 import { buildFeedItems, type PostRow } from '@/lib/social';
+import { getUserPortfolio } from '@/lib/trading/portfolio';
 import type { CreateCallInput } from '@/types/social';
 
 /** Same limit the composer enforces client-side (`MAX_POST_LENGTH`). */
@@ -14,8 +15,8 @@ const MAX_BODY_LENGTH = 280;
  * **required**: there is only a Callout now, and it always attaches a
  * held position (docs/DECISIONS.md, "Callouts Require a Held
  * Position"). The client never sends an entry price/size/outcome/
- * snapshot — this backend resolves `positionId` against its own
- * `Position` table (populated by the trading flow) and writes the
+ * snapshot — this backend resolves `positionId` (an outcome token id)
+ * against the caller's live Polymarket portfolio and writes the
  * immutable snapshot itself (docs/API.md, "Client Never Sends a
  * Position Snapshot"). Every failure (unknown position, someone
  * else's position, missing market) is an honest rejection, never a
@@ -41,21 +42,16 @@ export async function POST(request: Request) {
     }
 
     const supabase = getSupabase();
-    const { data: position } = await supabase
-      .from('positions')
-      .select('*')
-      .eq('id', body.positionId)
-      .maybeSingle();
-    if (!position) {
+    // Only positions the caller actually holds can back a Callout.
+    const portfolio = await getUserPortfolio(viewer.id, privyUserId);
+    const position = portfolio.find((candidate) => candidate.id === body.positionId);
+    if (!position || !position.marketId) {
       throw notFound(`Position ${body.positionId} not found.`);
     }
-    if (position.user_id !== viewer.id) {
-      throw new ApiError(403, 'forbidden_position', 'This position does not belong to you.');
-    }
 
-    const marketSummary = await getAndCacheMarketSummary(position.market_id);
+    const marketSummary = await getAndCacheMarketSummary(position.marketId);
     if (!marketSummary) {
-      throw notFound(`Market ${position.market_id} for this position no longer exists.`);
+      throw notFound(`Market ${position.marketId} for this position no longer exists.`);
     }
 
     const { data: created, error } = await supabase
@@ -63,11 +59,11 @@ export async function POST(request: Request) {
       .insert({
         author_id: viewer.id,
         body: body.body,
-        market_id: position.market_id,
-        position_snapshot_market_id: position.market_id,
+        market_id: position.marketId,
+        position_snapshot_market_id: position.marketId,
         position_snapshot_outcome: position.outcome,
-        position_snapshot_choice_index: position.choice_index,
-        position_snapshot_entry_price: position.entry_price,
+        position_snapshot_choice_index: position.choiceIndex,
+        position_snapshot_entry_price: position.entryPrice,
         position_snapshot_size: position.size,
         position_snapshot_captured_at: new Date().toISOString(),
       })

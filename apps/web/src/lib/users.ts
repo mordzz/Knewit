@@ -13,6 +13,8 @@ export interface DbUser {
   banner_url: string | null;
   bio: string | null;
   wallet_address: string | null;
+  /** Polymarket Deposit Wallet, cached by `getDepositWalletAddress`. */
+  deposit_wallet_address: string | null;
   created_at: string;
 }
 

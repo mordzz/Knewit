@@ -156,6 +156,8 @@ export interface FeedItem {
 }
 
 /** Phase 3 (Positions & Trading) types. */
+/** A holding in the user's Polymarket Deposit Wallet. `id` is the outcome
+ * token (asset) id. */
 export interface UserPosition {
   id: ID;
   marketId: ID;
@@ -166,7 +168,14 @@ export interface UserPosition {
   entryPrice: number; // cents
   currentPrice: number | null; // cents
   size: number; // shares
+  /** Last activity on the position (Polymarket's `lastEventAt`). */
   openedAt: ISODateString;
+  /** Live values from Polymarket's Data API — absent in guest mode. */
+  conditionId?: string;
+  valueUsd?: number;
+  pnlUsd?: number;
+  /** Resolved in this position's favor — redeem it to get pUSD back. */
+  redeemable?: boolean;
 }
 
 /** Phase 2 (Social core) types. */

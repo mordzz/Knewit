@@ -5,13 +5,12 @@ import { useAddFunds } from '@privy-io/react-auth';
 import { useQueryClient } from '@tanstack/react-query';
 import { useSession } from '@/hooks/useSession';
 import {
-  convertToCollateral,
-  getCryptoDepositInfo,
+  forwardCardDeposit,
+  getCardDepositState,
   POLYGON_CAIP2,
   POLYGON_USDC_NATIVE,
 } from '@/features/wallet/lib/walletService';
 import { creditGuestFunds } from '@/lib/guest/guestBackend';
-import { tradingEnabled, tradingUnavailableMessage } from '@/lib/tradingAvailability';
 import { cardDepositEnabled } from '@/lib/cardDeposit';
 
 export type BuyWithCardStage = 'idle' | 'buying' | 'waiting' | 'converting';
@@ -25,11 +24,9 @@ export class BuyFlowError extends Error {}
 
 const POLL_INTERVAL_MS = 4000;
 const POLL_ATTEMPTS = 15;
-/** Card purchase + bridge usually land within a few minutes. */
+/** A card purchase usually lands within a few minutes. */
 const LANDING_POLL_MS = 10_000;
 const LANDING_POLL_ATTEMPTS = 36;
-/** Below this, USDC.e in the Deposit Wallet is dust — not worth a wrap. */
-const MIN_CONVERTIBLE_USDC = 0.01;
 
 /**
  * `isActive` is checked on every tick so a poll started before the
@@ -71,14 +68,12 @@ function pollUntil(
 
 /**
  * Buys **native** USDC on Polygon via Privy's card/bank onramp (the only
- * asset Stripe/MoonPay actually sell — bridged USDC.e is rejected outright)
- * into the user's embedded wallet. The backend then forwards it to their
- * Polymarket bridge address (Privy-sponsored gas), the bridge delivers
- * USDC.e to the Deposit Wallet, and that's wrapped into pUSD — all through
- * `POST /api/wallet/convert-to-collateral`. The forward needs gas, so this
- * only runs with `NEXT_PUBLIC_CARD_DEPOSIT_ENABLED=true` (and Privy gas
- * sponsorship on). `stage` and the thrown error reflect exactly where
- * things stopped, never a fabricated "done".
+ * asset Stripe/MoonPay actually sell) into the user's embedded wallet. The
+ * backend then sends it to the user's Polymarket bridge deposit address for
+ * that chain (`POST /api/wallet/card-deposit`, Privy-sponsored gas), and the
+ * bridge delivers it to the Deposit Wallet as pUSD. The transfer needs gas,
+ * so this only runs with `NEXT_PUBLIC_CARD_DEPOSIT_ENABLED=true`. `stage`
+ * and the thrown error reflect exactly where things stopped.
  */
 export function useBuyWithCard() {
   const { address, isGuest } = useSession();
@@ -111,26 +106,20 @@ export function useBuyWithCard() {
       }
       return;
     }
-    if (!tradingEnabled) throw new BuyFlowError(tradingUnavailableMessage);
     if (!cardDepositEnabled) throw new BuyFlowError('Card deposits are not available yet.');
     if (!address) throw new BuyFlowError('Connect a wallet before buying.');
 
     setStage('buying');
     try {
-      const info = await getCryptoDepositInfo();
-      if (info.unavailable) {
-        throw new BuyFlowError('Your trading wallet is not ready yet. Please wait a moment and try again.');
+      const state = await getCardDepositState();
+      if (state.unavailable) {
+        throw new BuyFlowError('Your wallet is not ready yet. Please wait a moment and try again.');
       }
-      // Funds from an earlier purchase are still on their way (in the
-      // embedded wallet or already in the Deposit Wallet) — move them on
-      // instead of opening another onramp and risking a duplicate.
-      const startingUsdcE = info.usdcE.balance;
-      if (startingUsdcE >= MIN_CONVERTIBLE_USDC || info.usdc.balance >= MIN_CONVERTIBLE_USDC) {
+      // USDC from an earlier purchase is still in the embedded wallet — send
+      // it on instead of opening another onramp.
+      if (state.usdcBalance > 0) {
         setStage('converting');
-        const result = await convertToCollateral();
-        if (result.status !== 'converted') {
-          throw new BuyFlowError(result.errorMessage ?? 'Conversion could not be confirmed. Check your wallet and trading balance before trying again.');
-        }
+        await forwardOrThrow();
         await refreshTradingBalance();
         return;
       }
@@ -140,38 +129,30 @@ export function useBuyWithCard() {
         fiat: { source: { defaultAsset: 'usd' } },
       });
 
-      // Once native USDC is in the embedded wallet, ask the backend to
-      // forward it to the bridge; once USDC.e reaches the Deposit Wallet,
-      // it's ready to wrap.
       setStage('waiting');
       const landed = await pollUntil(
-        async () => {
-          const current = await getCryptoDepositInfo();
-          if (current.usdc.balance >= MIN_CONVERTIBLE_USDC) await convertToCollateral().catch(() => null);
-          return current.usdcE.balance > startingUsdcE;
-        },
+        async () => (await getCardDepositState()).usdcBalance > 0,
         () => activeRef.current,
         LANDING_POLL_MS,
         LANDING_POLL_ATTEMPTS
       );
       if (!activeRef.current) return;
       if (!landed) {
-        throw new BuyFlowError(
-          info.autoConvert
-            ? 'Your purchase is still processing. It will be added to your trading balance automatically when it arrives.'
-            : 'Your purchase is still processing. When it arrives, tap Deposit again to add it to your trading balance.'
-        );
+        throw new BuyFlowError('Your purchase is still processing. When it arrives, tap Deposit again to add it.');
       }
 
       setStage('converting');
-      const result = await convertToCollateral();
-      if (result.status !== 'converted') {
-        throw new BuyFlowError(result.errorMessage ?? 'Conversion could not be confirmed. Check your wallet and trading balance before trying again.');
-      }
-
+      await forwardOrThrow();
       await refreshTradingBalance();
     } finally {
       if (activeRef.current) setStage('idle');
+    }
+  };
+
+  const forwardOrThrow = async () => {
+    const result = await forwardCardDeposit();
+    if (result.status !== 'forwarded') {
+      throw new BuyFlowError('The purchase is below the bridge minimum, so it stays in your wallet for now.');
     }
   };
 

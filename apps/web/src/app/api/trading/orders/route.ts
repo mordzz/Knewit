@@ -21,22 +21,15 @@ interface CreateTradeOrderInput {
 }
 
 /**
- * `POST /trading/orders` — market-price BUY only (docs/API.md,
- * docs/PRD.md). The wallet is resolved from the authenticated Privy
+ * `POST /trading/orders` — market-price BUY (docs/API.md). The wallet is resolved from the authenticated Privy
  * session, never client-supplied. A failed trade (signing rejected,
  * CLOB rejects the order, no liquidity) is recorded as a `failed`
  * `Order` row for audit history, but the HTTP response itself errors
  * — never a `200` with a silently-failed trade — per docs/DECISIONS.md,
  * "No Fake Trade Success."
- *
- * **Not verified against a real fill** — see
- * `src/lib/trading/orders.ts`'s doc comment.
  */
 export async function POST(request: Request) {
   return withErrorHandling(async () => {
-    if (process.env.NEXT_PUBLIC_TRADING_ENABLED !== 'true') {
-      throw new ApiError(503, 'trading_unavailable', 'Trading is temporarily unavailable.');
-    }
     const { privyUserId } = await requireAuth(request);
     const viewer = await getOrCreateUser(privyUserId);
     await reconcileUserWalletOperations(viewer.id).catch((error) => console.warn('[trading/orders] prior operation reconciliation incomplete:', error));
@@ -85,7 +78,7 @@ export async function POST(request: Request) {
         result: { marketId: body.marketId, choiceIndex, choiceLabel: result.choiceLabel, filledSize: result.filledSize, filledPrice: result.filledPrice, status: result.status },
       });
     }
-    // Cache the market row first so the Order/Position FK into `markets`
+    // Cache the market row first so the Order FK into `markets`
     // holds regardless of fill outcome (see lib/marketCache.ts).
     try {
       await getAndCacheMarketSummary(body.marketId);
@@ -136,25 +129,8 @@ export async function POST(request: Request) {
       throw new ApiError(502, 'trade_failed', result.errorMessage ?? 'Trade failed.');
     }
 
-    const { error: positionError } = await supabase.from('positions').insert({
-      user_id: viewer.id,
-      market_id: body.marketId,
-      outcome: result.choiceLabel,
-      choice_index: choiceIndex,
-      entry_price: result.filledPrice,
-      size: result.filledSize,
-      wallet_operation_id: operation.id,
-    });
-    if (positionError) {
-      console.error('[trading/orders] venue trade executed but position persistence failed:', { orderId: orderRow.id, error: positionError });
-      return Response.json({
-        code: 'trade_reconciliation_required',
-        message: 'The trade executed but your position is still syncing. Check your wallet before placing another order.',
-        status: 'reconciliation_required',
-        orderId: orderRow.id,
-      }, { status: 202 });
-    }
-
+    // Holdings aren't stored locally — `GET /positions` reads them from
+    // Polymarket's Data API. The order row is the app's trade history.
     const order: Order = {
       id: orderRow.id,
       userId: orderRow.user_id,

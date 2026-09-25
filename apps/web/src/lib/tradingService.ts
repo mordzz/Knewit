@@ -20,3 +20,16 @@ export async function sellPosition(positionId: string): Promise<SellPositionResp
     body: JSON.stringify({ positionId }),
   });
 }
+
+export interface RedeemResult {
+  amountUsd: number;
+  transactionHash: string | null;
+}
+
+/** Redeems a resolved market's winning shares into the trading balance. */
+export async function redeemPosition(conditionId: string): Promise<RedeemResult> {
+  return apiRequest<RedeemResult>('/api/trading/redeem', {
+    method: 'POST',
+    body: JSON.stringify({ conditionId }),
+  });
+}
