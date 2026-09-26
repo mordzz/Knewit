@@ -6,7 +6,7 @@ import { POLYMARKET_PUSD } from '@/lib/trading/collateral';
 
 /**
  * `POST /wallet/withdraw-quote` `{ chainId, tokenAddress, recipient, amount }`
- * — what the recipient will receive and what the route costs, from the
+ *  what the recipient will receive and what the route costs, from the
  * bridge's `/quote` (pUSD on Polygon → the chosen token/chain).
  */
 export async function POST(request: Request) {

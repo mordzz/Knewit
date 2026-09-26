@@ -47,22 +47,22 @@ function formatShortDate(iso: string): string {
 }
 
 /**
- * Direct conversion of `apps/mobile`'s `MarketDetailScreen` — bare
+ * Direct conversion of `apps/mobile`'s `MarketDetailScreen`  bare
  * image + title header (back button inline to its left), a real
  * dual-line YES/NO `MarketPriceChart` for binary markets (backed by
  * `GET /markets/:id/price-history`, Polymarket's own CLOB price
- * history, proxied — not fabricated), a real `TradingPanel`
+ * history, proxied  not fabricated), a real `TradingPanel`
  * (BottomSheet-based Trade flow, same as mobile), a real
  * `MyPositionCard` when the viewer holds one, and Callouts/Top Holders
  * tabs.
  */
 /**
- * One detail surface for both a single market and a grouped event —
+ * One detail surface for both a single market and a grouped event
  * `id` is tried as a market first (`GET /markets/:id`), and only when
  * that honestly 404s is it treated as an event (`GET /events/:id`).
  * Event mode renders the same page shape (hero, chart, tabs) with one
  * chart line per child market, a Trade button per child that opens the
- * shared `TradeSheet` in place, and combined Callouts/Top Holders —
+ * shared `TradeSheet` in place, and combined Callouts/Top Holders
  * there is no separate event page.
  */
 export function MarketDetailView({ id }: { id: string }) {
@@ -95,7 +95,7 @@ export function MarketDetailView({ id }: { id: string }) {
   };
 
   const isEventMode = marketIsMissing;
-  // Desktop shows the trade card for one child at a time — the event's
+  // Desktop shows the trade card for one child at a time  the event's
   // largest market until another row's Trade is picked.
   const defaultChildId =
     event.status === 'success'
@@ -148,7 +148,7 @@ export function MarketDetailView({ id }: { id: string }) {
         {!isEventMode && market.status === 'success' ? (
           <>
             {/* Desktop/tablet: hero + chart + position on the left, a
-                sticky Trading Panel on the right — same components, same
+                sticky Trading Panel on the right  same components, same
                 data, just a two-column composition instead of one long
                 stack (styled after `apps/dekstop`'s detail.tsx, which
                 pairs a chart with a trade card side by side). */}
@@ -274,7 +274,7 @@ function EventHero({ event, onBack }: { event: EventDetail; onBack: () => void }
 }
 
 /**
- * One child market row — headline is the API's short `label` (what the
+ * One child market row  headline is the API's short `label` (what the
  * group card showed), long question as secondary text. The row itself is
  * display-only (no click, no hover); the only action is the yellow Trade
  * button, which opens the shared `TradeSheet` for this child in place.
@@ -386,13 +386,13 @@ function EventCalloutsTab({ eventId }: { eventId: string }) {
 }
 
 /**
- * Event Top Holders — rows stay per market+outcome, with a horizontally
+ * Event Top Holders  rows stay per market+outcome, with a horizontally
  * **dropdown** (a native select listing the event's child markets)
  * narrowing the list to one market (`?market=` on the endpoint).
  */
 function EventHoldersTab({ eventId, markets }: { eventId: string; markets: MarketSummary[] }) {
   // Polymarket's holder data is per market, so there is no honest "all
-  // markets" list — the tab defaults to the event's largest market and
+  // markets" list  the tab defaults to the event's largest market and
   // the dropdown switches between children.
   const defaultMarket = useMemo(
     () => [...markets].sort((a, b) => (b.volume ?? 0) - (a.volume ?? 0))[0] ?? null,
@@ -495,7 +495,7 @@ function MarketHero({ market, onBack }: { market: MarketDetail; onBack: () => vo
 }
 
 /**
- * Market Detail's "About" tab — rules text, resolution state, dates and
+ * Market Detail's "About" tab  rules text, resolution state, dates and
  * the volume/liquidity figures already on the summary. Built only from
  * fields the API actually returns; a missing field shows its own honest
  * fallback, never an invented value.
@@ -506,8 +506,8 @@ function AboutTab({ market }: { market: MarketDetail }) {
       ? `Resolved ${market.resolvedOutcome === 'YES' ? 'Yes' : 'No'}.`
       : 'This market has resolved.'
     : market.closed
-      ? 'Trading closed — awaiting resolution.'
-      : 'Not resolved yet — this market is still open.';
+      ? 'Trading closed  awaiting resolution.'
+      : 'Not resolved yet  this market is still open.';
 
   return (
     <div className="flex flex-col gap-4 px-4 pt-4">

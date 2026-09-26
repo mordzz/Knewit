@@ -9,7 +9,7 @@ interface ShareCommentInput {
 }
 
 /** Web equivalent of `apps/mobile/src/features/home/hooks/useShareComment.ts`
- * — optimistic +1 for a comment's share count, fired once the Web Share
+ *  optimistic +1 for a comment's share count, fired once the Web Share
  * API resolves without throwing. */
 export function useShareComment() {
   const queryClient = useQueryClient();

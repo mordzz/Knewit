@@ -8,12 +8,12 @@ export interface XLogoProps {
 }
 
 /**
- * X's brand mark as a real vector path — not a font glyph. Ionicons
+ * X's brand mark as a real vector path  not a font glyph. Ionicons
  * only ships the old Twitter bird (`logo-twitter`), and the unicode
  * "𝕏" (mathematical double-struck capital X) character used as a
  * placeholder before this component isn't the actual logo and isn't
  * guaranteed to render identically (or at all) across every
- * platform/font — a real SVG path renders identically everywhere.
+ * platform/font  a real SVG path renders identically everywhere.
  */
 export function XLogo({ size = 18, color = 'textPrimary' }: XLogoProps) {
   return (

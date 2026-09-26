@@ -5,7 +5,7 @@ import type { EventHolderRow } from '@/types/social';
 
 const HOLDER_LIMIT = 20;
 
-/** `GET /events/:id/holders?market=<childId>` — the event's Top
+/** `GET /events/:id/holders?market=<childId>`  the event's Top
  * Holders, proxied from Polymarket's public holder data (per market;
  * the Data API has no event-level holders endpoint). `?market=` picks a
  * child market; without it the child with the largest volume is used,

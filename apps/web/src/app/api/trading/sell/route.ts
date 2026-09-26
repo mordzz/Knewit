@@ -19,13 +19,13 @@ interface SellPositionInput {
 }
 
 /**
- * `POST /trading/sell` — market-price SELL of one whole position. Proceeds
+ * `POST /trading/sell`  market-price SELL of one whole position. Proceeds
  * stay in the caller's Polymarket Deposit Wallet for future trading or
  * withdrawal. The wallet and the position's ownership are resolved
  * from the authenticated session, never from the client.
  *
  * A failed sell is recorded as a `failed` Order row for audit history
- * and answered as a real error — never a `200` with a silently-failed
+ * and answered as a real error  never a `200` with a silently-failed
  * trade ("No Fake Trade Success").
  */
 export async function POST(request: Request) {
@@ -59,7 +59,7 @@ export async function POST(request: Request) {
     } catch (error) {
       // Rejected before anything reached the venue (bad input, not enough
       // balance/shares, approvals couldn't be set up): a plain failure, not
-      // an unknown outcome — release the lock and surface the real reason.
+      // an unknown outcome  release the lock and surface the real reason.
       if (isRejectedBeforeSubmit(error)) {
         await updateWalletOperation(supabase, operation.id, { status: 'failed', error_code: error.code, reconciled_at: new Date().toISOString() });
         throw error;

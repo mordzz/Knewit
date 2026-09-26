@@ -33,12 +33,12 @@ const FEED_TAB_OPTIONS: TabRowOption<FeedTabKey>[] = [
 
 /**
  * The primary social feed. The first tab (key still `forYou`) is
- * labeled **"Trending"** — the backend-ranked `/feed` itself, with no
+ * labeled **"Trending"**  the backend-ranked `/feed` itself, with no
  * personalized recommendation algorithm behind it, and "For You" would
- * imply one that doesn't exist — see docs/DECISIONS.md. "Following"
+ * imply one that doesn't exist  see docs/DECISIONS.md. "Following"
  * shows only real content from accounts the viewer follows (Sprint 9's
  * Follow relationships) with no dev-mock fallback, since fabricating it
- * would misrepresent a real social relationship — see
+ * would misrepresent a real social relationship  see
  * docs/DECISIONS.md. Discovery strips (Trending Calls/Markets, Closing
  * Soon) were deleted, not relocated.
  */
@@ -50,7 +50,7 @@ export function HomeScreen() {
   const feed = useHomeFeed();
   const followingFeed = useFollowingFeed();
   // The FAB is only ever shown while Home's tab is focused (see
-  // MainTabNavigator) — but that's always true while this screen is on
+  // MainTabNavigator)  but that's always true while this screen is on
   // screen, regardless of which of *its own* internal tabs (Trending/
   // Following) is selected, so both lists below reserve this clearance.
   const fabClearance = insets.bottom + FAB_CLEARANCE;
@@ -255,10 +255,10 @@ export function HomeScreen() {
 /**
  * Single row: balance on the left, Deposit on the right, separated
  * from the tabs below by a hairline bottom border. Balance is the real
- * USDC collateral read from Polymarket's CLOB (`useWalletBalance`) —
- * "—" when it's unavailable (no wallet, or signing not delegated yet),
+ * USDC collateral read from Polymarket's CLOB (`useWalletBalance`)
+ * "" when it's unavailable (no wallet, or signing not delegated yet),
  * never a fabricated `$0.00`. Kept as a raw `className` size override
- * (see docs/DECISIONS.md for the caveats) — same treatment as before.
+ * (see docs/DECISIONS.md for the caveats)  same treatment as before.
  * Deposit opens Privy's funding flow once a wallet exists; before that
  * it routes to sign-in like any gated action.
  */
@@ -272,7 +272,7 @@ function Header() {
   const [depositError, setDepositError] = useState<string | null>(null);
   const [depositSheetOpen, setDepositSheetOpen] = useState(false);
 
-  const balanceLabel = balance.data?.usdc != null ? formatUsd(balance.data.usdc) : '—';
+  const balanceLabel = balance.data?.usdc != null ? formatUsd(balance.data.usdc) : '';
 
   const handleDeposit = async () => {
     if (!canUseApp || !isConnected) {

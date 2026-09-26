@@ -6,7 +6,7 @@ import { uploadProfileImage, type ProfileImageKind } from '@/features/profile/li
 /**
  * Uploads an avatar or banner through the backend and refreshes every
  * place the image/author data is embedded (feed cards, comments, the
- * viewer's own profile) — same invalidation rule as `useUpdateProfile`.
+ * viewer's own profile)  same invalidation rule as `useUpdateProfile`.
  */
 export function useUploadProfileImage() {
   const queryClient = useQueryClient();

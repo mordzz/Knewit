@@ -3,7 +3,7 @@
  * Privy's own modal, not a real failure. Privy's `useAddFunds` rejects
  * with `Error("User cancelled funding")` on close (and `"USER_EXITED"`
  * from the crypto sub-flow); `useDepositAddress`'s modal exposes the same
- * exit as a `USER_EXITED` error *code* rather than only a message —
+ * exit as a `USER_EXITED` error *code* rather than only a message
  * verified in the installed `@privy-io/react-auth` bundle, since the
  * public types don't expose a cancel code. Kept in one place so a future
  * SDK wording change is a one-file fix; anything unrecognised is treated

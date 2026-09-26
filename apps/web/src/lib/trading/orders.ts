@@ -11,7 +11,7 @@ import { listHeldPositions } from '@/lib/trading/portfolio';
 
 export interface PlaceOrderResult {
   tokenId: string;
-  /** The chosen choice's label resolved from the live market — what the
+  /** The chosen choice's label resolved from the live market  what the
    * persisted Order row stores. */
   choiceLabel: string;
   status: 'filled' | 'failed';
@@ -21,7 +21,7 @@ export interface PlaceOrderResult {
   errorMessage: string | null;
 }
 
-/** Errors raised before an order is sent to the CLOB — nothing was placed,
+/** Errors raised before an order is sent to the CLOB  nothing was placed,
  * so the caller can record a plain failure instead of an unknown outcome. */
 export function isRejectedBeforeSubmit(error: unknown): error is ApiError {
   return error instanceof ApiError && (error.status < 500 || error.code === 'approvals_failed');
@@ -44,7 +44,7 @@ async function ensureTradingApprovals(client: UserSecureClient) {
     throw new ApiError(
       502,
       'approvals_failed',
-      "Your wallet couldn't finish its one-time trading setup — try again in a moment."
+      "Your wallet couldn't finish its one-time trading setup  try again in a moment."
     );
   }
 }
@@ -54,7 +54,7 @@ type AcceptedOrder = Extract<Awaited<ReturnType<UserSecureClient['placeMarketOrd
 /**
  * Waits for the order's fills to settle on-chain (`waitForOrderFillSettlement`).
  * A fill that failed on-chain means nothing moved; any other problem
- * (timeout, transport) leaves the venue's own match as the answer — the
+ * (timeout, transport) leaves the venue's own match as the answer  the
  * portfolio is read from Polymarket, so it corrects itself either way.
  */
 async function settleFills(client: UserSecureClient, response: AcceptedOrder): Promise<'settled' | 'failed'> {
@@ -77,7 +77,7 @@ async function settleFills(client: UserSecureClient, response: AcceptedOrder): P
  * with the Privy embedded EOA. `maxSpend` keeps the all-in cost (market +
  * builder fees) within the amount the user entered. A preflight on the
  * pUSD balance fails with an actionable 400 before submitting. Every
- * failure is a real error or `status: 'failed'` — never a fabricated fill.
+ * failure is a real error or `status: 'failed'`  never a fabricated fill.
  */
 export async function placeMarketOrder(params: {
   privyUserId: string;
@@ -87,7 +87,7 @@ export async function placeMarketOrder(params: {
 }): Promise<PlaceOrderResult> {
   const wallet = await getPrimaryEthereumWallet(params.privyUserId);
   if (!wallet) {
-    throw badRequest('No embedded wallet found for this account — connect a wallet before trading.');
+    throw badRequest('No embedded wallet found for this account  connect a wallet before trading.');
   }
 
   if (!/^\d+$/.test(params.marketId)) throw notFound(`Market ${params.marketId} not found.`);
@@ -110,7 +110,7 @@ export async function placeMarketOrder(params: {
     throw new ApiError(
       400,
       'insufficient_balance',
-      'Your trading balance is too low for this trade — add funds to your wallet and try again.'
+      'Your trading balance is too low for this trade  add funds to your wallet and try again.'
     );
   }
   await ensureTradingApprovals(client);
@@ -125,7 +125,7 @@ export async function placeMarketOrder(params: {
       ...builderCode(),
     });
   } catch (error) {
-    // The upstream reason stays in the server log — it can carry venue
+    // The upstream reason stays in the server log  it can carry venue
     // internals; the client gets a stable message.
     console.error('[trading/orders] buy rejected upstream:', error);
     throw new ApiError(502, 'trade_failed', 'The order could not be placed right now. Please try again.');
@@ -159,7 +159,7 @@ export async function placeMarketOrder(params: {
     choiceLabel: choice.label,
     status: 'filled',
     filledSize,
-    // Decimal cents (up to 4 dp) — a sub-cent fill's price must not round to 0.
+    // Decimal cents (up to 4 dp)  a sub-cent fill's price must not round to 0.
     filledPrice: Number(((filledUsd / filledSize) * 100).toFixed(4)),
     polymarketOrderId: response.orderId ?? null,
     errorMessage: null,
@@ -196,7 +196,7 @@ export async function sellMarketPosition(params: {
 }): Promise<SellPositionResult> {
   const wallet = await getPrimaryEthereumWallet(params.privyUserId);
   if (!wallet) {
-    throw badRequest('No embedded wallet found for this account — connect a wallet before trading.');
+    throw badRequest('No embedded wallet found for this account  connect a wallet before trading.');
   }
   const tokenId = params.positionId;
   if (!/^\d+$/.test(tokenId)) throw notFound(`Position ${tokenId} not found.`);
@@ -213,7 +213,7 @@ export async function sellMarketPosition(params: {
   const { balance } = await fetchBalanceAllowance(client, { assetId: tokenId, assetType: AssetType.CONDITIONAL });
   const shares = Math.floor(Number(balance)) / 1e6; // outcome shares have 6 decimals
   if (!(shares > 0)) {
-    throw new ApiError(400, 'insufficient_shares', 'You no longer hold this position — refresh your portfolio.');
+    throw new ApiError(400, 'insufficient_shares', 'You no longer hold this position  refresh your portfolio.');
   }
   await ensureTradingApprovals(client);
 
@@ -276,7 +276,7 @@ export async function sellMarketPosition(params: {
  * Redeems a resolved market's winning shares into pUSD (`redeemPositions`,
  * gasless through the relayer). Only runs when Polymarket's Data API
  * reports a redeemable position in that market for this user's Deposit
- * Wallet. Redeeming is idempotent on-chain — a repeat just returns $0.
+ * Wallet. Redeeming is idempotent on-chain  a repeat just returns $0.
  */
 export async function redeemMarketPositions(params: {
   privyUserId: string;
@@ -308,7 +308,7 @@ export async function redeemMarketPositions(params: {
     if (error instanceof TransactionFailedError) {
       throw new ApiError(502, 'redeem_failed', 'The redeem transaction failed. Nothing was changed.');
     }
-    // Submitted but not confirmed in time — it will land; the portfolio
+    // Submitted but not confirmed in time  it will land; the portfolio
     // shows the result once it does.
     console.warn('[trading/redeem] redeem confirmation pending:', error);
     return { amountUsd, transactionHash: handle.transactionHash ?? null };

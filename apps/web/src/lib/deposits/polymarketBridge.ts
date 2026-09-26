@@ -3,7 +3,7 @@ import { env } from '@/lib/env';
 const BRIDGE_URL = 'https://bridge.polymarket.com';
 
 /** Per-wallet deposit addresses from Polymarket's bridge
- * (docs.polymarket.com/trading/bridge/deposit) — anything sent to them is
+ * (docs.polymarket.com/trading/bridge/deposit)  anything sent to them is
  * bridged/swapped to pUSD and delivered to the Polymarket Deposit Wallet
  * on Polygon, ready to trade (bridge/swap costs come out of the deposit). */
 export interface BridgeDepositAddresses {
@@ -27,7 +27,7 @@ export interface BridgeTransaction {
   status: BridgeDepositStatus;
   fromChainId: string | null;
   toChainId: string | null;
-  /** Destination transaction hash — only once `COMPLETED`. */
+  /** Destination transaction hash  only once `COMPLETED`. */
   txHash: string | null;
   /** Only present once the transfer has started processing. */
   createdAtMs: number | null;
@@ -103,7 +103,7 @@ function numberOrNull(value: unknown): number | null {
 /** Withdrawal (docs.polymarket.com/trading/bridge/withdraw): the bridge
  * returns a Polygon address; pUSD sent there is bridged/swapped to
  * `toTokenAddress` on `toChainId` and delivered to `recipient`. Only create
- * one when the user is ready to send — the bridge's own guidance is not to
+ * one when the user is ready to send  the bridge's own guidance is not to
  * pre-generate withdrawal addresses. */
 export async function createBridgeWithdrawal(params: {
   polymarketWallet: string;
@@ -135,14 +135,14 @@ export interface BridgeQuote {
   estimatedReceivedUsd: number;
   /** USD value after max slippage (`estFeeBreakdown.minReceived`). */
   minReceivedUsd: number;
-  /** Everything the route costs, in USD (`estFeeBreakdown.totalImpactUsd` —
+  /** Everything the route costs, in USD (`estFeeBreakdown.totalImpactUsd`
    * already includes gas, fill cost, swap impact and app fee). */
   totalCostUsd: number;
   estimatedSeconds: number;
 }
 
 /**
- * `POST /quote` — the cost of moving `amount` pUSD (6 decimals) from
+ * `POST /quote`  the cost of moving `amount` pUSD (6 decimals) from
  * Polygon to a destination token/chain. `toDecimals` is the destination
  * token's decimals (from `/supported-assets`) to read `estToTokenBaseUnit`.
  */
@@ -187,7 +187,7 @@ interface SupportedAsset {
   minCheckoutUsd: number;
 }
 
-/** Which of the bridge's addresses a chain uses — the `/deposit` and
+/** Which of the bridge's addresses a chain uses  the `/deposit` and
  * `/withdraw` responses carry one per type. */
 export type BridgeAddressType = 'evm' | 'svm' | 'btc' | 'tron';
 
@@ -210,7 +210,7 @@ const UNSUPPORTED_CHAINS = new Set(['Lightning', 'Hypercore']);
 
 let assetsCache: { at: number; assets: BridgeAsset[] } | null = null;
 
-/** `/supported-assets`, normalized and refreshed every 10 minutes — the
+/** `/supported-assets`, normalized and refreshed every 10 minutes  the
  * list and its minimums change over time, so nothing here is hardcoded.
  * One entry per symbol per chain (the list repeats a few, e.g. native SOL
  * under two addresses). */

@@ -24,52 +24,52 @@ export interface MarketCardProps {
 }
 
 /**
- * The Markets tab's discovery card — a flat, borderless list row (same
+ * The Markets tab's discovery card  a flat, borderless list row (same
  * `border-b border-border px-4 py-3` convention as the Home feed's own
- * `CallCard` row), not a boxed `Card`/glass panel — see docs/DECISIONS.md
+ * `CallCard` row), not a boxed `Card`/glass panel  see docs/DECISIONS.md
  * ("List Rows, Not Cards, for the Markets Tab"). The image+title header
  * row itself still matches `MarketAttachment`'s exact layout (`flex-row
  * items-center gap-2.5`, bold `bodyStrong` title), so a market reads the
- * same way wherever its image+title appears — this card just isn't
+ * same way wherever its image+title appears  this card just isn't
  * wrapped in its own panel the way `MarketAttachment` is (that one is a
  * card *embedded inside* a feed row; this one *is* the row).
  *
  * Still **one flexible component**, never a component per category:
  * which of the two layouts below renders is decided purely by the
- * data's shape (a single YES/NO pair vs. several named outcome rows —
+ * data's shape (a single YES/NO pair vs. several named outcome rows
  * the latter sometimes called a "combo" market, e.g. an election with
- * several candidates), never by `category` — see docs/DESIGN.md and
+ * several candidates), never by `category`  see docs/DESIGN.md and
  * docs/DECISIONS.md (Markets visual refresh). Combo markets are already
  * supported today via `GroupCard`/`OutcomeRow` below.
  *
  * No buy/sell action anywhere in this card, and no *price* anywhere in
- * it either — price/trading only ever appears in Market Detail now,
+ * it either  price/trading only ever appears in Market Detail now,
  * not this discovery list (see docs/DECISIONS.md, "Price Only in
  * Market Detail"). The *choice types* still show (labels from the
  * market's own API choices, each candidate's name + pills for a combo)
- * — only the price/probability number attached to them is gone (the old
+ *  only the price/probability number attached to them is gone (the old
  * Yes/No price buttons, the per-candidate probability percentage, and
  * the combo trend chart). A single-market row opens Market Detail; a
  * group card opens that same detail screen in event mode and is the
- * card's **only** click target — its outcome rows are display-only, see
+ * card's **only** click target  its outcome rows are display-only, see
  * docs/DECISIONS.md ("Group Cards Are One Click"). The
- * footer shows Volume only (not Liquidity/time — see
+ * footer shows Volume only (not Liquidity/time  see
  * `buildMarketMetrics` for the full set `MarketAttachment` still shows)
  * with a Share action on the right, native OS share sheet, same pattern
- * as `SocialActionBar`'s — see docs/DECISIONS.md ("Native Share, Not
+ * as `SocialActionBar`'s  see docs/DECISIONS.md ("Native Share, Not
  * In-App Repost").
  *
  * Deliberately doesn't display category at all, not even indirectly
- * via icon — the category tab row (`TabPills`, above the list) is
+ * via icon  the category tab row (`TabPills`, above the list) is
  * already this screen's category signal; repeating it per-card would be
  * redundant. No status badge (Trending/Closed/Resolved) either, by
- * request — `MarketAttachment` still shows one; this card doesn't.
+ * request  `MarketAttachment` still shows one; this card doesn't.
  */
 export function MarketCard({ item, onOpenMarket }: MarketCardProps) {
   if (item.kind === 'group') {
     // One click target only: the whole group card opens the same
     // Market Detail surface in event mode. Child rows are display-only
-    // (no separate press) — see docs/DECISIONS.md ("One Detail
+    // (no separate press)  see docs/DECISIONS.md ("One Detail
     // Surface").
     return <GroupCard group={item.group} />;
   }
@@ -80,7 +80,7 @@ async function shareMarket(title: string) {
   try {
     await Share.share({ message: `${title}\n\nvia Knewit` });
   } catch {
-    // User dismissed the share sheet — nothing to recover from.
+    // User dismissed the share sheet  nothing to recover from.
   }
 }
 
@@ -144,7 +144,7 @@ function SingleMarketCard({
   );
 }
 
-/** Three or more choices — the same `MiniPill` treatment the group
+/** Three or more choices  the same `MiniPill` treatment the group
  * rows' Yes/No pills already use, one per choice, wrapping. When the
  * API actually provides an image for a choice, the pills switch to the
  * same image+label row `OutcomeRow` uses; the market's own image is
@@ -182,11 +182,11 @@ function ChoiceList({ choices }: { choices: MarketChoice[] }) {
 const ROW_LIMIT = 4;
 
 /**
- * A combo market (several named outcomes under one event) — still a
+ * A combo market (several named outcomes under one event)  still a
  * flat list row, just a taller one. **One click target only**: the whole
  * card opens the same Market Detail surface in event mode; the outcome
  * rows below are display-only (no separate press). Rows only show an
- * image when the API provides one that identifies the child — no
+ * image when the API provides one that identifies the child  no
  * placeholder art, no shared league/tournament art.
  */
 function GroupCard({ group }: { group: MarketGroupSummary }) {
@@ -255,7 +255,7 @@ function OutcomeRow({ row, large }: { row: MarketOutcomeRow; large: boolean }) {
 }
 
 /**
- * The binary single-market card's preview — same layout as the web
+ * The binary single-market card's preview  same layout as the web
  * Markets list (`apps/web` `MarketCard`'s `BinaryMarketPreview`): the
  * first choice's chance and a 1D sparkline side by side, then the two
  * choice labels as half-width blocks (label only, no price).
@@ -312,7 +312,7 @@ function BinaryMarketPreview({ market }: { market: MarketSummary }) {
 }
 
 /** Same contrast choice `Button` already made (dark text on bright
- * fills, light text on the pink/red and neutral surfaces) — replicated
+ * fills, light text on the pink/red and neutral surfaces)  replicated
  * rather than shared since `Button`'s own size (min-h-12) is too tall
  * for a dense outcome-row list; this is the compact equivalent for that
  * context only. */
@@ -329,7 +329,7 @@ function MiniPill({ label, variant }: { label: string; variant: 'primary' | 'sec
 /** Loading placeholder matching the single-market row's shape (the
  * more common of the two, and `MarketCardSkeleton`'s only current usage
  * context is the vertical `MarketsScreen` list) so a loading list
- * doesn't visually jump once real rows swap in — see docs/DESIGN.md. */
+ * doesn't visually jump once real rows swap in  see docs/DESIGN.md. */
 export function MarketCardSkeleton() {
   return (
     <View className="flex-row items-center gap-3 border-b border-border px-4 py-3">

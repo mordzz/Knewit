@@ -6,19 +6,19 @@ export interface MarketVisualProps {
   imageUrl?: string | null;
   /** The fixed fallback icon shown when no image is present or it
    * fails to load. Deliberately never derived from the market's
-   * category — category no longer signals anything visually on market
-   * cards (by request — see docs/DECISIONS.md). */
+   * category  category no longer signals anything visually on market
+   * cards (by request  see docs/DECISIONS.md). */
   fallbackIcon: IconName;
   size?: number;
 }
 
 /**
  * A market's own image when available, with a graceful fallback to a
- * fixed icon on a tinted swatch — both when no image is present at
+ * fixed icon on a tinted swatch  both when no image is present at
  * all, and when the image fails to load. Fixed square footprint either
  * way, so the fallback occupies the exact same slot a real image would
  * (no layout shift, no broken-image glyph). Shared by every market
- * card (`MarketAttachment`, `MarketCard`) and Market Detail's hero —
+ * card (`MarketAttachment`, `MarketCard`) and Market Detail's hero
  * see docs/DECISIONS.md.
  */
 export function MarketVisual({ imageUrl, fallbackIcon, size = 40 }: MarketVisualProps) {

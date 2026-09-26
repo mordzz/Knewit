@@ -10,12 +10,12 @@ export interface SearchInputProps {
 }
 
 /**
- * A search field matching the app's standard `Input` recipe — same
+ * A search field matching the app's standard `Input` recipe  same
  * `min-h-12 rounded-md border-border bg-surface-elevated` surface, not a
- * one-off pill — with a leading search icon and a trailing clear button
+ * one-off pill  with a leading search icon and a trailing clear button
  * that only appears once there's text to clear. Kept feature-local rather
  * than promoted to `components/ui`: nothing else in the app needs an
- * icon+clear-button text field today — see the project's "evidence before
+ * icon+clear-button text field today  see the project's "evidence before
  * promoting to global" convention (docs/DECISIONS.md).
  */
 export function SearchInput({

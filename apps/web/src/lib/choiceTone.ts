@@ -1,7 +1,7 @@
 export type ChoiceTone = 'yes' | 'no' | 'accent' | 'neutral';
 
 /**
- * Web equivalent of `apps/mobile/src/utils/choiceTone.ts` — directional
+ * Web equivalent of `apps/mobile/src/utils/choiceTone.ts`  directional
  * labels keep the semantic green/red pair ("Yes"/"Up" green, "No"/"Down"
  * red); every other named choice uses the neutral pair (brand accent
  * index 0, neutral surface index 1) so green/red never implies a meaning
@@ -15,7 +15,7 @@ export function choiceTone(choice: { index: number; label: string }): ChoiceTone
   return choice.index % 2 === 0 ? 'accent' : 'neutral';
 }
 
-/** The text color token matching a tone — `neutral` reads as ordinary
+/** The text color token matching a tone  `neutral` reads as ordinary
  * primary text, not as a color. */
 export function choiceTextColor(tone: ChoiceTone): 'yes' | 'no' | 'accent' | 'textPrimary' {
   if (tone === 'yes' || tone === 'no' || tone === 'accent') return tone;

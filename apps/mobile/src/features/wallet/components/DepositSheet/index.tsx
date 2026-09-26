@@ -237,7 +237,7 @@ function DepositStatus({ status }: { status: CryptoDepositStatus }) {
     );
   }
   if (status === 'bridging')
-    return <StatusRow spinner>Deposit detected — about a minute.</StatusRow>;
+    return <StatusRow spinner>Deposit detected  about a minute.</StatusRow>;
   if (status === 'failed') {
     return (
       <StatusRow icon="alert-circle-outline" color="accent">

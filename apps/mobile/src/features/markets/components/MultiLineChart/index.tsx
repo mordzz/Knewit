@@ -18,7 +18,7 @@ const CHART_HEIGHT = PLOT_HEIGHT + AXIS_HEIGHT;
 const PLOT_PADDING_Y = 10;
 const MAX_POINTS = 120;
 const TOOLTIP_ROWS = 4;
-/** Minimum horizontal travel before a drag becomes a chart scrub —
+/** Minimum horizontal travel before a drag becomes a chart scrub
  * anything more vertical is left to the page's ScrollView. */
 const SCRUB_THRESHOLD = 6;
 
@@ -30,10 +30,10 @@ export interface ChartSeries {
   label: string;
   color: string;
   values: number[];
-  /** ISO timestamps parallel to `values` — shown by the crosshair
+  /** ISO timestamps parallel to `values`  shown by the crosshair
    * tooltip. Same length as `values`. */
   timestamps: string[];
-  /** Optional SVG dash pattern — used to disambiguate extra event lines
+  /** Optional SVG dash pattern  used to disambiguate extra event lines
    * once the identity palette starts repeating. */
   dash?: string;
 }
@@ -91,7 +91,7 @@ function toPoints(values: number[], plotWidth: number, scale: Scale, offsetX: nu
   }));
 }
 
-/** Index of the point whose timestamp is closest to `target` —
+/** Index of the point whose timestamp is closest to `target`
  * timestamps are ascending, so a binary search is enough. */
 function nearestIndex(timestamps: string[], targetTime: number): number {
   if (timestamps.length === 0) return -1;
@@ -111,7 +111,7 @@ function nearestIndex(timestamps: string[], targetTime: number): number {
   return candidates[0];
 }
 
-/** Monotone-cubic (Fritsch–Carlson) path — Polymarket-style smooth lines
+/** Monotone-cubic (Fritsch–Carlson) path  Polymarket-style smooth lines
  * without overshoot, no dependency. */
 function buildSmoothPath(points: Point[]): string {
   if (points.length < 2) return '';
@@ -153,7 +153,7 @@ function buildSmoothPath(points: Point[]): string {
   return path;
 }
 
-/** Short gridline label — the full 4-decimal `formatProbability`
+/** Short gridline label  the full 4-decimal `formatProbability`
  * ("12.5000%") doesn't fit the `VALUE_GUTTER` and gets clipped. */
 function formatAxisPercent(value: number): string {
   const digits = value >= 10 ? 0 : value >= 1 ? 1 : 2;
@@ -178,7 +178,7 @@ function formatTooltipTime(iso: string): string {
 }
 
 /**
- * Shared line-chart primitive — one smooth line per `series` entry with
+ * Shared line-chart primitive  one smooth line per `series` entry with
  * a padded plot, a horizontal grid + value labels and time labels on the
  * x-axis, a tappable legend (each item toggles its line, at least one
  * stays visible), and a crosshair + tooltip while scrubbing (values are

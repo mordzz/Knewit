@@ -36,7 +36,7 @@ export function FieldLabel({ children }: { children: ReactNode }) {
   );
 }
 
-/** Token and Chain dropdowns side by side — the same box as the market
+/** Token and Chain dropdowns side by side  the same box as the market
  * detail's Top Holders filter. The box shows just the value; the native
  * list (a transparent select over the box) also shows each chain's minimum. */
 export function AssetPicker({ selection }: { selection: Selection }) {

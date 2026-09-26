@@ -10,7 +10,7 @@ export interface SocialActionBarProps {
   liked: boolean;
   likeCount: number;
   commentCount: number;
-  /** Omit on the Detail page itself — the comments are already right
+  /** Omit on the Detail page itself  the comments are already right
    * below, so the count renders as plain (non-interactive) text there. */
   onPressComment?: () => void;
   /** Rendered at the far right of the row (e.g. the post's timestamp). */
@@ -19,9 +19,9 @@ export interface SocialActionBarProps {
 
 /**
  * Web equivalent of `apps/mobile/src/features/home/components/SocialActionBar`
- * — the reusable Like + Comment row, used by `CallCard` and the Post
+ *  the reusable Like + Comment row, used by `CallCard` and the Post
  * Detail page so the same post shows identical, always-current social
- * counts wherever it appears. No Share action here — the OS-level
+ * counts wherever it appears. No Share action here  the OS-level
  * native share sheet mobile's `Share.share` opens has no web
  * equivalent worth building for this pass (same scope note the old web
  * port already carried).

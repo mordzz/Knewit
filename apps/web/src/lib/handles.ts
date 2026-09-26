@@ -7,7 +7,7 @@ import type { HandleAvailability } from '@/types/social';
 export const HANDLE_RE = /^[a-z0-9_]{3,20}$/;
 
 /**
- * Whether a Polymarket trader already uses this name — Knewit usernames
+ * Whether a Polymarket trader already uses this name  Knewit usernames
  * must not impersonate one. Throws a 503 `ApiError` when Polymarket
  * can't be reached, since "unknown" must not be treated as "free".
  */

@@ -11,7 +11,7 @@ interface RecentSearchesState {
 
 /**
  * Copied verbatim from `apps/mobile/src/store/search/recentSearchesStore.ts`
- * — genuinely client-only session state (a list of past search
+ *  genuinely client-only session state (a list of past search
  * strings), in-memory only (no persistence), same as mobile.
  */
 export const useRecentSearchesStore = create<RecentSearchesState>((set) => ({

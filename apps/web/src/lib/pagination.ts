@@ -1,7 +1,7 @@
 export const DEFAULT_PAGE_SIZE = 20;
 
 /** Opaque numeric-offset cursor, same convention as Phase 1's
- * `gammaClient.fetchEventsPage` — simple and correct; not the most
+ * `gammaClient.fetchEventsPage`  simple and correct; not the most
  * efficient at large scale (a real keyset cursor would be), left as a
  * documented simplification since nothing in this app has enough rows
  * yet to matter. */
@@ -14,7 +14,7 @@ export function nextCursor(offset: number, returned: number, pageSize = DEFAULT_
   return returned > pageSize ? String(offset + pageSize) : null;
 }
 
-/** Fetches one page from a Supabase query builder — requests
+/** Fetches one page from a Supabase query builder  requests
  * `pageSize + 1` rows so `nextCursor` can tell "more rows exist"
  * without a separate count query, then trims back to `pageSize`. */
 export async function fetchPage<T>(

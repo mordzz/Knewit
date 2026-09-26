@@ -108,7 +108,7 @@ export async function POST(request: Request) {
       throw new ApiError(409, 'withdrawal_in_progress', 'This withdrawal is already being processed. Check the destination wallet and your trading balance before trying again.');
     }
 
-    // Created only now, right before sending — the bridge advises against
+    // Created only now, right before sending  the bridge advises against
     // pre-generating withdrawal addresses.
     let bridgeAddress: string;
     try {
@@ -121,7 +121,7 @@ export async function POST(request: Request) {
     } catch (error) {
       await updateWalletOperation(getSupabase(), operation.id, { status: 'failed', error_code: 'bridge_unavailable', reconciled_at: new Date().toISOString() });
       console.error('[wallet/withdraw] bridge withdrawal address failed:', error);
-      throw new ApiError(502, 'bridge_unavailable', `Withdrawals to ${destination.chainName} are unavailable right now. Nothing was sent — try again or choose another chain.`);
+      throw new ApiError(502, 'bridge_unavailable', `Withdrawals to ${destination.chainName} are unavailable right now. Nothing was sent  try again or choose another chain.`);
     }
     await updateWalletOperation(getSupabase(), operation.id, { request: { ...operationRequest, bridgeAddress } });
     const routeInfo = { chainId: destination.chainId, tokenAddress: destination.tokenAddress, bridgeAddress };
@@ -162,8 +162,8 @@ export async function POST(request: Request) {
       // The relayer accepted the transaction, but its final status could not
       // be read before the request timed out. The ledger status stays
       // 'reconciliation_required' for the background reconciler, but the
-      // response body uses `status: 'pending'` — matching `WithdrawResult`'s
-      // type — because it carries a real transaction hash the client can
+      // response body uses `status: 'pending'`  matching `WithdrawResult`'s
+      // type  because it carries a real transaction hash the client can
       // already show; `apiClient.ts` only intercepts and throws for the
       // literal string 'reconciliation_required', which would otherwise
       // discard the hash/id fields the UI needs to avoid telling the user to

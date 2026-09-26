@@ -7,7 +7,7 @@ import { getMarketPriceHistory } from '@/features/markets/lib/marketService';
 import { MultiLineChart, type ChartSeries } from '@/components/MultiLineChart';
 import type { MarketSummary, PriceRange } from '@/types/social';
 
-/** Fixed identity palette for event lines — a line's color says "which
+/** Fixed identity palette for event lines  a line's color says "which
  * outcome", not yes/no (those keep their semantic colors only in a
  * single market's own chart). Ten stable colors; lines past the palette
  * repeat the colors with a dashed stroke so two different outcomes can
@@ -28,14 +28,14 @@ const INITIAL_LINES = 6;
 const LINES_PER_PAGE = 6;
 
 /** Each child market's line is its primary choice's real price history
- * — "Yes" when the market has one, else the first choice. */
+ *  "Yes" when the market has one, else the first choice. */
 function primaryChoiceIndex(market: MarketSummary): number {
   const yes = market.choices.find((choice) => choice.label.toLowerCase() === 'yes');
   return yes?.index ?? market.choices[0]?.index ?? 0;
 }
 
 /**
- * Web equivalent of `apps/mobile`'s `EventPriceChart` — one smooth,
+ * Web equivalent of `apps/mobile`'s `EventPriceChart`  one smooth,
  * interactive line per child market (Polymarket's event-page view),
  * ranked by volume, six lines at a time with a "Show more" button. The
  * shared `MultiLineChart` owns smoothing, crosshair/tooltip, legend

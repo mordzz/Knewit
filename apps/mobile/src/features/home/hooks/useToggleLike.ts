@@ -14,9 +14,9 @@ interface ToggleLikeInput {
  * holds this post the instant the button is tapped, fires the real
  * mutation, and rolls back to the exact previous cache state on
  * failure. In this environment (no backend), every like will visibly
- * flip and then revert a moment later — that's the correct, honest
+ * flip and then revert a moment later  that's the correct, honest
  * behavior of an optimistic update whose real request never lands, not
- * a bug — see docs/DECISIONS.md.
+ * a bug  see docs/DECISIONS.md.
  */
 export function useToggleLike() {
   const queryClient = useQueryClient();
@@ -43,7 +43,7 @@ export function useToggleLike() {
     },
     onSuccess: (result, { postId }) => {
       // Reconciles with the backend's authoritative count rather than
-      // trusting the optimistic +/-1 guess forever — matters if other
+      // trusting the optimistic +/-1 guess forever  matters if other
       // users liked the same post in the meantime.
       patchFeedItem(queryClient, postId, (item) => ({
         ...item,

@@ -14,7 +14,7 @@ export interface LeaderboardUserCardProps {
 
 /**
  * Web equivalent of `apps/mobile/src/features/leaderboard/components/LeaderboardUserCard`
- * — a plain divided row, not pressable and with no Follow button: a
+ *  a plain divided row, not pressable and with no Follow button: a
  * ranked row is a Polymarket trader (proxy wallet), not a Knewit
  * account (docs/DECISIONS.md, "Round 6").
  */

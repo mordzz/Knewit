@@ -41,18 +41,18 @@ const STATUS_COPY: Record<
 };
 
 /**
- * Wallet — the one account/funds screen (the old separate Portfolio
+ * Wallet  the one account/funds screen (the old separate Portfolio
  * screen is gone; docs/DECISIONS.md, "Wallet Replaces Portfolio").
  * Connection state, the real USDC collateral balance read from
  * Polymarket's CLOB, and the viewer's open positions with unrealized PnL
  * computed from live current prices. No fabricated figures anywhere:
- * balance "—" until the CLOB read works (delegated signing), PnL "—"
+ * balance "" until the CLOB read works (delegated signing), PnL ""
  * when no current price is available.
  *
  * **No manual setup buttons any more**: wallet creation and the signing
  * grant both run automatically through `useAutoWalletSetup`, and
- * `RootNavigator`'s setup gate holds the app until they finish — see
- * docs/DECISIONS.md, "Automatic Wallet & Trading Setup — No Manual
+ * `RootNavigator`'s setup gate holds the app until they finish  see
+ * docs/DECISIONS.md, "Automatic Wallet & Trading Setup  No Manual
  * Buttons". This screen only states what it's waiting for.
  */
 export function WalletScreen() {
@@ -81,7 +81,7 @@ export function WalletScreen() {
 
   // PnL per position: Polymarket's own figure when present, else
   // (current − entry) cents × shares. No positions is a real $0.00;
-  // positions whose live price is missing make the total unavailable ("—").
+  // positions whose live price is missing make the total unavailable ("").
   const pricedPositions = positions.filter((position) => positionPnl(position) != null);
   const totalPnl =
     positions.length === 0
@@ -95,10 +95,10 @@ export function WalletScreen() {
       ? '···'
       : balance.data?.usdc != null
         ? formatUsd(balance.data.usdc)
-        : '—';
+        : '';
   const pnlLabel =
     totalPnl == null
-      ? '—'
+      ? ''
       : totalPnl === 0
         ? formatUsd(0)
         : `${totalPnl > 0 ? '+' : '−'}${formatUsd(Math.abs(totalPnl))}`;
@@ -132,7 +132,7 @@ export function WalletScreen() {
         <Card contentClassName="gap-2">
           <Text variant="bodyStrong">Wallet isn&apos;t configured in this build</Text>
           <Text variant="caption" color="textSecondary">
-            This environment is missing its wallet credentials — see docs/WALLET.md.
+            This environment is missing its wallet credentials  see docs/WALLET.md.
           </Text>
         </Card>
       </Screen>
@@ -198,11 +198,9 @@ export function WalletScreen() {
                 {status === 'error' ? statusMeta.label : 'Setting up your wallet…'}
               </Text>
             )}
-            <Text variant="caption" color="textSecondary">
-              {tradingAddress
-                ? 'Polymarket trading wallet · balance and funds shown here'
-                : 'Resolving your trading wallet…'}
-            </Text>
+            {!tradingAddress && (
+              <Text variant="caption" color="textSecondary">Resolving your trading wallet…</Text>
+            )}
           </View>
         </View>
         {tradingAddress ? (
@@ -302,7 +300,7 @@ export function WalletScreen() {
                     onSuccess: (result) =>
                       setSellNotice({
                         tone: 'yes',
-                        message: `Redeemed — ${formatUsd(result.amountUsd)} added to your balance.`,
+                        message: `Redeemed  ${formatUsd(result.amountUsd)} added to your balance.`,
                       }),
                     onError: (error) =>
                       setSellNotice({ tone: 'danger', message: friendlySellError(error) }),
@@ -317,7 +315,7 @@ export function WalletScreen() {
 
       {isAuthenticated ? (
         <Text variant="micro" color="textTertiary" className="px-4 text-center">
-          Logging out ends your app session only — it doesn&apos;t delete your embedded wallet.
+          Logging out ends your app session only  it doesn&apos;t delete your embedded wallet.
         </Text>
       ) : null}
 
@@ -367,7 +365,7 @@ export function WalletScreen() {
                 <Text variant="bodyStrong">
                   {sellTarget.currentPrice != null
                     ? formatProbability(sellTarget.currentPrice)
-                    : '—'}
+                    : ''}
                 </Text>
               </View>
             </View>
@@ -397,7 +395,7 @@ export function WalletScreen() {
                     onSuccess: (result) => {
                       setSellNotice({
                         tone: 'yes',
-                        message: `Position sold — ${formatUsd(result.proceedsUsd)} is now in your trading balance.`,
+                        message: `Position sold  ${formatUsd(result.proceedsUsd)} is now in your trading balance.`,
                       });
                       setSellTarget(null);
                     },
@@ -455,7 +453,7 @@ function StatCard({
 const ALLOCATION_TOP_N = 4;
 
 /** Each open position's share of total position value (current price
- * when known, entry otherwise) — the largest few plus "+N more". */
+ * when known, entry otherwise)  the largest few plus "+N more". */
 function AllocationPanel({ positions }: { positions: UserPosition[] }) {
   const valued = positions
     .map((position) => ({
@@ -548,7 +546,7 @@ function PositionRow({
 }) {
   const pnl = positionPnl(position);
 
-  // Web's phone layout: a 3-column grid — Position / Entry / P/L on the
+  // Web's phone layout: a 3-column grid  Position / Entry / P/L on the
   // first row, Size / Current / Sell on the second.
   return (
     <View className="gap-3 px-4 py-3">
@@ -574,7 +572,7 @@ function PositionRow({
             variant="bodyStrong"
             color={pnl == null ? 'textSecondary' : pnl >= 0 ? 'yes' : 'no'}
           >
-            {pnl == null ? '—' : `${pnl >= 0 ? '+' : '−'}${formatUsd(Math.abs(pnl))}`}
+            {pnl == null ? '' : `${pnl >= 0 ? '+' : '−'}${formatUsd(Math.abs(pnl))}`}
           </Text>
         </PositionCell>
       </View>
@@ -584,7 +582,7 @@ function PositionRow({
         </PositionCell>
         <PositionCell label="Current">
           <Text variant="bodyStrong">
-            {position.currentPrice != null ? formatProbability(position.currentPrice) : '—'}
+            {position.currentPrice != null ? formatProbability(position.currentPrice) : ''}
           </Text>
         </PositionCell>
         <View className="flex-1 items-end justify-end">
@@ -631,7 +629,7 @@ function PositionCell({
   );
 }
 
-/** Never surfaces a raw backend error — the backend's own sell messages
+/** Never surfaces a raw backend error  the backend's own sell messages
  * are already user-facing, so known codes pass through and anything else
  * becomes one generic message. */
 function friendlySellError(error: unknown): string {
@@ -650,7 +648,7 @@ function friendlySellError(error: unknown): string {
     }
   }
   if (error instanceof Error && /network/i.test(error.message)) {
-    return 'Network error — check your connection and try again.';
+    return 'Network error  check your connection and try again.';
   }
   return "Couldn't sell this position right now. Please try again.";
 }

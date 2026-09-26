@@ -3,7 +3,7 @@ import { upstreamError } from '@/lib/apiError';
 import { normalizeWalletAddress } from '@/lib/polymarket/address';
 
 /**
- * Polymarket's **Data API** (`https://data-api.polymarket.com`) — a
+ * Polymarket's **Data API** (`https://data-api.polymarket.com`)  a
  * different service from the Gamma API `gammaClient.ts` talks to, and the
  * only place Polymarket publishes an actual ranked-trader leaderboard
  * (Gamma has no rankings endpoint at all; verified live). Same rules as
@@ -31,7 +31,7 @@ export interface PolymarketLeaderboardRow {
   profileImage: string;
 }
 
-/** Volume only, never PnL — docs/DECISIONS.md, "Leaderboard Metric —
+/** Volume only, never PnL  docs/DECISIONS.md, "Leaderboard Metric
  * Trading Volume Only, Not PnL." `timePeriod=ALL` because this app has no
  * period selector (docs/DECISIONS.md, "No Period or Category Filter") and
  * `category=OVERALL` for the same reason: every ranked number this API
@@ -71,7 +71,7 @@ async function dataGet<T>(path: string, params: Record<string, string | number |
 }
 
 /** The endpoint is documented (here) as returning an array, but a
- * single-address lookup has been observed to come back as a bare object —
+ * single-address lookup has been observed to come back as a bare object
  * accept both rather than let a shape change throw a `TypeError` inside a
  * route. Anything else is treated as "no rows", never as a fake row. */
 function toRows(payload: unknown): PolymarketLeaderboardRow[] {
@@ -120,7 +120,7 @@ export async function fetchLeaderboardRowsForUsername(
   throw upstreamError('Polymarket returned an invalid username search response.');
 }
 
-/** The ranked rows for a specific set of wallets — used by
+/** The ranked rows for a specific set of wallets  used by
  * `scope=following`. An address with no ranked volume is simply absent
  * from the result, which is what makes an unranked follow honestly
  * unranked rather than rank 0. */
@@ -159,7 +159,7 @@ export async function fetchLeaderboardRowForWallet(wallet: string): Promise<Poly
  * Data API `GET /holders?market=<conditionId>&limit=&offset=` (verified
  * live; takes the condition id, not our market id, and returns groups
  * keyed by outcome token). Public names are only shown when
- * `displayUsernamePublic` is true — otherwise callers fall back to a
+ * `displayUsernamePublic` is true  otherwise callers fall back to a
  * shortened proxy-wallet address, never an invented handle.
  */
 export interface PolymarketHolder {

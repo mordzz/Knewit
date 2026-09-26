@@ -1,12 +1,12 @@
 import { env } from '@/lib/env';
 import { upstreamError } from '@/lib/apiError';
 
-/** Polymarket's CLOB API — a separate service from Gamma
+/** Polymarket's CLOB API  a separate service from Gamma
  * (`gammaClient.ts`) and Data (`dataApiClient.ts`), the only place
  * Polymarket publishes a token's price history. Verified live:
  * `GET /prices-history?market=<clobTokenId>&interval=<interval>&fidelity=<minutes>`
  * returns `{ history: [{ t: unixSeconds, p: price 0-1 }] }`. Public,
- * no key — same convention the Gamma/Data clients already follow. */
+ * no key  same convention the Gamma/Data clients already follow. */
 
 export interface ClobPricePoint {
   t: number;
@@ -15,7 +15,7 @@ export interface ClobPricePoint {
 
 export type ClobInterval = '1h' | '6h' | '1d' | '1w' | '1m' | 'max';
 
-/** Minutes-per-candle for each interval — small enough for a readable
+/** Minutes-per-candle for each interval  small enough for a readable
  * chart, large enough to stay well under Polymarket's own documented
  * minimum `fidelity` per range (verified live: `1w` rejects anything
  * below 5, `1m` rejects anything below 10). */

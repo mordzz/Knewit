@@ -13,22 +13,22 @@ export interface TabRowProps<T extends string> {
   onChange: (key: T) => void;
   /** Horizontal-scrolling row of natural-width tabs (e.g. Markets'
    * category list) instead of a short, fixed set stretched to equal
-   * width. Only Markets uses this — every other tab row in the app is a
+   * width. Only Markets uses this  every other tab row in the app is a
    * small, fixed set, so it stays non-scrolling. */
   scroll?: boolean;
   className?: string;
 }
 
 /**
- * X/Twitter's own top-tab shape — a bold, full-white label with a
+ * X/Twitter's own top-tab shape  a bold, full-white label with a
  * bottom-border indicator for the active tab, a muted label and no
  * indicator otherwise. No pill/background fill. The one tab style used
- * everywhere the app switches between a small set of views — Home's
+ * everywhere the app switches between a small set of views  Home's
  * feed tabs, Markets' category filter, Profile's content tabs, Market
- * Detail's Comments/Top Holders/About — previously each screen had its
+ * Detail's Comments/Top Holders/About  previously each screen had its
  * own near-identical pill-chip implementation (or, for Home, a
  * different-again underline control); consolidated into one component
- * so every tab row in the app looks and behaves the same way — see
+ * so every tab row in the app looks and behaves the same way  see
  * docs/DECISIONS.md.
  */
 export function TabRow<T extends string>({

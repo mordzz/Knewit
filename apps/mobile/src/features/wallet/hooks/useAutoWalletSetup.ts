@@ -9,10 +9,10 @@ import { useWalletBalance } from '@/features/wallet/hooks/useWalletBalance';
 export type WalletSetupStatus = 'preparing' | 'ready' | 'error';
 
 /**
- * Mobile wallet setup flow backed by the API in `apps/web` —
+ * Mobile wallet setup flow backed by the API in `apps/web`
  * fully automatic account setup, with the manual "Connect Wallet" and
  * "Enable trading" buttons removed by request (docs/DECISIONS.md,
- * "Automatic Wallet & Trading Setup — No Manual Buttons"). Runs the two
+ * "Automatic Wallet & Trading Setup  No Manual Buttons"). Runs the two
  * steps a new account needs, in order, once per session:
  *
  * 1. **Create the embedded wallet** when the authenticated user has none
@@ -21,7 +21,7 @@ export type WalletSetupStatus = 'preparing' | 'ready' | 'error';
  * 2. **Grant the backend's authorization key signing authority** via
  *    `useSigners().addSigners`, Privy's owner-consent flow, once the
  *    balance read proves it isn't attached yet (`usdc === null` on a
- *    successful read) — docs/WALLET.md, "Backend Signing".
+ *    successful read)  docs/WALLET.md, "Backend Signing".
  *
  * `RootNavigator` keeps this hook mounted while the app is usable, so a
  * fresh login can continue into the app as provider setup runs in the
@@ -64,7 +64,7 @@ export function useAutoWalletSetup(): { status: WalletSetupStatus } {
   // This query is enabled by authentication in useWalletBalance above, and
   // invalidation prompts React Query to reconcile transient unavailable data.
   useEffect(() => {
-    // Stops once setup has timed out or failed — otherwise this keeps
+    // Stops once setup has timed out or failed  otherwise this keeps
     // re-hitting the backend every 3s for the rest of the session.
     if (!isAuthenticated || isConnected || setupTimedOut || failed) return;
     const timer = setInterval(() => {
@@ -77,7 +77,7 @@ export function useAutoWalletSetup(): { status: WalletSetupStatus } {
     const signerAddress = address;
     if (attemptedSigner.current || !signerAddress || !signerId) return;
     // Skip requesting consent again when the balance already reads
-    // successfully with a usable value — the signer already works, and
+    // successfully with a usable value  the signer already works, and
     // asking Privy for a redundant grant can itself fail and flip an
     // otherwise-healthy wallet's status to 'error'.
     if (!balance.isSuccess || balance.data?.usdc != null) return;
@@ -102,7 +102,7 @@ export function useAutoWalletSetup(): { status: WalletSetupStatus } {
 
   // Ready once the wallet exists and either signing already works
   // (`usdc` readable), no signer is configured, consent just succeeded, or
-  // the balance read itself errored — in that last case there is nothing
+  // the balance read itself errored  in that last case there is nothing
   // more this automatic path can do, so waiting on it would just block
   // readiness until the 30s setup timeout for no benefit.
   const signerReady =

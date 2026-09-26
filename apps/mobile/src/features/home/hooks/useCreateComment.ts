@@ -12,7 +12,7 @@ import type { CreateCommentInput } from '@/types/social';
  *   manually reconstructing page shape).
  * - Reply: refetches the parent comment's reply thread instead, and
  *   bumps that parent's `replyCount` by 1 wherever it's cached.
- * - Either way: bumps the post's overall `commentCount` by 1 — a reply
+ * - Either way: bumps the post's overall `commentCount` by 1  a reply
  *   still counts toward the post's total, same as X's own reply-count
  *   model (see docs/DECISIONS.md).
  */

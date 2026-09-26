@@ -11,7 +11,7 @@ export interface LikeButtonProps {
 
 /**
  * Web equivalent of `apps/mobile/src/features/home/components/LikeButton`
- * — purely presentational, same as mobile; the real liked/count state
+ *  purely presentational, same as mobile; the real liked/count state
  * and mutation live in `useToggleLike`, owned by `SocialActionBar`.
  */
 export function LikeButton({ liked, count, onPress, disabled }: LikeButtonProps) {

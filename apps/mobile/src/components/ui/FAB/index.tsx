@@ -13,13 +13,13 @@ export interface FABProps extends Omit<PressableProps, 'onPress' | 'style'> {
 const BORDER_COLOR = 'rgba(255, 255, 255, 0.2)';
 
 /**
- * A primary floating action, not a navigation destination — see
+ * A primary floating action, not a navigation destination  see
  * docs/DECISIONS.md for why Create is a FAB rather than a tab. Solid
- * accent fill (glossy, not glass — see docs/DECISIONS.md "Glossy Solid
+ * accent fill (glossy, not glass  see docs/DECISIONS.md "Glossy Solid
  * Buttons") with a plain border and an accent-tinted glow, since a flat
  * saturated yellow needs that to read as integrated against pure black
  * rather than pasted on. A brief 3D-bevel border phase was removed by
- * request — see docs/DECISIONS.md ("Solid Surfaces, No 3D Bevel").
+ * request  see docs/DECISIONS.md ("Solid Surfaces, No 3D Bevel").
  */
 export function FAB({
   onPress,

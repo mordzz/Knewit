@@ -9,19 +9,19 @@ import {
 import type { EventDetail } from '@/types/social';
 
 /**
- * `GET /events/:id` — the grouped-event detail page ("Event Detail"),
+ * `GET /events/:id`  the grouped-event detail page ("Event Detail"),
  * built live from Polymarket's own event record: the event header plus
  * every discoverable child market, each an ordinary `MarketSummary`
  * carrying its own short `label` (`groupItemTitle`). Closed/archived
  * children are excluded exactly like every other list surface, so an
- * event that has nothing left still renders honestly (empty list) —
+ * event that has nothing left still renders honestly (empty list)
  * never fabricated rows. Documented in docs/API.md.
  */
 export async function GET(_request: Request, { params }: { params: Promise<{ id: string }> }) {
   return withErrorHandling(async () => {
     const { id } = await params;
 
-    // Polymarket's own ids are always integer strings — a non-numeric id
+    // Polymarket's own ids are always integer strings  a non-numeric id
     // can never exist there (same guard as `GET /markets/:id`).
     if (!/^\d+$/.test(id)) {
       throw notFound(`Event ${id} not found.`);

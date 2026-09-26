@@ -12,7 +12,7 @@ import { useIsDesktop } from '@/hooks/useIsDesktop';
 import { CARD_SURFACE_CLASS } from '@/components/ui/cardSurface';
 
 /**
- * The signed-in user's activity feed — split out of `ProfileView`'s old
+ * The signed-in user's activity feed  split out of `ProfileView`'s old
  * "Activity" tab into its own page, styled after `apps/dekstop`'s
  * `ActivityPage` (a centered, generously-wide card on desktop) and
  * linked from `SideNav`. Same data (`useUserActivity('me', true)`) and

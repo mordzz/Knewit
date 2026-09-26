@@ -2,7 +2,7 @@ import { apiRequest } from '@/lib/apiClient';
 
 export interface WalletBalance {
   /** USDC collateral available to trade, or `null` when the read is
-   * unavailable (no embedded wallet yet, or CLOB auth rejected — most
+   * unavailable (no embedded wallet yet, or CLOB auth rejected  most
    * likely missing delegated signing; docs/WALLET.md). */
   usdc: number | null;
   /** Raw on-chain allowance per spender contract (6-decimals strings) the
@@ -26,10 +26,10 @@ export async function getWalletBalance(): Promise<WalletBalance> {
   return apiRequest<WalletBalance>('/api/wallet/balance');
 }
 
-/** Polygon mainnet, CAIP-2 — where card purchases land. */
+/** Polygon mainnet, CAIP-2  where card purchases land. */
 export const POLYGON_CAIP2 = 'eip155:137';
 
-/** Native (Circle-issued) USDC on Polygon — what card/bank onramps
+/** Native (Circle-issued) USDC on Polygon  what card/bank onramps
  * (Stripe, MoonPay) sell into the embedded wallet. */
 export const POLYGON_USDC_NATIVE = '0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359';
 
@@ -56,7 +56,7 @@ export interface BridgeTransaction {
   createdAtMs: number | null;
 }
 
-/** `GET /api/wallet/crypto-deposit` — the user's bridge deposit addresses,
+/** `GET /api/wallet/crypto-deposit`  the user's bridge deposit addresses,
  * the token/chain catalog and recent transfers. Deposits arrive as pUSD. */
 export interface CryptoDepositInfo {
   addresses: Record<BridgeAddressType, string | null>;
@@ -69,7 +69,7 @@ export async function getCryptoDepositInfo(): Promise<CryptoDepositInfo> {
   return apiRequest<CryptoDepositInfo>('/api/wallet/crypto-deposit');
 }
 
-/** `GET /api/wallet/card-deposit` — native USDC waiting in the embedded
+/** `GET /api/wallet/card-deposit`  native USDC waiting in the embedded
  * wallet after a card purchase (card deposits only). */
 export async function getCardDepositState(): Promise<{ address: string; usdcBalance: number; unavailable?: boolean }> {
   return apiRequest('/api/wallet/card-deposit');
@@ -85,7 +85,7 @@ export interface WithdrawResult {
   amountUsdc: number;
   transactionHash: string | null;
   transactionId: string | null;
-  /** The bridge withdrawal address — track delivery with `getWithdrawStatus`. */
+  /** The bridge withdrawal address  track delivery with `getWithdrawStatus`. */
   bridgeAddress?: string | null;
 }
 

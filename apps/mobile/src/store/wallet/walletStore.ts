@@ -14,11 +14,11 @@ interface WalletState {
 
 /**
  * A thin, non-authoritative mirror of Privy's own embedded-wallet state
- * (`PrivySessionBridge` keeps it in sync) — kept only because a few
+ * (`PrivySessionBridge` keeps it in sync)  kept only because a few
  * places need the current address/status synchronously outside a
  * component that can call Privy's hooks directly. Never holds a
- * private key, seed phrase, or any wallet secret — only the public
- * address and a connection-status label — see docs/WALLET.md.
+ * private key, seed phrase, or any wallet secret  only the public
+ * address and a connection-status label  see docs/WALLET.md.
  */
 export const useWalletStore = create<WalletState>((set) => ({
   status: 'disconnected',

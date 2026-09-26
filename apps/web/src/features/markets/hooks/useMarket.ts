@@ -22,7 +22,7 @@ function findCachedMarket(marketId: string, queryClient: ReturnType<typeof useQu
 }
 
 /** Web equivalent of `apps/mobile/src/features/markets/hooks/useMarket.ts`
- * — reuses a cached Markets-list entry as `placeholderData` so opening
+ *  reuses a cached Markets-list entry as `placeholderData` so opening
  * a market already visible in a list renders instantly, but always
  * re-fetches the latest data too. */
 export function useMarket(marketId: string, options?: { enabled?: boolean }) {
@@ -34,7 +34,7 @@ export function useMarket(marketId: string, options?: { enabled?: boolean }) {
     placeholderData: () => findCachedMarket(marketId, queryClient),
     enabled: options?.enabled ?? true,
     // MarketDetailView (`app/(app)/markets/[id]/MarketDetailView.tsx`) tries
-    // this lookup first and falls back to `useEvent` once it 404s — an id
+    // this lookup first and falls back to `useEvent` once it 404s  an id
     // that belongs to an event, not a market. A 404 here is that meaningful
     // signal, not a transient failure, but React Query's default `retry: 3`
     // keeps `status` stuck on `'pending'` through ~3 retries first, which

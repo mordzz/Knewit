@@ -4,7 +4,7 @@ import { getOrCreateUser } from '@/lib/users';
 import { getSupabase } from '@/lib/supabase';
 import { buildFeedItems, type PostRow } from '@/lib/social';
 
-/** `GET /calls/:id` — a single Callout (Call Detail). */
+/** `GET /calls/:id`  a single Callout (Call Detail). */
 export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
   return withErrorHandling(async () => {
     const { id } = await params;
@@ -20,7 +20,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
   });
 }
 
-/** `DELETE /calls/:id` — the backend independently verifies ownership
+/** `DELETE /calls/:id`  the backend independently verifies ownership
  * (docs/API.md, same rule as `DELETE /comments/:id`); `comments` and
  * `likes` rows cascade on the FK. Returns `{}` rather than a bare 204
  * since the mobile client's `apiRequest` always calls

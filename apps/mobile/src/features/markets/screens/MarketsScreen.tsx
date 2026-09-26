@@ -22,21 +22,21 @@ function itemKey(item: MarketListItem): string {
 }
 
 /**
- * Dedicated prediction-market discovery — Trending is the default
+ * Dedicated prediction-market discovery  Trending is the default
  * category. A bare "Markets" page title + divider sits above the
- * category row (no subtitle) — see docs/DECISIONS.md ("Decorated Top-3
+ * category row (no subtitle)  see docs/DECISIONS.md ("Decorated Top-3
  * Rank Numbers", which also covers this and the other main tabs' title
  * headers). No search box: Search is its own bottom tab. Renders
- * `MarketCard`, distinct from the Home feed's `MarketAttachment` — see
+ * `MarketCard`, distinct from the Home feed's `MarketAttachment`  see
  * that component's own docs for why they're separate.
  *
  * Category tabs come from the live `GET /categories`
- * (`eventService.ts::getCategories`) — Polymarket's own current tag
+ * (`eventService.ts::getCategories`)  Polymarket's own current tag
  * taxonomy, not a hardcoded list this app decided on. This replaces the
  * previous `KNOWN_CATEGORIES` (`types/common.ts`, now deleted) static
  * list, which had silently drifted out of sync with what the shared
  * backend actually resolves category filters against (e.g. "Technology"/
- * "World Events" matched nothing real — see the web app's
+ * "World Events" matched nothing real  see the web app's
  * `gammaClient.ts::CATEGORY_SLUG_CANDIDATES` for the same fix applied
  * there first).
  */
@@ -47,7 +47,7 @@ export function MarketsScreen() {
   const markets = useMarkets(category);
   const categoriesQuery = useQuery({ queryKey: ['categories'], queryFn: getCategories });
   // `key` is the API's tag slug (what the backend filters by); `label`
-  // is only what the tab shows — the two are different namespaces
+  // is only what the tab shows  the two are different namespaces
   // upstream (`pop-culture` ↔ "Culture"), never derived from each other.
   const categoryOptions: TabRowOption<string>[] = [
     { key: 'Trending', label: 'Trending' },

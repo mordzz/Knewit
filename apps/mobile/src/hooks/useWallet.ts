@@ -1,10 +1,10 @@
 import { useWalletStore } from '@/store/wallet/walletStore';
 
 /**
- * Thin, stable hook wrapper around walletStore — read-only by design.
+ * Thin, stable hook wrapper around walletStore  read-only by design.
  * `status`/`address`/`error` are kept in sync with Privy's real state by
  * `PrivySessionBridge`; nothing outside that bridge should call the
- * store's setters directly, so they aren't exposed here — see
+ * store's setters directly, so they aren't exposed here  see
  * docs/WALLET.md.
  */
 export function useWallet() {

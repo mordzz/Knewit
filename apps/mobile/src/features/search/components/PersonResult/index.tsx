@@ -9,12 +9,12 @@ export interface PersonResultProps {
 }
 
 /**
- * Compact person row for search results — avatar, display name,
+ * Compact person row for search results  avatar, display name,
  * handle. Deliberately doesn't show a bio snippet, follower count, or
  * verified badge: none of those exist in the data model yet
  * (`Profile`/`UserProfileScreen` show the same honest placeholders),
  * and fabricating them here would contradict this project's standing
- * "never present fabricated data as real" rule — see
+ * "never present fabricated data as real" rule  see
  * docs/DECISIONS.md. Never renders `user.walletAddress`.
  */
 export function PersonResult({ user, onPress }: PersonResultProps) {

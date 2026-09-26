@@ -21,7 +21,7 @@ export interface PositionPickerSheetProps {
 }
 
 /**
- * Direct conversion of `apps/mobile`'s `PositionPickerSheet` — lists
+ * Direct conversion of `apps/mobile`'s `PositionPickerSheet`  lists
  * the user's real positions so a Call's snapshot always starts from
  * something the user actually holds. Also the ownership gate: only
  * someone who has actually bought (holds >=1 position) can publish a

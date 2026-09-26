@@ -4,10 +4,10 @@ import { updateMyProfile } from '@/features/profile/services/userService';
 /**
  * On success: replaces the cached `['profile', 'me']` entry with the
  * server's own updated record (never trusts the submitted form values
- * as the new truth — the backend may normalize/reject fields), and
+ * as the new truth  the backend may normalize/reject fields), and
  * invalidates the feed/comment caches so author names embedded in
  * already-fetched posts/comments refetch fresh on next view rather than
- * keep showing a stale display name — see docs/DECISIONS.md ("Edit
+ * keep showing a stale display name  see docs/DECISIONS.md ("Edit
  * Profile Invalidates by Refetch, Not by Patching Every Embedded
  * Author").
  */

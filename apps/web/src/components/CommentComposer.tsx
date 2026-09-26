@@ -15,7 +15,7 @@ export interface CommentComposerProps {
 }
 
 /**
- * Inline comment/reply input — rendered only after the viewer taps a
+ * Inline comment/reply input  rendered only after the viewer taps a
  * comment button, directly under the post's action bar (a top-level
  * comment) or under the comment being replied to. Send is a round icon
  * button, disabled for empty/whitespace-only content, over the length

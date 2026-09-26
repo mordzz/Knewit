@@ -44,12 +44,12 @@ export function toPublicUser(user: DbUser): User {
 export async function buildUserProfile(target: DbUser, viewerUserId: string | null): Promise<UserProfile> {
   const [stats, standing] = await Promise.all([
     fetchProfileStats(target.id, viewerUserId),
-    // This account's live Polymarket standing — the *same* ranking the
+    // This account's live Polymarket standing  the *same* ranking the
     // Leaderboard shows (docs/DECISIONS.md, "Profile Trading Metric
     // Matches Leaderboard's Definition Exactly"), asked of Polymarket by
     // wallet address rather than summed from our own `orders` rows (which
     // have none). `null` when there's no wallet, no ranked volume, or the
-    // lookup fails — never guessed.
+    // lookup fails  never guessed.
     fetchPolymarketStanding(target.wallet_address),
   ]);
 
@@ -80,7 +80,7 @@ interface ProfileStatsRow {
   is_following: boolean;
 }
 
-/** Counts + viewer-relative follow state in **one** query — the
+/** Counts + viewer-relative follow state in **one** query  the
  * `user_profile_stats` SQL function (migration `0010_single_query_reads.sql`)
  * replaces the old three count queries plus an existence read
  * (docs/DECISIONS.md, "Single-Query Read Paths"). */
@@ -158,7 +158,7 @@ function toPositionSnapshot(post: PostRow): PositionSnapshot | null {
 
 /**
  * Batch-expands `Post` rows into `FeedItem`s for list endpoints (feed,
- * user posts/calls) — fetches authors/likes/markets with `.in(...)`
+ * user posts/calls)  fetches authors/likes/markets with `.in(...)`
  * queries instead of one round-trip per row. A single-item read (`GET
  * /calls/:id`) calls this with a one-element array; the batching still
  * pays off there since it's the same code path either way.

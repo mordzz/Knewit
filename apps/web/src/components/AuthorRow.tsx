@@ -12,7 +12,7 @@ export interface AuthorRowProps {
 
 /**
  * Web equivalent of `apps/mobile/src/features/home/components/AuthorRow`
- * — author header used on Post/Call Detail: avatar, name, handle, and a
+ *  author header used on Post/Call Detail: avatar, name, handle, and a
  * live Follow/Following button. Fetches this author's own profile for
  * real, current `isFollowing`/`isSelf`.
  */

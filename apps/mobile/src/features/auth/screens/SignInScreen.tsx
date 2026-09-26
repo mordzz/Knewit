@@ -18,32 +18,32 @@ import { env, isPrivyConfigured } from '@/app/config/env';
 import { solidPanel } from '@/theme';
 
 /**
- * Privy's embedded-wallet sign-in flow — email-OTP plus Google/X OAuth.
+ * Privy's embedded-wallet sign-in flow  email-OTP plus Google/X OAuth.
  * Layout: ambient corner glow → plain logo → one panel, styled and
  * anchored like a bottom sheet (edge-to-edge, rounded top corners only,
  * flush with the screen's bottom edge), holding *everything* else on
- * this screen — title, email/code step, "Or sign in with" divider,
+ * this screen  title, email/code step, "Or sign in with" divider,
  * Google/X, the error line, and the security footnote. The panel uses
  * the same solid-black + glass-edge treatment as `BottomSheet`/`Modal`
  * (`colors.background` + `glass.border`/`glass.highlight`) rather than a
- * `GlassSurface` fill — see docs/DECISIONS.md ("BottomSheet & Modal
+ * `GlassSurface` fill  see docs/DECISIONS.md ("BottomSheet & Modal
  * Solid Black + Glass Border"); this composition is deliberately scoped
  * to `SignInScreen`, not a change to the component itself. `Screen`'s
  * scroll content container
- * hardcodes `px-4` (see `components/layout/Screen`) — countered here
+ * hardcodes `px-4` (see `components/layout/Screen`)  countered here
  * with an explicit `px-0` (via `cn`'s `tailwind-merge`, the last
  * conflicting utility wins) so this panel is genuinely edge-to-edge;
  * the logo section re-adds its own `px-4` since it isn't meant to be
  * full-bleed. The email input and Google/X buttons also use a
  * translucent (`bg-white/10`) fill instead of their normal solid one
- * — an approximation, not a second `BlurView` per element, but
+ *  an approximation, not a second `BlurView` per element, but
  * sitting on top of the panel's own blur reads as "also glass" at
- * rest — so every surface on this screen matches, not just the panel
+ * rest  so every surface on this screen matches, not just the panel
  * itself. The X brand mark is a real SVG path
- * (`components/ui/XLogo`), not a font glyph — see that component's own
+ * (`components/ui/XLogo`), not a font glyph  see that component's own
  * comment for why. A brief fade/rise-in on mount uses
  * `react-native-reanimated` rather than React Native's own `Animated`
- * — this project's ESLint `react-hooks/refs` rule flags reading an
+ *  this project's ESLint `react-hooks/refs` rule flags reading an
  * `Animated.Value` during render (the classic API's normal, required
  * usage) as an illegal ref read; Reanimated's `useSharedValue`/
  * `useAnimatedStyle` are the compiler/lint-safe replacement.
@@ -53,14 +53,14 @@ import { solidPanel } from '@/theme';
  * nothing to go back to), and a modal presented on demand when already
  * signed in but not yet wallet-connected (e.g. taking a position).
  * Either way this screen no longer navigates itself: `isAuthenticated`
- * flipping true is what swaps `RootNavigator` — to the setup screen
+ * flipping true is what swaps `RootNavigator`  to the setup screen
  * first, then the app once wallet creation and signing consent finish
- * (docs/DECISIONS.md, "Automatic Wallet & Trading Setup — No Manual
+ * (docs/DECISIONS.md, "Automatic Wallet & Trading Setup  No Manual
  * Buttons"). No seed phrase is ever shown or collected; Privy manages
- * the embedded wallet's key material entirely — see docs/WALLET.md.
+ * the embedded wallet's key material entirely  see docs/WALLET.md.
  *
  * **Google/X sign-in requires those providers to be enabled as login
- * methods in the Privy Dashboard** (Login Methods settings) — this is
+ * methods in the Privy Dashboard** (Login Methods settings)  this is
  * dashboard configuration, not something this code can do. Without it,
  * `login({ provider })` below fails with a real Privy error, surfaced
  * the same way any other auth failure is, never silently.
@@ -96,8 +96,8 @@ export function SignInScreen() {
   // Wallet creation and signing consent are no longer part of this screen:
   // `RootNavigator`'s setup gate (`useAutoWalletSetup`) runs them right
   // after `isAuthenticated` flips, and renders the setup screen until both
-  // are done — so no login path here navigates anywhere itself
-  // (docs/DECISIONS.md, "Automatic Wallet & Trading Setup — No Manual
+  // are done  so no login path here navigates anywhere itself
+  // (docs/DECISIONS.md, "Automatic Wallet & Trading Setup  No Manual
   // Buttons"). This screen simply ends when the navigator swaps away.
   const { state, sendCode, loginWithCode } = useLoginWithEmail();
 
@@ -115,7 +115,7 @@ export function SignInScreen() {
           Wallet sign-in isn&apos;t configured yet
         </Text>
         <Text variant="body" color="textSecondary" className="text-center">
-          This build is missing its wallet credentials — see docs/WALLET.md.
+          This build is missing its wallet credentials  see docs/WALLET.md.
         </Text>
       </Screen>
     );
@@ -162,7 +162,7 @@ export function SignInScreen() {
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
       <Screen scroll contentContainerClassName="flex-grow justify-between overflow-hidden px-0">
-        {/* Ambient corner glows — this app's stand-in for a mesh
+        {/* Ambient corner glows  this app's stand-in for a mesh
             gradient/hero illustration: no gradient library is
             installed and no illustration asset exists, so depth comes
             from large, very-low-opacity accent blobs anchored off two
@@ -203,7 +203,7 @@ export function SignInScreen() {
             ]}
           >
             <View className="gap-4 px-4 pb-8 pt-3">
-              {/* Drag-handle bar — same visual cue `BottomSheet` uses, so
+              {/* Drag-handle bar  same visual cue `BottomSheet` uses, so
                 this panel reads as a bottom sheet even though it
                 doesn't reuse that component directly (this sheet never
                 closes/dismisses, so `BottomSheet`'s modal+backdrop

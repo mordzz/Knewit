@@ -21,7 +21,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
   });
 }
 
-/** `DELETE /comments/:id` — the backend independently verifies
+/** `DELETE /comments/:id`  the backend independently verifies
  * ownership (docs/API.md); returns `{}` rather than a bare 204 since
  * the mobile client's `apiRequest` always calls `response.json()`. */
 export async function DELETE(request: Request, { params }: { params: Promise<{ id: string }> }) {

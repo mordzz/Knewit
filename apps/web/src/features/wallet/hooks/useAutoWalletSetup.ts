@@ -8,7 +8,7 @@ import { useWalletBalance } from '@/features/wallet/hooks/useWalletBalance';
 
 export type WalletSetupStatus = 'preparing' | 'ready' | 'error';
 
-// Remembers, per wallet, that setup already finished once — otherwise every
+// Remembers, per wallet, that setup already finished once  otherwise every
 // refresh waits on the balance read before the app shell lets the user in.
 const setupKey = (address: string) => `knewit:setup-complete:${address}`;
 
@@ -24,24 +24,24 @@ function markSetupComplete(address: string) {
   try {
     window.localStorage.setItem(setupKey(address), '1');
   } catch {
-    // Storage blocked — the gate just shows again next load.
+    // Storage blocked  the gate just shows again next load.
   }
 }
 
 /**
- * Fully automatic account setup — the manual "Connect Wallet" and "Enable
+ * Fully automatic account setup  the manual "Connect Wallet" and "Enable
  * trading" buttons were removed by request (docs/DECISIONS.md, "Automatic
- * Wallet & Trading Setup — No Manual Buttons"). Runs the two steps a new
+ * Wallet & Trading Setup  No Manual Buttons"). Runs the two steps a new
  * account needs, in order, once per session:
  *
  * 1. **Create the embedded wallet** when the authenticated user has none
  *    (`providers.tsx`'s `createOnLogin` only fires inside the login flow
- *    itself, so a session that predates it — or whose automatic creation
- *    failed — still gets one here).
+ *    itself, so a session that predates it  or whose automatic creation
+ *    failed  still gets one here).
  * 2. **Grant the backend's authorization key signing authority** via
  *    `useSigners().addSigners`, Privy's owner-consent flow, once the
  *    balance read proves it isn't attached yet (`usdc === null` on a
- *    successful read) — docs/WALLET.md, "Backend Signing".
+ *    successful read)  docs/WALLET.md, "Backend Signing".
  *
  * The returned `status` drives the app shell's setup gate, so the user
  * never lands inside the app before this finishes. Failures are real and
@@ -123,7 +123,7 @@ export function useAutoWalletSetup(): { status: WalletSetupStatus } {
   useEffect(() => {
     if (attemptedSigner.current || !authenticated || !address || !signerId) return;
     // Skip requesting consent again when the balance already reads
-    // successfully with a usable value — the signer already works, and
+    // successfully with a usable value  the signer already works, and
     // asking Privy for a redundant grant can itself fail and flip an
     // otherwise-healthy wallet's status to 'error'.
     if (!balance.isSuccess || balance.data?.usdc != null) return;
@@ -157,7 +157,7 @@ export function useAutoWalletSetup(): { status: WalletSetupStatus } {
 
   // Ready once the wallet exists and either signing already works
   // (`usdc` readable), no signer is configured, consent just succeeded, or
-  // the balance read itself errored — in that last case there is nothing
+  // the balance read itself errored  in that last case there is nothing
   // more this automatic path can do, so waiting on it would just block
   // readiness (and `markSetupComplete`, below) indefinitely for no benefit.
   const setupReady = !signerId || signerGranted || (balance.isSuccess && balance.data?.usdc != null) || balance.isError;

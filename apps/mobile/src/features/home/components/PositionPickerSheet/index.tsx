@@ -20,17 +20,17 @@ export interface PositionPickerSheetProps {
 }
 
 /**
- * "Attach Position" — lists the user's real positions (Sprint 7's
+ * "Attach Position"  lists the user's real positions (Sprint 7's
  * `usePositions`, unchanged here) so a Call's snapshot always starts
  * from something the user actually holds client-side too. This sheet is
  * also the ownership gate: only someone who has actually bought (holds
- * ≥1 position) can publish a Call — the composer's publish button stays
+ * ≥1 position) can publish a Call  the composer's publish button stays
  * disabled until a position is picked, and this sheet's honest "No
  * positions yet" state (with a shortcut to the Markets tab) is what a
  * non-holder sees instead of a picker. The backend still independently
  * re-verifies ownership and re-fetches the position itself before
- * writing the snapshot — this list is for selection UX only, never
- * trusted as the snapshot's source of truth — see docs/DECISIONS.md.
+ * writing the snapshot  this list is for selection UX only, never
+ * trusted as the snapshot's source of truth  see docs/DECISIONS.md.
  */
 export function PositionPickerSheet({ visible, onClose, onSelect }: PositionPickerSheetProps) {
   const navigation = useNavigation();

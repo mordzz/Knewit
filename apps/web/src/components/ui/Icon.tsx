@@ -54,9 +54,9 @@ import {
 import type { IconType } from 'react-icons';
 
 /**
- * Web equivalent of `apps/mobile/src/components/ui/Icon` — same
+ * Web equivalent of `apps/mobile/src/components/ui/Icon`  same
  * constrained glyph set (Ionicons via `@expo/vector-icons` there,
- * `react-icons/io5` here — the same underlying Ionicons 5 glyph set,
+ * `react-icons/io5` here  the same underlying Ionicons 5 glyph set,
  * just packaged for React DOM instead of React Native), same
  * `ColorToken` color prop. `IconName` is copied verbatim; only the
  * rendering implementation swaps libraries.

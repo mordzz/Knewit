@@ -11,7 +11,7 @@ export interface ScreenProps extends ViewProps {
 /**
  * `className` is layout/spacing for the content (padding, gap, etc). For
  * scroll=true this must go on ScrollView's `contentContainerClassName`,
- * not its own `className` — RN doesn't apply padding/gap from a
+ * not its own `className`  RN doesn't apply padding/gap from a
  * ScrollView's outer style to its scrollable content, only to the
  * content container.
  */

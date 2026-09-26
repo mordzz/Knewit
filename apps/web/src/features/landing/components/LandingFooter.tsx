@@ -16,7 +16,7 @@ export function LandingFooter() {
           <Link className={cn('hover:text-white', FOCUS)} href="/privacy">Privacy</Link>
           <Link className={cn('hover:text-white', FOCUS)} href="/terms">Terms</Link>
         </nav>
-        <div className="flex w-full justify-between border-t border-white/10 pt-6 text-[11px] text-white/35 max-[640px]:flex-col max-[640px]:gap-2"><span>© {new Date().getFullYear()} Knew it</span><span>Trading involves risk. Product previews use illustrative data.</span></div>
+        <div className="w-full border-t border-white/10 pt-6 text-[11px] text-white/35"><span>© {new Date().getFullYear()} Knew it</span></div>
       </div>
     </footer>
   );

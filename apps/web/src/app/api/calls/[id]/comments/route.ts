@@ -13,9 +13,9 @@ async function assertPostExists(postId: string) {
   if (!data) throw notFound(`Call ${postId} not found.`);
 }
 
-/** `GET /calls/:id/comments` — top-level comments only (newest-first,
+/** `GET /calls/:id/comments`  top-level comments only (newest-first,
  * no client-side re-sorting, docs/API.md); replies live behind
- * `GET /comments/:id/replies` — see that route. */
+ * `GET /comments/:id/replies`  see that route. */
 export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
   return withErrorHandling(async () => {
     const { id } = await params;
@@ -43,7 +43,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
 }
 
 /**
- * `POST /calls/:id/comments` — the backend derives the author from the
+ * `POST /calls/:id/comments`  the backend derives the author from the
  * session. `parentCommentId`, when set, may reference any comment in the
  * same callout, allowing arbitrarily nested reply threads.
  */
@@ -84,7 +84,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     if (error) throw error;
 
     // Re-derived from the actual row count rather than a blind
-    // increment — same never-drift approach as `like/route.ts::syncLikeCount`.
+    // increment  same never-drift approach as `like/route.ts::syncLikeCount`.
     const { count } = await supabase.from('comments').select('id', { count: 'exact', head: true }).eq('post_id', id);
     await supabase.from('posts').update({ comment_count: count ?? 0 }).eq('id', id);
 

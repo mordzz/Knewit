@@ -6,7 +6,7 @@ import { useDebounce } from '@/hooks/useDebounce';
 import type { TradeEstimate } from '@/types/trading';
 
 /**
- * Live order-book estimate for the amount currently being typed —
+ * Live order-book estimate for the amount currently being typed
  * debounced so each keystroke doesn't hit Polymarket's book, and
  * disabled until a choice + amount exist. A failure is intentionally
  * quiet (the panel falls back to its plain `amount / price` math; no

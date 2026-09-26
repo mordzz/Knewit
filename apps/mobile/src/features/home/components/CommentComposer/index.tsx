@@ -10,7 +10,7 @@ const MAX_COMMENT_LENGTH = 280;
 export interface CommentComposerProps {
   onSubmit: (body: string) => void;
   isSubmitting: boolean;
-  /** Set while replying to a specific comment — shows a "Replying to
+  /** Set while replying to a specific comment  shows a "Replying to
    * @handle" chip above the input and includes `parentCommentId` in the
    * submitted comment (see `PostDetailScreen`). `null` for an ordinary
    * top-level comment. */
@@ -18,7 +18,7 @@ export interface CommentComposerProps {
   onCancelReply?: () => void;
 }
 
-/** Fixed-position footer under the comments list — see
+/** Fixed-position footer under the comments list  see
  * `PostDetailScreen`'s `KeyboardAvoidingView` for why the input stays
  * reachable above the keyboard. Send is disabled for empty/whitespace-
  * only content and while a submission is in flight. Clears the reply
@@ -36,7 +36,7 @@ export function CommentComposer({
   const canSend = trimmed.length > 0 && body.length <= MAX_COMMENT_LENGTH && !isSubmitting;
 
   // "Adjusting state during render" (React's own recommended pattern,
-  // not an effect — see react.dev/learn/you-might-not-need-an-effect):
+  // not an effect  see react.dev/learn/you-might-not-need-an-effect):
   // once the reply target changes, drop whatever was mid-typed for the
   // previous target/top-level comment rather than attaching it to the
   // new one.

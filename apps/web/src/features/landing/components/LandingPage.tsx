@@ -81,12 +81,12 @@ const faqs = [
   {
     question: 'Can I trade with real money yet?',
     answer:
-      'Knewit includes a Polymarket trading flow for eligible, configured accounts, but end-to-end execution has not yet been verified. Trading depends on wallet setup, funding, market availability, and Polymarket eligibility.',
+      'Knewit provides Polymarket trading for eligible accounts. Trading availability depends on wallet setup, funding, market availability, and Polymarket eligibility.',
   },
   {
     question: 'Is there a mobile app?',
     answer:
-      'A native mobile app is in development, and public App Store and Google Play downloads are not available yet. The web app is available today.',
+      'Knewit is available on the web.',
   },
   {
     question: 'What are prediction markets?',
@@ -314,7 +314,7 @@ export function LandingPage() {
                     <p className="text-sm text-landing-muted">Live market preview</p>
                     <p className="mt-2 text-xl font-semibold">{market.title}</p>
                   </div>
-                  <span className="rounded-full border border-landing-ink/10 px-3 py-1 text-xs text-landing-muted">Illustrative</span>
+                  <span className="rounded-full border border-landing-ink/10 px-3 py-1 text-xs text-landing-muted">Market view</span>
                 </div>
                 <div className="mt-10 flex items-end justify-between gap-6">
                   <div>
@@ -401,7 +401,7 @@ export function LandingPage() {
                   </strong>
                 </div>
                 <Chart className="h-[70px]" />
-                <span className="text-[7px] text-landing-muted">Illustrative probability</span>
+                <span className="text-[7px] text-landing-muted">Market probability</span>
               </div>
             </article>
             <article className="min-h-[397px] overflow-hidden rounded-[23px] bg-[oklch(.9_.054_46)] px-[27px] pt-[30px] max-[1101px]:px-[22px] max-[1101px]:pt-[27px] max-[801px]:min-h-[380px] max-[801px]:px-[18px] max-[801px]:pt-6 max-[581px]:min-h-[345px] max-[581px]:px-[27px] max-[581px]:pt-7">
@@ -471,7 +471,7 @@ export function LandingPage() {
             <h2 id="closing-title" className="max-w-[680px] text-balance text-5xl font-semibold leading-[1.03] tracking-[-0.035em] max-[640px]:text-[40px]">
               Ready to put your view on the market?
             </h2>
-            <p className="mt-4 max-w-[520px] text-sm leading-6 text-white/55">Sign in or get the mobile app when it ships. The web app works today.</p>
+            <p className="mt-4 max-w-[520px] text-sm leading-6 text-white/55">Sign in to start using Knewit.</p>
           </div>
           <div className="flex shrink-0 flex-col gap-3 max-[760px]:mt-7">
             <Link href="/sign-in" className={CTA_YELLOW}>
@@ -497,9 +497,8 @@ export function LandingPage() {
             <Link className={cn('hover:text-white', FOCUS)} href="/terms">Terms</Link>
             <Link className={cn('hover:text-white', FOCUS)} href="/support">Support</Link>
           </nav>
-          <div className="flex w-full justify-between border-t border-white/10 pt-6 text-[11px] text-white/35 max-[640px]:flex-col max-[640px]:gap-2">
+          <div className="w-full border-t border-white/10 pt-6 text-[11px] text-white/35">
             <span>© {new Date().getFullYear()} Knew it</span>
-            <span>Trading involves risk. Product previews use illustrative data.</span>
           </div>
         </div>
       </footer> */}

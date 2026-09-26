@@ -55,25 +55,25 @@ const DETAIL_TAB_OPTIONS: TabRowOption<DetailTab>[] = [
 
 /**
  * Only `marketId` travels through navigation (never a full market
- * object — see docs/DECISIONS.md), so this screen fetches its own
+ * object  see docs/DECISIONS.md), so this screen fetches its own
  * up-to-date copy rather than trusting stale data a list screen
- * happened to have. Modeled on Polymarket's own market page — see
+ * happened to have. Modeled on Polymarket's own market page  see
  * docs/DECISIONS.md (Market Detail rebuild, Sprint 5) for the layout/
  * content reasoning: **About** (rules, resolution state, dates,
- * volume/liquidity — all from fields the API actually returns),
+ * volume/liquidity  all from fields the API actually returns),
  * "Callouts" (Posts/Calls referencing this market, not a new comment
  * system), and "Top Holders" (read-only position-size list). Order
  * Book/trade Activity are deliberately absent: no honest data source
  * exists for them.
  *
  * Header is bare image + title with the back button inline to the
- * image's left (no `Card`, no separate back-button row above it) —
- * laid out like `MarketAttachment`'s own top row otherwise — see
+ * image's left (no `Card`, no separate back-button row above it)
+ * laid out like `MarketAttachment`'s own top row otherwise  see
  * docs/DECISIONS.md ("Market Price Chart"). That same decision also
  * supersedes the screen's earlier "no price chart" stance:
  * `MarketPriceChart` now renders a real dual-line (YES/NO) chart backed
  * by `useMarketPriceHistory` (real endpoint first, dev-mock fallback
- * only in dev — the same convention every other list/read in this app
+ * only in dev  the same convention every other list/read in this app
  * already follows, not a new exception to "never fabricate").
  *
  * Real trading (Sprint 7, see docs/DECISIONS.md): `TradingPanel` is a
@@ -237,7 +237,7 @@ export function MarketDetailScreen() {
   );
 }
 
-/** "All markets" list of an event — a long list collapses behind
+/** "All markets" list of an event  a long list collapses behind
  * "Show more markets", same as the web detail page on a phone. */
 function EventChildMarkets({
   markets,
@@ -296,10 +296,10 @@ function EventHero({ event, onBack }: { event: EventDetail; onBack: () => void }
 }
 
 /**
- * One child market row — headline is the API's short `label` (what the
+ * One child market row  headline is the API's short `label` (what the
  * group card showed), long question as secondary text. The row itself is
  * display-only (no press, no hover); the only action is the yellow Trade
- * button, which opens the shared `TradeSheet` for this child in place —
+ * button, which opens the shared `TradeSheet` for this child in place
  * no navigation, no separate page.
  */
 function EventMarketRow({ market, onTrade }: { market: MarketSummary; onTrade: () => void }) {
@@ -411,14 +411,14 @@ function EventCalloutsTab({
 }
 
 /**
- * Event Top Holders — rows stay per market+outcome, with a horizontally
+ * Event Top Holders  rows stay per market+outcome, with a horizontally
  * **dropdown** (a field that opens a sheet listing the event's child
  * markets) narrowing the list to one market (`?market=` on the
  * endpoint).
  */
 function EventHoldersTab({ eventId, markets }: { eventId: string; markets: MarketSummary[] }) {
   // Polymarket's holder data is per market, so there is no honest "all
-  // markets" list — the tab defaults to the event's largest market and
+  // markets" list  the tab defaults to the event's largest market and
   // the dropdown switches between children.
   const defaultMarket = useMemo(
     () => [...markets].sort((a, b) => (b.volume ?? 0) - (a.volume ?? 0))[0] ?? null,
@@ -530,8 +530,8 @@ function EventHolderRowView({ holder }: { holder: EventHolderRow }) {
   );
 }
 
-/** Bare image + title, back button inline to the image's left — no
- * `Card`, no separate back-button row above it — see docs/DECISIONS.md
+/** Bare image + title, back button inline to the image's left  no
+ * `Card`, no separate back-button row above it  see docs/DECISIONS.md
  * ("Market Price Chart"). Category/status badge intentionally dropped
  * from this row entirely, matching the literal "just image and title"
  * request. */
@@ -568,12 +568,12 @@ function MarketHero({ market, onBack }: { market: MarketDetail; onBack: () => vo
 }
 
 /**
- * Market Detail's "About" tab — Polymarket's own About/Rules section,
+ * Market Detail's "About" tab  Polymarket's own About/Rules section,
  * built only from fields this app actually has: the market's rules text,
  * its resolution state (backend still has no reliable "resolved
  * outcome" signal, so that line stays honest), its open/end dates, and
  * the volume/liquidity figures already on the summary. Nothing here is
- * derived or invented — a missing field shows its own honest fallback.
+ * derived or invented  a missing field shows its own honest fallback.
  */
 function AboutTab({ market }: { market: MarketDetail }) {
   const resolution = market.resolved
@@ -581,8 +581,8 @@ function AboutTab({ market }: { market: MarketDetail }) {
       ? `Resolved ${market.resolvedOutcome === 'YES' ? 'Yes' : 'No'}.`
       : 'This market has resolved.'
     : market.closed
-      ? 'Trading closed — awaiting resolution.'
-      : 'Not resolved yet — this market is still open.';
+      ? 'Trading closed  awaiting resolution.'
+      : 'Not resolved yet  this market is still open.';
 
   return (
     <View className="gap-4 px-4 pt-4">
@@ -689,11 +689,11 @@ function CommentsTab({
 }
 
 /**
- * A Post/Call referencing this market — "Comments" is this tab's
+ * A Post/Call referencing this market  "Comments" is this tab's
  * user-facing label (Sprint 5), but the underlying data is the same
  * `FeedItem` model Home renders, so it gets the same real
  * `SocialActionBar` (Sprint 9) rather than a second, divergent Like
- * implementation — see docs/DECISIONS.md.
+ * implementation  see docs/DECISIONS.md.
  */
 function MarketActivityRow({
   item,
@@ -778,7 +778,7 @@ function HoldersTab({ marketId }: { marketId: string }) {
   );
 }
 
-/** Display name only, no `@handle` — by request (see docs/DECISIONS.md,
+/** Display name only, no `@handle`  by request (see docs/DECISIONS.md,
  * "Market Price Chart"). */
 function HolderRow({ holder }: { holder: MarketHolder }) {
   const color = choiceTextColor(choiceTone({ index: 0, label: holder.outcome }));
@@ -802,7 +802,7 @@ function HolderRow({ holder }: { holder: MarketHolder }) {
 }
 
 /** Skeleton matching the loaded layout's actual shape (bare image+title
- * header, price chart) rather than a generic placeholder — see
+ * header, price chart) rather than a generic placeholder  see
  * docs/DESIGN.md. */
 function MarketDetailSkeleton() {
   return (

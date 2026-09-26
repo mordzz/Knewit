@@ -3,7 +3,7 @@ import { requireAuth } from '@/lib/privy';
 import { getBridgeTransactions } from '@/lib/deposits/polymarketBridge';
 
 /**
- * `GET /wallet/withdraw-status?address=` — the Polymarket bridge's status
+ * `GET /wallet/withdraw-status?address=`  the Polymarket bridge's status
  * for a bridge withdrawal (the `bridgeAddress` a withdrawal returned):
  * newest transaction first, `status` from DEPOSIT_DETECTED … COMPLETED /
  * FAILED.

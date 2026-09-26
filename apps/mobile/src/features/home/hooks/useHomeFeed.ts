@@ -2,7 +2,7 @@ import { useInfiniteQuery } from '@tanstack/react-query';
 import { getFeed } from '@/features/home/services/feedService';
 
 /**
- * Screen → useHomeFeed → feedService → apiRequest → backend — see
+ * Screen → useHomeFeed → feedService → apiRequest → backend  see
  * docs/ARCHITECTURE.md. Server state only; nothing here belongs in
  * Zustand.
  */

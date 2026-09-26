@@ -7,7 +7,7 @@ export interface CardProps extends Omit<HTMLAttributes<HTMLDivElement>, 'onClick
 }
 
 /**
- * Web equivalent of `apps/mobile/src/components/ui/Card` — same flat
+ * Web equivalent of `apps/mobile/src/components/ui/Card`  same flat
  * `bg-surface-elevated` + 1px border panel, same split between the
  * card's own sizing/positioning (`className`) and its content's
  * internal arrangement (`contentClassName`).

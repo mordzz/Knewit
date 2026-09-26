@@ -13,7 +13,7 @@ const EXT_BY_MIME: Record<string, string> = {
   'image/webp': 'webp',
 };
 
-/** Real file signatures — the upload's declared Content-Type is not
+/** Real file signatures  the upload's declared Content-Type is not
  * trusted (docs/DECISIONS.md, "Profile Image Upload Hardened"). */
 function hasImageSignature(buffer: ArrayBuffer, mime: string): boolean {
   const bytes = new Uint8Array(buffer);
@@ -37,7 +37,7 @@ function hasImageSignature(buffer: ArrayBuffer, mime: string): boolean {
 }
 
 /**
- * `POST /users/me/images?kind=avatar|banner` — uploads a profile image
+ * `POST /users/me/images?kind=avatar|banner`  uploads a profile image
  * (multipart `file`) into this app's public `profile-images` bucket via
  * the service role, points the user's column at the new public URL, and
  * removes the previous object (when it's ours). Returns the updated
@@ -97,7 +97,7 @@ export async function POST(request: Request) {
       .single();
     if (error) throw error;
 
-    // Best-effort cleanup of the replaced object — only when it lives in
+    // Best-effort cleanup of the replaced object  only when it lives in
     // our own bucket; a failure here must never fail the upload.
     const prefix = `${env.supabaseStoragePublicUrlBase}${BUCKET}/`;
     if (previous && previous.startsWith(prefix)) {
@@ -113,7 +113,7 @@ export async function POST(request: Request) {
 }
 
 /**
- * `DELETE /users/me/images?kind=avatar|banner` — removes the caller's
+ * `DELETE /users/me/images?kind=avatar|banner`  removes the caller's
  * avatar or banner right away (clears the column and deletes the stored
  * object when it's ours), the counterpart of the immediate upload above.
  * Returns the updated `UserProfile`. Removing an image that isn't set is

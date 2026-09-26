@@ -3,7 +3,7 @@ import { endpoints } from '@/services/api/endpoints';
 import type { CreateTradeInput, CreateTradeResult, SellPositionResponse } from '@/types/trading';
 
 /**
- * Places a real trade against our backend — deliberately **no dev-mock
+ * Places a real trade against our backend  deliberately **no dev-mock
  * fallback**, unlike every read-only `*Service.ts` in this codebase.
  * Those fall back to a local fixture on failure because a mock market
  * list is harmless. A trade is a financially consequential, mutating
@@ -11,11 +11,11 @@ import type { CreateTradeInput, CreateTradeResult, SellPositionResponse } from '
  * is unreachable would be exactly the fabricated transaction Sprint 7's
  * spec explicitly forbids. If the backend call fails (including because
  * no backend exists yet in this environment), the error propagates and
- * the UI shows an honest "Trade failed" — see docs/DECISIONS.md.
+ * the UI shows an honest "Trade failed"  see docs/DECISIONS.md.
  *
  * The backend is solely responsible for constructing the actual
  * Polymarket CLOB order and coordinating any client-side signing that
- * requires the embedded wallet (see docs/WALLET.md's signing flow) —
+ * requires the embedded wallet (see docs/WALLET.md's signing flow)
  * this function does not attempt to build or sign an order itself, since
  * that exact request/signing shape isn't implemented by a real backend
  * yet and this project must not invent one (see docs/DECISIONS.md,
@@ -31,7 +31,7 @@ export async function createTrade(input: CreateTradeInput): Promise<CreateTradeR
 /**
  * Closes one whole position at market and leaves proceeds in this
  * account's trading balance. **No dev-mock fallback**,
- * same reasoning as `createTrade` — a sell that never happened must
+ * same reasoning as `createTrade`  a sell that never happened must
  * never look like it did.
  */
 export async function sellPosition(positionId: string): Promise<SellPositionResponse> {

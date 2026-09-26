@@ -12,7 +12,7 @@ export interface CodeInputProps {
   /** Current code (digits only, up to `length`). */
   value: string;
   onChange: (value: string) => void;
-  /** Number of boxes — 6 for Privy's email OTP. */
+  /** Number of boxes  6 for Privy's email OTP. */
   length?: number;
   disabled?: boolean;
 }
@@ -23,7 +23,7 @@ export interface CodeInputProps {
  * `autoComplete="one-time-code"` let iOS/Android offer the email code.
  * Digits only; non-digit input is ignored. Built for the sign-in screen's
  * dedicated OTP step (docs/DECISIONS.md, "Dedicated OTP Step on
- * Sign-In") — no external OTP/input dependency.
+ * Sign-In")  no external OTP/input dependency.
  */
 export function CodeInput({ value, onChange, length = 6, disabled }: CodeInputProps) {
   const inputsRef = useRef<(TextInput | null)[]>([]);
@@ -36,7 +36,7 @@ export function CodeInput({ value, onChange, length = 6, disabled }: CodeInputPr
   const handleChange = (index: number, raw: string) => {
     const digits = raw.replace(/\D/g, '');
     if (!digits) {
-      // Some keyboards report the cleared box as an empty change — treat
+      // Some keyboards report the cleared box as an empty change  treat
       // it as a single-character delete and step back, so backspace feels
       // like one continuous motion.
       if (value[index]) {

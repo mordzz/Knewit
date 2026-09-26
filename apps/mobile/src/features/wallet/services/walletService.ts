@@ -3,7 +3,7 @@ import { endpoints } from '@/services/api/endpoints';
 
 export interface WalletBalance {
   /** USDC collateral available to trade, or `null` when the read is
-   * unavailable (no embedded wallet yet, or CLOB auth rejected — most
+   * unavailable (no embedded wallet yet, or CLOB auth rejected  most
    * likely missing delegated signing; docs/WALLET.md). */
   usdc: number | null;
   /** Raw on-chain allowance per spender contract (6-decimals strings) the
@@ -49,7 +49,7 @@ export interface BridgeTransaction {
   createdAtMs: number | null;
 }
 
-/** `GET /wallet/crypto-deposit` — the user's bridge deposit addresses, the
+/** `GET /wallet/crypto-deposit`  the user's bridge deposit addresses, the
  * token/chain catalog and recent transfers. Deposits arrive as pUSD. */
 export interface CryptoDepositInfo {
   addresses: Record<BridgeAddressType, string | null>;
@@ -62,7 +62,7 @@ export async function getCryptoDepositInfo(): Promise<CryptoDepositInfo> {
   return apiRequest<CryptoDepositInfo>(endpoints.walletCryptoDeposit);
 }
 
-/** `GET /wallet/card-deposit` — native USDC waiting in the embedded wallet
+/** `GET /wallet/card-deposit`  native USDC waiting in the embedded wallet
  * after a card purchase (card deposits only). */
 export async function getCardDepositState(): Promise<{
   address: string;
@@ -85,7 +85,7 @@ export interface WithdrawResult {
   amountUsdc: number;
   transactionHash: string | null;
   transactionId: string | null;
-  /** The bridge withdrawal address — track delivery with `getWithdrawStatus`. */
+  /** The bridge withdrawal address  track delivery with `getWithdrawStatus`. */
   bridgeAddress?: string | null;
 }
 
@@ -135,5 +135,5 @@ export async function getWithdrawStatus(bridgeAddress: string): Promise<BridgeTr
   return data.transactions;
 }
 
-/** Native USDC on Polygon — what card on-ramps sell into the embedded wallet. */
+/** Native USDC on Polygon  what card on-ramps sell into the embedded wallet. */
 export const POLYGON_USDC_NATIVE = '0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359';

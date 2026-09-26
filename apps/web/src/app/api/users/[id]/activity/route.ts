@@ -21,11 +21,11 @@ interface ActivityRow {
   followed_user_display_name: string | null;
 }
 
-/** `GET /users/:id/activity` — union of TRADE/CALL/FOLLOW events
+/** `GET /users/:id/activity`  union of TRADE/CALL/FOLLOW events
  * (docs/API.md; `user_activity` in
  * `supabase/migrations/0010_single_query_reads.sql`). Every row here
  * reflects a completed server-side action (a filled Order, a stored
- * Call/Follow row) — never a client's optimistic assumption. The
+ * Call/Follow row)  never a client's optimistic assumption. The
  * followed user's handle/display name come back with the same query
  * (docs/DECISIONS.md, "Single-Query Read Paths"). */
 export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {

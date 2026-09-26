@@ -4,10 +4,10 @@ import { getOrCreateUser } from '@/lib/users';
 import { getSupabase } from '@/lib/supabase';
 import type { ShareResult } from '@/types/social';
 
-/** `POST /comments/:id/share` — increment-only, no "unshare"
- * (docs/API.md's `ShareResult` — distinct from `LikeResult`'s toggle).
+/** `POST /comments/:id/share`  increment-only, no "unshare"
+ * (docs/API.md's `ShareResult`  distinct from `LikeResult`'s toggle).
  * A blind increment is fine here (unlike likes) since there's no
- * unique-row source of truth to recompute from — each call is a
+ * unique-row source of truth to recompute from  each call is a
  * genuine new share event. */
 export async function POST(request: Request, { params }: { params: Promise<{ id: string }> }) {
   return withErrorHandling(async () => {

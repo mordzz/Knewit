@@ -17,7 +17,7 @@ function shortenAddress(address: string): string {
 }
 
 /**
- * The single place that formats and copies a wallet address — never
+ * The single place that formats and copies a wallet address  never
  * renders anything but the public address itself (see docs/WALLET.md
  * "Do Not Store Secrets"). The full, unshortened address is always what
  * gets copied and what screen readers hear, even though the visible

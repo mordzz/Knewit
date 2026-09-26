@@ -21,13 +21,13 @@ import type { HandleAvailability } from '@/types/social';
 const MAX_BIO_LENGTH = 160;
 const MAX_DISPLAY_NAME_LENGTH = 50;
 const HANDLE_RE = /^[a-z0-9_]{3,20}$/;
-// Any image the browser can decode — it's re-encoded to JPEG before upload.
+// Any image the browser can decode  it's re-encoded to JPEG before upload.
 const IMAGE_ACCEPT = 'image/*';
 
 /**
  * Edit Profile, laid out like the Callout composer (same solid-panel
  * cards, same close + title + primary-action header): banner and avatar
- * uploads (tap to change), then name, username (lowercase, unique), and
+ * uploads (tap to change), then name, handle (lowercase, unique), and
  * bio. Images upload immediately through
  * `POST /users/me/images`; Save sends the text fields via
  * `PATCH /users/me` (docs/API.md).
@@ -233,7 +233,7 @@ export function EditProfileForm({ onSaved }: { onSaved: () => void }) {
 
             <div>
               <Text variant="caption" color="textSecondary" className="mb-1 block">
-                Username
+                Handle
               </Text>
               <div className="flex items-center gap-1">
                 <Text variant="body" color="textTertiary">
@@ -242,7 +242,7 @@ export function EditProfileForm({ onSaved }: { onSaved: () => void }) {
                 <input
                   value={handle}
                   onChange={(e) => setHandle(e.target.value.toLowerCase())}
-                  placeholder="username"
+                  placeholder="handle"
                   autoCapitalize="none"
                   autoCorrect="off"
                   className="min-h-12 flex-1 border-0 bg-transparent px-0 py-3 text-body text-text-primary placeholder:text-text-tertiary focus:outline-none"
@@ -376,7 +376,7 @@ function friendlyEditError(message: string | null): string {
   return "Couldn't save your changes right now. Please try again.";
 }
 
-/** The line under the username field: format rule, then the live check. */
+/** The line under the handle field: format rule, then the live check. */
 function HandleStatus({
   valid,
   checking,
@@ -391,21 +391,21 @@ function HandleStatus({
   if (!valid) {
     return (
       <Text variant="micro" color="danger" className="block">
-        3-20 lowercase letters, numbers, or underscores.
+        3–20 characters: a–z, 0–9, _
       </Text>
     );
   }
   if (checking) {
     return (
       <Text variant="micro" color="textTertiary" className="block">
-        Checking availability…
+        Checking…
       </Text>
     );
   }
   if (failed || !result || result.available == null || result.reason === 'current') {
     return (
       <Text variant="micro" color="textTertiary" className="block">
-        3-20 lowercase letters, numbers, or underscores.
+        3–20 characters: a–z, 0–9, _
       </Text>
     );
   }

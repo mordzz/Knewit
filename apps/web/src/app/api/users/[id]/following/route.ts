@@ -15,7 +15,7 @@ interface FollowListRow {
   is_self: boolean;
 }
 
-/** `GET /users/:id/following` — accounts this user follows. Mirrors
+/** `GET /users/:id/following`  accounts this user follows. Mirrors
  * `followers/route.ts` with `p_direction: 'following'`; both use the one
  * `user_follow_list` query (migration `0010_single_query_reads.sql`). */
 export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {

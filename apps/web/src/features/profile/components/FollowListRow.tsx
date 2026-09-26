@@ -11,7 +11,7 @@ export interface FollowListRowProps {
 
 /**
  * Web equivalent of `apps/mobile/src/features/profile/components/FollowListRow`
- * — one row of a Followers/Following list: avatar, name, handle, and a
+ *  one row of a Followers/Following list: avatar, name, handle, and a
  * live Follow/Following button (hidden on the viewer's own row).
  */
 export function FollowListRow({ item, onPress }: FollowListRowProps) {

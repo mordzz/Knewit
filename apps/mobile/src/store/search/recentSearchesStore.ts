@@ -5,7 +5,7 @@ const MAX_RECENTS = 8;
 interface RecentSearchesState {
   recent: string[];
   addRecent: (query: string) => void;
-  /** Removes one past search — case-insensitive match, same rule
+  /** Removes one past search  case-insensitive match, same rule
    * `addRecent`'s de-dupe already uses. */
   removeRecent: (query: string) => void;
   clearRecent: () => void;
@@ -13,10 +13,10 @@ interface RecentSearchesState {
 
 /**
  * Genuinely client-only session state (a list of past search strings),
- * not search *results* — those stay in TanStack Query per
+ * not search *results*  those stay in TanStack Query per
  * docs/DECISIONS.md (Sprint 4). In-memory only: no `AsyncStorage` (or
  * similar) dependency was added to persist this across app restarts,
- * since nothing in this app persists local state that way yet — a
+ * since nothing in this app persists local state that way yet  a
  * deliberate simplification, not an oversight; see docs/DECISIONS.md.
  */
 export const useRecentSearchesStore = create<RecentSearchesState>((set) => ({

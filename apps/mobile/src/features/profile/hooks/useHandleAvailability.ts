@@ -6,7 +6,7 @@ const HANDLE_RE = /^[a-z0-9_]{3,20}$/;
 const CHECK_DEBOUNCE_MS = 400;
 
 /**
- * Live "is this username free?" check for the username panel — waits
+ * Live "is this username free?" check for the username panel  waits
  * until typing pauses, and skips the request for the current handle or
  * one that can't be valid anyway (the panel's own rules already say so).
  * `isChecking` covers the debounce gap too, so the UI never shows a

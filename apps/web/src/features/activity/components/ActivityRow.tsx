@@ -14,7 +14,7 @@ export interface ActivityRowProps {
 
 /**
  * Web equivalent of `apps/mobile/src/features/profile/components/ActivityRow`
- * — renders exactly one of the three real, server-verified activity
+ *  renders exactly one of the three real, server-verified activity
  * types (docs/DECISIONS.md, "Activity Types Limited to What This App
  * Can Actually Produce").
  */

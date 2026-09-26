@@ -3,7 +3,7 @@ import { usePrivy } from '@privy-io/expo';
 import { getWalletBalance } from '@/features/wallet/services/walletService';
 import { useAuth } from '@/hooks/useAuth';
 
-/** Mobile wallet balance query backed by the API in `apps/web` —
+/** Mobile wallet balance query backed by the API in `apps/web`
  * gated on a connected wallet, same as `usePositions`. */
 export function useWalletBalance() {
   const { isAuthenticated } = useAuth();

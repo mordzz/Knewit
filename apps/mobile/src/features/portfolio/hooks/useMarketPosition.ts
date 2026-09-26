@@ -4,7 +4,7 @@ import { getMarketPosition } from '@/features/portfolio/services/positionService
 import { useWallet } from '@/hooks/useWallet';
 import { useAuth } from '@/hooks/useAuth';
 
-/** Market Detail's "My Position" section — the current user's position
+/** Market Detail's "My Position" section  the current user's position
  * (if any) in one specific market. Same wallet-gating as `usePositions`. */
 export function useMarketPosition(marketId: string, options?: { enabled?: boolean }) {
   const { isConnected } = useWallet();

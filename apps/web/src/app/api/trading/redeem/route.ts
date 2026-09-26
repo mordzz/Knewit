@@ -6,7 +6,7 @@ import { redeemMarketPositions } from '@/lib/trading/orders';
 export const maxDuration = 60;
 
 /**
- * `POST /trading/redeem` `{ conditionId }` — turns a resolved market's
+ * `POST /trading/redeem` `{ conditionId }`  turns a resolved market's
  * winning shares into pUSD in the caller's Deposit Wallet (Polymarket's
  * `redeemPositions`, gasless). Only succeeds when Polymarket reports a
  * redeemable position for this user in that market.

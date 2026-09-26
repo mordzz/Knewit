@@ -10,7 +10,7 @@ import { Keyboard, Platform } from 'react-native';
  * reads the keyboard height straight from the keyboard events instead.
  *
  * `bottomSpace` is whatever already sits between the content and the
- * screen's bottom edge (e.g. the tab bar) — the keyboard covers that
+ * screen's bottom edge (e.g. the tab bar)  the keyboard covers that
  * first, so it's subtracted from the padding.
  */
 export function useKeyboardPadding(bottomSpace = 0): number {

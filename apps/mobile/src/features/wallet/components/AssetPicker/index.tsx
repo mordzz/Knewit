@@ -48,7 +48,7 @@ interface PickerOption {
 }
 
 /**
- * Token and Chain dropdowns side by side — the same field as the market
+ * Token and Chain dropdowns side by side  the same field as the market
  * detail's Top Holders filter, opening a sheet with the options (chains
  * list their minimum there; the field shows just the value).
  */

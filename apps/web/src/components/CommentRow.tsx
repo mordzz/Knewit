@@ -30,7 +30,7 @@ export interface CommentRowProps {
 }
 
 /**
- * Direct conversion of `apps/mobile`'s `CommentRow` — every comment
+ * Direct conversion of `apps/mobile`'s `CommentRow`  every comment
  * (top-level or reply) carries its own Like, Reply, Share row. Only
  * top-level comments show a "View N replies" toggle, lazily fetching
  * and rendering each nested thread directly below its parent.
@@ -53,7 +53,7 @@ export function CommentRow({ comment, postId, onDelete, onOpenAuthor, onOpenComm
       }
       shareComment.mutate({ postId, commentId: comment.id });
     } catch {
-      // User dismissed the share sheet — no share to count.
+      // User dismissed the share sheet  no share to count.
     }
   }
 

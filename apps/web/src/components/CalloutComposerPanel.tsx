@@ -18,7 +18,7 @@ import type { UserPosition } from '@/types/social';
 const MAX_POST_LENGTH = 280;
 
 /**
- * Desktop-only inline composer shown beside the Callouts feed — the same
+ * Desktop-only inline composer shown beside the Callouts feed  the same
  * flow as the `/create-call` page (a Callout always needs an attached
  * position; Publish stays disabled until one is picked), but it stays on
  * the page: after publishing, the form clears and the feed on the left
@@ -188,7 +188,7 @@ function SelectedPosition({
 
 function friendlyPublishError(message: string | null): string {
   if (!message) return "Couldn't publish this right now. Please try again.";
-  if (/network/i.test(message)) return 'Network error — check your connection and try again.';
+  if (/network/i.test(message)) return 'Network error  check your connection and try again.';
   if (/position/i.test(message)) return "We couldn't verify this position. Please try again.";
   return "Couldn't publish this right now. Please try again.";
 }

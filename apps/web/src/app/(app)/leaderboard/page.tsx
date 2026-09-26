@@ -11,7 +11,7 @@ import { useLeaderboard } from '@/hooks/useLeaderboard';
 import { PageHeader } from '@/components/ui/PageHeader';
 
 /**
- * Direct conversion of `apps/mobile`'s `LeaderboardScreen` — Polymarket's
+ * Direct conversion of `apps/mobile`'s `LeaderboardScreen`  Polymarket's
  * own global ranking, read-only (docs/DECISIONS.md, "Round 6"): no
  * Follow button, no profile links, a row is a ranked Polymarket trader
  * identified by proxy wallet, never a Knewit account. Every rank uses the

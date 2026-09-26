@@ -7,11 +7,11 @@ import { buildCommentItems, type CommentRow } from '@/lib/social';
 import type { Paginated } from '@/types/common';
 import type { CommentItem } from '@/types/social';
 
-/** `GET /users/:id/replies` — comments this user has made on any
+/** `GET /users/:id/replies`  comments this user has made on any
  * Post/Call (both top-level and nested), newest first. Mirrors
  * `posts/route.ts`/`calls/route.ts`'s shape one level down: same
  * target-resolution/pagination, querying `comments` instead of
- * `posts`. Backs the profile's "Replies" tab (renamed from "Posts" —
+ * `posts`. Backs the profile's "Replies" tab (renamed from "Posts"
  * a plain, position-less Post already surfaces on the "Calls" tab's
  * sibling feed via `GET /feed`/the post's own detail page, so a
  * second "Posts" tab here just duplicated that; "Replies," like on

@@ -9,7 +9,7 @@ import { buildSecureClientForUser } from '@/lib/trading/client';
 export const maxDuration = 60;
 
 /**
- * `POST /wallet/allowance/refresh` — asks Polymarket's CLOB to re-read
+ * `POST /wallet/allowance/refresh`  asks Polymarket's CLOB to re-read
  * the deposit wallet's on-chain collateral allowance
  * (`updateBalanceAllowance`), since `GET /wallet/balance` serves the
  * CLOB's cached value. Auth-required; failures surface the real error.

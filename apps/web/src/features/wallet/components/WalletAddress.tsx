@@ -18,7 +18,7 @@ function shortenAddress(address: string): string {
 
 /**
  * Web equivalent of `apps/mobile/src/features/wallet/components/WalletAddress`
- * — the single place that formats and copies a wallet address, using
+ *  the single place that formats and copies a wallet address, using
  * the browser's Clipboard API instead of `expo-clipboard`.
  */
 export function WalletAddress({ address, compact = false, fullOnDesktop = false, className = '' }: WalletAddressProps) {

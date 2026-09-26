@@ -26,7 +26,7 @@ function getPrivyClient(): PrivyClient {
   return privyClient;
 }
 
-/** Best-effort hints for a first-time user's default handle/wallet —
+/** Best-effort hints for a first-time user's default handle/wallet
  * failure here must never block account creation, since Privy's Users
  * API is a convenience lookup, not the source of truth for our own
  * `users` row. */
@@ -48,14 +48,14 @@ export interface PrimaryEthereumWallet {
 }
 
 /**
- * The caller's Privy-custodied embedded Ethereum wallet — id + address
- * — resolved live from Privy rather than our own cached
+ * The caller's Privy-custodied embedded Ethereum wallet  id + address
+ *  resolved live from Privy rather than our own cached
  * `users.wallet_address` column, since nothing in this API surface
  * (docs/API.md has no "connect wallet" endpoint) ever tells the
  * backend when a wallet is created/changed after account creation;
  * only Privy itself is the live source of truth. Used by the trading
  * flow, which needs the Privy wallet **id** (not just the address) for
- * the Polymarket client's Privy signer adapter — see
+ * the Polymarket client's Privy signer adapter  see
  * `lib/trading/client.ts`. Returns `null` if the user has no embedded
  * Ethereum wallet yet.
  */
@@ -83,11 +83,11 @@ async function uniqueHandle(base: string): Promise<string> {
 
 /**
  * Resolves the Privy-authenticated caller to our own `users` row,
- * creating one on first sight — Privy's own auth (email-OTP, embedded
+ * creating one on first sight  Privy's own auth (email-OTP, embedded
  * wallet) is the account-creation moment for this app; there's no
  * separate signup step. `handle`/`displayName` default to an
  * email-derived or generated placeholder (see `fetchPrivyProfileHints`)
- * — editable afterward via `PATCH /users/me` (docs/DATABASE.md,
+ *  editable afterward via `PATCH /users/me` (docs/DATABASE.md,
  * "Sprint 11" bio/displayName editability).
  */
 export async function getOrCreateUser(privyUserId: string): Promise<DbUser> {
@@ -118,7 +118,7 @@ export async function getOrCreateUser(privyUserId: string): Promise<DbUser> {
   if (error) {
     // A concurrent request may have created the row between the select
     // and insert above (no unique constraint race guard beyond the DB's
-    // own `handle` uniqueness) — re-select rather than fail the request.
+    // own `handle` uniqueness)  re-select rather than fail the request.
     const { data: raceWinner } = await supabase
       .from('users')
       .select('*')
@@ -145,7 +145,7 @@ export async function findUserByWalletAddress(walletAddress: string): Promise<Db
 
 /** Resolves a `:id` path param that may be the literal `"me"`
  * (docs/API.md, "Literal `me` as the Self-Profile Identifier") to an
- * internal user id. A UUID is trusted as-is — it can only be an id this
+ * internal user id. A UUID is trusted as-is  it can only be an id this
  * backend itself emitted in a prior response (a `FeedItem.author.id`,
  * `FollowListItem.user.id`, etc.), never a client-invented value with
  * authorization implications.
@@ -153,12 +153,12 @@ export async function findUserByWalletAddress(walletAddress: string): Promise<Db
  * A wallet address (`0x…`, a `users.wallet_address`) resolves to that
  * account's row when one exists. It stays accepted because it is the exact
  * key `users.wallet_address` is stored under, not because the leaderboard
- * hands out wallet ids any more — `GET /leaderboard`'s rows are Polymarket
+ * hands out wallet ids any more  `GET /leaderboard`'s rows are Polymarket
  * traders, never profiles (docs/DECISIONS.md, "Round 6: Leaderboard Is a
- * Read-Only Polymarket Ranking — No Follow, No Profile Links"), and no
+ * Read-Only Polymarket Ranking  No Follow, No Profile Links"), and no
  * Polymarket trader is ever imported or synthesized into a `users` row.
- * Anything else — including a malformed id, which used to reach Postgres
- * and fail as a `uuid` cast error (a 500) — is an honest 404, so every
+ * Anything else  including a malformed id, which used to reach Postgres
+ * and fail as a `uuid` cast error (a 500)  is an honest 404, so every
  * `users/:id/...` read answers "no such user" instead of "something went
  * wrong".
  */

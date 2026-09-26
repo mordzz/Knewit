@@ -1,5 +1,5 @@
 /**
- * The internal API surface — see docs/API.md for request/response
+ * The internal API surface  see docs/API.md for request/response
  * shapes. Backed by `apps/web` (Next.js route handlers), which both
  * the web and mobile clients call.
  */
@@ -41,7 +41,7 @@ export const endpoints = {
   commentLike: (id: string) => `/comments/${id}/like`,
   commentShare: (id: string) => `/comments/${id}/share`,
   /** `id` accepts the literal `"me"` to resolve to the authenticated
-   * caller — see docs/API.md. Used identically for all the
+   * caller  see docs/API.md. Used identically for all the
    * `users/:id/...` sub-resources below. */
   users: (id: string) => `/users/${id}`,
   userImages: (kind: 'avatar' | 'banner') => `/users/me/images?kind=${kind}`,

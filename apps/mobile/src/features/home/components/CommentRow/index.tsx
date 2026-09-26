@@ -20,16 +20,16 @@ export interface CommentRowProps {
   onDelete: (commentId: string) => void;
   onOpenAuthor: (userId: string) => void;
   /** Puts the composer into "Replying to @handle" mode targeting this
-   * comment's thread — see `CommentComposer`. */
+   * comment's thread  see `CommentComposer`. */
   onReply: (comment: CommentItem) => void;
   /** The id of whichever comment (top-level or reply) is currently being
-   * deleted, or `null` — compared against this row's own id rather than
+   * deleted, or `null`  compared against this row's own id rather than
    * a single precomputed boolean, since that boolean would otherwise be
    * tied to whichever comment `PostDetailScreen`'s `renderItem` last
    * computed it for and wrongly apply to every nested reply too. */
   deletingCommentId: string | null;
   /** Replies render slightly indented, with a smaller avatar, and never
-   * show their own "View replies" toggle — threads are one level deep,
+   * show their own "View replies" toggle  threads are one level deep,
    * not a recursive tree (see docs/DECISIONS.md, "One Reply Level").
    * Tapping Reply on a reply still targets the same top-level thread. */
   isReply?: boolean;
@@ -37,16 +37,16 @@ export interface CommentRowProps {
 }
 
 /**
- * `comment.canDelete` is server-computed (see docs/DECISIONS.md) — this
+ * `comment.canDelete` is server-computed (see docs/DECISIONS.md)  this
  * component never derives ownership itself, so the "..." menu with
  * Delete simply doesn't render at all for a comment it isn't true for.
  * A confirmation dialog always sits between the menu and the actual
- * delete — no destructive action fires on a single tap. The author's
- * avatar/name are their own pressable opening Profile (Sprint 11) — see
+ * delete  no destructive action fires on a single tap. The author's
+ * avatar/name are their own pressable opening Profile (Sprint 11)  see
  * docs/SOCIAL-FEATURE.md ("Profile From Comment").
  *
  * Every comment (top-level or reply) carries its own X-style action row
- * — Like, Reply, Share, each with a count — see docs/DECISIONS.md
+ *  Like, Reply, Share, each with a count  see docs/DECISIONS.md
  * ("Threaded Comment Replies"). Only top-level comments show a "View N
  * replies" toggle, which lazily fetches (`useCommentReplies`, `enabled`-
  * gated) and renders that thread nested directly below, one level deep.
@@ -75,7 +75,7 @@ export function CommentRow({
       });
       shareComment.mutate({ postId, commentId: comment.id });
     } catch {
-      // User dismissed the share sheet — no share to count.
+      // User dismissed the share sheet  no share to count.
     }
   }
 

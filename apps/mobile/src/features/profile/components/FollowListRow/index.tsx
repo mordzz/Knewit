@@ -10,7 +10,7 @@ export interface FollowListRowProps {
   onPress: () => void;
 }
 
-/** One row of a Followers/Following list — avatar, name, handle, and a
+/** One row of a Followers/Following list  avatar, name, handle, and a
  * live Follow/Following button (hidden on the viewer's own row). */
 export function FollowListRow({ item, onPress }: FollowListRowProps) {
   const toggleFollow = useFollowToggle();

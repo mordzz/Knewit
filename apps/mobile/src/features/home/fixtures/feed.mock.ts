@@ -3,8 +3,8 @@ import type { FeedItem, MarketSummary } from '@/types/social';
 /**
  * DEVELOPMENT-ONLY fixture data. Used solely as a local fallback by
  * `feedService` when the real `/feed` backend is unreachable (no backend
- * exists yet — see docs/API.md). Never presented as real user/trading
- * data, and never imported by production service logic directly — see
+ * exists yet  see docs/API.md). Never presented as real user/trading
+ * data, and never imported by production service logic directly  see
  * docs/DECISIONS.md.
  */
 const AUTHORS = {
@@ -117,7 +117,7 @@ const BASE_ITEMS: Omit<FeedItem, 'id' | 'createdAt'>[] = [
   },
   {
     author: AUTHORS.jordan,
-    body: 'Taking YES on the MVP repeat — form has been undeniable all season.',
+    body: 'Taking YES on the MVP repeat  form has been undeniable all season.',
     market: MARKETS.finals,
     positionSnapshot: {
       marketId: MARKETS.finals.id,
@@ -155,7 +155,7 @@ export function buildMockFeed(size: number): FeedItem[] {
 }
 
 /** Single-item lookup for `getPostById`'s dev fallback (Post/Call
- * Detail) — picks a deterministic template by id/seed, same pattern as
+ * Detail)  picks a deterministic template by id/seed, same pattern as
  * `markets.mock.ts::pickMockMarketTemplate`, so opening different mock
  * post ids shows different template content instead of always the
  * first one. */
@@ -168,7 +168,7 @@ const MOCK_USER_CONTENT_PAGE_SIZE = 3;
 
 /**
  * Dev-mock fallback for Profile's Calls tab (`postService.ts::getUserCalls`)
- * — every entry is already a position-backed Call. Reassigns `author` to
+ *  every entry is already a position-backed Call. Reassigns `author` to
  * a profile matching `userId`, so the mock content visibly belongs to
  * whichever profile is being viewed rather than one of the feed's own
  * fixed sample authors; `canDelete` follows the same convention as

@@ -36,7 +36,7 @@ function validateAmount(amount: number): string | null {
 }
 
 /**
- * Market Detail's trade entry point — a single "Trade" button for the
+ * Market Detail's trade entry point  a single "Trade" button for the
  * market it was given, opening the shared `TradeSheet`. Event rows open
  * the exact same `TradeSheet` directly (with the child market they
  * fetched), so trading from a list needs no new page.
@@ -50,7 +50,7 @@ export function TradingPanel({ market }: { market: MarketDetail }) {
     return <InfoBanner text="This market has resolved." />;
   }
   if (market.closed) {
-    return <InfoBanner text="Market Closed — Trading is no longer available." />;
+    return <InfoBanner text="Market Closed  Trading is no longer available." />;
   }
   if (market.choices.length === 0) return null;
 
@@ -73,11 +73,11 @@ export function TradingPanel({ market }: { market: MarketDetail }) {
 }
 
 /**
- * The reusable Trade bottom sheet — pick a choice + amount, review,
+ * The reusable Trade bottom sheet  pick a choice + amount, review,
  * submit (`CreateTradeInput.choiceIndex`; the label is resolved
  * server-side). Pass `market: null` while a row-opened child market is
  * still loading and the sheet shows an honest loading state. Never
- * fabricates a successful trade — a failed backend call shows a real
+ * fabricates a successful trade  a failed backend call shows a real
  * "Trade failed" state (docs/DECISIONS.md, "No Fake Trade Success").
  */
 export function TradeSheet({
@@ -123,7 +123,7 @@ export function TradeSheet({
     setStep('pick');
     if (mutation.isSuccess) {
       // Reset for the next trade only after the user has dismissed a
-      // successful one — keeps "Trade successful" on screen while the
+      // successful one  keeps "Trade successful" on screen while the
       // sheet is still open.
       mutation.reset();
       setAmountText('');
@@ -137,7 +137,7 @@ export function TradeSheet({
 
   async function handleConfirm() {
     // Re-checked here, immediately before submitting, rather than only
-    // when the sheet opened — guards against the wallet disconnecting
+    // when the sheet opened  guards against the wallet disconnecting
     // or the amount becoming invalid while the sheet was open.
     setIsValidating(true);
     const validationError = validateAmount(amount);
@@ -158,7 +158,7 @@ export function TradeSheet({
       ) : market.resolved ? (
         <InfoBanner text="This market has resolved." />
       ) : market.closed ? (
-        <InfoBanner text="Market Closed — Trading is no longer available." />
+        <InfoBanner text="Market Closed  Trading is no longer available." />
       ) : market.choices.length === 0 ? (
         <InfoBanner text="This market has no tradeable outcomes." />
       ) : step === 'pick' ? (
@@ -194,7 +194,7 @@ export function TradeSheet({
   );
 }
 
-/** Step 1 of the Trade sheet — choice + amount, what used to be the
+/** Step 1 of the Trade sheet  choice + amount, what used to be the
  * always-visible Card's contents. Purely a picker; nothing here submits
  * a trade, `onContinue` only advances to the review step. Two choices
  * stay side by side (the original layout), three or more stack
@@ -281,7 +281,7 @@ function PickStep({
             value={`+${formatUsd(Math.max(0, shares - amount))}`}
           />
           <Text variant="micro" color="textTertiary" className="mt-0.5">
-            Each share pays $1 if this call wins — a cheaper share means a bigger payout, but a
+            Each share pays $1 if this call wins  a cheaper share means a bigger payout, but a
             lower chance.
           </Text>
         </View>
@@ -393,7 +393,7 @@ function ConfirmTradeContent({
   onClose: () => void;
 }) {
   // "signing" is a real, defined state (types/trading.ts) that this flow
-  // never enters — see docs/DECISIONS.md ("Trade Signing Not
+  // never enters  see docs/DECISIONS.md ("Trade Signing Not
   // Implemented This Sprint"). Only preparing (client-side validation)
   // and pending (the live backend call) are ever actually reached.
   const status: 'idle' | 'preparing' | 'pending' | 'success' | 'failed' = isValidating
@@ -501,7 +501,7 @@ function ConfirmRow({
   );
 }
 
-/** Never surfaces a raw stack trace/internal error to the user — maps
+/** Never surfaces a raw stack trace/internal error to the user  maps
  * anything unrecognized to one honest, generic message. */
 function friendlyTradeError(message: string | null): string {
   if (!message) return "Couldn't complete this trade right now. Please try again.";
@@ -509,7 +509,7 @@ function friendlyTradeError(message: string | null): string {
     return 'Network error - check your connection and try again.';
   }
   // Our own preflight 400s are already actionable sentences (balance /
-  // one-time setup) — surface them as-is instead of flattening to a
+  // one-time setup)  surface them as-is instead of flattening to a
   // generic failure (docs/DECISIONS.md, "Trade Preflight").
   if (/balance is too low|one-time trading setup|no resting orders/i.test(message)) return message;
   return "Couldn't complete this trade right now. Please try again.";

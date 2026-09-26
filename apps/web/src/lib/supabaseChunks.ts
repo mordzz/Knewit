@@ -12,7 +12,7 @@ interface QueryResult<T> {
 }
 
 /** Runs `buildQuery` once per batch of `ids` and concatenates the rows.
- * Order is preserved per batch, not globally — callers re-sort if the
+ * Order is preserved per batch, not globally  callers re-sort if the
  * order matters. */
 export async function selectInChunks<T>(
   ids: string[],

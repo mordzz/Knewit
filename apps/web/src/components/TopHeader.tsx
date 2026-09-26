@@ -22,12 +22,12 @@ const MAX_MARKETS = 3;
 
 /**
  * Desktop/tablet-only top bar (`hidden lg:flex`), ported from
- * `apps/dekstop/src/components/knew/app-shell.tsx`'s `<header>` — a
+ * `apps/dekstop/src/components/knew/app-shell.tsx`'s `<header>`  a
  * search field, balance, and a Deposit button, fixed above the content
  * area (`lg:left-56`, clearing `SideNav`). The search field searches in
  * place: results (same `useSearch` the `/search` page uses) open in a
  * dropdown under the field, and picking one goes straight to that
- * profile/market — it never routes through `/search`.
+ * profile/market  it never routes through `/search`.
  */
 export function TopHeader() {
   const router = useRouter();
@@ -58,7 +58,7 @@ export function TopHeader() {
     setQuery('');
   };
 
-  const balanceLabel = balance.data?.usdc != null ? formatUsd(balance.data.usdc) : '—';
+  const balanceLabel = balance.data?.usdc != null ? formatUsd(balance.data.usdc) : '';
 
   const openDeposit = () => {
     if (!canUseApp || !walletConnected) {

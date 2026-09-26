@@ -1,16 +1,16 @@
 import type { NavigatorScreenParams } from '@react-navigation/native';
 
 /**
- * Bottom-tab route list — lives here (not in MainTabNavigator.tsx) so
+ * Bottom-tab route list  lives here (not in MainTabNavigator.tsx) so
  * `AppParamList` below can reference it for deep-linking into a specific
  * tab (`Main` → `{ screen: 'MarketsTab', params: {...} }`) without a
  * circular import between the two files.
  */
 /** The Profile tab's own stack routes, declared separately (and without
  * any reference back to `MainTabParamList`) so `ProfileTab` can accept
- * nested navigation params — e.g.
+ * nested navigation params  e.g.
  * `navigate('Main', { screen: 'ProfileTab', params: { screen: 'Profile', params: { userId } } })`
- * — without the circular type reference that `NavigatorScreenParams<AppParamList>`
+ *  without the circular type reference that `NavigatorScreenParams<AppParamList>`
  * would create. */
 export type ProfileStackParamList = {
   Profile: { userId?: string } | undefined;
@@ -31,11 +31,11 @@ export type MainTabParamList = {
 };
 
 /**
- * Flat, app-wide route list — React Navigation's documented pattern for
+ * Flat, app-wide route list  React Navigation's documented pattern for
  * global `useNavigation()` typing without per-screen composite navigation
  * props. Screens are physically owned by different navigators (Main/Auth/
  * CreateCall by the root stack; MarketDetail lives in both Home's and
- * Markets' own stacks; Wallet lives in Profile's stack — see
+ * Markets' own stacks; Wallet lives in Profile's stack  see
  * MainTabNavigator.tsx), but `navigate()` bubbles up through parent
  * navigators at runtime regardless of where a screen is typed, so one
  * flat list keeps every call site simple.
@@ -43,9 +43,9 @@ export type MainTabParamList = {
 export type AppParamList = {
   Main: NavigatorScreenParams<MainTabParamList> | undefined;
   Auth: undefined;
-  /** The Callout composer — no params: every callout requires an
+  /** The Callout composer  no params: every callout requires an
    * attached market position (only buyers can publish one), enforced by
-   * the screen itself — see docs/DECISIONS.md ("Black Glass for Callout
+   * the screen itself  see docs/DECISIONS.md ("Black Glass for Callout
    * Surfaces", superseding the earlier Post/Call `intent` choice). */
   CreateCall: undefined;
   HomeFeed: undefined;
@@ -54,7 +54,7 @@ export type AppParamList = {
   Leaderboard: undefined;
   /**
    * One route/screen for both the viewer's own profile and anyone
-   * else's (Sprint 11) — `userId` omitted means "my own profile,"
+   * else's (Sprint 11)  `userId` omitted means "my own profile,"
    * resolved server-side from the session (see docs/DECISIONS.md, "One
    * Profile Route/Screen for Self and Other Users"). Replaces the
    * earlier separate `Profile`/`UserProfile` routes.
@@ -67,7 +67,7 @@ export type AppParamList = {
   Settings: undefined;
   Notifications: undefined;
   /** One detail screen for a single market (`marketId`) and a grouped
-   * event (`eventId`) — event mode shows the event's own chart, child
+   * event (`eventId`)  event mode shows the event's own chart, child
    * markets with inline Trade sheets, and combined tabs; there is no
    * separate event screen. */
   MarketDetail: { marketId?: string; eventId?: string };

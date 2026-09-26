@@ -4,7 +4,7 @@ import { getOrCreateUser } from '@/lib/users';
 import { fetchMarketById } from '@/lib/polymarket/gammaClient';
 import { getUserPortfolio } from '@/lib/trading/portfolio';
 
-/** `GET /positions/:marketId` — the authenticated user's largest holding
+/** `GET /positions/:marketId`  the authenticated user's largest holding
  * in one market (live from Polymarket's Data API), or 404 if none. */
 export async function GET(request: Request, { params }: { params: Promise<{ marketId: string }> }) {
   return withErrorHandling(async () => {

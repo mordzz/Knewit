@@ -24,7 +24,7 @@ async function share(title: string) {
     try {
       await navigator.share({ text: `${title}\n\nvia Knew it` });
     } catch {
-      // Dismissed share sheet — nothing to recover from.
+      // Dismissed share sheet  nothing to recover from.
     }
   }
 }

@@ -2,7 +2,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { uploadProfileImage, type ProfileImageFile } from '@/features/profile/services/userService';
 
 /**
- * Uploads an avatar or banner and applies the server's updated profile —
+ * Uploads an avatar or banner and applies the server's updated profile
  * same cache rule as `useUpdateProfile`: replace `['profile', 'me']`,
  * invalidate feed/comments/profile so already-fetched authors refetch
  * rather than keep showing a stale image.

@@ -8,7 +8,7 @@ export async function getComments(postId: string, cursor?: string): Promise<Pagi
   return apiRequest<Paginated<CommentItem>>(`/api/calls/${postId}/comments${query}`);
 }
 
-/** A top-level comment's replies — one level deep. */
+/** A top-level comment's replies  one level deep. */
 export async function getCommentReplies(commentId: string, cursor?: string): Promise<Paginated<CommentItem>> {
   const query = cursor ? `?cursor=${encodeURIComponent(cursor)}` : '';
   return apiRequest<Paginated<CommentItem>>(`/api/comments/${commentId}/replies${query}`);
@@ -41,7 +41,7 @@ export async function shareComment(id: string): Promise<ShareResult> {
   return apiRequest<ShareResult>(`/api/comments/${id}/share`, { method: 'POST' });
 }
 
-/** Profile's Replies tab — comments this user has made on any Post/Call.
+/** Profile's Replies tab  comments this user has made on any Post/Call.
  * `id` accepts `"me"`. */
 export async function getUserReplies(id: string, cursor?: string): Promise<Paginated<CommentItem>> {
   const query = cursor ? `?cursor=${encodeURIComponent(cursor)}` : '';

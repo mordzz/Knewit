@@ -5,9 +5,9 @@ import type { WalletSetupStatus } from '@/features/wallet/hooks/useAutoWalletSet
 
 /**
  * The account-setup gate screen `RootNavigator` renders between "signed
- * in" and "wallet + signing ready" — a fresh login never lands inside the
+ * in" and "wallet + signing ready"  a fresh login never lands inside the
  * app mid-setup, and there are no manual Connect/Enable buttons any more
- * (docs/DECISIONS.md, "Automatic Wallet & Trading Setup — No Manual
+ * (docs/DECISIONS.md, "Automatic Wallet & Trading Setup  No Manual
  * Buttons"). Shows the real state: an honest spinner while the automatic
  * steps run, or what failed when they couldn't finish.
  */
@@ -26,7 +26,7 @@ export function AccountSetupScreen({ status }: { status: WalletSetupStatus }) {
             We couldn&apos;t finish setting up your account
           </Text>
           <Text variant="caption" color="textSecondary" className="text-center">
-            We&apos;ll try again next time you open the app — your wallet and funds are safe.
+            We&apos;ll try again next time you open the app  your wallet and funds are safe.
           </Text>
         </>
       ) : (

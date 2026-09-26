@@ -8,11 +8,11 @@ import type { UserPosition } from '@/types/social';
 /**
  * "My Position" on Market Detail. Always prefers the market's own live
  * price (already loaded on this screen) over `position.currentPrice`
- * for the headline PnL math — two independently-timed "current price"
+ * for the headline PnL math  two independently-timed "current price"
  * numbers on the same screen would risk visibly disagreeing; see
  * docs/DECISIONS.md. No "✓ Verified" badge: that would claim a
  * real cross-check against Polymarket this project hasn't implemented
- * (see docs/DECISIONS.md) — omitted rather than fabricated, same
+ * (see docs/DECISIONS.md)  omitted rather than fabricated, same
  * principle as Sprint 5's omitted price chart.
  */
 export function MyPositionCard({

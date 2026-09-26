@@ -1,7 +1,7 @@
 import type { User } from '@/types/social';
 
 /**
- * DEVELOPMENT-ONLY fixture data — same rule as every other `*.mock.ts`
+ * DEVELOPMENT-ONLY fixture data  same rule as every other `*.mock.ts`
  * in this app: used solely as a local fallback when the real
  * `/search` backend is unreachable, never presented as real user data.
  * `avatarUrl` is intentionally `null` on every entry (not fetching from
@@ -46,7 +46,7 @@ export const MOCK_PEOPLE: User[] = [
   },
 ];
 
-/** Case-insensitive substring match against handle or display name —
+/** Case-insensitive substring match against handle or display name
  * a simple, deterministic MVP ranking signal per docs/PRD.md; not a
  * fabricated relevance score. */
 export function searchMockPeople(query: string): User[] {

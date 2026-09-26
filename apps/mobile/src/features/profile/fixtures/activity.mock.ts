@@ -1,6 +1,6 @@
 import type { ActivityItem } from '@/types/activity';
 
-/** DEVELOPMENT-ONLY — cycles through one of each real, supported
+/** DEVELOPMENT-ONLY  cycles through one of each real, supported
  * `ActivityType` (see docs/DECISIONS.md, "Activity Types Limited to
  * What This App Can Actually Produce") so every rendered variant is
  * exercisable in dev without a backend. */
@@ -16,7 +16,7 @@ function hashString(value: string): number {
 
 /**
  * Returns a full `ActivityItem` directly (rather than an
- * `Omit<ActivityItem, 'id'|'createdAt'>` merged in afterward) —
+ * `Omit<ActivityItem, 'id'|'createdAt'>` merged in afterward)
  * `Omit`/`keyof` over a discriminated union collapses to only the
  * fields every member shares, which silently loses each variant's own
  * fields and made every case here a type error. Passing `id`/`createdAt`

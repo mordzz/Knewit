@@ -14,18 +14,18 @@ export interface LeaderboardUserCardProps {
 }
 
 /**
- * A plain divided row — same convention as `FollowListRow`/`CallCard`
+ * A plain divided row  same convention as `FollowListRow`/`CallCard`
  * (`border-b border-border px-4 py-3`, no card/blur) rather than a
  * glass card per row, so a long ranked list reads as one coherent list
- * instead of a stack of individual boxes — see docs/DECISIONS.md
+ * instead of a stack of individual boxes  see docs/DECISIONS.md
  * ("Glass Surfaces Reserved for Overlays Only").
  *
  * Deliberately **not** pressable and with no Follow button: a ranked row is
  * a Polymarket trader, identified by proxy wallet, which is not a Knewit
- * account — there is no profile here to open and no relationship to toggle,
+ * account  there is no profile here to open and no relationship to toggle,
  * because this app's users and Polymarket's users are different populations
  * (docs/DECISIONS.md, "Round 6: Leaderboard Is a Read-Only Polymarket
- * Ranking — No Follow, No Profile Links"). It renders as a `View` rather
+ * Ranking  No Follow, No Profile Links"). It renders as a `View` rather
  * than a `Pressable` on purpose, so nothing promises an action that doesn't
  * exist. The row is still `accessible` with a spoken label, since rank +
  * volume is real information for a screen reader even with no tap target.

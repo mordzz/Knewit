@@ -15,16 +15,16 @@ import { ApiRequestError } from '@/lib/apiClient';
 const solanaConnectors = toSolanaWalletConnectors();
 
 /**
- * Client-side provider tree for the web app — Privy (email-OTP +
+ * Client-side provider tree for the web app  Privy (email-OTP +
  * Google/X OAuth, mirroring `apps/frontend`'s `AppProviders`/
  * `PrivyProvider` setup) and TanStack Query for data fetching, same
  * library the mobile app uses for the same reason: this project's
  * ESLint config enforces `react-hooks/set-state-in-effect`, which
- * flags the plain `useEffect` + `setState` fetch pattern — a query
+ * flags the plain `useEffect` + `setState` fetch pattern  a query
  * library's own internal effect is what's meant to own that, not
  * page-level code (see `app/(app)/page.tsx`'s doc comment). Privy is
  * always mounted, even without a configured app id, so every page can
- * unconditionally use its hooks — pages that need it gate on
+ * unconditionally use its hooks  pages that need it gate on
  * `publicEnv.privyAppId` instead, same pattern as the mobile app's
  * `SignInScreen`.
  */
@@ -35,8 +35,8 @@ export function Providers({ children }: { children: ReactNode }) {
         defaultOptions: {
           queries: {
             // A 404 almost always means "this id doesn't exist in this
-            // resource" — a real, meaningful answer, not a transient
-            // failure — so retrying it just delays the query's `status`
+            // resource"  a real, meaningful answer, not a transient
+            // failure  so retrying it just delays the query's `status`
             // reaching `'error'` for no benefit (observed concretely: a
             // market-detail page that tries a market id then falls back to
             // an event id got stuck on its loading skeleton for the full
@@ -69,7 +69,7 @@ export function Providers({ children }: { children: ReactNode }) {
           // Solana wallet login is enabled in the Privy Dashboard for this
           // app, so the SDK warns unless real wallet-standard connectors
           // are passed. `toSolanaWalletConnectors()` is Privy's own helper
-          // (needs the `@solana-program/*` peers installed — memo is the
+          // (needs the `@solana-program/*` peers installed  memo is the
           // only one that wasn't); `loginMethods` above keeps Solana out of
           // the login modal. See docs/WALLET.md.
           //

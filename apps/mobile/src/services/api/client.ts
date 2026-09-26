@@ -20,11 +20,11 @@ export class ApiRequestError extends Error {
 /**
  * The only thing the app ever talks to over the network for market/social
  * data is our own backend. It never calls Polymarket or holds Polymarket
- * credentials directly — see docs/ARCHITECTURE.md.
+ * credentials directly  see docs/ARCHITECTURE.md.
  */
 export async function apiRequest<T>(path: string, init?: RequestInit): Promise<T> {
   const token = await getSessionToken();
-  // `FormData` must set its own multipart boundary — forcing
+  // `FormData` must set its own multipart boundary  forcing
   // `application/json` on it would corrupt the upload.
   const isFormData = typeof FormData !== 'undefined' && init?.body instanceof FormData;
 

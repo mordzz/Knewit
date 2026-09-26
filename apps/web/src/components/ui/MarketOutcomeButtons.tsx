@@ -3,7 +3,7 @@ import { cn } from '@/lib/cn';
 import type { MarketChoice } from '@/types/market';
 
 export interface MarketOutcomeButtonsProps {
-  /** The market's own choices, in API order — label + live price each. */
+  /** The market's own choices, in API order  label + live price each. */
   choices: MarketChoice[];
   onPress: () => void;
   className?: string;
@@ -15,11 +15,11 @@ function buttonVariant(choice: MarketChoice): ButtonVariant {
 
 /**
  * Web equivalent of `apps/mobile/src/components/ui/MarketOutcomeButtons`
- * — two choices keep the two large solid buttons (labels from the API's
+ *  two choices keep the two large solid buttons (labels from the API's
  * own outcome names), three or more render as a compact stacked list.
  * Tone follows `choiceTone` (Yes/Up green, No/Down red, anything else
- * accent/neutral — never green/red). A choice only ever shows an image
- * if the API provides one for that choice itself — never the market's
+ * accent/neutral  never green/red). A choice only ever shows an image
+ * if the API provides one for that choice itself  never the market's
  * own image.
  */
 export function MarketOutcomeButtons({ choices, onPress, className }: MarketOutcomeButtonsProps) {

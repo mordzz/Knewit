@@ -18,26 +18,26 @@ export interface CallCardProps {
 
 /**
  * X-style feed row: borderless, full-width, separated from the next item
- * by a hairline bottom border rather than a bordered/rounded card — see
+ * by a hairline bottom border rather than a bordered/rounded card  see
  * docs/DESIGN.md. Renders both variants of the unified Post/Call model
  * (docs/SOCIAL-FEATURE.md): a normal Post when `item.market` is null, and
- * a position-backed Call — with the MarketAttachment's Verified badge —
+ * a position-backed Call  with the MarketAttachment's Verified badge
  * when it isn't. There is deliberately no separate PostCard component;
  * see docs/DECISIONS.md.
  *
- * The whole row opens Post/Call Detail (Sprint 9) — the avatar/author
+ * The whole row opens Post/Call Detail (Sprint 9)  the avatar/author
  * name and the Market Attachment are their own nested `Pressable`s with
  * their own destinations (author profile, Market Detail), which React
  * Native resolves correctly (only the innermost pressable under the
  * touch fires), so they don't fight this outer one.
  *
  * Header row is name/handle on the left, the callout's post time on the
- * far right — X/Twitter's own layout, rather than the time trailing
- * inline after the handle — see docs/DECISIONS.md.
+ * far right  X/Twitter's own layout, rather than the time trailing
+ * inline after the handle  see docs/DECISIONS.md.
  */
 function CallCardComponent({ item, onOpenMarket, onOpenAuthor, onOpenPost }: CallCardProps) {
   const shareMessage = item.market
-    ? `${item.body}\n\n${item.market.question} — via Knewit`
+    ? `${item.body}\n\n${item.market.question}  via Knewit`
     : `${item.body}\n\nvia Knewit`;
 
   return (

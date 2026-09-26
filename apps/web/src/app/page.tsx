@@ -6,7 +6,7 @@ import { useSession } from '@/hooks/useSession';
 import { LandingPage } from '@/features/landing/components/LandingPage';
 
 /**
- * Public entry point — the marketing landing page lives here now, not
+ * Public entry point  the marketing landing page lives here now, not
  * the Home feed (moved to `(app)/home`, still behind the Hard Login
  * Gate). Renders immediately for signed-out visitors; an already-
  * authenticated session is bounced straight to `/home` once

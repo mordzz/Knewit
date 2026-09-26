@@ -20,7 +20,7 @@ function parseRange(raw: string | null): PriceRange {
     : '1D';
 }
 
-/** `GET /markets/:id/price-history?range=&choice=` — the real price
+/** `GET /markets/:id/price-history?range=&choice=`  the real price
  * history of one of the market's choices (default: the first one), in
  * the market's own `outcomes` order, so a chart follows whichever
  * choice the user selected. Proxied from Polymarket's CLOB API
@@ -29,7 +29,7 @@ function parseRange(raw: string | null): PriceRange {
  * derived from the CLOB's own `p` (0-1 decimal), so the chart's most
  * recent point always agrees with whatever live price the rest of
  * Market Detail shows. An out-of-range choice (or a market with no
- * resolvable token) gets a clean 404 — this endpoint has no honest
+ * resolvable token) gets a clean 404  this endpoint has no honest
  * series to return, and never fabricates one. */
 export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
   return withErrorHandling(async () => {
@@ -68,7 +68,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
 
     const points: PricePoint[] = history.map((point) => ({
       timestamp: new Date(point.t * 1000).toISOString(),
-      // Decimal cents (up to 4 dp) — same unit as `MarketChoice.price`;
+      // Decimal cents (up to 4 dp)  same unit as `MarketChoice.price`;
       // rounding to whole cents flattens sub-cent markets to 0.
       price: Number((point.p * 100).toFixed(4)),
     }));

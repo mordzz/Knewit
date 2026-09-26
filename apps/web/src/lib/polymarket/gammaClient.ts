@@ -24,10 +24,10 @@ async function gammaGet<T>(path: string, params: Record<string, string | number 
 
 const PAGE_SIZE = 20;
 
-/** Backs `GET /markets` and `GET /events` — Polymarket's own `/events`
+/** Backs `GET /markets` and `GET /events`  Polymarket's own `/events`
  * groups related markets and carries the `tags` this backend uses for
  * category, which the plain `/markets` endpoint's nested `events` field
- * doesn't (verified live — see the Phase 1 design notes). `cursor` is
+ * doesn't (verified live  see the Phase 1 design notes). `cursor` is
  * an opaque numeric offset. */
 export async function fetchEventsPage(cursor: string | undefined, categoryTagSlug?: string): Promise<{
   events: GammaEvent[];
@@ -43,7 +43,7 @@ export async function fetchEventsPage(cursor: string | undefined, categoryTagSlu
     ascending: false,
     tag_slug: categoryTagSlug,
   });
-  // The cursor advances by the raw page size — the sub-event filter must
+  // The cursor advances by the raw page size  the sub-event filter must
   // not stop pagination early. Verified live: `public-search` also
   // excludes these "- More Markets" extras, so a list should never show
   // them (GET /events/:id still serves them for a direct link).
@@ -54,15 +54,15 @@ export async function fetchEventsPage(cursor: string | undefined, categoryTagSlu
 
 /** Single-market fetch (`GET /markets/:id`) has no `events`/`tags`
  * field on Polymarket's side, so category is resolved via a second
- * call — `fetchEventForMarket` — rather than guessed. */
+ * call  `fetchEventForMarket`  rather than guessed. */
 export async function fetchMarketById(id: string): Promise<GammaMarket | null> {
   const markets = await gammaGet<GammaMarket[]>('/markets', { id });
   return markets[0] ?? null;
 }
 
 /** Markets by CLOB token id or condition id (Gamma accepts repeated
- * `clob_token_ids` / `condition_ids`). Used to map Data API positions —
- * which carry token/condition ids, not Gamma ids — back to our markets.
+ * `clob_token_ids` / `condition_ids`). Used to map Data API positions
+ * which carry token/condition ids, not Gamma ids  back to our markets.
  * Gamma hides closed markets unless asked, and resolved markets are
  * exactly where redeemable positions live, so both are fetched. */
 export async function fetchMarketsByIds(
@@ -90,7 +90,7 @@ async function fetchMarketsPage(kind: string, ids: string[], closed: boolean): P
 }
 
 /** Polymarket's single-event fetch (unlike the bulk `/events` list)
- * reliably includes `tags` — used to resolve a market's category for
+ * reliably includes `tags`  used to resolve a market's category for
  * `GET /markets/:id`. Returns `null` if the market has no discoverable
  * parent event (Gamma's `/markets?id=` list response nests one). */
 export async function fetchEventForMarket(marketId: string): Promise<GammaEvent | null> {
@@ -102,7 +102,7 @@ export async function fetchEventForMarket(marketId: string): Promise<GammaEvent 
   return gammaGet<GammaEvent>(`/events/${eventId}`, {});
 }
 
-/** Single event by id — backs `GET /events/:id` (the group/event detail
+/** Single event by id  backs `GET /events/:id` (the group/event detail
  * page). Uses the list endpoint's `id` filter (verified live) rather
  * than `/events/{id}`, so an unknown id comes back as an empty list
  * (`null` here) and a real upstream failure still propagates as an
@@ -117,19 +117,19 @@ export async function fetchEventById(eventId: string): Promise<GammaEvent | null
  * slugs**, verified live from polymarket.com's rendered nav (2026-09-17,
  * e.g. `href="/pop-culture"` → label "Culture"): the site links by slug,
  * and each slug's label comes from the tag API itself. There is no
- * "give me the nav categories" endpoint — `/tags` is an unordered dump
+ * "give me the nav categories" endpoint  `/tags` is an unordered dump
  * of thousands of narrow tags (no category flag: `forceShow` is `false`
  * even on foundational tags, and is `true` for non-categories like
  * "Bitcoin"/"Featured"), and `/categories` does not exist (404). So the
  * only API-faithful approach is: keep the nav's slug list, resolve each
  * one live via `/tags/slug/:slug`, and take `{label, slug}` from the
- * response — never reconstruct a slug from a label.
+ * response  never reconstruct a slug from a label.
  *
  * `mentions` is deliberately absent: it's a Polymarket site page, not a
- * tag (404s upstream — verified live). Slugs not in the current nav
+ * tag (404s upstream  verified live). Slugs not in the current nav
  * (`world`, `ai`) are not tabs here even though they're valid tags.
  * A candidate that 404s (renamed/removed upstream) is silently dropped
- * rather than fabricated — this list is a starting point for the live
+ * rather than fabricated  this list is a starting point for the live
  * lookup below, not itself the source of truth.
  */
 const CATEGORY_SLUG_CANDIDATES = [
@@ -160,7 +160,7 @@ export async function fetchCategoryTags(): Promise<GammaTag[]> {
   return results.filter((tag): tag is GammaTag => tag !== null);
 }
 
-/** Backs the markets half of `GET /search` — Polymarket's dedicated
+/** Backs the markets half of `GET /search`  Polymarket's dedicated
  * `/public-search` endpoint (verified live), unlike `/events`'s own
  * `title=` filter param which silently does nothing (also verified
  * live). Response events carry `tags`/`markets` in the same shape as

@@ -17,23 +17,23 @@ import type { MarketGroupSummary, MarketListItem, MarketOutcomeRow, MarketSummar
 
 export interface MarketCardProps {
   item: MarketListItem;
-  /** The flat list row at every width — for dense surfaces like the search dropdown. */
+  /** The flat list row at every width  for dense surfaces like the search dropdown. */
   compact?: boolean;
 }
 
 /**
  * Direct conversion of `apps/mobile`'s Markets tab card
- * (`features/markets/components/MarketCard`) — a flat, borderless list
+ * (`features/markets/components/MarketCard`)  a flat, borderless list
  * row (same convention as `CallCard`), not a boxed card. No price
  * anywhere on this card (price/trading only ever appears in Market
- * Detail) — the choice *types* still show (labels from the market's own
+ * Detail)  the choice *types* still show (labels from the market's own
  * API choices, each combo-market outcome's name + pills), just not a
  * probability number. A single-market row opens Market Detail; a group
  * card opens the exact same detail surface in event mode (one chart
  * line per child market, per-child Trade sheets), while each outcome
  * group card opens the exact same detail surface in event mode (one
  * chart line per child market, per-child Trade sheets), and its outcome
- * rows are display-only — one click target per card, see
+ * rows are display-only  one click target per card, see
  * docs/DECISIONS.md ("Group Cards Are One Click").
  */
 export function MarketCard({ item, compact = false }: MarketCardProps) {
@@ -59,7 +59,7 @@ async function shareMarket(title: string) {
     try {
       await navigator.share({ text: `${title}\n\nvia Knew it` });
     } catch {
-      // User dismissed the share sheet — nothing to recover from.
+      // User dismissed the share sheet  nothing to recover from.
     }
   }
 }
@@ -164,7 +164,7 @@ function BinaryMarketPreview({ market }: { market: MarketSummary }) {
   );
 }
 
-/** Three or more choices — the same `MiniPill` treatment the group
+/** Three or more choices  the same `MiniPill` treatment the group
  * rows' Yes/No pills already use, one per choice, wrapping. When the
  * API actually provides an image for a choice, the pills switch to the
  * same image+label row `OutcomeRow` uses; the market's own image is
@@ -203,11 +203,11 @@ function ChoiceList({ choices }: { choices: MarketChoice[] }) {
 const ROW_LIMIT = 4;
 
 /**
- * A combo market (several named outcomes under one event) — still a
+ * A combo market (several named outcomes under one event)  still a
  * flat list row, just a taller one. **One click target only**: the whole
  * card opens the same Market Detail surface in event mode; the outcome
  * rows below are display-only (no separate press). Rows only show an
- * image when the API provides one that identifies the child — no
+ * image when the API provides one that identifies the child  no
  * placeholder art, no shared league/tournament art.
  */
 function GroupCard({ group }: { group: MarketGroupSummary }) {

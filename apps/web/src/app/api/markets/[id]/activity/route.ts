@@ -6,9 +6,9 @@ import { buildFeedItems, type PostRow } from '@/lib/social';
 
 const ACTIVITY_LIMIT = 20;
 
-/** `GET /markets/:id/activity` — Posts/Calls referencing this market
+/** `GET /markets/:id/activity`  Posts/Calls referencing this market
  * (docs/API.md). Not paginated (a fixed, reasonably small batch, per
- * contract) — newest first. Phase 1 stubbed this empty since `Post`
+ * contract)  newest first. Phase 1 stubbed this empty since `Post`
  * had no rows yet; now backed by real data from Phase 2. */
 export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
   return withErrorHandling(async () => {

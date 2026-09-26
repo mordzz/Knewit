@@ -3,7 +3,7 @@
 import { getAccessToken } from '@privy-io/react-auth';
 
 /** The `{ code, message }` wire shape every API route error responds
- * with (`src/lib/apiError.ts::ApiError.toResponse()`, server-only —
+ * with (`src/lib/apiError.ts::ApiError.toResponse()`, server-only
  * not imported directly here to avoid pulling server code into the
  * client bundle). */
 interface ApiErrorBody {
@@ -22,16 +22,16 @@ export class ApiRequestError extends Error {
 
 /**
  * Client-side fetch helper for this same Next.js app's own `/api/*`
- * routes — same origin, so no base URL like `apps/frontend`'s
+ * routes  same origin, so no base URL like `apps/frontend`'s
  * `apiRequest` needs (`EXPO_PUBLIC_API_BASE_URL`). Still attaches
  * `Authorization: Bearer <token>` the same way, via Privy's web SDK
  * `getAccessToken()` (the web equivalent of the mobile hook's
- * `getSessionToken()`) — our backend's `requireAuth`/`optionalAuth`
+ * `getSessionToken()`)  our backend's `requireAuth`/`optionalAuth`
  * (`src/lib/privy.ts`) don't care which SDK issued the token.
  */
 export async function apiRequest<T>(path: string, init?: RequestInit): Promise<T> {
   const token = await getAccessToken().catch(() => null);
-  // `FormData` must set its own multipart boundary — forcing
+  // `FormData` must set its own multipart boundary  forcing
   // `application/json` on it would corrupt the upload.
   const isFormData = typeof FormData !== 'undefined' && init?.body instanceof FormData;
 

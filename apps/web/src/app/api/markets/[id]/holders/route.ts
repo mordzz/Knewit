@@ -5,7 +5,7 @@ import type { MarketHolder } from '@/types/social';
 
 const HOLDER_LIMIT = 20;
 
-/** `GET /markets/:id/holders` — this market's top position holders,
+/** `GET /markets/:id/holders`  this market's top position holders,
  * proxied from Polymarket's own public holder data (`data-api
  * /holders`), the same source Polymarket's own page shows. Our `positions`
  * table is no longer used here: it only ever contains trades this app

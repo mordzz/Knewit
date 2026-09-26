@@ -3,7 +3,7 @@ import { requireAuth } from '@/lib/privy';
 import { getOrCreateUser } from '@/lib/users';
 import { getUserPortfolio } from '@/lib/trading/portfolio';
 
-/** `GET /positions` — the authenticated user's portfolio, read live from
+/** `GET /positions`  the authenticated user's portfolio, read live from
  * Polymarket's Data API for their Deposit Wallet (docs/API.md): open
  * positions plus resolved winners that can be redeemed. */
 export async function GET(request: Request) {

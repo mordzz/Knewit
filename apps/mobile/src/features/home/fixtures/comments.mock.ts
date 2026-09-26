@@ -1,10 +1,10 @@
 import type { CommentItem } from '@/types/social';
 
 /**
- * DEVELOPMENT-ONLY fixture data — see `feed.mock.ts` for the same
+ * DEVELOPMENT-ONLY fixture data  see `feed.mock.ts` for the same
  * pattern/rationale. `canDelete` is always `false`: there is no real
  * authenticated session to compare against in mock mode, so nothing is
- * honestly deletable — see docs/DECISIONS.md. `liked` is always `false`
+ * honestly deletable  see docs/DECISIONS.md. `liked` is always `false`
  * for the same reason (no session to be "liked by").
  */
 const AUTHORS = [
@@ -27,13 +27,13 @@ const AUTHORS = [
 
 const BODIES = [
   'Great call, I agree with this take.',
-  "Not so sure — the volume doesn't support this yet.",
+  "Not so sure  the volume doesn't support this yet.",
   'This aged well already.',
   "What's your reasoning on the timeline here?",
 ];
 
 const REPLY_BODIES = [
-  'Same — watching this one closely too.',
+  'Same  watching this one closely too.',
   'Source? Genuinely curious.',
   "That's fair, hadn't thought about it that way.",
   'Yeah the timing lines up.',
@@ -78,7 +78,7 @@ export function buildMockComments(postId: string, cursor?: string): CommentItem[
   });
 }
 
-/** Deterministic mock replies for one top-level comment — see
+/** Deterministic mock replies for one top-level comment  see
  * `buildMockComments`'s `replyCount`, which this must stay consistent
  * with (`MOCK_REPLY_TOTAL` total, paginated 2 at a time). */
 export function buildMockReplies(
@@ -117,7 +117,7 @@ const MOCK_USER_REPLIES_TOTAL = 6;
 const MOCK_TARGET_POST_COUNT = 5;
 
 /** Dev-mock fallback for Profile's Replies tab
- * (`commentService.ts::getUserReplies`) — same author-reassignment
+ * (`commentService.ts::getUserReplies`)  same author-reassignment
  * trick `feed.mock.ts::buildMockUserContent` uses for Posts/Calls, so
  * the mock content visibly belongs to whichever profile is being
  * viewed rather than one of the fixed sample authors above. */

@@ -25,7 +25,7 @@ export async function getComments(
   } catch (error) {
     if (env.isDev) {
       console.warn(
-        '[commentService] backend unreachable — using local mock comments for development only.',
+        '[commentService] backend unreachable  using local mock comments for development only.',
         error
       );
       const start = cursor ? Number(cursor) : 0;
@@ -39,7 +39,7 @@ export async function getComments(
 }
 
 /**
- * A top-level comment's replies — one level deep, see docs/DECISIONS.md
+ * A top-level comment's replies  one level deep, see docs/DECISIONS.md
  * ("One Reply Level"). Same real-endpoint-first/dev-mock-fallback
  * pattern as `getComments`; only fetched once a thread is expanded
  * (`useCommentReplies` is `enabled`-gated), not eagerly for every
@@ -59,7 +59,7 @@ export async function getCommentReplies(
   } catch (error) {
     if (env.isDev) {
       console.warn(
-        '[commentService] backend unreachable — using local mock replies for development only.',
+        '[commentService] backend unreachable  using local mock replies for development only.',
         error
       );
       const start = cursor ? Number(cursor) : 0;
@@ -73,8 +73,8 @@ export async function getCommentReplies(
 }
 
 /**
- * Profile's Replies tab — comments this user has made on any Post/Call
- * (top-level and nested), newest first. `id` accepts `"me"` — see
+ * Profile's Replies tab  comments this user has made on any Post/Call
+ * (top-level and nested), newest first. `id` accepts `"me"`  see
  * docs/API.md. Replaces the old Posts tab (see `ProfileScreen`'s doc
  * comment); real-endpoint-first/dev-mock-fallback, same pattern as
  * `getComments`.
@@ -87,7 +87,7 @@ export async function getUserReplies(id: string, cursor?: string): Promise<Pagin
   } catch (error) {
     if (env.isDev) {
       console.warn(
-        '[commentService] backend unreachable — using local mock replies for development only.',
+        '[commentService] backend unreachable  using local mock replies for development only.',
         error
       );
       const start = cursor ? Number(cursor) : 0;
@@ -100,10 +100,10 @@ export async function getUserReplies(id: string, cursor?: string): Promise<Pagin
 }
 
 /**
- * Posting a comment is a real, user-visible mutating action — **no
+ * Posting a comment is a real, user-visible mutating action  **no
  * dev-mock fallback**, same reasoning as `createPost`/`createTrade`. The
  * backend derives the author from the authenticated session, never from
- * anything the client sends — see docs/DECISIONS.md. `input.parentCommentId`
+ * anything the client sends  see docs/DECISIONS.md. `input.parentCommentId`
  * set makes this a reply rather than a top-level comment; the backend
  * (not this function) is the one that must reject a `parentCommentId`
  * that isn't itself a top-level comment (see "One Reply Level").
@@ -120,7 +120,7 @@ export async function createComment(
 
 /**
  * **No dev-mock fallback.** The backend must independently verify the
- * caller owns this comment before deleting it — the client never sends
+ * caller owns this comment before deleting it  the client never sends
  * (and the backend must never trust) an ownership claim; see
  * docs/DECISIONS.md.
  */
@@ -129,7 +129,7 @@ export async function deleteComment(commentId: string): Promise<void> {
 }
 
 /**
- * Like/unlike a comment — same shape and same no-dev-mock-fallback
+ * Like/unlike a comment  same shape and same no-dev-mock-fallback
  * reasoning as `postService.ts::likePost`/`unlikePost`: `useToggleCommentLike`'s
  * optimistic update already gives instant feedback, and this call still
  * needs to genuinely reach the backend to roll back on a real failure.
@@ -143,12 +143,12 @@ export async function unlikeComment(id: string): Promise<LikeResult> {
 }
 
 /**
- * Records a share of this comment. **No dev-mock fallback** — same
+ * Records a share of this comment. **No dev-mock fallback**  same
  * reasoning as `likeComment`: `useShareComment`'s optimistic +1 already
  * gives instant feedback, and in this no-backend dev environment the
  * real call will fail and the optimistic bump will roll back, which is
  * the correct, honest behavior (see `useToggleLike`'s own documented
- * comment on this exact pattern) — not a bug.
+ * comment on this exact pattern)  not a bug.
  */
 export async function shareComment(id: string): Promise<ShareResult> {
   return apiRequest<ShareResult>(endpoints.commentShare(id), { method: 'POST' });

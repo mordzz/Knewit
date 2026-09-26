@@ -5,16 +5,16 @@ import { toLeaderboardEntry } from '@/lib/leaderboard';
 import type { LeaderboardEntry, LeaderboardPage } from '@/types/leaderboard';
 
 /**
- * `GET /leaderboard?cursor=` — the ranked traders are **Polymarket's own
+ * `GET /leaderboard?cursor=`  the ranked traders are **Polymarket's own
  * live leaderboard** (`data-api.polymarket.com`, volume only, all-time;
  * see `lib/polymarket/dataApiClient.ts`), not a local aggregation.
  *
  * Why live: this app's own `orders` table is empty by construction until a
- * trade actually fills (Phase 3's trading flow is still unverified — see
+ * trade actually fills (Phase 3's trading flow is still unverified  see
  * `lib/trading/orders.ts`), so ranking our own rows produced a permanently
  * empty leaderboard. Polymarket, which *does* have the fills, publishes the
- * ranking — with the same volume-only metric this app already documented
- * (docs/DECISIONS.md, "Leaderboard Metric — Trading Volume Only, Not
+ * ranking  with the same volume-only metric this app already documented
+ * (docs/DECISIONS.md, "Leaderboard Metric  Trading Volume Only, Not
  * PnL"). No PnL/ROI figure is read from it, and no period or category
  * control is exposed (`ALL`/`OVERALL` are fixed), so no cosmetic filter
  * exists.
@@ -23,9 +23,9 @@ import type { LeaderboardEntry, LeaderboardPage } from '@/types/leaderboard';
  * users are two different populations, so this list is deliberately not a
  * social surface: no follow state, no profile links, no `scope=following`.
  * Each row is a ranked Polymarket trader whose `user.id` is their proxy
- * wallet address — the only identity Polymarket gives, never a synthesized
+ * wallet address  the only identity Polymarket gives, never a synthesized
  * Knewit account and never a follow target (docs/DECISIONS.md, "Round 6:
- * Leaderboard Is a Read-Only Polymarket Ranking — No Follow, No Profile
+ * Leaderboard Is a Read-Only Polymarket Ranking  No Follow, No Profile
  * Links"). `users` is not consulted here at all any more, so browsing the
  * leaderboard can neither resolve nor create a local account.
  *

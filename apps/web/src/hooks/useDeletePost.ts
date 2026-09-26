@@ -1,7 +1,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { deletePost } from '@/lib/postService';
 
-/** Deletes a Callout — the API enforces author-only. Invalidates every
+/** Deletes a Callout  the API enforces author-only. Invalidates every
  * surface a deleted Call appears on (feeds, the author's Profile tabs,
  * the attached market's activity), and drops the now-404 detail cache. */
 export function useDeletePost(postId: string) {

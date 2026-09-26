@@ -4,7 +4,7 @@ import { getOrCreateUser } from '@/lib/users';
 import { checkHandleAvailability } from '@/lib/handles';
 
 /**
- * `GET /users/handle-available?handle=` — checks a prospective username
+ * `GET /users/handle-available?handle=`  checks a prospective username
  * for the authenticated caller with the same rules `PATCH /users/me`
  * applies (format, other Knewit accounts, Polymarket trader names), so
  * the edit screen can say "available" / "taken" while the user types.

@@ -5,7 +5,7 @@ import { search } from '@/lib/searchService';
 export const MIN_QUERY_LENGTH = 2;
 
 /** Web equivalent of `apps/mobile/src/features/search/hooks/useSearch.ts`
- * — callers are expected to pass an already-debounced query. */
+ *  callers are expected to pass an already-debounced query. */
 export function useSearch(query: string) {
   const trimmed = query.trim();
 

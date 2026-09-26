@@ -10,10 +10,10 @@ interface ShareCommentInput {
 
 /**
  * Optimistic +1 for a comment's share count, fired once the native
- * share sheet (`Share.share`) resolves without throwing — see
+ * share sheet (`Share.share`) resolves without throwing  see
  * `CommentRow`. Unlike Like, there's no "unshare" to toggle back to, so
  * this only ever increments; the rollback path still exists for the
- * same reason `useToggleLike`'s does — in this no-backend dev
+ * same reason `useToggleLike`'s does  in this no-backend dev
  * environment the real request fails and the optimistic +1 reverts,
  * which is the correct, honest behavior, not a bug.
  */

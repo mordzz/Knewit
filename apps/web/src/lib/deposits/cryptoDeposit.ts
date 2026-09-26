@@ -9,7 +9,7 @@ import {
 } from '@/lib/deposits/polymarketBridge';
 
 export interface CryptoDepositInfo {
-  /** The user's bridge deposit address per address type — whatever is
+  /** The user's bridge deposit address per address type  whatever is
    * sent there (any supported token/chain) arrives as pUSD in the Deposit
    * Wallet, ready to trade. */
   addresses: BridgeDepositAddresses;
@@ -23,7 +23,7 @@ export interface CryptoDepositInfo {
  * Everything the crypto deposit screen needs, straight from the Polymarket
  * bridge (docs.polymarket.com/trading/bridge): `/deposit` for the
  * addresses, `/supported-assets` for the token and chain pickers, and
- * `/status` for what's on its way. No wrapping, webhooks or RPC — the
+ * `/status` for what's on its way. No wrapping, webhooks or RPC  the
  * bridge delivers pUSD itself.
  */
 export async function getCryptoDepositInfo(userId: string, privyUserId: string): Promise<CryptoDepositInfo | null> {

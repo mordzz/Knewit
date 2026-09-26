@@ -14,12 +14,12 @@ export async function getPostById(id: string): Promise<FeedItem> {
   return apiRequest<FeedItem>(`/api/calls/${id}`);
 }
 
-/** Deletes a Callout — the backend enforces author-only (403 otherwise). */
+/** Deletes a Callout  the backend enforces author-only (403 otherwise). */
 export async function deletePost(id: string): Promise<void> {
   await apiRequest<Record<string, never>>(`/api/calls/${id}`, { method: 'DELETE' });
 }
 
-/** Profile's Calls tab — position-backed Calls only. `id` accepts `"me"`. */
+/** Profile's Calls tab  position-backed Calls only. `id` accepts `"me"`. */
 export async function getUserCalls(id: string, cursor?: string): Promise<Paginated<FeedItem>> {
   const query = cursor ? `?cursor=${encodeURIComponent(cursor)}` : '';
   return apiRequest<Paginated<FeedItem>>(`/api/users/${id}/calls${query}`);

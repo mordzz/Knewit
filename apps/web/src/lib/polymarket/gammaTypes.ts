@@ -1,4 +1,4 @@
-/** Partial shapes of Polymarket's Gamma API responses — only the
+/** Partial shapes of Polymarket's Gamma API responses  only the
  * fields this backend actually reads. Verified against the live API
  * (https://gamma-api.polymarket.com) while building this integration;
  * re-verify against https://docs.polymarket.com/ before relying on any
@@ -13,7 +13,7 @@ export interface GammaTag {
 
 export interface GammaMarket {
   id: string;
-  /** Polymarket's on-chain condition id — what the Data API's
+  /** Polymarket's on-chain condition id  what the Data API's
    * `/holders` endpoint takes (it does not accept our market id). */
   conditionId: string;
   question: string;
@@ -21,9 +21,9 @@ export interface GammaMarket {
   image: string | null;
   icon: string | null;
   /** The candidate/outcome's short name when this market is one row of
-   * a grouped event (e.g. "Donald Trump" for a nomination market) —
+   * a grouped event (e.g. "Donald Trump" for a nomination market)
    * empty string when the market isn't part of such a group (verified
-   * live — see `normalize.ts::toMarketListItems`). */
+   * live  see `normalize.ts::toMarketListItems`). */
   groupItemTitle: string;
   /** JSON-encoded string array, e.g. `'["Yes","No"]'`. */
   outcomes: string;
@@ -42,7 +42,7 @@ export interface GammaMarket {
   archived: boolean;
   featured: boolean;
   /** JSON-encoded string array of CLOB token ids, same order as
-   * `outcomes` (verified live) — e.g. `'["123...", "456..."]'` for
+   * `outcomes` (verified live)  e.g. `'["123...", "456..."]'` for
    * `["Yes", "No"]`. Used by the trading flow to know which token a
    * BUY on a given choice is for. */
   clobTokenIds: string;
@@ -50,7 +50,7 @@ export interface GammaMarket {
 
 export interface GammaEvent {
   id: string;
-  /** Set when this event is a **sub-event** of another one — Polymarket's
+  /** Set when this event is a **sub-event** of another one  Polymarket's
    * "- More Markets" extras. Such events are not standalone listings
    * (`public-search` excludes them too), so lists filter them out; the
    * event-detail endpoint still serves them for a direct link. */

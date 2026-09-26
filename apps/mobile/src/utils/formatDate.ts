@@ -4,7 +4,7 @@ export function formatShortDate(iso: string): string {
 }
 
 /** Compact countdown for a market's end date, e.g. "24d left", "6h left",
- * "Ended" once past — used in Market Attachment's metrics footer. */
+ * "Ended" once past  used in Market Attachment's metrics footer. */
 export function formatTimeRemaining(iso: string): string {
   const diffMs = new Date(iso).getTime() - Date.now();
   if (diffMs <= 0) return 'Ended';

@@ -50,7 +50,7 @@ export function getDepositErrorMessage(error: unknown): string {
     return 'This deposit could not be processed for compliance reasons.';
   }
   if (code === 'nothing_to_convert') {
-    return "Your purchase hasn't landed yet — wait a moment and try converting again.";
+    return "Your purchase hasn't landed yet  wait a moment and try converting again.";
   }
   if (code === 'swap_failed') {
     return 'Could not confirm the conversion. Check your wallet and trading balance before trying again.';
@@ -59,7 +59,7 @@ export function getDepositErrorMessage(error: unknown): string {
     return 'Your trading wallet is not ready yet. Please wait a moment and try again.';
   }
   if (code === 'trade_reconciliation_required' || code === 'withdrawal_pending_review') {
-    return "This may have already gone through — we're still verifying it. Check your balance before trying again.";
+    return "This may have already gone through  we're still verifying it. Check your balance before trying again.";
   }
   if (typeof candidate?.message === 'string' && /trading wallet is not ready/i.test(candidate.message)) {
     return candidate.message;

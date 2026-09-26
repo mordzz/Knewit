@@ -4,7 +4,7 @@ import { cn } from '@/utils/cn';
 import type { MarketChoice } from '@/types/market';
 
 export interface MarketOutcomeButtonsProps {
-  /** The market's own choices, in API order — label + live price each. */
+  /** The market's own choices, in API order  label + live price each. */
   choices: MarketChoice[];
   onPress: () => void;
   className?: string;
@@ -21,8 +21,8 @@ function buttonVariant(choice: MarketChoice): ButtonVariant {
  * names; **three or more** render as a compact stacked list in the
  * existing `rounded-xl bg-surface-elevated` panel. Tone follows
  * `choiceTone` (Yes/Up green, No/Down red, anything else accent/neutral
- * — never green/red). A choice only ever shows an image if the API
- * provides one for that choice itself — never the market's own image.
+ *  never green/red). A choice only ever shows an image if the API
+ * provides one for that choice itself  never the market's own image.
  *
  * No buy/sell action: `onPress` is the same "open Market Detail"
  * handler the rest of the card uses, not a trade.

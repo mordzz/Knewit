@@ -2,7 +2,7 @@
  * Whether a funding-flow rejection is just the user closing/cancelling
  * Privy's own modal, not a real failure. `@privy-io/expo/ui`'s
  * `fundWallet` rejects with a `PrivyUIError` whose code is
- * `'funding_flow_cancelled'` on close — verified in the installed
+ * `'funding_flow_cancelled'` on close  verified in the installed
  * bundle. Matched structurally (not via `instanceof`) so a duplicated
  * SDK module instance can't break the check; anything unrecognised is
  * treated as a real error.

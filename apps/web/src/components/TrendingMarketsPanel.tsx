@@ -17,7 +17,7 @@ function rowOf(item: MarketListItem) {
     : { id: item.group.id, name: item.group.title, imageUrl: item.group.imageUrl };
 }
 
-/** Desktop right-rail card: the top four Trending markets — image and
+/** Desktop right-rail card: the top four Trending markets  image and
  * name only; a row opens Market Detail (event mode for a group). */
 export function TrendingMarketsPanel() {
   const router = useRouter();

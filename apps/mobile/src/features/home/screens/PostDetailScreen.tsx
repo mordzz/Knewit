@@ -35,9 +35,9 @@ import type { AppParamList } from '@/types/navigation';
 
 /**
  * A position-backed Callout's detail. The Verified Position block renders
- * via the same `MarketAttachment` component used everywhere else — no
+ * via the same `MarketAttachment` component used everywhere else  no
  * separate "Call Detail" market UI. The badge means "verified when
- * created," never "still holds this position" — see docs/DECISIONS.md.
+ * created," never "still holds this position"  see docs/DECISIONS.md.
  * The header's "…" deletes the Callout when the viewer authored it
  * (`canDelete`, server-computed).
  */
@@ -257,7 +257,7 @@ function PostContent({
         commentCount={item.commentCount}
         shareMessage={
           item.market
-            ? `${item.body}\n\n${item.market.question} — via Knewit`
+            ? `${item.body}\n\n${item.market.question}  via Knewit`
             : `${item.body}\n\nvia Knewit`
         }
       />

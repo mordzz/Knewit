@@ -28,7 +28,7 @@ export const env = {
    * half the Privy Dashboard registered as a signer on this app's user
    * embedded wallets. Lets the backend sign on a user's behalf through
    * the Polymarket client's Privy signer adapter (`lib/trading/client.ts`).
-   * Optional at boot — read-only browsing works without it; signing fails
+   * Optional at boot  read-only browsing works without it; signing fails
    * with a clear error instead (docs/WALLET.md, "Backend Signing"). */
   get privyAuthorizationPrivateKey() {
     return process.env.PRIVY_AUTHORIZATION_PRIVATE_KEY;
@@ -58,11 +58,11 @@ export const env = {
   },
   /** Builder code (Polymarket → Settings → Builders), sent as
    * `X-Builder-Code` to the bridge so deposits are attributed to this
-   * app. Optional — the bridge works without it. */
+   * app. Optional  the bridge works without it. */
   get polymarketBuilderCode() {
     return process.env.POLYMARKET_BUILDER_CODE;
   },
-  /** Polygon JSON-RPC endpoint — only for withdrawal receipts and the
+  /** Polygon JSON-RPC endpoint  only for withdrawal receipts and the
    * card-deposit balance. Defaults to a free public node; no key needed. */
   get polygonRpcUrl() {
     return process.env.POLYGON_RPC_URL || 'https://polygon-bor-rpc.publicnode.com';

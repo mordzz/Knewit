@@ -6,7 +6,7 @@ export type GlassTone = 'light' | 'dark';
 export interface GlassSurfaceProps {
   radius?: number;
   tone?: GlassTone;
-  /** Real `backdrop-filter: blur()` on the web — unlike the mobile
+  /** Real `backdrop-filter: blur()` on the web  unlike the mobile
    * app's `BlurView`, the DOM's blur is cheap enough to leave on for
    * every instance, so this prop is kept only for API parity (a
    * `false` value just skips the `backdrop-blur` utility, still using
@@ -24,7 +24,7 @@ const TONE_STYLES: Record<GlassTone, { border: string; tint: string }> = {
 };
 
 /**
- * Web equivalent of `apps/mobile/src/components/ui/GlassSurface` — same
+ * Web equivalent of `apps/mobile/src/components/ui/GlassSurface`  same
  * frosted-glass surface (faint border + translucent tint), using CSS
  * `backdrop-filter: blur()` for the actual blur instead of `expo-blur`'s
  * native `BlurView`.

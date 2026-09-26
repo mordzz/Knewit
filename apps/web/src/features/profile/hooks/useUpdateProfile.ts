@@ -3,7 +3,7 @@ import { updateMyProfile } from '@/features/profile/lib/userService';
 import type { UpdateProfileInput, UserProfile } from '@/types/social';
 
 /** Web equivalent of `apps/mobile/src/features/profile/hooks/useUpdateProfile.ts`
- * — invalidates by refetch, not by patching every embedded author
+ *  invalidates by refetch, not by patching every embedded author
  * (docs/DECISIONS.md). */
 export function useUpdateProfile() {
   const queryClient = useQueryClient();

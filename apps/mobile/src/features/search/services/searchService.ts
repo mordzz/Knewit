@@ -18,15 +18,15 @@ async function getMockSearchResults(query: string): Promise<SearchResults> {
 }
 
 /**
- * Always returns both People and Markets together — the Search screen
+ * Always returns both People and Markets together  the Search screen
  * shows both sections side by side, not behind a scope toggle, so
- * there's no reason to ask the backend for just one — see
+ * there's no reason to ask the backend for just one  see
  * docs/DECISIONS.md (Sprint 4). Reuses the Sprint 3 market model
  * (`MarketListItem`) as-is; no separate search-specific market schema.
  *
- * Real endpoint first — the shipped path. Falls back to labeled mock
+ * Real endpoint first  the shipped path. Falls back to labeled mock
  * fixtures only in dev, only on failure, same pattern as every other
- * service in this app (`feedService`, `marketService`) — see
+ * service in this app (`feedService`, `marketService`)  see
  * docs/DECISIONS.md.
  */
 export async function search(query: string): Promise<SearchResults> {
@@ -37,7 +37,7 @@ export async function search(query: string): Promise<SearchResults> {
   } catch (error) {
     if (env.isDev) {
       console.warn(
-        '[searchService] backend unreachable — using local mock search fixtures for development only.',
+        '[searchService] backend unreachable  using local mock search fixtures for development only.',
         error
       );
       return getMockSearchResults(query);

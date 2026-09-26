@@ -17,7 +17,7 @@ import { PrivySessionBridge } from '@/app/providers/PrivySessionBridge';
 import { ApiRequestError } from '@/services/api/client';
 
 // Wire TanStack Query's connectivity/focus signals to React Native's own
-// APIs — by default it assumes a browser (navigator.onLine, window focus
+// APIs  by default it assumes a browser (navigator.onLine, window focus
 // events), neither of which exist on-device. Module-level: these are
 // process-wide singletons, not per-render state.
 onlineManager.setEventListener((setOnline) => {
@@ -35,7 +35,7 @@ function onAppStateChange(status: AppStateStatus) {
 /**
  * Central place to register app-wide providers. `PrivyProvider` is always
  * mounted (even with an empty `appId` in local dev without credentials) so
- * every screen can unconditionally call Privy's hooks — `isPrivyConfigured`
+ * every screen can unconditionally call Privy's hooks  `isPrivyConfigured`
  * gates actual usage instead. See docs/WALLET.md.
  */
 export function AppProviders({ children }: PropsWithChildren) {
@@ -48,14 +48,14 @@ export function AppProviders({ children }: PropsWithChildren) {
             // metadata a longer one. This is the conservative default;
             // individual queries override it once they exist.
             staleTime: 30_000,
-            // A 404 means "this id doesn't exist in this resource" — a
-            // real, meaningful answer, not a transient failure — so
+            // A 404 means "this id doesn't exist in this resource"  a
+            // real, meaningful answer, not a transient failure  so
             // retrying it just delays `status` reaching `'error'` for no
             // benefit. Screens that branch on a 404 (e.g. a market-detail
             // route that isn't sure yet whether an id is a market or an
             // event) would otherwise sit on a loading state through the
             // full retry backoff first.
-            // 401/403 likewise won't fix themselves on an immediate retry —
+            // 401/403 likewise won't fix themselves on an immediate retry
             // the session token has to refresh first.
             retry: (failureCount, error) =>
               error instanceof ApiRequestError && [401, 403, 404].includes(error.status)

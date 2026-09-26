@@ -28,25 +28,25 @@ type ResultItem =
 
 /**
  * Search, and only search: a bottom-anchored search bar (matching the
- * reference this screen was modeled on — see docs/DECISIONS.md), and —
- * with no query — a "Recents" list of past searches. A resolved query
+ * reference this screen was modeled on  see docs/DECISIONS.md), and
+ * with no query  a "Recents" list of past searches. A resolved query
  * shows People + Markets together, no scope toggle. No discovery
- * content (trending/category strips live — or don't — on other tabs);
+ * content (trending/category strips live  or don't  on other tabs);
  * this screen does one thing.
  *
  * A bare "Search" page title + divider sits above the Recents/results
  * area (outside/above the "Recents" section header, which stays as its
- * own smaller label) — see docs/DECISIONS.md ("Decorated Top-3 Rank
+ * own smaller label)  see docs/DECISIONS.md ("Decorated Top-3 Rank
  * Numbers", which also covers this and the other main tabs' title
  * headers). The empty "no recent searches" state is centered in the
- * screen (not just top-aligned under the title) — `EmptyState` already
+ * screen (not just top-aligned under the title)  `EmptyState` already
  * centers its own content, but needs a `flex-1 items-center
  * justify-center` wrapper to center within the full available height.
  *
- * Recent searches can be cleared — a "Clear" action next to the
+ * Recent searches can be cleared  a "Clear" action next to the
  * "Recents" label removes all of them (`clearRecent`), and each row has
  * its own remove button (`removeRecent`) for deleting just that one
- * entry — see docs/DECISIONS.md ("Clearable Search History").
+ * entry  see docs/DECISIONS.md ("Clearable Search History").
  */
 export function SearchScreen() {
   const navigation = useNavigation();

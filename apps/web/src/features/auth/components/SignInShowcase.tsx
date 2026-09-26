@@ -6,7 +6,7 @@ import { CARD_SURFACE_CLASS } from '@/components/ui/cardSurface';
 
 /**
  * Left-column showcase panel shown next to the real sign-in form at
- * `lg:` and up — ported from the left column of
+ * `lg:` and up  ported from the left column of
  * `apps/dekstop/src/components/knew/sign-in.tsx`, restyled with this
  * app's own tokens (`--color-*` in `globals.css`) and Inter instead of
  * dekstop's placeholder oklch palette and "Work Sans"/"Instrument

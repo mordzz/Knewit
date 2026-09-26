@@ -6,22 +6,22 @@ export interface BottomSheetProps {
   onClose: () => void;
   children: ReactNode;
   /** Size to the content (capped at 75% of the screen, then scroll) instead
-   * of a fixed 75% height — same as mobile's `BottomSheet`. */
+   * of a fixed 75% height  same as mobile's `BottomSheet`. */
   fitContent?: boolean;
 }
 
 /**
- * Web equivalent of `apps/mobile/src/components/ui/BottomSheet` — a
+ * Web equivalent of `apps/mobile/src/components/ui/BottomSheet`  a
  * slide-up sheet anchored to the bottom of the app shell's own frame
- * (`absolute`, not `fixed` — see `Modal`'s comment on why), a CSS
+ * (`absolute`, not `fixed`  see `Modal`'s comment on why), a CSS
  * transform transition standing in for RN's `Animated.timing`.
- * Solid absolute black (`bg-background`) with the glass *edge* only —
- * a faint white border plus a brighter top edge — the same treatment
- * `Modal` shares; every non-overlay panel stays glass — see
+ * Solid absolute black (`bg-background`) with the glass *edge* only
+ * a faint white border plus a brighter top edge  the same treatment
+ * `Modal` shares; every non-overlay panel stays glass  see
  * docs/DECISIONS.md ("BottomSheet & Modal Solid Black + Glass Border").
  *
  * At `lg:` (desktop) the same component renders as a centered modal
- * instead — a viewport-fixed backdrop with a fade/scale panel that also
+ * instead  a viewport-fixed backdrop with a fade/scale panel that also
  * closes on Escape. Phone rendering is unchanged.
  */
 export function BottomSheet({ visible, onClose, children, fitContent = false }: BottomSheetProps) {

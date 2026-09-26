@@ -1,7 +1,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { removeProfileImage } from '@/features/profile/services/userService';
 
-/** Removes the avatar or banner on the server right away — same cache
+/** Removes the avatar or banner on the server right away  same cache
  * refresh as `useUploadProfileImage`, since the result is the same kind
  * of profile change. */
 export function useRemoveProfileImage() {

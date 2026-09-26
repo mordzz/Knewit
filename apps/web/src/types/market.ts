@@ -1,14 +1,14 @@
 import type { ID, ISODateString, Category } from '@/types/common';
 
-/** Mirrors `apps/frontend/src/types/market.ts`. Settlement is binary —
- * Polymarket resolves each token as paid (1) or not (0) — but a market
+/** Mirrors `apps/frontend/src/types/market.ts`. Settlement is binary
+ * Polymarket resolves each token as paid (1) or not (0)  but a market
  * may offer more than two tradeable **choices** (see `MarketChoice`);
  * this type is only used for settlement outcomes. */
 export type Outcome = 'YES' | 'NO';
 
 /**
  * One selectable choice of a market, exactly in Polymarket's own
- * `outcomes` array order — `index` is the position in that array (and in
+ * `outcomes` array order  `index` is the position in that array (and in
  * the parallel `clobTokenIds` array), so it is the stable identifier a
  * trade sends. `label` is display-only, straight from the API ("Yes",
  * "Manchester City", "Over", ...). See docs/DECISIONS.md
@@ -53,7 +53,7 @@ export interface Position {
   openedAt: ISODateString;
 }
 
-/** MVP trading is market-price buys only — no limit orders/order book. */
+/** MVP trading is market-price buys only  no limit orders/order book. */
 export interface Order {
   id: ID;
   userId: ID;

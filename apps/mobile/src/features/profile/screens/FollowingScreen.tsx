@@ -11,7 +11,7 @@ import { useFollowing } from '@/features/profile/hooks/useFollowing';
 import { colors } from '@/theme';
 import type { AppParamList } from '@/types/navigation';
 
-/** Paginated list of who `userId` follows — see `FollowersScreen` for
+/** Paginated list of who `userId` follows  see `FollowersScreen` for
  * why this is a separate, near-identical file rather than a shared
  * parameterized component. */
 export function FollowingScreen() {

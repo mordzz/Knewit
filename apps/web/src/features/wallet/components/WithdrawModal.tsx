@@ -258,7 +258,7 @@ export function WithdrawModal({
                 ? `Delivered as ${asset.symbol} on ${asset.chainName}.`
                 : latestBridge === "FAILED"
                   ? "The bridge couldn't deliver it. Contact support with the transaction below."
-                  : `On its way to ${asset.chainName} — about a minute.`}
+                  : `On its way to ${asset.chainName}  about a minute.`}
             </Text>
             {result.transactionHash ? (
               <a

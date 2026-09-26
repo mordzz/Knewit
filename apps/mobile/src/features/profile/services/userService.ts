@@ -17,7 +17,7 @@ import type {
 
 /**
  * Real endpoint first, dev-mock fallback on failure (read-only). `id`
- * accepts the literal `"me"` — see docs/API.md — used for both the
+ * accepts the literal `"me"`  see docs/API.md  used for both the
  * current user's own profile and any other user's, so `ProfileScreen`
  * needs exactly one fetch path regardless of which it's showing.
  */
@@ -27,7 +27,7 @@ export async function getUserProfile(id: string): Promise<UserProfile> {
   } catch (error) {
     if (env.isDev) {
       console.warn(
-        '[userService] backend unreachable — using a local mock profile for development only.',
+        '[userService] backend unreachable  using a local mock profile for development only.',
         error
       );
       return buildMockUserProfile(id);
@@ -37,13 +37,13 @@ export async function getUserProfile(id: string): Promise<UserProfile> {
 }
 
 /**
- * **No dev-mock fallback** — editing is a real, user-visible mutating
+ * **No dev-mock fallback**  editing is a real, user-visible mutating
  * action. The backend must independently validate `displayName`/
- * `handle`/`bio` (length, format, uniqueness) — client-side validation
+ * `handle`/`bio` (length, format, uniqueness)  client-side validation
  * in `EditProfileScreen` is UX only, never the actual integrity boundary
- * — see docs/DECISIONS.md.
+ *  see docs/DECISIONS.md.
  */
-/** Advisory username check (`GET /users/handle-available`) — the PATCH
+/** Advisory username check (`GET /users/handle-available`)  the PATCH
  * below still decides. See docs/API.md. */
 export async function checkHandleAvailability(handle: string): Promise<HandleAvailability> {
   return apiRequest<HandleAvailability>(endpoints.handleAvailable(handle));
@@ -65,7 +65,7 @@ export interface ProfileImageFile {
 }
 
 /**
- * Uploads a profile avatar/banner (multipart) — the backend stores it in
+ * Uploads a profile avatar/banner (multipart)  the backend stores it in
  * the public `profile-images` bucket and returns the updated profile.
  * **No dev-mock fallback**, same reasoning as `updateMyProfile`.
  */
@@ -100,7 +100,7 @@ async function getFollowList(
   } catch (error) {
     if (env.isDev) {
       console.warn(
-        '[userService] backend unreachable — using local mock follow list for development only.',
+        '[userService] backend unreachable  using local mock follow list for development only.',
         error
       );
       const start = cursor ? Number(cursor) : 0;
@@ -122,7 +122,7 @@ export function getFollowing(userId: string, cursor?: string): Promise<Paginated
 }
 
 /**
- * Follow suggestions — Knewit accounts the viewer doesn't follow yet,
+ * Follow suggestions  Knewit accounts the viewer doesn't follow yet,
  * most-followed first (`GET /users/suggestions`, five per page). Dev-mock
  * fallback is an
  * **empty page, never fabricated people**: a suggestion is a promise
@@ -136,7 +136,7 @@ export async function getFollowSuggestions(cursor?: string): Promise<Paginated<F
   } catch (error) {
     if (env.isDev) {
       console.warn(
-        '[userService] backend unreachable — returning no follow suggestions (never fabricated) for development only.',
+        '[userService] backend unreachable  returning no follow suggestions (never fabricated) for development only.',
         error
       );
       return { items: [], nextCursor: null };
@@ -146,11 +146,11 @@ export async function getFollowSuggestions(cursor?: string): Promise<Paginated<F
 }
 
 /**
- * **No dev-mock fallback** — following is a real, user-visible mutating
+ * **No dev-mock fallback**  following is a real, user-visible mutating
  * action (same reasoning as every other create/mutate call in this
  * codebase). The backend derives the follower from the authenticated
- * session and must reject `followerId === followingId` itself — the
- * client never sends a follower id at all, only the target — see
+ * session and must reject `followerId === followingId` itself  the
+ * client never sends a follower id at all, only the target  see
  * docs/DECISIONS.md.
  */
 export async function followUser(userId: string): Promise<FollowResult> {

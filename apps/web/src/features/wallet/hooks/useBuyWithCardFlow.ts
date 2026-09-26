@@ -25,7 +25,7 @@ export function useBuyWithCardFlow() {
     } catch (error) {
       // `buyWithCard`'s own poll can still resolve/reject after this
       // component unmounts (its `window.setInterval` isn't tied to React's
-      // lifecycle) — skip logging/surfacing a result nobody is looking at.
+      // lifecycle)  skip logging/surfacing a result nobody is looking at.
       if (!activeRef.current) return;
       if (isUserCancelledFunding(error)) return; // closing Privy's modal is not a failure
       if (error instanceof BuyFlowError) {

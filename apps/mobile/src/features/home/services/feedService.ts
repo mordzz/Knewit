@@ -22,9 +22,9 @@ async function getMockFeedPage(cursor?: string): Promise<Paginated<FeedItem>> {
 }
 
 /**
- * Tries the real backend first — this is the shipped code path, not a
+ * Tries the real backend first  this is the shipped code path, not a
  * fake one. Falls back to local mock fixtures only in dev, only when the
- * real request fails (no backend exists yet — see docs/API.md), and only
+ * real request fails (no backend exists yet  see docs/API.md), and only
  * with a loud console warning so it's never mistaken for real data.
  */
 export async function getFeed(cursor?: string, sort: 'trending' | 'latest' = 'trending'): Promise<Paginated<FeedItem>> {
@@ -38,7 +38,7 @@ export async function getFeed(cursor?: string, sort: 'trending' | 'latest' = 'tr
   } catch (error) {
     if (env.isDev) {
       console.warn(
-        '[feedService] backend unreachable — using local mock feed fixtures for development only.',
+        '[feedService] backend unreachable  using local mock feed fixtures for development only.',
         error
       );
       return getMockFeedPage(cursor);
@@ -48,14 +48,14 @@ export async function getFeed(cursor?: string, sort: 'trending' | 'latest' = 'tr
 }
 
 /**
- * The "Following" tab — Posts/Calls from accounts the caller follows
+ * The "Following" tab  Posts/Calls from accounts the caller follows
  * (Sprint 9's real Follow relationships), backend-filtered and
  * backend-ranked like `/feed` itself. **No dev-mock fallback that
- * fabricates content** — unlike `getFeed`'s generic mock feed (harmless
+ * fabricates content**  unlike `getFeed`'s generic mock feed (harmless
  * placeholder social content), a fake "following feed" would misrepresent
  * a real social relationship the user hasn't actually established in
  * mock mode; returns an honestly empty page instead, same principle as
- * Sprint 10's leaderboard mock fallback — see docs/DECISIONS.md.
+ * Sprint 10's leaderboard mock fallback  see docs/DECISIONS.md.
  */
 export async function getFollowingFeed(cursor?: string): Promise<Paginated<FeedItem>> {
   const query = cursor ? `?cursor=${encodeURIComponent(cursor)}` : '';
@@ -65,7 +65,7 @@ export async function getFollowingFeed(cursor?: string): Promise<Paginated<FeedI
   } catch (error) {
     if (env.isDev) {
       console.warn(
-        '[feedService] backend unreachable — returning no following-feed content (never fabricated) for development only.',
+        '[feedService] backend unreachable  returning no following-feed content (never fabricated) for development only.',
         error
       );
       return { items: [], nextCursor: null };

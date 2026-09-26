@@ -7,7 +7,7 @@ import { buildFeedItems, type PostRow } from '@/lib/social';
 import type { Paginated } from '@/types/common';
 import type { FeedItem } from '@/types/social';
 
-/** `GET /feed/following` — Posts/Calls from accounts the caller
+/** `GET /feed/following`  Posts/Calls from accounts the caller
  * follows; requires authentication (the endpoint is inherently about
  * "who you follow"). An authenticated caller who follows no one gets
  * an honestly empty page, never fabricated content. */

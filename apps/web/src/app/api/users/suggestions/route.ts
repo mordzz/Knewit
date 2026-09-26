@@ -6,7 +6,7 @@ import { nextCursor, parseCursor } from '@/lib/pagination';
 import type { Paginated } from '@/types/common';
 import type { FollowListItem } from '@/types/social';
 
-/** Page size for the tablet/desktop "Who to follow" rail — deliberately
+/** Page size for the tablet/desktop "Who to follow" rail  deliberately
  * smaller than `DEFAULT_PAGE_SIZE`: the rail shows five and expands in
  * fives via "Show more". */
 const RAIL_PAGE_SIZE = 5;
@@ -19,13 +19,13 @@ interface SuggestionRow {
 }
 
 /**
- * `GET /users/suggestions?cursor=` — follow suggestions for the
+ * `GET /users/suggestions?cursor=`  follow suggestions for the
  * authenticated caller: **Knewit accounts only** (never Polymarket
- * traders, who have no profile or follow relationship here — see
+ * traders, who have no profile or follow relationship here  see
  * docs/DECISIONS.md, "Round 6"), excluding the caller and anyone they
  * already follow, most-followed first. Backed by the
  * `user_follow_suggestions` SQL function (migration
- * `0009_follow_suggestions.sql`) — one query, no per-user count round
+ * `0009_follow_suggestions.sql`)  one query, no per-user count round
  * trips. Returns `Paginated<FollowListItem>`; `isFollowing`/`isSelf` are
  * `false` by construction, so both clients reuse `FollowListRow`
  * unchanged. A viewer who follows everyone gets an honestly empty page.

@@ -11,7 +11,7 @@ function assertEnabled() {
   }
 }
 
-/** `GET /wallet/card-deposit` — the embedded wallet a card purchase lands
+/** `GET /wallet/card-deposit`  the embedded wallet a card purchase lands
  * in and the native USDC waiting there: `{ address, usdcBalance }`. */
 export async function GET(request: Request) {
   return withErrorHandling(async () => {
@@ -21,7 +21,7 @@ export async function GET(request: Request) {
   });
 }
 
-/** `POST /wallet/card-deposit` — forwards that USDC to the user's bridge
+/** `POST /wallet/card-deposit`  forwards that USDC to the user's bridge
  * deposit address (it arrives as pUSD). `{ status: 'forwarded' | 'nothing',
  * amountUsd, transactionHash }`. */
 export async function POST(request: Request) {

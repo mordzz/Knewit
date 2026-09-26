@@ -5,15 +5,15 @@ import type { Paginated } from '@/types/common';
 import type { MarketListItem } from '@/types/social';
 
 /**
- * `GET /markets?cursor=&category=` — mirrors `marketService.getMarkets`
+ * `GET /markets?cursor=&category=`  mirrors `marketService.getMarkets`
  * (mobile) exactly: cursor-based pagination, optional category filter.
  * `category` is Polymarket's own tag **slug** (as returned by
- * `GET /categories`) — passed straight through to the upstream
+ * `GET /categories`)  passed straight through to the upstream
  * `tag_slug` filter, never derived from a display label (the label and
  * slug are different namespaces upstream: `pop-culture` ↔ "Culture").
  * Built on Polymarket's `/events` (not `/markets`) because only events
- * carry `tags` — see `gammaClient.fetchEventsPage`. Each event becomes
- * one or more `MarketListItem`s — see
+ * carry `tags`  see `gammaClient.fetchEventsPage`. Each event becomes
+ * one or more `MarketListItem`s  see
  * `normalize.ts::toMarketListItems` for the group-vs-flat decision and
  * the category-label rule.
  */

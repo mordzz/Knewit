@@ -21,7 +21,7 @@ const containerClass: Record<ButtonVariant, string> = {
   ghost: 'bg-transparent border border-border',
 };
 
-// `accent` is the brand yellow — white text on it is a legibility
+// `accent` is the brand yellow  white text on it is a legibility
 // problem, so primary uses the same dark inverse label as yes/no's own
 // bright backgrounds, not the default light-on-dark text.
 const labelColor: Record<ButtonVariant, 'textPrimary' | 'textInverse' | 'textSecondary'> = {
@@ -33,7 +33,7 @@ const labelColor: Record<ButtonVariant, 'textPrimary' | 'textInverse' | 'textSec
 };
 
 /**
- * Web equivalent of `apps/mobile/src/components/ui/Button` — same five
+ * Web equivalent of `apps/mobile/src/components/ui/Button`  same five
  * variants, same solid/glossy (not glass) fill, same border + shadow
  * glow tinted with the variant's own identity color.
  */

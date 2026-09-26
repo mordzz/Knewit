@@ -7,7 +7,7 @@ import { getCryptoDepositInfo } from '@/lib/deposits/cryptoDeposit';
 export const maxDuration = 60;
 
 /**
- * `GET /wallet/crypto-deposit` — the user's Polymarket bridge deposit
+ * `GET /wallet/crypto-deposit`  the user's Polymarket bridge deposit
  * addresses (`evm`/`svm`/`btc`/`tron`), every supported token/chain with its
  * minimum (`/supported-assets`), and recent bridge transfers (`/status`).
  * Deposits arrive as pUSD. `{ unavailable: true }` when the account has no

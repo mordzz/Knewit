@@ -11,7 +11,7 @@ import { useSession } from '@/hooks/useSession';
 
 /**
  * Shell for every authenticated page (Home, Markets, Search,
- * Leaderboard, Profile, …) — a direct conversion of `apps/mobile`'s
+ * Leaderboard, Profile, …)  a direct conversion of `apps/mobile`'s
  * `MainTabNavigator`: same bottom tab bar, same FAB, same single
  * scrolling column, rendered inside a phone-width frame (`max-w-2xl`,
  * bordered on both sides, pinned to the viewport height with its own
@@ -20,7 +20,7 @@ import { useSession } from '@/hooks/useSession';
  * take over instead of the bottom tab bar/FAB, the frame's border and
  * height lock go away so the page scrolls natively like a normal
  * website (the rail/header are `position: fixed`, so they stay pinned),
- * and no width cap is imposed here — each page owns its own width. Same "Hard
+ * and no width cap is imposed here  each page owns its own width. Same "Hard
  * Login Gate" the mobile app's `RootNavigator` enforces
  * (docs/DECISIONS.md): signed-out visitors are bounced to `/sign-in`,
  * which deliberately sits *outside* this route group (`app/sign-in/`,

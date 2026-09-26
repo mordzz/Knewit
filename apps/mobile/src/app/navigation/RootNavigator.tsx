@@ -12,11 +12,11 @@ import type { AppParamList } from '@/types/navigation';
 const Stack = createNativeStackNavigator<AppParamList>();
 
 /**
- * Hard login gate — by request, this supersedes the earlier "Main is
+ * Hard login gate  by request, this supersedes the earlier "Main is
  * always the initial route, browsing never requires a wallet" decision
  * (see docs/DECISIONS.md, "Hard Login Gate"). Until Privy has resolved
  * (`isReady`, mirrored from `usePrivy()` by `PrivySessionBridge`) this
- * renders a bare loading state, not the login form — deciding from
+ * renders a bare loading state, not the login form  deciding from
  * `isAuthenticated` alone before Privy has actually checked would flash
  * the login screen even for an already-logged-in user. Once ready:
  * signed out sees only `AuthNavigator` (no `Main`/`CreateCall` routes
@@ -51,7 +51,7 @@ export function RootNavigator() {
             {/* `Auth` is registered in both branches, so without a
                 changing `navigationKey` React Navigation would keep the
                 focused login-gate route after sign-in instead of moving
-                to `Main` — the user stayed stuck on SignIn until a cold
+                to `Main`  the user stayed stuck on SignIn until a cold
                 start. */}
             <Stack.Screen
               name="Auth"

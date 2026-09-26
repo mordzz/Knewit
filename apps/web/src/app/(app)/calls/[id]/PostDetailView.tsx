@@ -26,7 +26,7 @@ import { formatRelativeTime } from '@/lib/formatters';
 import type { CommentItem, CreateCommentInput, FeedItem, MarketSummary } from '@/types/social';
 
 /**
- * Direct conversion of `apps/mobile`'s `PostDetailScreen` — a
+ * Direct conversion of `apps/mobile`'s `PostDetailScreen`  a
  * position-backed Callout's detail. Threaded comments,
  * infinite scroll on the comment list, a composer that supports replying
  * to a specific top-level comment, and a header "…" that deletes the

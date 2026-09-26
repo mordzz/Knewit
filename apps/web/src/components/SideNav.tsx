@@ -40,12 +40,12 @@ const PROFILE_ITEM = {
 
 /**
  * Desktop/tablet-only sidebar rail (`hidden lg:flex`), ported from
- * `apps/dekstop/src/components/knew/app-shell.tsx`'s left nav — same
+ * `apps/dekstop/src/components/knew/app-shell.tsx`'s left nav  same
  * fixed rail, same active/inactive treatment. Built from `TAB_ITEMS`
  * (the same routes `BottomTabBar` uses on phone) but not a straight
  * copy of it: `Search` moves into `TopHeader`'s search field instead of
  * a nav link, and `Profile` is dropped in favor of the "Account" button
- * below (same destination, `/profile`) — replaced with `Wallet` and a
+ * below (same destination, `/profile`)  replaced with `Wallet` and a
  * new `Activity` entry (its own page now, split out of the Activity tab
  * that used to live inside Profile). This is the desktop counterpart
  * `BottomTabBar` renders on phone; the two never show at the same time

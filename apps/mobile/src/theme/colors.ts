@@ -1,6 +1,6 @@
 /**
  * Dark-first palette for the FOMO-inspired trading experience.
- * Light mode is deferred — see docs/DESIGN.md.
+ * Light mode is deferred  see docs/DESIGN.md.
  */
 export const colors = {
   background: '#000000',
@@ -30,19 +30,19 @@ export type ColorToken = keyof typeof colors;
 
 /**
  * Black-glass card surface raw values (`GlassSurface` `tone="dark"`,
- * e.g. `MarketAttachment`) — genuinely translucent, not solid: this
+ * e.g. `MarketAttachment`)  genuinely translucent, not solid: this
  * component briefly went fully solid ("Solid Surfaces, No 3D Bevel")
- * before that was scoped back down to `BottomSheet` only — every other
- * glass surface (this one included) stays real glassmorphism — see
+ * before that was scoped back down to `BottomSheet` only  every other
+ * glass surface (this one included) stays real glassmorphism  see
  * docs/DECISIONS.md ("Glassmorphism Restored Outside BottomSheet").
  * `fill` at 0.88 alpha is "near-opaque, not see-through" (the earlier
  * "too transparent" complaint) while still being a translucent tint,
- * not a flat color; `border`/`highlight` sell the glass edge — a faint
+ * not a flat color; `border`/`highlight` sell the glass edge  a faint
  * uniform border plus a brighter top-edge sheen (glossy shine, not a
  * full directional bevel). Kept out of `colors` itself (not a
  * `ColorToken`): every `ColorToken` is expected to work as a matching
  * `bg-`/`text-`/`border-` Tailwind class too (see `theme/tw.ts` and
- * `tailwind.config.js`), which these translucent rgba values don't —
+ * `tailwind.config.js`), which these translucent rgba values don't
  * they're only ever consumed as raw values in `style`, never `className`.
  */
 export const glass = {
@@ -53,10 +53,10 @@ export const glass = {
 
 /**
  * The shared "solid panel" recipe: absolute black fill with only the
- * *glass edge* — the treatment every overlay surface uses (`BottomSheet`,
+ * *glass edge*  the treatment every overlay surface uses (`BottomSheet`,
  * `Modal`, sign-in's panel) and now the Callout composer's cards too.
  * Spread into a `style` next to the per-site radius/padding, e.g.
- * `style={[solidPanel, { borderRadius: 16 }]}` — see docs/DECISIONS.md
+ * `style={[solidPanel, { borderRadius: 16 }]}`  see docs/DECISIONS.md
  * ("BottomSheet & Modal Solid Black + Glass Border" and "Create Callout
  * Composer Polish") so the edge values never drift between surfaces.
  */

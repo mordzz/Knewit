@@ -5,7 +5,7 @@ import type { UserPosition } from '@/types/social';
 
 /**
  * Real endpoint first, same pattern as `marketService.ts`'s read
- * endpoints — but the dev fallback here is deliberately an *empty*
+ * endpoints  but the dev fallback here is deliberately an *empty*
  * result, never fabricated position data. Trading can't actually
  * succeed without a real backend (see `tradingService.ts`), so there is
  * no honest position data to show in dev either; pretending otherwise
@@ -18,7 +18,7 @@ export async function getUserPositions(): Promise<UserPosition[]> {
   } catch (error) {
     if (env.isDev) {
       console.warn(
-        '[positionService] backend unreachable — returning no positions (never fabricated) for development only.',
+        '[positionService] backend unreachable  returning no positions (never fabricated) for development only.',
         error
       );
       return [];
@@ -29,7 +29,7 @@ export async function getUserPositions(): Promise<UserPosition[]> {
 
 /**
  * A single market's position for the authenticated user, or `null` if
- * they don't hold one — used by Market Detail's "My Position" section.
+ * they don't hold one  used by Market Detail's "My Position" section.
  * A 404 from the backend means "no position here," not an error.
  */
 export async function getMarketPosition(marketId: string): Promise<UserPosition | null> {
@@ -41,7 +41,7 @@ export async function getMarketPosition(marketId: string): Promise<UserPosition 
     }
     if (env.isDev) {
       console.warn(
-        '[positionService] backend unreachable — returning no position (never fabricated) for development only.',
+        '[positionService] backend unreachable  returning no position (never fabricated) for development only.',
         error
       );
       return null;

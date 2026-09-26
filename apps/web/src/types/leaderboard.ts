@@ -15,8 +15,8 @@ export interface LeaderboardMetric {
  * Carries no viewer-relative fields and no Knewit identity: this app's
  * users and Polymarket's users are two different populations
  * (docs/DECISIONS.md, "Round 6: Leaderboard Is a Read-Only Polymarket
- * Ranking — No Follow, No Profile Links"), so a row here is a ranked
- * Polymarket trader — not a profile this app can open, and not an account
+ * Ranking  No Follow, No Profile Links"), so a row here is a ranked
+ * Polymarket trader  not a profile this app can open, and not an account
  * anyone can follow. `user.id` is Polymarket's own `proxyWallet`, used
  * purely as a list key; it is never a `users` row id and never a
  * `/users/:id` or `/users/:id/follow` target.
@@ -28,7 +28,7 @@ export interface LeaderboardEntry {
 }
 
 /** The caller's own live standing in Polymarket's global ranking, used by
- * the profile read's `tradingVolume` lookup (`lib/leaderboard.ts`) — the
+ * the profile read's `tradingVolume` lookup (`lib/leaderboard.ts`)  the
  * leaderboard response itself carries no viewer-relative figure any more
  * (docs/DECISIONS.md, "Your Rank Removed From the Leaderboard"). */
 export interface LeaderboardSelf {

@@ -14,13 +14,13 @@ export interface TabRowProps<T extends string> {
   onChange: (key: T) => void;
   /** Horizontal-scrolling row of natural-width tabs (e.g. Markets'
    * category list) instead of a short, fixed set stretched to equal
-   * width — same distinction as mobile's `scroll` prop. */
+   * width  same distinction as mobile's `scroll` prop. */
   scroll?: boolean;
   className?: string;
 }
 
 /**
- * Web equivalent of `apps/mobile/src/components/ui/TabRow` — same
+ * Web equivalent of `apps/mobile/src/components/ui/TabRow`  same
  * bold-label + bottom-border-indicator shape, same single component
  * used everywhere the app switches between a small set of views. A
  * plain overflow-x-auto row replaces RN's `ScrollView horizontal`.

@@ -4,7 +4,7 @@ import type { ColorToken } from '@/theme/colors';
 
 /**
  * Constrained to the glyphs this app actually uses, rather than exposing
- * every Ionicons name — keeps icon usage consistent and typo-safe.
+ * every Ionicons name  keeps icon usage consistent and typo-safe.
  */
 export type IconName =
   | 'home'

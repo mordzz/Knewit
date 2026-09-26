@@ -7,12 +7,12 @@ import type { MarketSummary } from '@/types/social';
  * `posts.market_id` has a foreign key into our local `markets` table
  * (docs/DATABASE.md: "Market/Event rows are a cache of Polymarket
  * data"), but Phase 1 never wrote to it (pure live proxy, no caching
- * — see the web app README). Phase 2 needs the FK to actually
+ *  see the web app README). Phase 2 needs the FK to actually
  * hold when a Call/Post references a market, so this fetches the
  * market live (reusing Phase 1's Gamma client/normalizer) and
  * upserts a minimal cache row before the reference is allowed.
  *
- * Returns the live `MarketSummary` (full display fidelity — imageUrl,
+ * Returns the live `MarketSummary` (full display fidelity  imageUrl,
  * trending, etc., which the DB cache's minimal columns don't carry)
  * so callers expanding a `FeedItem.market` get the same shape
  * `GET /markets/:id` would return, not a stripped-down cached copy.
@@ -66,7 +66,7 @@ export async function getAndCacheMarketSummary(marketId: string): Promise<Market
 
 /** Cheaper re-expansion for a `Post` whose market was already cached
  * by a prior `getAndCacheMarketSummary` call (e.g. when listing many
- * posts) — reads the local cache instead of hitting Polymarket again
+ * posts)  reads the local cache instead of hitting Polymarket again
  * per row. Falls back to a live fetch (and re-caching) on a cache
  * miss, since the cache has no TTL/backfill job yet. */
 export async function getCachedOrLiveMarketSummary(marketId: string): Promise<MarketSummary | null> {
@@ -79,7 +79,7 @@ export async function getCachedOrLiveMarketSummary(marketId: string): Promise<Ma
     .eq('id', marketId)
     .maybeSingle();
 
-  // A row cached before the `choices` column existed has no choice list —
+  // A row cached before the `choices` column existed has no choice list
   // the UI renders choices, so fall back to a live fetch (and re-cache)
   // rather than serving a market with nothing to pick.
   const choices = Array.isArray(data?.choices) ? (data.choices as MarketSummary['choices']) : [];

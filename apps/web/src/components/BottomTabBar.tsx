@@ -38,7 +38,7 @@ export const TAB_ITEMS: TabItem[] = [
 ];
 
 /**
- * Direct conversion of `apps/mobile`'s `MainTabNavigator` bottom bar —
+ * Direct conversion of `apps/mobile`'s `MainTabNavigator` bottom bar
  * same five destinations, same icon-only style, same active/inactive
  * color split.
  */

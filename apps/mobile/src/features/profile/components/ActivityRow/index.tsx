@@ -18,7 +18,7 @@ export interface ActivityRowProps {
 /**
  * Renders exactly one of the four real, server-verified activity types
  * (see docs/DECISIONS.md, "Activity Types Limited to What This App Can
- * Actually Produce") — a `switch` on the discriminated `type`, so each
+ * Actually Produce")  a `switch` on the discriminated `type`, so each
  * branch only ever reads fields that variant actually has.
  */
 export function ActivityRow({ item, onOpenPost, onOpenMarket, onOpenUser }: ActivityRowProps) {

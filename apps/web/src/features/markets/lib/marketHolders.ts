@@ -18,7 +18,7 @@ function shortAddress(wallet: string): string {
 }
 
 /**
- * Polymarket's Data API is the source of truth for holders — our own
+ * Polymarket's Data API is the source of truth for holders  our own
  * `positions` table only ever contains trades this app executed, which
  * is why that table-backed version looked permanently empty. Maps each
  * holder's `outcomeIndex` onto the market's own choice label and only

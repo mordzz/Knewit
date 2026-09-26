@@ -8,10 +8,10 @@ import type { Paginated } from '@/types/common';
 import type { FeedItem } from '@/types/social';
 
 /**
- * `GET /feed` — Home's "For You" tab. docs/API.md's intended ranking
+ * `GET /feed`  Home's "For You" tab. docs/API.md's intended ranking
  * is "recency + likes + comments + follow relationship + verified
  * position + market activity" (see docs/DECISIONS.md, "Feed Ranking
- * Is a Backend Responsibility") — that full weighted formula isn't
+ * Is a Backend Responsibility")  that full weighted formula isn't
  * built in this pass; this orders by recency only, which is a strict
  * subset (a valid, if less engaging, ranking) rather than a
  * fabricated one. Revisit once there's enough real engagement data

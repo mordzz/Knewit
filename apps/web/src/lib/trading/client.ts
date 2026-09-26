@@ -16,9 +16,9 @@ export type UserSecureClient = Awaited<ReturnType<typeof createSecureClient>>;
  * wallet type (for these users: a Deposit Wallet, `walletType: 3`),
  * deploys it through Polymarket's gasless relayer when missing,
  * authenticates CLOB requests with the correct POLY_1271 binding, and
- * signs orders — all of which the older `clob-client` packages got
+ * signs orders  all of which the older `clob-client` packages got
  * wrong (docs/DECISIONS.md, "Trading Fixed: Official @polymarket/client").
- * Builder credentials are required — without them the client can't
+ * Builder credentials are required  without them the client can't
  * authenticate; the error says exactly which env vars to set.
  */
 export async function buildSecureClientForUser(walletId: string): Promise<UserSecureClient> {
@@ -29,7 +29,7 @@ export async function buildSecureClientForUser(walletId: string): Promise<UserSe
     throw new ApiError(
       500,
       'builder_keys_missing',
-      'Polymarket Builder API credentials are not configured (POLYMARKET_BUILDER_API_KEY/SECRET/PASSPHRASE) — see docs/WALLET.md.'
+      'Polymarket Builder API credentials are not configured (POLYMARKET_BUILDER_API_KEY/SECRET/PASSPHRASE)  see docs/WALLET.md.'
     );
   }
 

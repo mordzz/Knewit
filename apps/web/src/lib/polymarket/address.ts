@@ -4,9 +4,9 @@
  *
  * Addresses here are always 0x-prefixed 40-hex-character strings. No
  * checksum normalization is attempted: every writer of a wallet address
- * this backend compares against — Privy's linked-account API
+ * this backend compares against  Privy's linked-account API
  * (`lib/users.ts::fetchPrivyProfileHints`, `getPrimaryEthereumWallet`)
- * and Polymarket's Data API (`proxyWallet`) — returns lowercase hex, so
+ * and Polymarket's Data API (`proxyWallet`)  returns lowercase hex, so
  * lowercase is the project's canonical comparison form. `isWalletAddress`
  * accepts either case for *input* (a client could send EIP-55 checksummed
  * text) and `normalizeWalletAddress` folds it the same way every time.
@@ -21,7 +21,7 @@ export function normalizeWalletAddress(value: string): string {
   return value.trim().toLowerCase();
 }
 
-/** `0x1234…abcd` — the honest last-resort display handle for a Polymarket
+/** `0x1234…abcd`  the honest last-resort display handle for a Polymarket
  * trader who has no `userName`, never an invented one. */
 export function shortenWalletAddress(value: string): string {
   const address = value.trim();

@@ -12,10 +12,10 @@ import type {
  * Categories follow the API's own data, never a hardcoded taxonomy.
  * Polymarket exposes no canonical "category" field on events (the
  * documented `category`/`categories` fields are absent from real
- * responses — verified live), only an ordered `tags` list, so:
+ * responses  verified live), only an ordered `tags` list, so:
  *
  * - When the request is filtered (`preferredSlug` = the `tag_slug` the
- *   backend queried with), that tag wins — every event returned under a
+ *   backend queried with), that tag wins  every event returned under a
  *   category tab genuinely carries it, and this keeps the label
  *   consistent with the tab the user chose.
  * - Otherwise (Trending / search / single-market reads), the API's own
@@ -30,7 +30,7 @@ export function categoryFromTags(tags: GammaTag[], preferredSlug?: string): stri
 
 /**
  * Resolves which Polymarket CLOB token id a trade on `choiceIndex`
- * should use — `outcomes`/`clobTokenIds` are parallel JSON-encoded
+ * should use  `outcomes`/`clobTokenIds` are parallel JSON-encoded
  * arrays (verified live), so the index into `outcomes` (what the API
  * response's `MarketChoice.index` carries) is also the index into the
  * token list. Returns `null` for an out-of-range index, since a trading
@@ -55,7 +55,7 @@ function parseJsonArray(raw: string): string[] {
 
 /**
  * `outcomes`/`outcomePrices` are JSON-encoded parallel string arrays,
- * prices in the 0-1 range — this is the market's own list of tradeable
+ * prices in the 0-1 range  this is the market's own list of tradeable
  * choices, in the API's order, and is rendered as-is (never forced into
  * a fabricated Yes/No pair). See `MarketChoice`.
  */
@@ -64,7 +64,7 @@ export function parseChoices(market: GammaMarket): MarketChoice[] {
   const prices = parseJsonArray(market.outcomePrices).map((p) => Number(p));
 
   // Polymarket's tick sizes go down to 0.001/0.0001, so prices are kept
-  // as decimal cents (up to 4 dp) — rounding to whole cents would turn a
+  // as decimal cents (up to 4 dp)  rounding to whole cents would turn a
   // real 0.1c price into 0 (docs/DECISIONS.md, "Sub-Cent Prices").
   const toCents = (fraction: number | undefined) =>
     Number.isFinite(fraction) ? Number(((fraction as number) * 100).toFixed(4)) : 0;
@@ -80,7 +80,7 @@ export function parseChoices(market: GammaMarket): MarketChoice[] {
  * The legacy summary fields derived from `choices`: `isBinary` means the
  * two labels are literally "Yes"/"No" (the only case the app's
  * green/red pair maps to meaning), and `yesPrice`/`noPrice` then point
- * at whichever index each label has — for any other market they fall
+ * at whichever index each label has  for any other market they fall
  * back to the first two choices' prices so existing readers still get a
  * number.
  */
@@ -106,7 +106,7 @@ export function toMarketSummary(
   market: GammaMarket,
   category: string,
   eventLiquidity: number | null,
-  /** Child-image override from `childImageUrls` — present only for
+  /** Child-image override from `childImageUrls`  present only for
    * markets inside a multi-market event. */
   imageOverrides?: Map<string, string | null>,
   /** The parent event's id, passed only when that event has more than
@@ -119,7 +119,7 @@ export function toMarketSummary(
     id: market.id,
     question: market.question,
     // The short grouped-event label, when this market is one row of an
-    // event — the event page/hero prefer it over the long `question`.
+    // event  the event page/hero prefer it over the long `question`.
     label: market.groupItemTitle || null,
     parentEventId: parentEventId ?? null,
     category,
@@ -130,7 +130,7 @@ export function toMarketSummary(
     endDate: market.endDate,
     trending: market.featured,
     closed: market.closed,
-    // Polymarket's `closed` means "trading stopped," not "settled" —
+    // Polymarket's `closed` means "trading stopped," not "settled"
     // this backend doesn't yet have a reliable signal for the latter
     // (see docs/DATABASE.md's closed-vs-resolved distinction), so
     // `resolved` is left `undefined` rather than guessed from `closed`.
@@ -181,9 +181,9 @@ function toMarketGroupSummary(
  * `closed` means trading stopped, `archived` means it was pulled from
  * Polymarket's own lists, and `active === false` marks the placeholder
  * child markets Polymarket never lists (verified live: 554 of 560
- * inactive children carry no price at all — the "Party B"/"Other" rows
+ * inactive children carry no price at all  the "Party B"/"Other" rows
  * in elections). Individual invalid child markets inside an otherwise-
- * open event are dropped here — the entry point for every list surface
+ * open event are dropped here  the entry point for every list surface
  * (Markets tab, Search, Trending). Single-market reads
  * (`GET /markets/:id`) deliberately do NOT filter, so a link or an
  * older Callout can still open its detail page. */
@@ -193,7 +193,7 @@ export function isDiscoverable(market: GammaMarket): boolean {
 
 /**
  * A child market keeps its own API image unless it is the **event's own
- * image** — that one merely repeats the card/header and says nothing
+ * image**  that one merely repeats the card/header and says nothing
  * about the child, so it is dropped (`null`) and the row renders text
  * only. Sibling-shared art that differs from the event's (e.g. the
  * `Repetitive-markets/MLB.jpg` Polymarket gives every Spread/O-U row,
@@ -215,8 +215,8 @@ export function childImageUrls(
 /**
  * An event whose markets **all** carry a non-empty `groupItemTitle`
  * (verified live: e.g. "Donald Trump", "J.D. Vance" for "Republican
- * Presidential Nominee 2028") is a named-outcomes group — an election,
- * a threshold ladder, a matchup — and is emitted as one
+ * Presidential Nominee 2028") is a named-outcomes group  an election,
+ * a threshold ladder, a matchup  and is emitted as one
  * `{ kind: 'group' }` row (`MarketGroupSummary`) rather than one row
  * per market. This matters beyond presentation: some of these events
  * have 100+ markets (verified live), so flattening them would make a
@@ -231,7 +231,7 @@ export function toMarketListItems(event: GammaEvent, filterTagSlug?: string): Ma
   if (markets.length === 0) return [];
 
   const category = categoryFromTags(event.tags, filterTagSlug);
-  // Any event with more than one discoverable market is one group card —
+  // Any event with more than one discoverable market is one group card
   // a child market must never surface as a standalone card, including
   // the mixed events where the moneyline row lacks a `groupItemTitle`
   // (verified live: "Lions vs. Bills" has 315 such children).
@@ -270,7 +270,7 @@ export function toMarketDetail(
 }
 
 /** `Event`/`Market` (types/market.ts) are the normalized DB-shaped
- * entities `GET /events` returns — distinct from `MarketSummary`
+ * entities `GET /events` returns  distinct from `MarketSummary`
  * above, which is the denormalized feed/discovery shape. See
  * docs/DATABASE.md. */
 export function toDomainEvent(event: GammaEvent): DomainEvent {

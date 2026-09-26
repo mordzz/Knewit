@@ -9,8 +9,8 @@ export interface PersonResultProps {
 
 /**
  * Web equivalent of `apps/mobile/src/features/search/components/PersonResult`
- * — compact person row: avatar, display name, handle. No bio, follower
- * count, or verified badge — none exist in the data model yet.
+ *  compact person row: avatar, display name, handle. No bio, follower
+ * count, or verified badge  none exist in the data model yet.
  */
 export function PersonResult({ user, onPress }: PersonResultProps) {
   return (

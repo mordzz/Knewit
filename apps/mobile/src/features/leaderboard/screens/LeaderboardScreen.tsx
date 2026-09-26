@@ -12,11 +12,11 @@ import { colors, typography } from '@/theme';
 import type { LeaderboardEntry } from '@/types/leaderboard';
 
 /**
- * Ranked by **Trading Volume only** — not PnL, ROI, or win rate. This
+ * Ranked by **Trading Volume only**  not PnL, ROI, or win rate. This
  * app's data model doesn't track position closure/settlement outcomes
  * yet, so any PnL-based metric would have to be estimated or guessed;
  * Volume is the one figure a backend can compute honestly from executed
- * orders alone — see docs/DECISIONS.md ("Leaderboard Metric: Volume,
+ * orders alone  see docs/DECISIONS.md ("Leaderboard Metric: Volume,
  * Not PnL"). No period/category filter: the window is fixed at
  * all-time/overall (`ALL`/`OVERALL`), so a filter control would be exactly
  * the "kosmetik" filter the spec forbids.
@@ -26,13 +26,13 @@ import type { LeaderboardEntry } from '@/types/leaderboard';
  * is no following scope), no Follow button on a row, and no tapping a row
  * to open a profile: a row is a ranked Polymarket trader identified by
  * proxy wallet, never a Knewit account (docs/DECISIONS.md, "Round 6:
- * Leaderboard Is a Read-Only Polymarket Ranking — No Follow, No Profile
- * Links"). The old "Your Rank" self-standing row is gone too — removed by
+ * Leaderboard Is a Read-Only Polymarket Ranking  No Follow, No Profile
+ * Links"). The old "Your Rank" self-standing row is gone too  removed by
  * request, UI and backend alike (docs/DECISIONS.md, "Your Rank Removed
  * From the Leaderboard"), so this screen has no viewer-relative content at
  * all.
  *
- * Header is a bare page title (no subtitle) + a divider — see
+ * Header is a bare page title (no subtitle) + a divider  see
  * docs/DECISIONS.md ("Decorated Top-3 Rank Numbers").
  */
 export function LeaderboardScreen() {

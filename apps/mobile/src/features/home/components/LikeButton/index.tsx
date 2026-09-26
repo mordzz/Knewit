@@ -11,7 +11,7 @@ export interface LikeButtonProps {
 }
 
 /**
- * Purely presentational — real like/unlike state and the mutation live
+ * Purely presentational  real like/unlike state and the mutation live
  * in `useToggleLike` (Sprint 9), owned by whichever screen renders this
  * (`SocialActionBar`). `disabled` covers the brief window a mutation is
  * in flight, so a rapid double-tap can't fire two requests.

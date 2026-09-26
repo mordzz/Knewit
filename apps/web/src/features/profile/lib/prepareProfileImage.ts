@@ -1,6 +1,6 @@
 import type { ProfileImageKind } from '@/features/profile/lib/userService';
 
-/** Widest the stored image ever needs to be — same limits as mobile. */
+/** Widest the stored image ever needs to be  same limits as mobile. */
 const MAX_WIDTH: Record<ProfileImageKind, number> = { avatar: 512, banner: 1500 };
 const JPEG_QUALITY = 0.8;
 

@@ -3,7 +3,7 @@ import Svg, { Defs, LinearGradient, Path, Stop } from 'react-native-svg';
 import { colors } from '@/theme';
 
 /**
- * Lightweight pure-SVG sparkline — mobile port of `apps/web`'s
+ * Lightweight pure-SVG sparkline  mobile port of `apps/web`'s
  * `components/ui/Sparkline`, used by the Markets tab's binary card.
  * Renders an area + stroke from a series of numbers, green when the
  * series ends at or above where it started, red otherwise.

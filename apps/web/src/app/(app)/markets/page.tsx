@@ -14,7 +14,7 @@ import { PageHeader } from '@/components/ui/PageHeader';
 
 const SKELETON_ROWS = [0, 1, 2, 3, 4, 5];
 
-// Desktop/tablet swaps the phone's single-column list for a grid —
+// Desktop/tablet swaps the phone's single-column list for a grid
 // same `MarketCard`s, styled after `apps/dekstop`'s `MarketsPage`
 // (which browses markets in a grid too), each just wrapped in its own
 // bordered tile since `MarketCard` itself only carries a bottom border
@@ -24,9 +24,9 @@ const TILE_CLASS = 'flex flex-col';
 
 /**
  * Direct conversion of `apps/mobile`'s Markets tab (`MarketsScreen` +
- * `MarketCard`) — Trending is the default category, category tabs come
+ * `MarketCard`)  Trending is the default category, category tabs come
  * from the live `GET /categories` (Polymarket's own current taxonomy,
- * not a hardcoded list — see docs/DECISIONS.md, "Round 4"), and the
+ * not a hardcoded list  see docs/DECISIONS.md, "Round 4"), and the
  * list scrolls infinitely (an `IntersectionObserver` sentinel replaces
  * `FlatList`'s `onEndReached`) instead of a "Load more" button.
  */
@@ -37,7 +37,7 @@ export default function MarketsPage() {
   const isDesktop = useIsDesktop();
 
   // `key` is the API's tag slug (what the backend filters by); `label`
-  // is only what the tab shows — the two are different namespaces
+  // is only what the tab shows  the two are different namespaces
   // upstream (`pop-culture` ↔ "Culture"), never derived from each other.
   const categoryOptions: TabRowOption<string>[] = [
     { key: 'Trending', label: 'Trending' },

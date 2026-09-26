@@ -6,7 +6,7 @@ import { useWalletStore } from '@/store/wallet/walletStore';
 import { isPrivyConfigured } from '@/app/config/env';
 
 /**
- * Mounted once, inside `PrivyProvider` — pushes Privy's real
+ * Mounted once, inside `PrivyProvider`  pushes Privy's real
  * authentication/embedded-wallet state into `authStore`/`walletStore`
  * so the handful of call sites that need it synchronously outside a
  * component (or just prefer the existing `useAuth`/`useWallet` hooks)
@@ -15,16 +15,16 @@ import { isPrivyConfigured } from '@/app/config/env';
  *
  * Also mirrors Privy's own `isReady` (cold-start "have we finished
  * checking for an existing session yet" flag) into `authStore.isReady`
- * — `RootNavigator` waits on that before choosing between the login
+ *  `RootNavigator` waits on that before choosing between the login
  * gate and Main, see docs/DECISIONS.md ("Hard Login Gate").
  *
  * Deliberately does **not** call `useEmbeddedEthereumWallet().create()`
- * itself — wallet creation is a real, deliberate action, triggered by
+ * itself  wallet creation is a real, deliberate action, triggered by
  * `SignInScreen` right after a fresh login and by `WalletScreen`'s own
  * "Connect Wallet" button for an already-authenticated visitor who
  * still has none (the login-time call only ever fires once, at login
- * — it can't retroactively cover a returning session); this bridge
- * only ever mirrors state, never mutates Privy's side — see
+ *  it can't retroactively cover a returning session); this bridge
+ * only ever mirrors state, never mutates Privy's side  see
  * docs/DECISIONS.md.
  */
 export function PrivySessionBridge() {
@@ -43,12 +43,12 @@ export function PrivySessionBridge() {
   useEffect(() => {
     // Gated on Privy's own `isReady`: before Privy has finished checking
     // for an existing session, `user` is just falsy-by-default, not
-    // "confirmed logged out" — syncing `clearSession()` from that would
+    // "confirmed logged out"  syncing `clearSession()` from that would
     // tell `RootNavigator` to show the login gate for an instant even
     // when the person is actually already signed in. See
     // docs/DECISIONS.md ("Hard Login Gate"). Skipped entirely when Privy
     // isn't configured (`PrivyProvider` is still mounted with a blank
-    // `appId` in that case, per `AppProviders`' own doc comment) — its
+    // `appId` in that case, per `AppProviders`' own doc comment)  its
     // `isReady` has no real session to resolve and shouldn't gate
     // anything; `authStore.isReady` flips true immediately so the login
     // gate shows its honest "not configured" state instead of hanging.
@@ -56,7 +56,7 @@ export function PrivySessionBridge() {
 
     if (user) {
       // Our own backend's `User` record (handle/displayName/avatar)
-      // doesn't exist yet — see docs/WALLET.md — so `authStore.user`
+      // doesn't exist yet  see docs/WALLET.md  so `authStore.user`
       // stays `null`; only `isAuthenticated` reflects the real Privy
       // session. `setSession(null)` still flips `isAuthenticated` true.
       setSession(null);
@@ -77,7 +77,7 @@ export function PrivySessionBridge() {
 
     // A wallet identity change (including connect and disconnect) means
     // any cached position/trade data was fetched under a *different*
-    // wallet context — invalidate it rather than risk a trade or
+    // wallet context  invalidate it rather than risk a trade or
     // position display silently using stale data from a previous
     // session (Sprint 7: "user must not trade against a stale wallet
     // context"). Skipped on the very first resolution (mount) so this
@@ -94,7 +94,7 @@ export function PrivySessionBridge() {
     if (address) {
       setConnected(address);
     } else {
-      // Authenticated, but no embedded wallet created yet — a real,
+      // Authenticated, but no embedded wallet created yet  a real,
       // valid state (creation is explicit, see the component doc
       // above), distinct from "disconnected."
       setConnecting();

@@ -5,7 +5,7 @@ import type { FeedItem } from '@/types/social';
 
 /** Scans the feed's already-cached pages for this post, so opening a
  * Call/Post already visible in the feed renders instantly instead of a
- * blank skeleton — same `placeholderData` pattern as
+ * blank skeleton  same `placeholderData` pattern as
  * `features/markets/hooks/useMarket.ts`. */
 function findCachedPost(
   postId: string,
@@ -26,7 +26,7 @@ function findCachedPost(
   return undefined;
 }
 
-/** Call/Post Detail — always re-fetches its own copy (never trusts only
+/** Call/Post Detail  always re-fetches its own copy (never trusts only
  * the cached feed row), same reasoning as `useMarket`. */
 export function usePost(postId: string) {
   const queryClient = useQueryClient();

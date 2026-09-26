@@ -9,7 +9,7 @@ export interface MetricsSource {
 }
 
 /**
- * Web equivalent of `apps/mobile/src/utils/marketMetrics.ts` — same
+ * Web equivalent of `apps/mobile/src/utils/marketMetrics.ts`  same
  * "$2.4M Volume · $840K Liquidity · 12d left" footer, joining only
  * whichever metrics the data actually has.
  */
@@ -19,7 +19,7 @@ export function buildMarketMetrics(source: MetricsSource): string[] {
   if (source.liquidity != null) metrics.push(`${formatCompactUsd(source.liquidity)} Liquidity`);
 
   if (source.resolved) {
-    // Settled — a countdown/status note would be noise here.
+    // Settled  a countdown/status note would be noise here.
   } else if (source.closed) {
     metrics.push('Trading closed');
   } else if (source.endDate) {

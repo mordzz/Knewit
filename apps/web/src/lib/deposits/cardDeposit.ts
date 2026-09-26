@@ -66,7 +66,7 @@ export async function forwardCardDeposit(params: {
     (candidate) => candidate.chainId === CARD_DEPOSIT_CHAIN_ID && candidate.tokenAddress.toLowerCase() === CARD_DEPOSIT_TOKEN.toLowerCase()
   );
   const amountUsd = Number(balance) / 1e6;
-  // Below the bridge's minimum it would not be processed — leave it.
+  // Below the bridge's minimum it would not be processed  leave it.
   if (!asset || amountUsd < asset.minUsd) return { status: 'nothing', amountUsd, transactionHash: null };
 
   const to = (await getBridgeDepositAddresses(depositWallet))[asset.addressType];

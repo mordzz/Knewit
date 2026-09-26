@@ -26,7 +26,7 @@ export default function PrivacyPage() {
       <p>When you sign in, Privy creates an embedded wallet for you, and Polymarket creates a Deposit Wallet (your trading wallet) controlled by it. We store and process the public addresses of these wallets and of your Polymarket bridge deposit addresses. We do not receive or store your private keys or recovery phrases.</p>
       <p>To place trades, deposits, and withdrawals you request, you authorize Knewit’s server as a signer on your embedded wallet through Privy. Knewit uses that authorization only to carry out actions you start in the app.</p>
       <H3>Trading and transfer records</H3>
-      <p>We keep a record of the money-moving actions you request — buys, sells, withdrawals, and card-deposit transfers — including the market, outcome, amount, price, status, destination address and chain for withdrawals, and transaction identifiers. This record prevents duplicate transactions and lets us reconcile their outcome. Your balance, positions, and profit and loss are read live from Polymarket and are not stored by Knewit.</p>
+      <p>We keep a record of the money-moving actions you request  buys, sells, withdrawals, and card-deposit transfers  including the market, outcome, amount, price, status, destination address and chain for withdrawals, and transaction identifiers. This record prevents duplicate transactions and lets us reconcile their outcome. Your balance, positions, and profit and loss are read live from Polymarket and are not stored by Knewit.</p>
     </LegalSection>
 
     <LegalSection title="2. Automatically Collected Information">
@@ -54,12 +54,12 @@ export default function PrivacyPage() {
     <LegalSection title="5. Service Providers We Use">
       <p>We share information with the providers below only as needed to operate the Services. Each processes information under its own terms and privacy policy.</p>
       <List>
-        <li><strong>Privy</strong> — sign-in, embedded wallets, and transaction signing.</li>
-        <li><strong>Polymarket</strong> — market data, order placement, portfolio data, gasless wallet transactions, and the bridge used for deposits and withdrawals. Polymarket’s bridge relies on its own bridge provider to move funds between chains. Your Deposit Wallet address, bridge addresses, withdrawal destination, and order details are sent to Polymarket to carry out your requests. Orders placed through Knewit include Knewit’s Polymarket builder code, which attributes the order to Knewit.</li>
-        <li><strong>Supabase</strong> — our database and storage for profile and cover images.</li>
-        <li><strong>Vercel</strong> — hosting of the Knewit website and API.</li>
-        <li><strong>Polygon network nodes</strong> — reading public transaction receipts and balances.</li>
-        <li><strong>MoonPay or other card providers</strong> — only if card deposits are offered in your app. The provider collects payment and identity information directly under its own policies; Knewit does not receive your full card details.</li>
+        <li><strong>Privy</strong>  sign-in, embedded wallets, and transaction signing.</li>
+        <li><strong>Polymarket</strong>  market data, order placement, portfolio data, gasless wallet transactions, and the bridge used for deposits and withdrawals. Polymarket’s bridge relies on its own bridge provider to move funds between chains. Your Deposit Wallet address, bridge addresses, withdrawal destination, and order details are sent to Polymarket to carry out your requests. Orders placed through Knewit include Knewit’s Polymarket builder code, which attributes the order to Knewit.</li>
+        <li><strong>Supabase</strong>  our database and storage for profile and cover images.</li>
+        <li><strong>Vercel</strong>  hosting of the Knewit website and API.</li>
+        <li><strong>Polygon network nodes</strong>  reading public transaction receipts and balances.</li>
+        <li><strong>MoonPay or other card providers</strong>  only if card deposits are offered in your app. The provider collects payment and identity information directly under its own policies; Knewit does not receive your full card details.</li>
       </List>
       <p>We may also disclose information when required by law or legal process, or when reasonably necessary to protect Knewit, users, or others from fraud, abuse, or security threats.</p>
     </LegalSection>

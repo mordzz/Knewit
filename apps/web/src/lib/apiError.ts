@@ -1,4 +1,4 @@
-/** Mirrors `ApiError` in the mobile app's `src/types/api.ts` — every
+/** Mirrors `ApiError` in the mobile app's `src/types/api.ts`  every
  * error response from this backend must match `{ code, message }`
  * exactly, since `apiRequest` (mobile) parses the body against that
  * shape. See docs/API.md, "Conventions." */

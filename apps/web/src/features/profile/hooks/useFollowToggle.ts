@@ -10,10 +10,10 @@ interface ToggleFollowInput {
 
 /**
  * Web equivalent of `apps/mobile/src/features/profile/hooks/useFollowToggle.ts`
- * — plain mutate-then-reconcile (not optimistic, unlike `useToggleLike`).
+ *  plain mutate-then-reconcile (not optimistic, unlike `useToggleLike`).
  * On success, patches every place this target user's follow state is
  * cached: their own `['profile', userId]` entry and any row for them in
- * a cached Followers/Following list. No leaderboard patch — a
+ * a cached Followers/Following list. No leaderboard patch  a
  * leaderboard row is a Polymarket trader with no follow state
  * (docs/DECISIONS.md, "Round 6").
  */
@@ -41,7 +41,7 @@ export function useFollowToggle() {
       queryClient.setQueriesData<InfiniteData<Paginated<FollowListItem>>>({ queryKey: ['following'] }, patchList);
 
       // The right rail's suggestions are "accounts you don't follow yet"
-      // — refetch so a newly followed account leaves the list (and the
+      //  refetch so a newly followed account leaves the list (and the
       // next ones fill in).
       queryClient.invalidateQueries({ queryKey: ['follow-suggestions'] });
     },

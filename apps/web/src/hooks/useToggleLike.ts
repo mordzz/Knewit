@@ -10,7 +10,7 @@ interface ToggleLikeInput {
 
 /**
  * Web equivalent of `apps/mobile/src/features/home/hooks/useToggleLike.ts`
- * — optimistic like/unlike, same flip-then-reconcile-then-rollback
+ *  optimistic like/unlike, same flip-then-reconcile-then-rollback
  * shape: flips `liked`/`likeCount` in every cache holding this post the
  * instant the button is pressed, fires the real mutation, and rolls
  * back to the exact previous cache state on failure.

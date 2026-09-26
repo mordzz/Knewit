@@ -3,7 +3,7 @@ import type { Paginated } from '@/types/common';
 import type { FeedItem, LikeResult } from '@/types/social';
 
 /** Web equivalent of `apps/mobile/src/features/home/services/feedService.ts`
- * — real endpoint only, no dev-mock fallback (this backend is always
+ *  real endpoint only, no dev-mock fallback (this backend is always
  * live for the web app, unlike the mobile client's disconnected-dev
  * case). */
 export async function getFeed(cursor?: string, sort: 'trending' | 'latest' = 'latest'): Promise<Paginated<FeedItem>> {
@@ -14,7 +14,7 @@ export async function getFeed(cursor?: string, sort: 'trending' | 'latest' = 'la
   return apiRequest<Paginated<FeedItem>>(`/api/feed${query}`);
 }
 
-/** The "Following" tab — Posts/Calls from accounts the caller follows. */
+/** The "Following" tab  Posts/Calls from accounts the caller follows. */
 export async function getFollowingFeed(cursor?: string): Promise<Paginated<FeedItem>> {
   const query = cursor ? `?cursor=${encodeURIComponent(cursor)}` : '';
   return apiRequest<Paginated<FeedItem>>(`/api/feed/following${query}`);

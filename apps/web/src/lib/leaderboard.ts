@@ -5,7 +5,7 @@ import type { LeaderboardEntry, LeaderboardSelf } from '@/types/leaderboard';
 /**
  * Ranking → `LeaderboardEntry` mapping for `GET /leaderboard`, and the
  * own-standing lookup the profile read uses (`buildUserProfile`), so a rank
- * or a volume figure means exactly the same thing everywhere it appears —
+ * or a volume figure means exactly the same thing everywhere it appears
  * docs/DECISIONS.md, "Profile Trading Metric Matches Leaderboard's
  * Definition Exactly."
  *
@@ -14,20 +14,20 @@ import type { LeaderboardEntry, LeaderboardSelf } from '@/types/leaderboard';
  * this app's response shapes. It attaches nothing about this app's own
  * accounts: Polymarket's users and this app's users are two different
  * populations, so a ranked wallet is never resolved to a `users` row and
- * never synthesized into one — docs/DECISIONS.md, "Round 6: Leaderboard Is
- * a Read-Only Polymarket Ranking — No Follow, No Profile Links."
+ * never synthesized into one  docs/DECISIONS.md, "Round 6: Leaderboard Is
+ * a Read-Only Polymarket Ranking  No Follow, No Profile Links."
  */
 
 /**
  * One ranked trader, under Polymarket's own identity: their proxy wallet
  * address as the list key, and Polymarket's `userName`/`profileImage` (a
- * blank `userName` falls back to a shortened address — never an invented
+ * blank `userName` falls back to a shortened address  never an invented
  * handle). That `id` is **never** a `users` row id, and is never a profile
  * or follow target; it is a list key and nothing more, which is exactly
  * what "no profile links on the leaderboard" means in code.
  *
  * Returns `null` for a row Polymarket returned without a usable rank,
- * volume, or wallet address, rather than coercing it to `0` — a fabricated
+ * volume, or wallet address, rather than coercing it to `0`  a fabricated
  * "rank 0" or "$0" row is worse than an omitted one.
  */
 export function toLeaderboardEntry(row: PolymarketLeaderboardRow): LeaderboardEntry | null {
@@ -52,7 +52,7 @@ export function toLeaderboardEntry(row: PolymarketLeaderboardRow): LeaderboardEn
   };
 }
 
-/** The viewer's own rank, straight from Polymarket's ranking — never
+/** The viewer's own rank, straight from Polymarket's ranking  never
  * computed here from a single fetched page. */
 export function toLeaderboardSelf(row: PolymarketLeaderboardRow): LeaderboardSelf | null {
   const rank = Number(row.rank);

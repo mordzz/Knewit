@@ -16,7 +16,7 @@ function getPrivyClient(): PrivyClient {
  * attaches (`src/services/api/client.ts::apiRequest`) against Privy,
  * per docs/API.md's auth convention. Returns the Privy user id
  * (`sub`/`user_id` of the token) for endpoints that require a caller
- * identity — nothing in this Foundation phase calls this yet (markets/
+ * identity  nothing in this Foundation phase calls this yet (markets/
  * categories/events are public reads), but it's built now so Phase 2's
  * social endpoints (feed, likes, follows, calls) can use it directly.
  *
@@ -38,7 +38,7 @@ export async function requireAuth(request: Request): Promise<{ privyUserId: stri
 }
 
 /** Same as `requireAuth`, but returns `null` instead of throwing when
- * there's no/invalid token — for endpoints whose response shape
+ * there's no/invalid token  for endpoints whose response shape
  * depends on the viewer (e.g. a future `liked`/`isFollowing` field)
  * but that still work for an unauthenticated caller. Unused by any
  * Foundation-phase endpoint; kept alongside `requireAuth` since both

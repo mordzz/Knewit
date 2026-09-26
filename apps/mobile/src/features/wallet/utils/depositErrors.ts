@@ -35,10 +35,10 @@ export function getDepositErrorMessage(error: unknown): string {
     return 'This deposit method is not enabled yet. Please try the other method or contact support.';
   }
   if (code === 'trade_reconciliation_required' || code === 'withdrawal_pending_review') {
-    return "This may have already gone through — we're still verifying it. Check your balance before trying again.";
+    return "This may have already gone through  we're still verifying it. Check your balance before trying again.";
   }
   // The app's own pre-flight errors (not Privy's) already say what's wrong
-  // — show them as-is instead of the generic quote failure below.
+  //  show them as-is instead of the generic quote failure below.
   if (
     typeof candidate?.message === 'string' &&
     /trading wallet is not ready|temporarily unavailable|connect a wallet|still processing|conversion could not/i.test(

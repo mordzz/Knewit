@@ -7,18 +7,18 @@ import type {
 } from '@/types/social';
 
 /**
- * DEVELOPMENT-ONLY fixture data — same rule as
+ * DEVELOPMENT-ONLY fixture data  same rule as
  * `features/home/fixtures/feed.mock.ts`: used solely as a local fallback
  * when the real `/markets` backend is unreachable, never presented as
  * real data. `imageUrl` is intentionally omitted on every entry (not
- * fetching from arbitrary third-party image hosts for mock data) — this
+ * fetching from arbitrary third-party image hosts for mock data)  this
  * also exercises `MarketVisual`'s fixed-icon fallback path.
  *
  * Deliberately includes one `closed` (not yet resolved), one `resolved`,
  * one non-binary (`isBinary: false`), and one `outcomeLabels`-overridden
  * (crypto "Up/Down") single market, plus a mix of grouped markets (a
  * 2-row head-to-head and a 5-row list, to exercise the "+N more"
- * truncation) — otherwise those states would only ever be exercised
+ * truncation)  otherwise those states would only ever be exercised
  * once a real backend returns them, which defeats the point of having
  * fixtures at all. See docs/DECISIONS.md (Sprint 3, Markets visual
  * refresh).
@@ -30,7 +30,7 @@ type MockMarketTemplate = Omit<MarketSummary, 'id' | 'choices'> & {
 };
 
 /** A binary pair's choices, derived from the fixture's own yes/no fields
- * — the same shape a real `/markets` response carries. */
+ *  the same shape a real `/markets` response carries. */
 function binaryChoices(
   yesLabel: string,
   noLabel: string,
@@ -198,7 +198,7 @@ const RAW_GROUPS: MockGroupTemplate[] = [
     ],
   },
   {
-    title: 'FORZE Reload vs. UPGRADE — Game 2, Best of 3',
+    title: 'FORZE Reload vs. UPGRADE  Game 2, Best of 3',
     category: 'Sports',
     volume: 224_000,
     liquidity: 51_000,
@@ -229,11 +229,11 @@ function hashString(value: string): number {
 
 /**
  * Deterministically picks one of the base market templates based on the
- * given id/seed, rather than always the first one — so opening
+ * given id/seed, rather than always the first one  so opening
  * different mock market ids (from a Markets/Search list) shows
  * different mock detail content, including the closed/resolved/
  * non-binary templates, instead of the same active market every time.
- * Used by `marketService.getMarketById`'s dev-only fallback — see
+ * Used by `marketService.getMarketById`'s dev-only fallback  see
  * docs/DECISIONS.md (Sprint 5).
  */
 export function pickMockMarketTemplate(seed: string): Omit<MarketSummary, 'id'> {
@@ -241,7 +241,7 @@ export function pickMockMarketTemplate(seed: string): Omit<MarketSummary, 'id'> 
 }
 
 /** `category` is a live Polymarket tag slug (see `GET /categories`), so
- * the mock's display labels are compared slugified — never equal-by-eye. */
+ * the mock's display labels are compared slugified  never equal-by-eye. */
 function slugify(label: string): string {
   return label.toLowerCase().replace(/\s+/g, '-');
 }
@@ -285,7 +285,7 @@ export function buildMockGroups(size: number, category?: string): MarketGroupSum
 }
 
 /**
- * The combined Markets discovery feed — mixes single markets and
+ * The combined Markets discovery feed  mixes single markets and
  * grouped ones (every 3rd slot is a group) so the mock fallback
  * actually exercises both `MarketCard` layouts, the same way a real
  * `/markets` response mixing Polymarket's own market/event shapes
@@ -319,12 +319,12 @@ export function buildMockMarketList(size: number, category?: string): MarketList
 }
 
 /**
- * Search's mock fallback for the markets half of `/search` — filters
+ * Search's mock fallback for the markets half of `/search`  filters
  * the same base templates `buildMockMarkets`/`buildMockGroups` cycle
  * through, by a simple case-insensitive substring match against the
  * question/title, rather than maintaining a separate search-specific
  * fixture set. Deterministic ranking (source order), never a fabricated
- * relevance score — see docs/DECISIONS.md (Sprint 4).
+ * relevance score  see docs/DECISIONS.md (Sprint 4).
  */
 export function searchMockMarketList(query: string): MarketListItem[] {
   const needle = query.trim().toLowerCase();

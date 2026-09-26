@@ -13,7 +13,7 @@ export interface CallCardProps {
 
 /**
  * Web equivalent of `apps/mobile/src/features/home/components/CallCard`
- * — X-style feed row: borderless, full-width, separated from the next
+ *  X-style feed row: borderless, full-width, separated from the next
  * item by a hairline bottom border. Renders both variants of the
  * unified Post/Call model: a normal Post when `item.market` is null,
  * and a position-backed Call (with the Market Attachment) when it

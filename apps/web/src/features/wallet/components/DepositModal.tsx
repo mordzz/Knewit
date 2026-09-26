@@ -12,12 +12,12 @@ import { useCryptoDeposit, type CryptoDepositStatus } from '@/features/wallet/ho
 export interface DepositModalProps {
   visible: boolean;
   onClose: () => void;
-  /** The card flow (`useBuyWithCardFlow`) — offered only when card deposits are on. */
+  /** The card flow (`useBuyWithCardFlow`)  offered only when card deposits are on. */
   onBuyWithCard: () => void;
 }
 
 /**
- * Deposit entry point — a bottom sheet on phones, a centered dialog on
+ * Deposit entry point  a bottom sheet on phones, a centered dialog on
  * desktop (`BottomSheet`). With card deposits off it opens straight on
  * crypto; with them on it first asks card or crypto. Crypto goes through the
  * Polymarket bridge: pick a token and chain (`/supported-assets`), send to
@@ -216,7 +216,7 @@ function DepositStatus({ status }: { status: CryptoDepositStatus }) {
   );
 
   if (status === 'completed') return row('Deposit added to your balance.', 'good');
-  if (status === 'bridging') return row('Deposit detected — about a minute.', 'muted', true);
+  if (status === 'bridging') return row('Deposit detected  about a minute.', 'muted', true);
   if (status === 'failed') return row("Bridge couldn't process it. Check the token, chain and amount.", 'warn');
   if (status === 'waiting') return row('Waiting for your deposit. You can close this.', 'muted', true);
   return null;

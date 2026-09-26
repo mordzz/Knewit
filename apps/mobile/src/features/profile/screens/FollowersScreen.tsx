@@ -11,9 +11,9 @@ import { useFollowers } from '@/features/profile/hooks/useFollowers';
 import { colors } from '@/theme';
 import type { AppParamList } from '@/types/navigation';
 
-/** Paginated list of `userId`'s followers — see docs/SOCIAL-FEATURE.md.
+/** Paginated list of `userId`'s followers  see docs/SOCIAL-FEATURE.md.
  * `FollowingScreen` is the near-identical sibling of this file (its own
- * hook/empty copy), not a shared parameterized component — the two
+ * hook/empty copy), not a shared parameterized component  the two
  * differ only in which hook/copy they use, and duplicating that little
  * is clearer than a generic wrapper both routes would have to thread
  * `kind` through. */

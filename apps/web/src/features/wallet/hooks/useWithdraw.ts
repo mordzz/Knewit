@@ -23,7 +23,7 @@ export function useWithdraw() {
     }
     const result = await withdrawTradingBalance({ recipient: recipient.trim(), amount: amount.trim(), chainId, tokenAddress });
     // On-chain confirmation lags behind `sendTransaction` resolving, the same
-    // as the deposit flow — poll for a short window instead of a single
+    // as the deposit flow  poll for a short window instead of a single
     // immediate invalidate so the balance UI catches the update.
     await queryClient.invalidateQueries({ queryKey: ['wallet-balance'] });
     let attempts = 0;

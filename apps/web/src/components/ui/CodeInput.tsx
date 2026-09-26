@@ -7,7 +7,7 @@ export interface CodeInputProps {
   /** Current code (digits only, up to `length`). */
   value: string;
   onChange: (value: string) => void;
-  /** Number of boxes — 6 for Privy's email OTP. */
+  /** Number of boxes  6 for Privy's email OTP. */
   length?: number;
   disabled?: boolean;
 }
@@ -18,7 +18,7 @@ export interface CodeInputProps {
  * `autoComplete="one-time-code"` lets browsers/OSes offer the SMS/email
  * code. Digits only; non-digit input is ignored. Built for the sign-in
  * screen's dedicated OTP step (docs/DECISIONS.md, "Dedicated OTP Step on
- * Sign-In") — no external OTP/input dependency.
+ * Sign-In")  no external OTP/input dependency.
  */
 export function CodeInput({ value, onChange, length = 6, disabled }: CodeInputProps) {
   const inputsRef = useRef<(HTMLInputElement | null)[]>([]);

@@ -12,11 +12,11 @@ export interface AuthorRowProps {
 }
 
 /**
- * Author header used on Post/Call Detail — avatar, name, handle, and a
+ * Author header used on Post/Call Detail  avatar, name, handle, and a
  * live Follow/Following button. Fetches this author's profile itself
  * (`useProfile`) since Follow needs real, current per-viewer status
  * (`isFollowing`) that a `FeedItem.author` (just a `User`) doesn't
- * carry. Never shows Follow on the viewer's own author row — gated on
+ * carry. Never shows Follow on the viewer's own author row  gated on
  * the server-computed `isSelf`, not a client-side id comparison (see
  * docs/DECISIONS.md).
  */

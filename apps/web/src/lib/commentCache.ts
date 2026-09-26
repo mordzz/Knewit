@@ -3,7 +3,7 @@ import type { CommentItem } from '@/types/social';
 import type { Paginated } from '@/types/common';
 
 /** Web equivalent of `apps/mobile/src/features/home/utils/commentCache.ts`
- * — applies the same patch to a `CommentItem` wherever it's cached (a
+ *  applies the same patch to a `CommentItem` wherever it's cached (a
  * top-level comment in `['comments', postId]`, a reply in whichever
  * `['commentReplies', parentCommentId]` cache its thread was expanded
  * into). */

@@ -14,7 +14,7 @@ export interface RankNumberProps {
 
 /**
  * Web equivalent of `apps/mobile/src/features/leaderboard/components/RankNumber`
- * — gold/silver/bronze decoration for ranks 1-3, plain otherwise, used by
+ *  gold/silver/bronze decoration for ranks 1-3, plain otherwise, used by
  * `LeaderboardUserCard`'s dense list column.
  */
 export function RankNumber({ rank }: RankNumberProps) {

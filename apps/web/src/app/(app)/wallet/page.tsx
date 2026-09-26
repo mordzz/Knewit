@@ -26,22 +26,22 @@ import type { UserPosition } from '@/types/social';
 const ALLOCATION_TOP_N = 4;
 
 /**
- * Wallet — the one account/funds screen (the old separate Portfolio page
+ * Wallet  the one account/funds screen (the old separate Portfolio page
  * and its Profile row are gone; docs/DECISIONS.md, "Wallet Replaces
- * Portfolio"). Styled after `apps/dekstop`'s `PortfolioPage` — a stat
+ * Portfolio"). Styled after `apps/dekstop`'s `PortfolioPage`  a stat
  * row, an allocation breakdown, a recent-activity preview, and the open
- * positions list — as **one** responsive layout (mobile-first classes,
+ * positions list  as **one** responsive layout (mobile-first classes,
  * `lg:grid-cols-[1.5fr_1fr]` etc. only at `lg:`) rather than separate
  * phone/desktop branches, so both get the same "Portfolio" composition.
  * Real data only: dekstop's allocation splits by a fictional asset-class
- * taxonomy (Predictions/Crypto/Perps/Stocks) this app doesn't have —
+ * taxonomy (Predictions/Crypto/Perps/Stocks) this app doesn't have
  * here it's each open position's real share of total position value
  * instead. Activity remains available on its dedicated `/activity` page.
  *
  * **No manual setup buttons any more**: wallet creation and the signing
  * grant both run automatically through `useAutoWalletSetup` (the app
- * shell's setup gate renders until they finish) — see docs/DECISIONS.md,
- * "Automatic Wallet & Trading Setup — No Manual Buttons".
+ * shell's setup gate renders until they finish)  see docs/DECISIONS.md,
+ * "Automatic Wallet & Trading Setup  No Manual Buttons".
  */
 export default function WalletPage() {
   const router = useRouter();
@@ -60,7 +60,7 @@ export default function WalletPage() {
 
   // PnL per position: Polymarket's own figure when present, else
   // (current − entry) cents × shares. No positions is a real $0.00;
-  // positions whose live price is missing make the total unavailable ("—").
+  // positions whose live price is missing make the total unavailable ("").
   const pricedPositions = positions.filter((p) => positionPnl(p) != null);
   const totalPnl =
     positions.length === 0
@@ -69,9 +69,9 @@ export default function WalletPage() {
         ? pricedPositions.reduce((sum, p) => sum + positionPnl(p)!, 0)
         : null;
 
-  const balanceLabel = balance.isPending && address ? '···' : balance.data?.usdc != null ? formatUsd(balance.data.usdc) : '—';
+  const balanceLabel = balance.isPending && address ? '···' : balance.data?.usdc != null ? formatUsd(balance.data.usdc) : '';
   const pnlLabel =
-    totalPnl == null ? '—' : totalPnl === 0 ? formatUsd(0) : `${totalPnl > 0 ? '+' : '−'}${formatUsd(Math.abs(totalPnl))}`;
+    totalPnl == null ? '' : totalPnl === 0 ? formatUsd(0) : `${totalPnl > 0 ? '+' : '−'}${formatUsd(Math.abs(totalPnl))}`;
   const pnlColor = totalPnl == null || totalPnl === 0 ? 'textSecondary' : totalPnl > 0 ? 'yes' : 'no';
 
   return (
@@ -114,9 +114,9 @@ export default function WalletPage() {
               Setting up your wallet…
             </Text>
           )}
-          <Text variant="caption" color="textSecondary">
-            {tradingAddress ? 'Polymarket trading wallet · balance and funds shown here' : 'Resolving your trading wallet…'}
-          </Text>
+          {!tradingAddress && (
+            <Text variant="caption" color="textSecondary">Resolving your trading wallet…</Text>
+          )}
         </div>
         {tradingAddress ? (
           <div className="flex shrink-0 flex-wrap justify-end gap-2 lg:hidden">
@@ -195,7 +195,7 @@ export default function WalletPage() {
                   setSellNotice(null);
                   redeem.mutate(position.conditionId, {
                     onSuccess: (result) =>
-                      setSellNotice({ tone: 'yes', message: `Redeemed — ${formatUsd(result.amountUsd)} added to your balance.` }),
+                      setSellNotice({ tone: 'yes', message: `Redeemed  ${formatUsd(result.amountUsd)} added to your balance.` }),
                     onError: (error) => setSellNotice({ tone: 'danger', message: friendlySellError(error) }),
                   });
                 }}
@@ -244,7 +244,7 @@ export default function WalletPage() {
                   Current
                 </Text>
                 <Text variant="bodyStrong">
-                  {sellTarget.currentPrice != null ? formatProbability(sellTarget.currentPrice) : '—'}
+                  {sellTarget.currentPrice != null ? formatProbability(sellTarget.currentPrice) : ''}
                 </Text>
               </div>
             </div>
@@ -274,7 +274,7 @@ export default function WalletPage() {
                     onSuccess: (result) => {
                       setSellNotice({
                         tone: 'yes',
-                        message: `Position sold — ${formatUsd(result.proceedsUsd)} is now in your trading balance.`,
+                        message: `Position sold  ${formatUsd(result.proceedsUsd)} is now in your trading balance.`,
                       });
                       setSellTarget(null);
                     },
@@ -291,7 +291,7 @@ export default function WalletPage() {
 
       {authenticated ? (
         <Text variant="micro" color="textTertiary" className="block px-4 text-center lg:px-0">
-          Logging out ends your app session only — it doesn&apos;t delete your embedded wallet.
+          Logging out ends your app session only  it doesn&apos;t delete your embedded wallet.
         </Text>
       ) : null}
       {depositModal}
@@ -337,12 +337,12 @@ function StatCard({
 }
 
 /**
- * Real-data stand-in for `apps/dekstop`'s "Allocation" panel — that
+ * Real-data stand-in for `apps/dekstop`'s "Allocation" panel  that
  * version splits by a fictional asset-class taxonomy (Predictions/
  * Crypto/Perps/Stocks) this app has no data for. This splits by each
  * open position's own share of total position value instead (current
  * price when known, entry price otherwise), capped to the largest few
- * with a "+N more" remainder — same convention `MarketCard`'s
+ * with a "+N more" remainder  same convention `MarketCard`'s
  * `GroupCard` already uses for long outcome lists.
  */
 function AllocationPanel({ positions }: { positions: UserPosition[] }) {
@@ -456,7 +456,7 @@ function PositionRow({
               Current
             </Text>
             <Text variant="bodyStrong">
-              {position.currentPrice != null ? formatProbability(position.currentPrice) : '—'}
+              {position.currentPrice != null ? formatProbability(position.currentPrice) : ''}
             </Text>
           </div>
           <div className="order-4 lg:order-none">
@@ -471,7 +471,7 @@ function PositionRow({
             P/L
           </Text>
           <Text variant="bodyStrong" color={pnl == null ? 'textSecondary' : pnl >= 0 ? 'yes' : 'no'}>
-            {pnl == null ? '—' : `${pnl >= 0 ? '+' : '−'}${formatUsd(Math.abs(pnl))}`}
+            {pnl == null ? '' : `${pnl >= 0 ? '+' : '−'}${formatUsd(Math.abs(pnl))}`}
           </Text>
         </div>
         <div className="order-6 col-span-1 flex items-end justify-end lg:order-none lg:col-span-1 lg:mt-0">
@@ -492,7 +492,7 @@ function PositionRow({
   );
 }
 
-/** Never surfaces a raw backend error — the backend's own sell messages
+/** Never surfaces a raw backend error  the backend's own sell messages
  * are already user-facing, so known codes pass through and anything else
  * becomes one generic message. */
 function friendlySellError(error: unknown): string {

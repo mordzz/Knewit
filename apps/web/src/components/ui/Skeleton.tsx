@@ -9,7 +9,7 @@ export interface SkeletonProps {
 }
 
 /**
- * Web equivalent of `apps/mobile/src/components/ui/Skeleton` — same
+ * Web equivalent of `apps/mobile/src/components/ui/Skeleton`  same
  * pulsing placeholder shape, using a plain CSS animation
  * (`animate-pulse`, Tailwind's built-in) instead of RN's `Animated`
  * loop, since the DOM already has one for exactly this.

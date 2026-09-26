@@ -6,7 +6,7 @@ import type { UserPosition } from '@/types/social';
 
 /**
  * Portfolio reads straight from Polymarket's Data API (`/positions` via the
- * SDK's `listPositions`) for the user's Deposit Wallet — the venue is the
+ * SDK's `listPositions`) for the user's Deposit Wallet  the venue is the
  * source of truth for what's held, its average price, value, PnL and
  * whether it can be redeemed. Nothing about holdings is stored locally.
  */
@@ -17,7 +17,7 @@ const PAGE_SIZE = 100;
 
 type DataPosition = Awaited<ReturnType<ReturnType<typeof listPositions>['firstPage']>>['items'][number];
 
-/** Every position the wallet still holds something in — open ones, and
+/** Every position the wallet still holds something in  open ones, and
  * resolved winners waiting to be redeemed. Resolved losers (worth $0) are
  * left out. */
 export async function listHeldPositions(depositWallet: string, conditionId?: string): Promise<DataPosition[]> {
@@ -56,7 +56,7 @@ export async function resolveMarketIds(conditionIds: string[]): Promise<Map<stri
 }
 
 /** Data API position → the `UserPosition` shape both clients render. The
- * id is the outcome token (asset) id — what sell/redeem/callouts take. */
+ * id is the outcome token (asset) id  what sell/redeem/callouts take. */
 export function toUserPosition(position: DataPosition, marketId: string | undefined): UserPosition {
   const cents = (value: unknown) => Number((Number(value) * 100).toFixed(4));
   return {

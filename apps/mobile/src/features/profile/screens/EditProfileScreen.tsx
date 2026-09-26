@@ -28,10 +28,10 @@ const HANDLE_RE = /^[a-z0-9_]{3,20}$/;
 /**
  * Edit Profile, laid out like the Callout composer (same solid-panel
  * cards, same close + title + primary-action header): banner and avatar
- * pickers, then name, username (lowercase, unique), and bio. Images
+ * pickers, then name, handle (lowercase, unique), and bio. Images
  * upload immediately through `POST /users/me/images`; Save sends the
  * text fields via `PATCH /users/me` (docs/API.md). Client-side
- * validation is UX only — the backend independently validates format,
+ * validation is UX only  the backend independently validates format,
  * length, and uniqueness.
  */
 export function EditProfileScreen() {
@@ -52,7 +52,7 @@ export function EditProfileScreen() {
   const [bio, setBio] = useState('');
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [bannerUrl, setBannerUrl] = useState<string | null>(null);
-  // Tracks which profile id the form was last seeded from — the
+  // Tracks which profile id the form was last seeded from  the
   // documented React pattern for "reset derived state when an input
   // changes" (https://react.dev/learn/you-might-not-need-an-effect),
   // called during render rather than in a `useEffect` so it re-renders
@@ -131,7 +131,7 @@ export function EditProfileScreen() {
     });
   }
 
-  /** Saves only the new username — name/bio are sent as they are on the
+  /** Saves only the new username  name/bio are sent as they are on the
    * server, so unsaved edits in the form stay unsaved until Save. */
   function saveUsername(newHandle: string) {
     if (profile.status !== 'success') return;
@@ -307,7 +307,7 @@ export function EditProfileScreen() {
 
               <View className="border-b border-white/10" />
 
-              {/* A large, clearly labelled row — the actual editing happens in
+              {/* A large, clearly labelled row  the actual editing happens in
                   UsernameSheet, docked above the keyboard. */}
               <Pressable
                 onPress={() => {
@@ -316,11 +316,11 @@ export function EditProfileScreen() {
                 }}
                 className="min-h-14 flex-row items-center gap-3 py-1 active:opacity-70"
                 accessibilityRole="button"
-                accessibilityLabel={`Username @${handle}. Change username`}
+                accessibilityLabel={`Handle @${handle}. Change handle`}
               >
                 <View className="flex-1 gap-0.5">
                   <Text variant="caption" color="textSecondary">
-                    Username
+                    Handle
                   </Text>
                   <Text variant="bodyStrong" numberOfLines={1}>
                     @{handle}
@@ -435,12 +435,12 @@ export function EditProfileScreen() {
   );
 }
 
-/** Never surfaces a raw backend error — maps known cases to honest,
+/** Never surfaces a raw backend error  maps known cases to honest,
  * specific copy and anything else to one generic message. */
 function friendlyEditError(message: string | null): string {
   if (!message) return "Couldn't save your changes right now. Please try again.";
   if (/network/i.test(message)) {
-    return 'Network error — check your connection and try again.';
+    return 'Network error  check your connection and try again.';
   }
   if (
     /username is already taken|already used by a polymarket trader|couldn't verify username with polymarket/i.test(

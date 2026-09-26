@@ -4,7 +4,7 @@ import type { Paginated } from '@/types/common';
 
 /**
  * Web equivalent of `apps/mobile/src/features/home/utils/feedCache.ts`
- * — applies the same patch to a `FeedItem` wherever it's cached
+ *  applies the same patch to a `FeedItem` wherever it's cached
  * (`['feed']`'s infinite-query pages and `['post', id]`'s single-post
  * detail query), so a like/comment-count change never visibly disagrees
  * between the feed and the detail page. Used for both optimistic
@@ -38,7 +38,7 @@ export function patchFeedItem(
   return { previousDetail, previousFeedPages };
 }
 
-/** Restores exactly what `patchFeedItem` returned — rolls back an
+/** Restores exactly what `patchFeedItem` returned  rolls back an
  * optimistic update when the real mutation fails. */
 export function restoreFeedItem(
   queryClient: QueryClient,

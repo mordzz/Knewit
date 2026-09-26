@@ -19,11 +19,11 @@ import type { UserPosition } from '@/types/social';
 const MAX_POST_LENGTH = 280;
 
 /**
- * The Callout composer — X/Twitter-style layout (avatar + inline input,
+ * The Callout composer  X/Twitter-style layout (avatar + inline input,
  * Cancel/Publish in the top bar rather than a full-width bottom button).
  * There is no longer a Post/Call choice (see docs/DECISIONS.md,
  * superseding the earlier unified Post/Call composer): a callout
- * **always** requires an attached market position — only someone who has
+ * **always** requires an attached market position  only someone who has
  * actually bought a position can publish one, enforced here by keeping
  * Publish disabled until one is selected from `PositionPickerSheet`
  * (which itself gates on wallet connection and an honest "no positions
@@ -32,7 +32,7 @@ const MAX_POST_LENGTH = 280;
  * Fake Publish Success"), and the "✓ Verified Position" badge only ever
  * appears on a callout once the backend has actually returned one
  * (rendered by `MarketAttachment` on the feed after this screen closes)
- * — this screen itself never shows that badge speculatively.
+ *  this screen itself never shows that badge speculatively.
  */
 export function CreateCallScreen() {
   const navigation = useNavigation();
@@ -155,7 +155,7 @@ export function CreateCallScreen() {
               <View className="flex-1 gap-0.5">
                 <Text variant="bodyStrong">Attach your position</Text>
                 <Text variant="caption" color="textSecondary">
-                  Only a position you hold can become a Callout — pick one to continue.
+                  Only a position you hold can become a Callout  pick one to continue.
                 </Text>
               </View>
               <Icon name="chevron-forward" size={18} color="textTertiary" />
@@ -180,7 +180,7 @@ export function CreateCallScreen() {
 }
 
 /**
- * Preview only — never claims "Verified" here. The badge that matters
+ * Preview only  never claims "Verified" here. The badge that matters
  * is `MarketAttachment`'s, rendered on the feed from the backend's own
  * response after a successful publish, not this pre-publish preview.
  */
@@ -234,12 +234,12 @@ function SelectedPositionCard({
   );
 }
 
-/** Never surfaces a raw backend error — maps known cases to honest,
+/** Never surfaces a raw backend error  maps known cases to honest,
  * specific copy and anything else to one generic message. */
 function friendlyPublishError(message: string | null): string {
   if (!message) return "Couldn't publish this right now. Please try again.";
   if (/network/i.test(message)) {
-    return 'Network error — check your connection and try again.';
+    return 'Network error  check your connection and try again.';
   }
   if (/position/i.test(message)) {
     return "We couldn't verify this position. Please try again.";

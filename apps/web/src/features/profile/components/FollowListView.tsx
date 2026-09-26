@@ -13,7 +13,7 @@ import { getFollowers, getFollowing } from '@/features/profile/lib/userService';
 
 /**
  * Direct conversion of `apps/mobile`'s `FollowersScreen`/`FollowingScreen`
- * — same back-button + title header, same `FollowListRow`, same
+ *  same back-button + title header, same `FollowListRow`, same
  * infinite scroll. Mobile keeps these as two near-identical files; this
  * stays one component parameterized by `kind`, matching the web
  * project's own established convention for this pair.

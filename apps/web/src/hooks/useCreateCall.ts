@@ -2,7 +2,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { createCall } from '@/lib/postService';
 
 /** Web equivalent of `apps/mobile/src/features/home/hooks/useCreateCall.ts`
- * — same invalidation: the feed, the author's own Profile tabs/counters,
+ *  same invalidation: the feed, the author's own Profile tabs/counters,
  * and the referenced market's activity list. */
 export function useCreateCall() {
   const queryClient = useQueryClient();

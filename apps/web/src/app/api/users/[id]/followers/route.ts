@@ -15,7 +15,7 @@ interface FollowListRow {
   is_self: boolean;
 }
 
-/** `GET /users/:id/followers` — accounts following this user. The page,
+/** `GET /users/:id/followers`  accounts following this user. The page,
  * the users, and the viewer's own follow state come from one
  * `user_follow_list` query (migration `0010_single_query_reads.sql`;
  * docs/DECISIONS.md, "Single-Query Read Paths"). */

@@ -11,8 +11,8 @@ export interface ModalProps {
  * A centered dialog sharing the same solid surface as `BottomSheet`:
  * absolute black (`colors.background`, #000000) with the glass *edge*
  * recipe (`glass.border` + a brighter `glass.highlight` top edge). It no
- * longer uses `GlassSurface` — non-overlay cards/panels stay real
- * glassmorphism — see docs/DECISIONS.md ("BottomSheet & Modal Solid
+ * longer uses `GlassSurface`  non-overlay cards/panels stay real
+ * glassmorphism  see docs/DECISIONS.md ("BottomSheet & Modal Solid
  * Black + Glass Border"). For a bottom-anchored sheet, use
  * `components/ui/BottomSheet` instead.
  */

@@ -3,7 +3,7 @@ import type { Signer } from '@polymarket/client';
 import { encodeFunctionData, erc20Abi } from 'viem';
 import type { UserSecureClient } from '@/lib/trading/client';
 
-/** Polymarket USD — the trading collateral held in the Deposit Wallet. */
+/** Polymarket USD  the trading collateral held in the Deposit Wallet. */
 export const POLYMARKET_PUSD = '0xC011a7E12a19f7B1f670d46F03B03f3342E82DFB' as const;
 
 async function submitGaslessCalls(
@@ -27,7 +27,7 @@ async function submitGaslessCalls(
 }
 
 /** Send pUSD from the Deposit Wallet to a Polymarket bridge withdrawal
- * address — the bridge takes pUSD directly and delivers the destination
+ * address  the bridge takes pUSD directly and delivers the destination
  * token (docs.polymarket.com/trading/bridge/withdraw). */
 export async function transferPusd(
   client: UserSecureClient,

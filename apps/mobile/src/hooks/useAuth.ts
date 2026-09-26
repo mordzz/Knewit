@@ -5,9 +5,9 @@ import { isPrivyConfigured } from '@/app/config/env';
 /**
  * Thin, stable hook wrapper around authStore so screens don't import the
  * store directly. `isAuthenticated`/`user`/`isReady` are kept in sync
- * with Privy's real auth state by `PrivySessionBridge` — see
+ * with Privy's real auth state by `PrivySessionBridge`  see
  * docs/WALLET.md. `isReady` is what `RootNavigator` waits on before
- * deciding between the login gate and Main — see docs/DECISIONS.md
+ * deciding between the login gate and Main  see docs/DECISIONS.md
  * ("Hard Login Gate").
  *
  * `canUseApp` mirrors the authenticated Privy state and is the stable
@@ -33,16 +33,16 @@ export function useAuth() {
 /**
  * For non-React call sites (the API client) that need the current
  * session token without subscribing to store updates. Reads fresh from
- * Privy every call rather than caching — Privy's own docs recommend
+ * Privy every call rather than caching  Privy's own docs recommend
  * this exact pattern ("call anytime a token is needed, don't cache the
  * response"), and it means no session token is ever duplicated into
- * Zustand — see docs/DECISIONS.md.
+ * Zustand  see docs/DECISIONS.md.
  *
  * `getAccessToken` (Privy's top-level export) is documented as
  * deprecated in favor of a `client.getAccessToken()` instance method,
  * but remains the supported way to reach a token from outside a
  * component tree when the app only ever mounts one implicit
- * `PrivyProvider` (this app's case) — see docs/WALLET.md. Returns
+ * `PrivyProvider` (this app's case)  see docs/WALLET.md. Returns
  * `null` (never throws past this boundary) when Privy isn't configured
  * or there's no active session, so a missing token degrades to an
  * unauthenticated request rather than failing the whole call.

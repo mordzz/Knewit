@@ -6,7 +6,7 @@ const HANDLE_RE = /^[a-z0-9_]{3,20}$/;
 const CHECK_DEBOUNCE_MS = 400;
 
 /**
- * Live "is this username free?" check — same as mobile's hook: waits until
+ * Live "is this username free?" check  same as mobile's hook: waits until
  * typing pauses, skips the current handle and invalid input, and reports
  * `isChecking` through the debounce gap so a stale "available" never shows.
  */

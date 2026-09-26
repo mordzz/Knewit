@@ -12,7 +12,7 @@ export function Avatar({ uri, fallbackLabel, size = 40 }: AvatarProps) {
 
   if (uri) {
     return (
-      // Arbitrary external avatar host — not worth a next.config
+      // Arbitrary external avatar host  not worth a next.config
       // remotePatterns entry for a URL this backend doesn't control.
       // eslint-disable-next-line @next/next/no-img-element
       <img

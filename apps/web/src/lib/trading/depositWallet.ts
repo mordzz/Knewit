@@ -3,7 +3,7 @@ import { getPrimaryEthereumWallet } from '@/lib/users';
 import { buildSecureClientForUser } from '@/lib/trading/client';
 
 /**
- * The user's Polymarket Deposit Wallet address — where trading funds live
+ * The user's Polymarket Deposit Wallet address  where trading funds live
  * and what the bridge delivers pUSD to. Resolved once through the secure
  * client (which also deploys the wallet if needed) and kept on the user row
  * (`users.deposit_wallet_address`) so later reads skip the signing client.

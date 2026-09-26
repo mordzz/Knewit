@@ -201,8 +201,8 @@ export default function DocsPage() {
         </List>
         <h3 className={subheadingClass}>Fund your wallet</h3>
         <p>
-          Select Deposit from Wallet, Settings, or the app header. Pick a Token and a Chain from the two dropdowns —
-          each chain lists its minimum deposit — then send exactly that token on that chain to the address shown (copy
+          Select Deposit from Wallet, Settings, or the app header. Pick a Token and a Chain from the two dropdowns
+          each chain lists its minimum deposit  then send exactly that token on that chain to the address shown (copy
           it or scan the QR code). Deposits go through Polymarket’s bridge and arrive as pUSD, your trading balance,
           usually within a minute or two.
         </p>
@@ -220,7 +220,7 @@ export default function DocsPage() {
         <p>
           Withdraw uses the same Token and Chain pickers. Enter the recipient address on that chain and an amount in
           USD; Knewit shows what the recipient should receive and the route cost before you confirm. Review the full
-          address and chain — Knewit can check an address’s format, but not who owns it. Transfers are public and
+          address and chain  Knewit can check an address’s format, but not who owns it. Transfers are public and
           irreversible.
         </p>
         <h3 className={subheadingClass}>Search, profiles, and following</h3>
@@ -375,7 +375,7 @@ export default function DocsPage() {
         />
         <p>
           Only send the token and chain you selected, and at least the minimum. Bridge costs come out of the deposit.
-          If a deposit fails or you sent the wrong token, contact support with the transaction hash — Polymarket
+          If a deposit fails or you sent the wrong token, contact support with the transaction hash  Polymarket
           provides a recovery process for some mistakes, but recovery is not guaranteed.
         </p>
       </LegalSection>
@@ -469,7 +469,7 @@ export default function DocsPage() {
             ['“Deposit detected” for a while', 'The bridge is processing the transfer.', 'Wait a few minutes. Bitcoin and busy networks can take longer.'],
             ['Bridge couldn’t process it', 'The token, chain, or amount was not supported, or the amount was below the minimum.', 'Contact support with the transaction hash; do not send the same deposit again.'],
             ['A balance has not updated', 'The deposit or its balance update may still be processing.', 'Use Check now, then refresh. Avoid sending a second deposit while the first is pending.'],
-            ['A transfer is pending', 'The transfer has been submitted but is not yet final.', 'Keep the transaction reference, wait for the status to update, and do not submit the same transfer again.'],
+            ['A transfer is pending', 'The transfer has been submitted and is processing.', 'Keep the transaction reference, wait for the status to update, and do not submit the same transfer again.'],
           ]}
         />
         <p>
@@ -495,9 +495,9 @@ export default function DocsPage() {
             ['Implied probability', 'A probability-style interpretation of market price; it is not a guaranteed forecast.'],
             ['Liquidity', 'Availability of trading interest near a displayed price, which can affect execution.'],
             ['Order book', 'Buy and sell interest used to estimate a market order’s execution price.'],
-            ['Position', 'An outcome exposure held in a connected trading account or represented in demo data.'],
+            ['Position', 'An outcome exposure held in a connected trading account.'],
             ['Unrealized P/L', 'Estimated profit or loss on an open position that has not been sold.'],
-            ['Trading balance (pUSD)', 'Polymarket USD held in your Polymarket Deposit Wallet — what trades spend and what deposits are credited as.'],
+            ['Trading balance (pUSD)', 'Polymarket USD held in your Polymarket Deposit Wallet  what trades spend and what deposits are credited as.'],
             ['Deposit Wallet', 'Your Polymarket trading wallet. It is controlled by your Knewit (Privy) embedded wallet and holds your trading balance and positions.'],
             ['Bridge', 'Polymarket’s service that converts supported tokens from other chains into pUSD for deposits, and pUSD into your chosen token for withdrawals.'],
             ['Redeem', 'Turning winning shares in a resolved market into trading balance.'],

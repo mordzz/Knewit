@@ -26,7 +26,7 @@ export function useWithdraw() {
       tokenAddress,
     });
     // On-chain confirmation lags behind the request resolving, the same as
-    // the deposit flow — poll for a short window instead of a single
+    // the deposit flow  poll for a short window instead of a single
     // immediate invalidate so the balance UI catches the update.
     await queryClient.invalidateQueries({ queryKey: ['wallet-balance'] });
     let attempts = 0;

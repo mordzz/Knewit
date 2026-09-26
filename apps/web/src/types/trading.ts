@@ -1,7 +1,7 @@
 import type { ID } from '@/types/common';
 import type { Order } from '@/types/market';
 
-/** `choiceIndex` is the index into the market's own `outcomes` array —
+/** `choiceIndex` is the index into the market's own `outcomes` array
  * the label is never sent by the client; the backend resolves it from
  * the live market. */
 export interface CreateTradeInput {
@@ -12,7 +12,7 @@ export interface CreateTradeInput {
 
 export type CreateTradeResult = Order;
 
-/** `POST /trading/sell` — closes one whole position at market. Proceeds
+/** `POST /trading/sell`  closes one whole position at market. Proceeds
  * stay in the user's Polymarket Deposit Wallet for future trading or
  * withdrawal. */
 export interface SellPositionResponse {
@@ -20,7 +20,7 @@ export interface SellPositionResponse {
   proceedsUsd: number;
 }
 
-/** Live order-book estimate for a market BUY of `usdAmount` —
+/** Live order-book estimate for a market BUY of `usdAmount`
  * `GET /markets/:id/trade-estimate`. `estimatedPrice` is cents,
  * `estimatedShares` is shares (both 2dp). */
 export interface TradeEstimate {

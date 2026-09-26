@@ -7,7 +7,7 @@ const DESKTOP_QUERY = '(min-width: 1024px)';
 /**
  * Same pattern as `apps/dekstop`'s `use-mobile.tsx` (undefined-until-mounted
  * state + `matchMedia` change listener), but at the `lg` (1024px) cutoff
- * instead of that hook's 768px — the desktop mockups being ported
+ * instead of that hook's 768px  the desktop mockups being ported
  * (`app-shell.tsx`, `sign-in.tsx`, `landing.css`) are all built against
  * Tailwind's `lg:` breakpoint, not 768px.
  */

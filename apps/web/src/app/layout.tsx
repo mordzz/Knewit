@@ -5,7 +5,7 @@ import './globals.css';
 
 // Same typeface `apps/mobile` loads (`theme/typography.ts`'s doc
 // comment: Inter as the freely-licensed substitute for X's proprietary
-// Chirp) — one variable font covering every weight `font-inter-*`
+// Chirp)  one variable font covering every weight `font-inter-*`
 // (`globals.css`) needs, instead of static per-weight files like the
 // Expo app installs (Google Fonts' web delivery already serves Inter
 // as a single variable font).
@@ -16,7 +16,7 @@ const inter = Inter({
 
 export const metadata: Metadata = {
   title: 'Knew it',
-  description: 'A social prediction-market app — where hype becomes opportunity.',
+  description: 'A social prediction-market app  where hype becomes opportunity.',
   icons: {
     icon: '/favicon.ico',
     apple: '/icon.png',

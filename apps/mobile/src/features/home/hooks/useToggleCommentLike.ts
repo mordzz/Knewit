@@ -10,7 +10,7 @@ interface ToggleCommentLikeInput {
 }
 
 /**
- * Optimistic like/unlike for a comment — same pattern and same "no
+ * Optimistic like/unlike for a comment  same pattern and same "no
  * backend in this environment means it visibly flips and reverts" honest
  * behavior as `useToggleLike` (see that hook's own comment for the
  * reasoning; not repeated here).

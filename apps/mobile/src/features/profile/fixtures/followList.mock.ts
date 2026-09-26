@@ -1,6 +1,6 @@
 import type { FollowListItem } from '@/types/social';
 
-/** DEVELOPMENT-ONLY — see `home/fixtures/feed.mock.ts`. `isFollowing`/
+/** DEVELOPMENT-ONLY  see `home/fixtures/feed.mock.ts`. `isFollowing`/
  * `isSelf` are always `false`: no real session to compute either
  * against in mock mode. */
 const MOCK_TOTAL = 12;

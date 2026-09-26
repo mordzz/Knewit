@@ -8,8 +8,8 @@ import type { MarketListItem } from '@/types/social';
 const PEOPLE_LIMIT = 10;
 const MARKET_ITEM_LIMIT = 10;
 
-/** `GET /search?q=` — people (our own `users` table) and markets
- * (Polymarket's `/public-search`, docs/API.md — both sections always
+/** `GET /search?q=`  people (our own `users` table) and markets
+ * (Polymarket's `/public-search`, docs/API.md  both sections always
  * returned together, no `scope` param). A query under 2 characters
  * (mirroring the mobile client's own debounce/length gate) returns an
  * honestly empty result rather than a broad, meaningless match. */

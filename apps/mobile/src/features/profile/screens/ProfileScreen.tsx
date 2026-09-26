@@ -42,11 +42,11 @@ const PROFILE_TAB_OPTIONS: TabRowOption<ProfileTab>[] = [
 
 /**
  * The one Profile route/screen for both the viewer's own profile and
- * anyone else's — see docs/DECISIONS.md ("One Profile Route/Screen for
+ * anyone else's  see docs/DECISIONS.md ("One Profile Route/Screen for
  * Self and Other Users"). `route.params?.userId` absent means "my own"
- * (`useProfile` resolves this via the literal `"me"` id — see
+ * (`useProfile` resolves this via the literal `"me"` id  see
  * docs/API.md); present means viewing that specific user. Every
- * viewer-relative fact (`isSelf`, `isFollowing`) is server-computed —
+ * viewer-relative fact (`isSelf`, `isFollowing`) is server-computed
  * see docs/DECISIONS.md, Sprint 9's original rule, still in force here.
  */
 export function ProfileScreen() {
@@ -127,11 +127,11 @@ export function ProfileScreen() {
 
   // Read each active-tab value through its own ternary branch, rather
   // than selecting one polymorphic `activeQuery` object up front and
-  // calling methods on it — `calls` (FeedItem pages), `replies`
+  // calling methods on it  `calls` (FeedItem pages), `replies`
   // (CommentItem pages), and `activity` (ActivityItem pages) are
   // differently-typed `UseInfiniteQueryResult`s, and TypeScript doesn't
   // distribute method calls (e.g. `.data.pages.flatMap`) correctly
-  // across that kind of union — see docs/DECISIONS.md.
+  // across that kind of union  see docs/DECISIONS.md.
   const items: (FeedItem | CommentItem | ActivityItem)[] =
     tab === 'activity'
       ? (activity.data?.pages.flatMap((page) => page.items) ?? [])
@@ -239,7 +239,7 @@ export function ProfileScreen() {
                 className="text-2xl"
                 style={{ fontFamily: typography.family.extrabold, fontVariant: ['tabular-nums'] }}
               >
-                {walletBalance.data?.usdc != null ? formatUsd(walletBalance.data.usdc) : '—'}
+                {walletBalance.data?.usdc != null ? formatUsd(walletBalance.data.usdc) : ''}
               </Text>
             </Pressable>
           ) : null}

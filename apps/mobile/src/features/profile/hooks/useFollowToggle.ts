@@ -9,22 +9,22 @@ interface ToggleFollowInput {
 }
 
 /**
- * Not optimistic, unlike `useToggleLike` — the spec calls out Like
+ * Not optimistic, unlike `useToggleLike`  the spec calls out Like
  * specifically for optimism, and Follow appears in fewer, lower-frequency
  * places (an author header, not a scrollable feed of many rows), so a
  * plain mutate-then-reconcile is simple, correct, and not worth the
- * extra rollback complexity — see docs/DECISIONS.md.
+ * extra rollback complexity  see docs/DECISIONS.md.
  *
  * On success, patches every place this target user's follow state is
  * cached: their own `['profile', userId]` entry and any row for them
- * inside a currently-cached Followers/Following list (any owner — TanStack's
- * prefix matching finds every `['followers'/'following', *]` entry) — the
+ * inside a currently-cached Followers/Following list (any owner  TanStack's
+ * prefix matching finds every `['followers'/'following', *]` entry)  the
  * same user can legitimately appear in all of these at once, and the spec
  * requires Follow state to stay consistent everywhere it's shown. There is
  * deliberately no leaderboard patch any more: a leaderboard row is a
  * Polymarket trader with no follow state to keep in sync (docs/DECISIONS.md,
- * "Round 6: Leaderboard Is a Read-Only Polymarket Ranking — No Follow, No
- * Profile Links"). This is the single, shared place that logic lives —
+ * "Round 6: Leaderboard Is a Read-Only Polymarket Ranking  No Follow, No
+ * Profile Links"). This is the single, shared place that logic lives
  * callers (`AuthorRow`, `ProfileScreen`, `FollowListRow`) never each
  * re-implement their own cache patch.
  */
@@ -63,7 +63,7 @@ export function useFollowToggle() {
       );
 
       // The right rail's suggestions are "accounts you don't follow yet"
-      // — refetch so a newly followed account leaves the list (and the
+      //  refetch so a newly followed account leaves the list (and the
       // next ones fill in).
       queryClient.invalidateQueries({ queryKey: ['follow-suggestions'] });
     },

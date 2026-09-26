@@ -24,7 +24,7 @@ type ResultItem =
   | { kind: 'empty'; key: string; message: string };
 
 /**
- * Direct conversion of `apps/mobile`'s `SearchScreen` — search, and
+ * Direct conversion of `apps/mobile`'s `SearchScreen`  search, and
  * only search: a bottom-anchored search bar (same position mobile
  * uses), and with no query, a "Recents" list of past searches (Zustand,
  * in-memory only, same store copied verbatim). A resolved query shows

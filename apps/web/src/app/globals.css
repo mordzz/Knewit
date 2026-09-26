@@ -3,7 +3,7 @@
 /**
  * Color tokens mirror `apps/frontend/src/theme/colors.ts` exactly (same
  * dark-first palette, same names) so the web app reads as the same
- * product, not a different-looking clone — see docs/DESIGN.md. Tailwind
+ * product, not a different-looking clone  see docs/DESIGN.md. Tailwind
  * v4's `@theme` block generates `bg-*`/`text-*`/`border-*` utilities
  * directly from these custom properties, so `bg-accent`, `text-text-
  * secondary`, etc. all work exactly like their mobile-app equivalents.
@@ -33,7 +33,7 @@
 
   --font-sans: var(--font-inter), ui-sans-serif, system-ui, -apple-system, sans-serif;
 
-  /* Landing page palette (`components/landing/LandingPage.tsx`) — its own
+  /* Landing page palette (`components/landing/LandingPage.tsx`)  its own
      light marketing palette, exposed as `bg-landing-paper`,
      `text-landing-ink`, etc. */
   --color-landing-yellow: oklch(0.92 0.19 99);
@@ -64,7 +64,7 @@
 
   /**
    * Text sizes and border radii mirror `apps/mobile/tailwind.config.js`
-   * exactly (same pixel values) — so a component copied over from a
+   * exactly (same pixel values)  so a component copied over from a
    * mobile screen using `text-jumbo`, `rounded-md`, etc. renders at the
    * same size here, not whatever Tailwind's own unrelated defaults for
    * those names happen to be.
@@ -92,7 +92,7 @@
 }
 
 /**
- * `font-inter-*` utilities — mobile carries weight via which static
+ * `font-inter-*` utilities  mobile carries weight via which static
  * Inter file is loaded (`theme/typography.ts`'s doc comment explains
  * why: mixing a numeric `fontWeight` with a custom static font is an
  * RN/Android gotcha). The web variable font has no such constraint, but

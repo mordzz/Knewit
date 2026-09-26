@@ -1,8 +1,8 @@
 /**
  * Web copies of `apps/frontend/src/utils/formatRelativeTime.ts` and
- * `formatNumber.ts` — pure functions with zero React Native
+ * `formatNumber.ts`  pure functions with zero React Native
  * dependency, so the logic is copied verbatim rather than shared via a
- * package (the two apps have no shared package — see
+ * package (the two apps have no shared package  see
  * docs/ARCHITECTURE.md). Keep these in sync by hand if the mobile
  * versions change.
  */
@@ -32,7 +32,7 @@ export function formatCompactNumber(value: number): string {
 }
 
 /** A market's `yesPrice`/`noPrice` (cents, 1-99) doubles as an implied
- * probability — displayed as a percentage, e.g. 68 -> "68%". */
+ * probability  displayed as a percentage, e.g. 68 -> "68%". */
 export function formatProbability(cents: number): string {
   return `${cents.toFixed(4)}%`;
 }
@@ -47,7 +47,7 @@ export function formatUsd(amount: number): string {
   return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(amount);
 }
 
-/** Market prices are decimal cents (up to 4 dp — Polymarket ticks go to
+/** Market prices are decimal cents (up to 4 dp  Polymarket ticks go to
  * 0.001/0.0001), rendered with full precision so a sub-cent price shows
  * as `0.1000¢` instead of rounding to `0¢`. */
 export function formatPrice(cents: number): string {
@@ -55,7 +55,7 @@ export function formatPrice(cents: number): string {
 }
 
 /** Compact countdown for a market's end date, e.g. "24d left", "6h left",
- * "Ended" once past — used in the market attachment's metrics footer. */
+ * "Ended" once past  used in the market attachment's metrics footer. */
 export function formatTimeRemaining(iso: string): string {
   const diffMs = new Date(iso).getTime() - Date.now();
   if (diffMs <= 0) return 'Ended';

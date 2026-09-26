@@ -6,7 +6,7 @@ import { useAuth } from '@/hooks/useAuth';
 
 /**
  * All of the authenticated user's positions. Gated on a connected
- * wallet — positions are meaningless (and the backend has no session to
+ * wallet  positions are meaningless (and the backend has no session to
  * resolve them from) without one, so this never fires a request that
  * could only ever come back empty for that reason.
  */

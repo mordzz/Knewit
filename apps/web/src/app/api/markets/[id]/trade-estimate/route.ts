@@ -17,7 +17,7 @@ interface TradeEstimate {
 }
 
 /**
- * `GET /markets/:id/trade-estimate?choiceIndex=&usdAmount=` — what a
+ * `GET /markets/:id/trade-estimate?choiceIndex=&usdAmount=`  what a
  * market BUY of `usdAmount` would fill at right now, using Polymarket's
  * own `estimateMarketPrice` (walks the live order book, so it accounts
  * for depth). Auth-required because the official client resolves the
@@ -74,7 +74,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
         throw new ApiError(
           400,
           'no_liquidity',
-          'This market has no resting orders to fill against right now — nothing to trade.'
+          'This market has no resting orders to fill against right now  nothing to trade.'
         );
       }
       throw error;
@@ -85,7 +85,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
     }
 
     const estimate: TradeEstimate = {
-      // Decimal cents (up to 4 dp) — same unit as `MarketChoice.price`;
+      // Decimal cents (up to 4 dp)  same unit as `MarketChoice.price`;
       // a sub-cent price renders as e.g. 0.1000, never rounded to 0.
       estimatedPrice: Number((price * 100).toFixed(4)),
       estimatedShares: Number((usdAmount / price).toFixed(4)),

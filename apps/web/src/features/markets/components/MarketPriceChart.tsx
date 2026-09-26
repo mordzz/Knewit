@@ -8,13 +8,13 @@ import { choiceTone } from '@/lib/choiceTone';
 import type { MarketChoice } from '@/types/market';
 import type { PriceRange } from '@/types/social';
 
-/** At most the first four choices (API order) are drawn — one request
+/** At most the first four choices (API order) are drawn  one request
  * per line; the choice-chip selector was removed by request, so a market
  * with more choices shows the first four and the legend can toggle them. */
 const MAX_SERIES = 4;
 
 /** Chart lines take raw hex colors: Yes green, No red, accent yellow,
- * neutral grey — never green/red for a non-directional choice. */
+ * neutral grey  never green/red for a non-directional choice. */
 function lineColor(choice: MarketChoice): string {
   const tone = choiceTone(choice);
   if (tone === 'yes') return '#22C55E';
@@ -25,13 +25,13 @@ function lineColor(choice: MarketChoice): string {
 
 export interface MarketPriceChartProps {
   marketId: string;
-  /** The market's own choices — each one gets its own real price-history
+  /** The market's own choices  each one gets its own real price-history
    * line (Polymarket's "Both Outcomes" view), capped at `MAX_SERIES`. */
   choices: MarketChoice[];
 }
 
 /**
- * Web equivalent of `apps/mobile`'s `MarketPriceChart` — one real line
+ * Web equivalent of `apps/mobile`'s `MarketPriceChart`  one real line
  * per choice (each fetched from `GET /markets/:id/price-history?
  * choice=`), with the shared `MultiLineChart` legend naming every line.
  * No choice-chip selector: the chart draws the first four choices.

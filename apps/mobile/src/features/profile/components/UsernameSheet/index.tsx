@@ -9,7 +9,7 @@ import { colors, solidPanel, typography } from '@/theme';
 export const HANDLE_MIN_LENGTH = 3;
 export const HANDLE_MAX_LENGTH = 20;
 
-/** What a username may contain — anything else is converted or dropped
+/** What a handle may contain  anything else is converted or dropped
  * while typing, so the field can never hold an invalid character. */
 export function sanitizeHandle(value: string): string {
   return value
@@ -24,7 +24,7 @@ export interface UsernameSheetProps {
   saving: boolean;
   errorMessage: string | null;
   /** Distance from the bottom of this screen's content to the top of the
-   * keyboard — the panel docks right on top of the keyboard, whatever
+   * keyboard  the panel docks right on top of the keyboard, whatever
    * its height is on this phone. */
   bottomOffset: number;
   onSave: (handle: string) => void;
@@ -32,10 +32,10 @@ export interface UsernameSheetProps {
 }
 
 /**
- * "Change username" panel. Docks directly on top of the keyboard (its
+ * "Change handle" panel. Docks directly on top of the keyboard (its
  * height is read from the real keyboard, so it fits every phone) with
  * one large field, the rules shown as a live checklist, and full-width
- * buttons. Mount it only while open — it focuses the field on mount.
+ * buttons. Mount it only while open  it focuses the field on mount.
  */
 export function UsernameSheet({
   currentHandle,
@@ -59,7 +59,7 @@ export function UsernameSheet({
   const isTaken = availability.result?.available === false;
   // Wait for the check before allowing a save, and never save a name the
   // server already said is taken. An unverified result ("couldn't check")
-  // still allows saving — the save itself re-checks.
+  // still allows saving  the save itself re-checks.
   const canSave = lengthOk && !unchanged && !saving && !availability.isChecking && !isTaken;
 
   const submit = () => {
@@ -94,9 +94,9 @@ export function UsernameSheet({
         <View className="h-1 w-9 self-center rounded-full bg-white/20" />
 
         <View className="gap-1">
-          <Text variant="heading">Change username</Text>
+          <Text variant="heading">Change handle</Text>
           <Text variant="caption" color="textSecondary">
-            People use your username to find and mention you.
+            Your handle helps people find you.
           </Text>
         </View>
 
@@ -128,12 +128,12 @@ export function UsernameSheet({
             keyboardType={Platform.OS === 'android' ? 'visible-password' : 'default'}
             returnKeyType="done"
             maxLength={HANDLE_MAX_LENGTH}
-            placeholder="username"
+            placeholder="handle"
             placeholderTextColor={colors.textTertiary}
             selectionColor={colors.accent}
             className="flex-1 py-3 text-text-primary"
             style={{ fontFamily: typography.family.semibold, fontSize: 18 }}
-            accessibilityLabel="New username"
+            accessibilityLabel="New handle"
           />
           {value.length > 0 ? (
             <Pressable
@@ -144,7 +144,7 @@ export function UsernameSheet({
               hitSlop={10}
               className="h-10 w-10 items-center justify-center"
               accessibilityRole="button"
-              accessibilityLabel="Clear username"
+              accessibilityLabel="Clear handle"
             >
               <Icon name="close-circle" size={20} color="textTertiary" />
             </Pressable>
@@ -154,10 +154,10 @@ export function UsernameSheet({
         <View className="gap-2">
           <Rule
             ok={lengthOk}
-            text={`${HANDLE_MIN_LENGTH}–${HANDLE_MAX_LENGTH} characters`}
+            text={`${HANDLE_MIN_LENGTH}–${HANDLE_MAX_LENGTH} chars`}
             trailing={`${value.length}/${HANDLE_MAX_LENGTH}`}
           />
-          <Rule ok text="Letters, numbers and _ only — spaces become _ automatically" />
+          <Rule ok text="a–z, 0–9, _" />
           {lengthOk && !unchanged ? <AvailabilityRow availability={availability} /> : null}
         </View>
 
@@ -179,12 +179,12 @@ export function UsernameSheet({
             className="min-h-12 flex-1"
           />
           <Button
-            label={unchanged ? 'No changes' : saving ? 'Saving…' : 'Save username'}
+            label={unchanged ? 'No changes' : saving ? 'Saving…' : 'Save handle'}
             onPress={submit}
             disabled={!canSave}
             loading={saving}
             className="min-h-12 flex-1"
-            accessibilityLabel="Save username"
+            accessibilityLabel="Save handle"
           />
         </View>
       </View>
@@ -216,13 +216,13 @@ function AvailabilityRow({
         <Icon name="alert-circle-outline" size={18} color="textTertiary" />
         <Text variant="caption" color="textSecondary" className="flex-1">
           {result?.message ??
-            "Couldn't check this username right now. You can still try to save it."}
+            "Handle check unavailable. You can still save it."}
         </Text>
       </View>
     );
   }
   return result.available ? (
-    <Rule ok text="Username is available" />
+    <Rule ok text="Handle available" />
   ) : (
     <Rule ok={false} bad text={result.message} />
   );
@@ -235,7 +235,7 @@ function Rule({
   trailing,
 }: {
   ok: boolean;
-  /** A hard failure (e.g. taken), shown red — not just "not met yet". */
+  /** A hard failure (e.g. taken), shown red  not just "not met yet". */
   bad?: boolean;
   text: string;
   trailing?: string;

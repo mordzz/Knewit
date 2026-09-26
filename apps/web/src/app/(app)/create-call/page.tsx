@@ -18,11 +18,11 @@ import type { UserPosition } from '@/types/social';
 const MAX_POST_LENGTH = 280;
 
 /**
- * Direct conversion of `apps/mobile`'s `CreateCallScreen` — a callout
+ * Direct conversion of `apps/mobile`'s `CreateCallScreen`  a callout
  * always requires an attached market position (docs/DECISIONS.md,
  * "Callouts Require a Held Position"): Publish stays disabled until one
  * is selected from `PositionPickerSheet`. No dev-mock fallback on
- * publish (`useCreateCall` — "No Fake Publish Success").
+ * publish (`useCreateCall`  "No Fake Publish Success").
  */
 export default function CreateCallPage() {
   const router = useRouter();
@@ -94,7 +94,7 @@ export default function CreateCallPage() {
 
         {/* Auto-growing textarea: content starts at the top edge and the
             box keeps extending downward as the text grows (no internal
-            scroll) — the one card is split in two by the divider above. */}
+            scroll)  the one card is split in two by the divider above. */}
         <textarea
           placeholder="What's your call?"
           value={content}
@@ -123,7 +123,7 @@ export default function CreateCallPage() {
                 Attach your position
               </Text>
               <Text variant="caption" color="textSecondary">
-                Only a position you hold can become a Callout — pick one to continue.
+                Only a position you hold can become a Callout  pick one to continue.
               </Text>
             </div>
             <Icon name="chevron-forward" size={18} color="textTertiary" />
@@ -192,7 +192,7 @@ function SelectedPositionCard({
 function friendlyPublishError(message: string | null): string {
   if (!message) return "Couldn't publish this right now. Please try again.";
   if (/network/i.test(message)) {
-    return 'Network error — check your connection and try again.';
+    return 'Network error  check your connection and try again.';
   }
   if (/position/i.test(message)) {
     return "We couldn't verify this position. Please try again.";

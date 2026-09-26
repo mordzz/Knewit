@@ -8,7 +8,7 @@ import type { ActivityItem } from '@/types/activity';
 /**
  * Real endpoint first, dev-mock fallback on failure (read-only). Every
  * item this returns must reflect an event that actually completed
- * server-side — see docs/DECISIONS.md ("Activity Events Reflect Only
+ * server-side  see docs/DECISIONS.md ("Activity Events Reflect Only
  * Completed Server Actions"); this function has no way to enforce that
  * itself (it only relays whatever the backend sends), which is exactly
  * why that constraint is documented as a backend responsibility, not a
@@ -25,7 +25,7 @@ export async function getUserActivity(
   } catch (error) {
     if (env.isDev) {
       console.warn(
-        '[activityService] backend unreachable — using local mock activity for development only.',
+        '[activityService] backend unreachable  using local mock activity for development only.',
         error
       );
       const start = cursor ? Number(cursor) : 0;

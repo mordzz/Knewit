@@ -10,7 +10,7 @@ export interface SocialActionBarProps {
   liked: boolean;
   likeCount: number;
   commentCount: number;
-  /** Omit on the Detail screen itself — the comments are already right
+  /** Omit on the Detail screen itself  the comments are already right
    * below, so the count renders as plain (non-interactive) text there
    * instead of a button that would do nothing. */
   onPressComment?: () => void;
@@ -20,12 +20,12 @@ export interface SocialActionBarProps {
 }
 
 /**
- * The reusable Like + Comment + Share row — used by `CallCard` (feed
+ * The reusable Like + Comment + Share row  used by `CallCard` (feed
  * row), `PostDetailScreen`, and Market Detail's own Comments tab, so the
  * same post shows identical, always-current social counts wherever it
  * appears (Sprint 9: "Feed dan Detail menggunakan data social yang
  * konsisten"). Share opens the device's native share sheet (`Share.share`)
- * — a client-only action with no count/backend, unlike Like/Comment —
+ *  a client-only action with no count/backend, unlike Like/Comment
  * see docs/DECISIONS.md ("Native Share, Not In-App Repost").
  */
 export function SocialActionBar({
@@ -42,7 +42,7 @@ export function SocialActionBar({
     try {
       await Share.share({ message: shareMessage ?? '' });
     } catch {
-      // User dismissed the share sheet or the OS call failed — nothing
+      // User dismissed the share sheet or the OS call failed  nothing
       // to recover from, so no error UI for what's just a share sheet.
     }
   }

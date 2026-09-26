@@ -28,8 +28,8 @@ const FEED_TAB_OPTIONS: TabRowOption<FeedTabKey>[] = [
 ];
 
 /**
- * Direct conversion of `apps/mobile`'s `HomeScreen` — same two tabs
- * (labeled "Trending", not "For You" — the backend's `/feed` has no
+ * Direct conversion of `apps/mobile`'s `HomeScreen`  same two tabs
+ * (labeled "Trending", not "For You"  the backend's `/feed` has no
  * personalization behind it, see docs/DECISIONS.md), same balance +
  * Deposit header, same infinite-scroll feed (an `IntersectionObserver`
  * sentinel replaces `FlatList`'s `onEndReached`).
@@ -177,7 +177,7 @@ function CalloutsLayout({ isDesktop, children }: { isDesktop: boolean; children:
   );
 }
 
-/** Web equivalent of `FlatList`'s `onEndReached` — an `IntersectionObserver`
+/** Web equivalent of `FlatList`'s `onEndReached`  an `IntersectionObserver`
  * on a sentinel div at the bottom of the list, same 0.4 threshold
  * (`rootMargin` approximates it) as mobile's `onEndReachedThreshold`. */
 function InfiniteScrollSentinel({
@@ -221,8 +221,8 @@ function InfiniteScrollSentinel({
 /**
  * Single row: balance on the left, Deposit on the right, separated
  * from the tabs below by a hairline bottom border. Balance is the real
- * USDC collateral read from Polymarket's CLOB (`useWalletBalance`) —
- * "—" when it's unavailable (no wallet, or signing not delegated yet),
+ * USDC collateral read from Polymarket's CLOB (`useWalletBalance`)
+ * "" when it's unavailable (no wallet, or signing not delegated yet),
  * never a fabricated `$0.00`. Deposit opens Privy's funding flow once a
  * wallet exists; before that it routes to sign-in like any gated action.
  */
@@ -232,7 +232,7 @@ function Header({ isDesktop }: { isDesktop: boolean }) {
   const balance = useWalletBalance();
   const { isBuying, buyError, startDeposit, depositModal } = useDepositEntry();
 
-  const balanceLabel = balance.data?.usdc != null ? formatUsd(balance.data.usdc) : '—';
+  const balanceLabel = balance.data?.usdc != null ? formatUsd(balance.data.usdc) : '';
 
   const handleDeposit = () => {
     if (!canUseApp || !walletConnected) {

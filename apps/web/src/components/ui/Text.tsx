@@ -45,7 +45,7 @@ const typographyClass: Record<TypographyVariant, string> = {
 
 // Tailwind's scanner needs complete class-name strings literally in
 // source (same reason `theme/tw.ts` uses lookup tables, not template
-// interpolation, for color classes) — a `line-clamp-${n}` template
+// interpolation, for color classes)  a `line-clamp-${n}` template
 // wouldn't be picked up, so this is bounded to the few line counts this
 // app actually uses anywhere.
 const lineClampClass: Record<number, string> = {
@@ -61,7 +61,7 @@ export interface TextProps extends HTMLAttributes<HTMLSpanElement> {
 }
 
 /**
- * Web equivalent of `apps/mobile/src/components/ui/Text` — same
+ * Web equivalent of `apps/mobile/src/components/ui/Text`  same
  * `variant`/`color` props, same lookup-table approach (`textColorClass`/
  * `typographyClass` copied verbatim from `theme/tw.ts`), rendering a
  * `span` instead of RN's `Text`. `numberOfLines` (RN-only) maps to a

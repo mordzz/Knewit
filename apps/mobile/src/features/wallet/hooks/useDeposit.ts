@@ -10,7 +10,7 @@ import {
 } from '@/features/wallet/services/walletService';
 import { env } from '@/app/config/env';
 
-/** Pre-filled card purchase — just above MoonPay's minimum order; the
+/** Pre-filled card purchase  just above MoonPay's minimum order; the
  * user can still change it on MoonPay's screen. */
 const DEFAULT_CARD_DEPOSIT_USDC = '20';
 /** A MoonPay purchase usually lands within a few minutes. */
@@ -19,7 +19,7 @@ const LANDING_POLL_ATTEMPTS = 36;
 
 /**
  * Opens Privy's own funding flow (`useFundWallet` from
- * `@privy-io/expo/ui` — requires `<PrivyElements />`, mounted once in
+ * `@privy-io/expo/ui`  requires `<PrivyElements />`, mounted once in
  * `AppProviders`) with card as the payment method and MoonPay as the preferred
  * provider. The route is: card → MoonPay → native USDC in the user's
  * embedded wallet → sent to their Polymarket bridge deposit address for
@@ -30,7 +30,7 @@ const LANDING_POLL_ATTEMPTS = 36;
  *
  * Requires the funding feature + payment methods to be enabled in the
  * Privy Dashboard; without that, `fundWallet` rejects with Privy's real
- * error — surfaced to the user, never faked as success.
+ * error  surfaced to the user, never faked as success.
  */
 export function useDeposit() {
   const { fundWallet } = useFundWallet();
@@ -57,7 +57,7 @@ export function useDeposit() {
       if (state.unavailable) {
         throw new Error('Your wallet is not ready yet. Please wait a moment and try again.');
       }
-      // USDC from an earlier purchase is still in the embedded wallet —
+      // USDC from an earlier purchase is still in the embedded wallet
       // send it on instead of opening another card purchase.
       if (state.usdcBalance > 0) {
         setStage('converting');

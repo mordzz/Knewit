@@ -3,13 +3,13 @@ import type { FeedItem } from '@/types/social';
 import type { Paginated } from '@/types/common';
 
 /**
- * Applies the same patch to a `FeedItem` wherever it's cached — the
+ * Applies the same patch to a `FeedItem` wherever it's cached  the
  * feed's infinite-query pages (`['feed']`) and the single-post detail
  * query (`['post', id]`) both store the identical shape, and Sprint 9
  * requires their counts/like-state to never visibly disagree (see
  * docs/DECISIONS.md, "One Patch Function, Two Cache Entries"). Used for
  * both optimistic updates (like/unlike) and settled-count adjustments
- * (comment create/delete) — never for anything a real refetch wouldn't
+ * (comment create/delete)  never for anything a real refetch wouldn't
  * eventually confirm.
  *
  * Returns the previous feed/detail cache values (for optimistic-update
@@ -43,7 +43,7 @@ export function patchFeedItem(
   return { previousDetail, previousFeedPages };
 }
 
-/** Restores exactly what `patchFeedItem` returned — used to roll back
+/** Restores exactly what `patchFeedItem` returned  used to roll back
  * an optimistic update when the real mutation fails. */
 export function restoreFeedItem(
   queryClient: QueryClient,

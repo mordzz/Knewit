@@ -15,7 +15,7 @@ import { cardDepositEnabled } from '@/lib/cardDeposit';
 export type BuyWithCardStage = 'idle' | 'buying' | 'waiting' | 'converting';
 
 /** Thrown for this hook's own honest, already-user-facing messages (the
- * purchase landed but conversion is still pending, etc.) — distinguished
+ * purchase landed but conversion is still pending, etc.)  distinguished
  * from `ApiRequestError`/raw Privy errors so `useBuyWithCardFlow` can show
  * this message verbatim instead of running it through `depositErrors.ts`'s
  * generic Privy-quote-failure copy, which would be misleading here. */
@@ -31,7 +31,7 @@ const LANDING_POLL_ATTEMPTS = 36;
  * `isActive` is checked on every tick so a poll started before the
  * triggering component unmounts (navigation, sign-out, switching
  * accounts) stops cleanly instead of running to completion in the
- * background — a plain `window.setInterval` has no idea a React component
+ * background  a plain `window.setInterval` has no idea a React component
  * went away, and calling back into it later re-enters stale closures
  * (`setStage`/error handlers) and fires their side effects, like a
  * `console.error`, for a session that's no longer on screen.
@@ -99,7 +99,7 @@ export function useBuyWithCard() {
       if (state.unavailable) {
         throw new BuyFlowError('Your wallet is not ready yet. Please wait a moment and try again.');
       }
-      // USDC from an earlier purchase is still in the embedded wallet — send
+      // USDC from an earlier purchase is still in the embedded wallet  send
       // it on instead of opening another onramp.
       if (state.usdcBalance > 0) {
         setStage('converting');

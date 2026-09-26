@@ -9,7 +9,7 @@ export interface SearchInputProps {
 
 /**
  * Web equivalent of `apps/mobile/src/features/search/components/SearchInput`
- * — a search field matching the app's standard `Input` recipe (same
+ *  a search field matching the app's standard `Input` recipe (same
  * `min-h-12 rounded-md border-border bg-surface-elevated` surface, not a
  * one-off pill), with a leading search icon and a trailing clear button
  * that only appears once there's text to clear.

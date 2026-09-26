@@ -5,10 +5,10 @@ import { usePathname } from 'next/navigation';
 import { IoAdd } from 'react-icons/io5';
 
 /**
- * Direct conversion of `apps/mobile`'s `FAB` (`components/ui/FAB`) —
+ * Direct conversion of `apps/mobile`'s `FAB` (`components/ui/FAB`)
  * same solid accent circle, same size, same position (bottom-right,
  * above the tab bar), same "Home only" visibility rule (mobile's
- * `MainTabNavigator` shows it only while the Home tab is focused — see
+ * `MainTabNavigator` shows it only while the Home tab is focused  see
  * docs/DECISIONS.md). Links straight to `/create-call`, same
  * destination `onPress={() => navigation.navigate('CreateCall')}` goes
  * to on mobile. Home now lives at `/callouts` (`/` is the public landing

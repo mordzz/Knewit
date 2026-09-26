@@ -27,17 +27,17 @@ function delay(ms: number) {
 }
 
 /**
- * `MarketDetail` — every `MarketSummary` field plus detail-only ones
+ * `MarketDetail`  every `MarketSummary` field plus detail-only ones
  * (`rules`, `openedAt`); not `Market` (`types/market.ts`), which stays
- * the DB-normalized documentation type — see docs/DATABASE.md. Used for
- * a single market lookup (Market Detail), never a grouped one — a
+ * the DB-normalized documentation type  see docs/DATABASE.md. Used for
+ * a single market lookup (Market Detail), never a grouped one  a
  * group's individual outcome rows are each still an ordinary market
  * with their own id, so this works the same way whether the id came
  * from a plain market card or a group's row.
  *
- * Real endpoint first — falls back to a mock fixture only in dev, only
+ * Real endpoint first  falls back to a mock fixture only in dev, only
  * on failure, same pattern as `getMarkets` below. Calls OUR backend,
- * never Polymarket directly — see docs/ARCHITECTURE.md.
+ * never Polymarket directly  see docs/ARCHITECTURE.md.
  */
 export async function getMarketById(id: string): Promise<MarketDetail> {
   try {
@@ -45,7 +45,7 @@ export async function getMarketById(id: string): Promise<MarketDetail> {
   } catch (error) {
     if (env.isDev) {
       console.warn(
-        '[marketService] backend unreachable — using a local mock market fixture for development only.',
+        '[marketService] backend unreachable  using a local mock market fixture for development only.',
         error
       );
       const fallback = pickMockMarketTemplate(id);
@@ -66,8 +66,8 @@ export async function getMarketById(id: string): Promise<MarketDetail> {
 }
 
 /**
- * Posts/Calls referencing this market — Market Detail's "Comments" tab.
- * Not paginated in this pass (a fixed, reasonably small batch) — see
+ * Posts/Calls referencing this market  Market Detail's "Comments" tab.
+ * Not paginated in this pass (a fixed, reasonably small batch)  see
  * docs/DECISIONS.md (Market Detail rebuild) for why infinite scroll
  * wasn't added here.
  */
@@ -77,7 +77,7 @@ export async function getMarketActivity(marketId: string): Promise<FeedItem[]> {
   } catch (error) {
     if (env.isDev) {
       console.warn(
-        '[marketService] backend unreachable — using local mock market activity for development only.',
+        '[marketService] backend unreachable  using local mock market activity for development only.',
         error
       );
       await delay(300);
@@ -87,7 +87,7 @@ export async function getMarketActivity(marketId: string): Promise<FeedItem[]> {
   }
 }
 
-/** Market Detail's "Top Holders" tab — see `MarketHolder` in
+/** Market Detail's "Top Holders" tab  see `MarketHolder` in
  * `types/social.ts` for why this isn't the same as `Position`. */
 export async function getTopHolders(marketId: string): Promise<MarketHolder[]> {
   try {
@@ -95,7 +95,7 @@ export async function getTopHolders(marketId: string): Promise<MarketHolder[]> {
   } catch (error) {
     if (env.isDev) {
       console.warn(
-        '[marketService] backend unreachable — using local mock holder data for development only.',
+        '[marketService] backend unreachable  using local mock holder data for development only.',
         error
       );
       await delay(300);
@@ -107,9 +107,9 @@ export async function getTopHolders(marketId: string): Promise<MarketHolder[]> {
 
 /**
  * Market Detail's price chart (see docs/DECISIONS.md, "Market Price
- * Chart"). `currentPriceCents` is only used by the dev-mock fallback —
+ * Chart"). `currentPriceCents` is only used by the dev-mock fallback
  * to seed a series that ends exactly at the market's own live YES price
- * rather than a disagreeing number — and is never sent to the real
+ * rather than a disagreeing number  and is never sent to the real
  * endpoint, which is the actual source of truth for historical prices.
  */
 export async function getMarketPriceHistory(
@@ -125,7 +125,7 @@ export async function getMarketPriceHistory(
   } catch (error) {
     if (env.isDev) {
       console.warn(
-        '[marketService] backend unreachable — using local mock price history for development only.',
+        '[marketService] backend unreachable  using local mock price history for development only.',
         error
       );
       await delay(200);
@@ -151,12 +151,12 @@ async function getMockMarketsPage(
 }
 
 /**
- * The Markets discovery feed — a page can mix plain single markets and
+ * The Markets discovery feed  a page can mix plain single markets and
  * grouped ones (`MarketListItem`, see docs/DECISIONS.md, Markets visual
  * refresh), the same way Polymarket's own market/event data mixes
- * shapes. Real endpoint first — the shipped path. Falls back to labeled
+ * shapes. Real endpoint first  the shipped path. Falls back to labeled
  * mock fixtures only in dev, only on failure, same pattern as
- * `features/home/services/feedService.ts` — see docs/DECISIONS.md.
+ * `features/home/services/feedService.ts`  see docs/DECISIONS.md.
  */
 export async function getMarkets(
   cursor?: string,
@@ -172,7 +172,7 @@ export async function getMarkets(
   } catch (error) {
     if (env.isDev) {
       console.warn(
-        '[marketService] backend unreachable — using local mock market fixtures for development only.',
+        '[marketService] backend unreachable  using local mock market fixtures for development only.',
         error
       );
       return getMockMarketsPage(cursor, category);
@@ -186,7 +186,7 @@ export async function getMarkets(
  * Polymarket's own order book (`GET /markets/:id/trade-estimate`).
  * **No dev-mock fallback**: a fabricated fill price would be exactly the
  * kind of invented money math this project forbids (docs/DECISIONS.md,
- * "No Fake Trade Success") — the trade UI just omits the estimate when
+ * "No Fake Trade Success")  the trade UI just omits the estimate when
  * this fails.
  */
 export async function getTradeEstimate(

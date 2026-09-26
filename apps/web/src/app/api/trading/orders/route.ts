@@ -14,18 +14,18 @@ export const maxDuration = 60;
 
 interface CreateTradeOrderInput {
   marketId: string;
-  /** Index into the market's own `outcomes` array — the client never
+  /** Index into the market's own `outcomes` array  the client never
    * sends a label; the backend resolves it from the live market. */
   choiceIndex: number;
   usdAmount: number;
 }
 
 /**
- * `POST /trading/orders` — market-price BUY (docs/API.md). The wallet is resolved from the authenticated Privy
+ * `POST /trading/orders`  market-price BUY (docs/API.md). The wallet is resolved from the authenticated Privy
  * session, never client-supplied. A failed trade (signing rejected,
  * CLOB rejects the order, no liquidity) is recorded as a `failed`
  * `Order` row for audit history, but the HTTP response itself errors
- * — never a `200` with a silently-failed trade — per docs/DECISIONS.md,
+ *  never a `200` with a silently-failed trade  per docs/DECISIONS.md,
  * "No Fake Trade Success."
  */
 export async function POST(request: Request) {
@@ -67,7 +67,7 @@ export async function POST(request: Request) {
     } catch (error) {
       // Rejected before anything reached the venue (bad input, not enough
       // balance/shares, approvals couldn't be set up): a plain failure, not
-      // an unknown outcome — release the lock and surface the real reason.
+      // an unknown outcome  release the lock and surface the real reason.
       if (isRejectedBeforeSubmit(error)) {
         await updateWalletOperation(supabase, operation.id, { status: 'failed', error_code: error.code, reconciled_at: new Date().toISOString() });
         throw error;
@@ -99,7 +99,7 @@ export async function POST(request: Request) {
         }, { status: 202 });
       }
       // The trade itself was already rejected and recorded as 'failed'
-      // above — a coincidental market-cache error here must not mask that
+      // above  a coincidental market-cache error here must not mask that
       // with a generic 500. Report the real, already-known trade failure.
       console.error('[trading/orders] market cache reconciliation also failed for an already-failed trade:', error);
       throw new ApiError(502, 'trade_failed', result.errorMessage ?? 'Trade failed.');
@@ -136,7 +136,7 @@ export async function POST(request: Request) {
       throw new ApiError(502, 'trade_failed', result.errorMessage ?? 'Trade failed.');
     }
 
-    // Holdings aren't stored locally — `GET /positions` reads them from
+    // Holdings aren't stored locally  `GET /positions` reads them from
     // Polymarket's Data API. The order row is the app's trade history.
     const order: Order = {
       id: orderRow.id,

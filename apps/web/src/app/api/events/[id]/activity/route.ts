@@ -8,8 +8,8 @@ import { buildFeedItems, type PostRow } from '@/lib/social';
 
 const ACTIVITY_LIMIT = 20;
 
-/** `GET /events/:id/activity` — the event's Callouts: Posts/Calls that
- * reference any of its child markets (docs/API.md). Not paginated — the
+/** `GET /events/:id/activity`  the event's Callouts: Posts/Calls that
+ * reference any of its child markets (docs/API.md). Not paginated  the
  * same fixed-batch contract `GET /markets/:id/activity` uses. Closed
  * children are still included here on purpose: their history is real
  * activity on the event. */

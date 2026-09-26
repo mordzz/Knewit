@@ -21,7 +21,7 @@ async function assertCommentExists(commentId: string) {
   if (!data) throw notFound(`Comment ${commentId} not found.`);
 }
 
-/** `POST /comments/:id/like` — mirrors `calls/[id]/like/route.ts` for
+/** `POST /comments/:id/like`  mirrors `calls/[id]/like/route.ts` for
  * comments instead of posts. */
 export async function POST(request: Request, { params }: { params: Promise<{ id: string }> }) {
   return withErrorHandling(async () => {

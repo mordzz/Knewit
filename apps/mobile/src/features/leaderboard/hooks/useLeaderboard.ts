@@ -3,7 +3,7 @@ import { getLeaderboard } from '@/features/leaderboard/services/leaderboardServi
 
 /**
  * One query, one list: Polymarket's global ranking. No scope argument and
- * no auth gate — the ranking is a public, viewer-independent read with no
+ * no auth gate  the ranking is a public, viewer-independent read with no
  * viewer-relative fields at all (the old `currentUser`/"Your Rank" self
  * standing was removed; docs/DECISIONS.md, "Your Rank Removed From the
  * Leaderboard").

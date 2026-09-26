@@ -58,7 +58,7 @@ export async function beginWalletOperation(
       throw new ApiError(409, 'idempotency_key_reused', 'This request key was already used for a different wallet action.');
     }
     // A prior attempt under this exact key that already reached a terminal
-    // failure is safe to retry — nothing is in flight for it. Reset the
+    // failure is safe to retry  nothing is in flight for it. Reset the
     // same row (preserving the audit trail) instead of permanently
     // refusing every future retry that reuses this key.
     if (prior.status === 'failed') {
@@ -129,12 +129,12 @@ export function operationInProgress(): ApiError {
 
 /**
  * Deletes an operation row that never had any on-chain footprint (no
- * transaction submitted, no provider action started) — e.g. a deposit-wrap
+ * transaction submitted, no provider action started)  e.g. a deposit-wrap
  * attempted before the funds had actually arrived. There's nothing to
  * reconcile and nothing to record as a real failure, so undo the
  * reservation entirely: this also frees the one-active-per-type slot
  * immediately, instead of leaving a row that would either misreport a
- * genuine no-op as 'failed' in the audit ledger, or — if left 'pending' —
+ * genuine no-op as 'failed' in the audit ledger, or  if left 'pending'
  * block every future attempt of this type forever, since nothing ever
  * transitions a 'pending' row out of the active set on its own.
  */

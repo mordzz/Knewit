@@ -7,7 +7,7 @@ import { buildFeedItems, type PostRow } from '@/lib/social';
 import type { Paginated } from '@/types/common';
 import type { FeedItem } from '@/types/social';
 
-/** `GET /users/:id/calls` — position-backed Calls
+/** `GET /users/:id/calls`  position-backed Calls
  * (`positionSnapshot !== null`) by this user, docs/API.md. Mirrors
  * `posts/route.ts` with the null-check inverted. */
 export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {

@@ -12,14 +12,14 @@ export interface ButtonProps extends Omit<PressableProps, 'style'> {
   variant?: ButtonVariant;
   loading?: boolean;
   style?: StyleProp<ViewStyle>;
-  /** Optional leading glyph (e.g. an OAuth provider's logo) — rendered
+  /** Optional leading glyph (e.g. an OAuth provider's logo)  rendered
    * in the same color as the label, left of it. Added for
    * `SignInScreen`'s Google button rather than inventing a one-off
    * styled `Pressable` that would drift from every other button's
    * look. */
   icon?: IconName;
   /** Escape hatch for a leading glyph `icon` (Ionicons-only) can't
-   * express — e.g. `SignInScreen`'s X button, which needs the real X
+   * express  e.g. `SignInScreen`'s X button, which needs the real X
    * brand mark (`components/ui/XLogo`), not Ionicons' outdated
    * `logo-twitter` bird. Takes precedence over `icon` when both are
    * given. */
@@ -34,7 +34,7 @@ const containerClass: Record<ButtonVariant, string> = {
   ghost: 'bg-transparent border border-border',
 };
 
-// `accent` is the brand yellow (matches the app icon) — white text on it
+// `accent` is the brand yellow (matches the app icon)  white text on it
 // is a legibility problem, so primary uses the same dark inverse label
 // as yes/no's own bright backgrounds, not the default light-on-dark text.
 const labelColor: Record<ButtonVariant, 'textPrimary' | 'textInverse' | 'textSecondary'> = {
@@ -45,7 +45,7 @@ const labelColor: Record<ButtonVariant, 'textPrimary' | 'textInverse' | 'textSec
   ghost: 'textSecondary',
 };
 
-// Raw hex, not a class — ActivityIndicator's `color` prop isn't classNameable.
+// Raw hex, not a class  ActivityIndicator's `color` prop isn't classNameable.
 const spinnerColor: Record<ButtonVariant, string> = {
   primary: colors.textInverse,
   yes: colors.textInverse,
@@ -55,14 +55,14 @@ const spinnerColor: Record<ButtonVariant, string> = {
 };
 
 // Glossy, not glass: every variant keeps its own solid, opaque fill (no
-// translucency) — see docs/DECISIONS.md ("Glossy Solid Buttons",
+// translucency)  see docs/DECISIONS.md ("Glossy Solid Buttons",
 // superseding "Black Glass for Callout Surfaces" for buttons
 // specifically). A brief 3D-bevel border phase (light top/left, dark
-// bottom/right) was removed by request — see docs/DECISIONS.md ("Solid
-// Surfaces, No 3D Bevel") — back to one plain uniform border on every
+// bottom/right) was removed by request  see docs/DECISIONS.md ("Solid
+// Surfaces, No 3D Bevel")  back to one plain uniform border on every
 // variant, plus a soft drop shadow tinted with the variant's own
 // identity color on `primary`/`yes`/`no` (a plain neutral shadow on
-// `secondary`/`ghost`, which have no identity color — a colored glow on
+// `secondary`/`ghost`, which have no identity color  a colored glow on
 // a neutral button would stop meaning anything).
 const BORDER_COLOR = 'rgba(255, 255, 255, 0.16)';
 const glowColor: Record<ButtonVariant, string> = {

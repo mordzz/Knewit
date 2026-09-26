@@ -1,7 +1,7 @@
 /**
  * Font family is Inter (loaded via `@expo-google-fonts/inter` in
- * App.tsx) — the freely-licensed substitute for X's proprietary Chirp
- * typeface, which this project can't legitimately obtain or bundle —
+ * App.tsx)  the freely-licensed substitute for X's proprietary Chirp
+ * typeface, which this project can't legitimately obtain or bundle
  * see docs/DECISIONS.md. One static file per weight, so weight is
  * carried by *which family name* is used, not a separate `fontWeight`
  * style (mixing the two is a known RN/Android gotcha with custom static
@@ -16,8 +16,8 @@ export const typography = {
     extrabold: 'Inter_800ExtraBold',
   },
   scale: {
-    // Balance-style hero numbers — deliberately above `display`, not a
-    // page heading. Used sparingly (Home header balance) — see
+    // Balance-style hero numbers  deliberately above `display`, not a
+    // page heading. Used sparingly (Home header balance)  see
     // docs/DESIGN.md.
     jumbo: { fontSize: 48, lineHeight: 54 },
     display: { fontSize: 32, lineHeight: 38 },

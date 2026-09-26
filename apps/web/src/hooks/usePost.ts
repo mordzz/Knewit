@@ -18,7 +18,7 @@ function findCachedPost(postId: string, queryClient: ReturnType<typeof useQueryC
 }
 
 /** Web equivalent of `apps/mobile/src/features/home/hooks/usePost.ts`
- * — scans the feed's already-cached pages so opening a post already
+ *  scans the feed's already-cached pages so opening a post already
  * visible in the feed renders instantly, but always re-fetches its own
  * copy too. */
 export function usePost(postId: string) {

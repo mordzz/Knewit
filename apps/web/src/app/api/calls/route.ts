@@ -11,11 +11,11 @@ import type { CreateCallInput } from '@/types/social';
 const MAX_BODY_LENGTH = 280;
 
 /**
- * `POST /calls` — create a position-backed Callout. `positionId` is
+ * `POST /calls`  create a position-backed Callout. `positionId` is
  * **required**: there is only a Callout now, and it always attaches a
  * held position (docs/DECISIONS.md, "Callouts Require a Held
  * Position"). The client never sends an entry price/size/outcome/
- * snapshot — this backend resolves `positionId` (an outcome token id)
+ * snapshot  this backend resolves `positionId` (an outcome token id)
  * against the caller's live Polymarket portfolio and writes the
  * immutable snapshot itself (docs/API.md, "Client Never Sends a
  * Position Snapshot"). Every failure (unknown position, someone

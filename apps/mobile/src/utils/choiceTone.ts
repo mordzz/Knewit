@@ -4,8 +4,8 @@ export type ChoiceTone = 'yes' | 'no' | 'accent' | 'neutral';
  * The visual tone for a market choice. Directional labels keep the
  * semantic green/red pair ("Yes"/"Up" green, "No"/"Down" red); every
  * other named choice (team names, "Over"/"Under", candidates, ...) uses
- * the app's neutral pair instead — brand accent for index 0, neutral
- * surface treatment for index 1 — so green/red never implies a meaning
+ * the app's neutral pair instead  brand accent for index 0, neutral
+ * surface treatment for index 1  so green/red never implies a meaning
  * those choices don't have. See docs/DECISIONS.md ("Trading Any
  * Polymarket Choice").
  */
@@ -16,7 +16,7 @@ export function choiceTone(choice: { index: number; label: string }): ChoiceTone
   return choice.index % 2 === 0 ? 'accent' : 'neutral';
 }
 
-/** The text color token matching a tone — `neutral` reads as ordinary
+/** The text color token matching a tone  `neutral` reads as ordinary
  * primary text, not as a color. */
 export function choiceTextColor(tone: ChoiceTone): 'yes' | 'no' | 'accent' | 'textPrimary' {
   if (tone === 'yes' || tone === 'no' || tone === 'accent') return tone;

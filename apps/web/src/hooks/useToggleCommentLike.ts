@@ -10,7 +10,7 @@ interface ToggleCommentLikeInput {
 }
 
 /** Web equivalent of `apps/mobile/src/features/home/hooks/useToggleCommentLike.ts`
- * — optimistic like/unlike for a comment, same pattern as `useToggleLike`. */
+ *  optimistic like/unlike for a comment, same pattern as `useToggleLike`. */
 export function useToggleCommentLike() {
   const queryClient = useQueryClient();
 

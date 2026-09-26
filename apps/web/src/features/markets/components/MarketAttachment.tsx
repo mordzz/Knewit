@@ -15,7 +15,7 @@ export interface MarketAttachmentProps {
 
 /**
  * Web equivalent of `apps/mobile/src/features/home/components/MarketAttachment`
- * — a mini interactive prediction-market preview embedded in a social
+ *  a mini interactive prediction-market preview embedded in a social
  * post. Same layout: market visual + question on top, then either the
  * Position/Profit read (a position-backed Call), a multi-outcome
  * preview, or the solid Yes/No outcome buttons, plus the volume/

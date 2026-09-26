@@ -1,7 +1,7 @@
 import type { Category, ID, ISODateString } from '@/types/common';
 import type { MarketChoice, Outcome } from '@/types/market';
 
-/** Mirrors `apps/frontend/src/types/social.ts` exactly — this backend is
+/** Mirrors `apps/frontend/src/types/social.ts` exactly  this backend is
  * a separate package so it can't import mobile's types directly, but
  * response shapes must match since the mobile client is already
  * written against them (see docs/API.md). */
@@ -35,7 +35,7 @@ export interface MarketSummary {
   label?: string | null;
   /** Set only when this market is a **child** of an event with more than
    * one market; opening it from a post attachment goes to the parent
-   * event's detail instead of the child's own page — see
+   * event's detail instead of the child's own page  see
    * docs/DECISIONS.md ("Attachment of a Child Market Opens Its Parent
    * Event"). */
   parentEventId?: ID | null;
@@ -51,7 +51,7 @@ export interface MarketSummary {
   isBinary?: boolean;
   outcomeCount?: number | null;
   imageUrl?: string | null;
-  /** Every tradeable choice, in the market's own API order — what the
+  /** Every tradeable choice, in the market's own API order  what the
    * UI renders instead of a hardcoded Yes/No pair. */
   choices: MarketChoice[];
 }
@@ -99,7 +99,7 @@ export interface MarketHolder {
 }
 
 /**
- * A grouped event's own detail shape (`GET /events/:id`) — the event
+ * A grouped event's own detail shape (`GET /events/:id`)  the event
  * header plus every discoverable child market, each of which is an
  * ordinary `MarketSummary` with its own `label`. Built live from
  * Polymarket's `/events/{id}` (docs/API.md).
@@ -117,7 +117,7 @@ export interface EventDetail {
   markets: MarketSummary[];
 }
 
-/** One event-level Top Holders row — a position in one of the event's
+/** One event-level Top Holders row  a position in one of the event's
  * child markets, with enough context to render the row without a second
  * lookup. Sourced from our own `positions` table (docs/API.md). */
 export interface EventHolderRow {
@@ -132,7 +132,7 @@ export interface EventHolderRow {
 /** Polymarket's own set of chart time windows. */
 export type PriceRange = '1H' | '6H' | '1D' | '1W' | '1M' | 'ALL';
 
-/** One point of a market's YES-price history — `price` is cents, the
+/** One point of a market's YES-price history  `price` is cents, the
  * same unit as `MarketSummary.yesPrice`. */
 export interface PricePoint {
   timestamp: ISODateString;
@@ -148,7 +148,7 @@ export interface FeedItem {
   likeCount: number;
   commentCount: number;
   liked: boolean;
-  /** Server-computed — whether the *authenticated viewer* may delete this
+  /** Server-computed  whether the *authenticated viewer* may delete this
    * Callout. The client has no reliable local copy of its own user id,
    * same rule as `CommentItem.canDelete` (docs/DECISIONS.md). */
   canDelete: boolean;
@@ -174,13 +174,13 @@ export interface UserPosition {
   conditionId?: string;
   valueUsd?: number;
   pnlUsd?: number;
-  /** Resolved in this position's favor — redeem it to get pUSD back. */
+  /** Resolved in this position's favor  redeem it to get pUSD back. */
   redeemable?: boolean;
 }
 
 /** Phase 2 (Social core) types. */
 
-/** A Callout always attaches a held position — `positionId` required
+/** A Callout always attaches a held position  `positionId` required
  * (docs/DECISIONS.md, "Callouts Require a Held Position"). */
 export interface CreateCallInput {
   body: string;
@@ -223,7 +223,7 @@ export interface FollowResult {
 export interface UserProfile extends User {
   bio: string | null;
   /** Public URL of the profile banner (Supabase Storage), or `null` when
-   * the user hasn't uploaded one — the UI renders a soft gradient
+   * the user hasn't uploaded one  the UI renders a soft gradient
    * placeholder in that case. */
   bannerUrl: string | null;
   followerCount: number;
@@ -247,7 +247,7 @@ export interface UpdateProfileInput {
   bannerUrl?: string | null;
 }
 
-/** `GET /users/handle-available?handle=` — whether the caller could
+/** `GET /users/handle-available?handle=`  whether the caller could
  * switch to this username right now. Advisory: `PATCH /users/me` still
  * decides, since a handle can be claimed between the check and a save.
  * `available: null` means the Polymarket name check couldn't run. */

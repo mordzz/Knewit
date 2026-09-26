@@ -9,11 +9,11 @@ export interface ProfileReplyRowProps {
 }
 
 /**
- * A comment this user left on someone's (or their own) Post/Call —
+ * A comment this user left on someone's (or their own) Post/Call
  * opens that post's detail for the full thread, same as X's own
  * "Replies" tab always needing the original post's context to make
  * sense of a reply in isolation. Deliberately simpler than `CommentRow`
- * (no inline Like/Reply/Share/delete) — those actions belong to the
+ * (no inline Like/Reply/Share/delete)  those actions belong to the
  * comment's own thread on Post Detail, not a second copy of them here.
  */
 export function ProfileReplyRow({ item, onOpenPost }: ProfileReplyRowProps) {

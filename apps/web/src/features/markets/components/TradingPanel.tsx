@@ -42,7 +42,7 @@ function validateAmount(amount: number): string | null {
 }
 
 /**
- * Market Detail's trade entry point — a single "Trade" button for the
+ * Market Detail's trade entry point  a single "Trade" button for the
  * market it was given, opening the shared `TradeSheet`. Event rows open
  * the exact same `TradeSheet` directly (with the child market they
  * fetched), so trading from a list needs no new page.
@@ -56,7 +56,7 @@ export function TradingPanel({ market }: { market: MarketDetail }) {
     return <InfoBanner text="This market has resolved." />;
   }
   if (market.closed) {
-    return <InfoBanner text="Market Closed — Trading is no longer available." />;
+    return <InfoBanner text="Market Closed  Trading is no longer available." />;
   }
   if (market.choices.length === 0) return null;
 
@@ -79,11 +79,11 @@ export function TradingPanel({ market }: { market: MarketDetail }) {
 }
 
 /**
- * Web equivalent of `apps/mobile`'s `TradeSheet` — pick a choice +
+ * Web equivalent of `apps/mobile`'s `TradeSheet`  pick a choice +
  * amount, review, submit (`CreateTradeInput.choiceIndex`; the label is
  * resolved server-side). Pass `market: null` while a row-opened child
  * market is still loading and the sheet shows an honest loading state.
- * Never fabricates a successful trade — a failed backend call shows a
+ * Never fabricates a successful trade  a failed backend call shows a
  * real "Trade failed" state.
  */
 function useTradeFlow(market: MarketDetail | null, onClose: () => void) {
@@ -114,7 +114,7 @@ function useTradeFlow(market: MarketDetail | null, onClose: () => void) {
 
   function handleChangeAmount(value: string) {
     // Keep digits and at most one decimal point with up to 2 decimal places
-    // (USDC cents) — the previous `[^0-9]` strip silently turned "12.50"
+    // (USDC cents)  the previous `[^0-9]` strip silently turned "12.50"
     // into "1250".
     const cleaned = value.replace(/[^0-9.]/g, '');
     const [whole, ...rest] = cleaned.split('.');
@@ -183,7 +183,7 @@ function TradeFlowContent({ flow }: { flow: TradeFlow }) {
     );
   }
   if (market.resolved) return <InfoBanner text="This market has resolved." />;
-  if (market.closed) return <InfoBanner text="Market Closed — Trading is no longer available." />;
+  if (market.closed) return <InfoBanner text="Market Closed  Trading is no longer available." />;
   if (market.choices.length === 0) return <InfoBanner text="This market has no tradeable outcomes." />;
 
   return flow.step === 'pick' ? (
@@ -236,7 +236,7 @@ export function TradeSheet({
 }
 
 /**
- * Desktop-only inline trade card (the right column of Market Detail) —
+ * Desktop-only inline trade card (the right column of Market Detail)
  * the same flow as `TradeSheet`, rendered in place instead of a sheet.
  * Give it a `key` of the market id so switching markets starts fresh.
  */
@@ -326,7 +326,7 @@ function PickStep({
           <EstimateRow label="Potential payout" value={formatUsd(shares)} />
           <EstimateRow label="Potential profit" value={`+${formatUsd(Math.max(0, shares - amount))}`} />
           <Text variant="micro" color="textTertiary" className="mt-0.5 block">
-            Each share pays $1 if this call wins — a cheaper share means a bigger payout, but a lower chance.
+            Each share pays $1 if this call wins  a cheaper share means a bigger payout, but a lower chance.
           </Text>
         </div>
       ) : null}
@@ -524,7 +524,7 @@ function friendlyTradeError(message: string | null): string {
     return 'Network error - check your connection and try again.';
   }
   // Our own preflight 400s are already actionable sentences (balance /
-  // one-time setup) — surface them as-is instead of flattening to a
+  // one-time setup)  surface them as-is instead of flattening to a
   // generic failure (docs/DECISIONS.md, "Trade Preflight").
   if (/balance is too low|one-time trading setup|no resting orders/i.test(message)) return message;
   return "Couldn't complete this trade right now. Please try again.";

@@ -14,36 +14,36 @@ import { publicEnv } from '@/lib/publicEnv';
 
 /**
  * Direct conversion of `apps/mobile/src/features/auth/screens/SignInScreen.tsx`
- * below `lg:` — same content, same single-column layout, rendered
+ * below `lg:`  same content, same single-column layout, rendered
  * inside the same bordered `max-w-2xl` frame every authenticated page
  * uses (`app/(app)/layout.tsx`) so this looks like the mobile app's
  * screen viewed bigger, not a separate desktop composition: ambient
  * corner glows, a centered logo above, and a bottom panel (rounded top
- * corners only, flush with the frame's own bottom edge — the same
+ * corners only, flush with the frame's own bottom edge  the same
  * solid-black + glass-edge treatment as mobile's sign-in panel and the
  * `Modal`/`BottomSheet` surfaces: `bg-background` + faint white border
  * with a brighter top edge) holding the email/code step,
  * "Or sign in with" divider, Google/X buttons, error line, and security
- * footnote — same order, same copy.
+ * footnote  same order, same copy.
  *
  * **The web SDK's login hooks differ from `@privy-io/expo`'s in one
  * important way**: `useLoginWithOAuth` here returns `initOAuth`, a full
  * page redirect (`window.location.assign` to the provider, then back to
- * this same page) — it does not resolve with the logged-in user like
+ * this same page)  it does not resolve with the logged-in user like
  * the Expo hook's in-app-browser-session `login()` does. Both this and
  * `useLoginWithEmail`'s `loginWithCode` are therefore driven by one
  * shared `onComplete` callback (registered on both hooks) rather than
- * awaiting a return value — verified against the installed
+ * awaiting a return value  verified against the installed
  * `@privy-io/react-auth` type declarations while building this, not
  * assumed from the mobile SDK's shape. `onComplete` also only fires once
  * embedded-wallet creation (configured in `app/providers.tsx`,
  * `createOnLogin: 'users-without-wallets'`) has finished, so there's no
- * separate "create wallet if missing" step to write here — Privy's own
+ * separate "create wallet if missing" step to write here  Privy's own
  * config already does it, unlike the mobile screen which creates the
  * wallet manually after login.
  *
  * **Google/X sign-in requires those providers to be enabled as login
- * methods in the Privy Dashboard** — dashboard configuration, not code;
+ * methods in the Privy Dashboard**  dashboard configuration, not code;
  * without it, `initOAuth` redirects to a Privy error page instead of a
  * fabricated success.
  */
@@ -61,13 +61,13 @@ export default function SignInPage() {
     return () => clearTimeout(timer);
   }, [resendSeconds]);
 
-  // `router.replace` is a soft, client-side navigation — Next.js can fetch
+  // `router.replace` is a soft, client-side navigation  Next.js can fetch
   // the destination's RSC payload successfully yet never actually commit
   // the URL/route swap (observed directly: the /callouts request lands
   // with a 200, the address bar still reads /sign-in). When that happens
   // there's no rejected promise or thrown error to catch, so the user is
   // left stuck on this screen indefinitely. Verify the navigation actually
-  // took within a couple seconds and force a full page load if it didn't —
+  // took within a couple seconds and force a full page load if it didn't
   // slower, but guaranteed to land.
   const goToApp = () => {
     router.replace('/callouts');
@@ -105,7 +105,7 @@ export default function SignInPage() {
       <main className="mx-auto flex h-screen w-full max-w-2xl flex-col items-center justify-center gap-2 border-x border-border px-4 text-center">
         <h1 className="text-2xl font-bold">Wallet sign-in isn&apos;t configured yet</h1>
         <p className="text-text-secondary">
-          This deployment is missing its wallet credentials — see docs/WALLET.md.
+          This deployment is missing its wallet credentials  see docs/WALLET.md.
         </p>
       </main>
     );
@@ -149,7 +149,7 @@ export default function SignInPage() {
     <main className="relative mx-auto flex min-h-screen w-full max-w-2xl flex-col overflow-y-auto border-x border-border bg-background lg:h-screen lg:grid lg:max-w-none lg:grid-cols-[1.1fr_.9fr] lg:overflow-visible lg:border-x-0 lg:bg-transparent">
       <SignInShowcase />
       <section className="relative flex min-h-screen flex-1 flex-col overflow-hidden lg:min-h-0 lg:justify-center lg:overflow-y-auto lg:bg-[radial-gradient(60%_45%_at_50%_0%,rgba(255,229,6,0.07),transparent)] lg:px-10">
-        {/* Ambient corner glows — same idea as the mobile screen's. */}
+        {/* Ambient corner glows  same idea as the mobile screen's. */}
         <div
           aria-hidden
           className="pointer-events-none absolute -left-24 -top-16 h-72 w-72 rounded-full bg-accent lg:hidden"

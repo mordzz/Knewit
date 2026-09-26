@@ -10,7 +10,7 @@ export interface MarketVisualProps {
 }
 
 /**
- * Web equivalent of `apps/mobile/src/components/ui/MarketVisual` — a
+ * Web equivalent of `apps/mobile/src/components/ui/MarketVisual`  a
  * market's own image when available, graceful fallback to a fixed icon
  * on a tinted swatch otherwise (no image, or the image failed to load).
  */
@@ -20,7 +20,7 @@ export function MarketVisual({ imageUrl, fallbackIcon, size = 40 }: MarketVisual
 
   if (imageUrl && !failed) {
     return (
-      // Arbitrary external market image host — not worth a next.config
+      // Arbitrary external market image host  not worth a next.config
       // remotePatterns entry for URLs this backend doesn't control.
       // eslint-disable-next-line @next/next/no-img-element
       <img

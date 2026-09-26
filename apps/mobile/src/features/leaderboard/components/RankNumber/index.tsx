@@ -2,10 +2,10 @@ import { Text } from '@/components/ui/Text';
 import { typography, colors } from '@/theme';
 
 /**
- * Gold/silver/bronze — bigger and colored, everything else plain. Not a
+ * Gold/silver/bronze  bigger and colored, everything else plain. Not a
  * `ColorToken` (these colors have no other meaning anywhere else in the
  * app, unlike `yes`/`no`/`accent`), so this stays a raw hex map rather
- * than extending the shared palette for a one-component use — see
+ * than extending the shared palette for a one-component use  see
  * docs/DECISIONS.md ("Decorated Top-3 Rank Numbers").
  */
 const RANK_DECORATION: Record<number, { fontSize: number; color: string }> = {
@@ -22,7 +22,7 @@ export interface RankNumberProps {
 
 /**
  * Sizes and decorates a rank for the leaderboard's dense list column
- * (`LeaderboardUserCard`) — #1/#2/#3 bigger and gold/silver/bronze,
+ * (`LeaderboardUserCard`)  #1/#2/#3 bigger and gold/silver/bronze,
  * every other rank plain `textSecondary`. See docs/DECISIONS.md
  * ("Decorated Top-3 Rank Numbers").
  */

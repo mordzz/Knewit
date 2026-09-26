@@ -10,7 +10,7 @@ import type { UpdateProfileInput } from '@/types/social';
 const MAX_DISPLAY_NAME_LENGTH = 50;
 const MAX_BIO_LENGTH = 160;
 
-/** `GET /users/:id` — `:id` accepts the literal `"me"` (docs/API.md).
+/** `GET /users/:id`  `:id` accepts the literal `"me"` (docs/API.md).
  * Public read: an unauthenticated caller gets `isFollowing: false`,
  * `isSelf: false`, never a 401. The user row, counts, and follow state
  * come from one `user_profile_overview` query
@@ -32,7 +32,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
 }
 
 /** Only URLs inside this app's public `profile-images` bucket are ever
- * accepted for avatar/banner — never an arbitrary remote URL (which
+ * accepted for avatar/banner  never an arbitrary remote URL (which
  * could point at anything and would be rendered for every visitor). */
 function profileImagePrefix(): string {
   return `${env.supabaseStoragePublicUrlBase}profile-images/`;
@@ -48,7 +48,7 @@ function parseImageField(value: unknown, field: string, current: string | null):
   return value;
 }
 
-/** `PATCH /users/me` — the only mutable profile route; `:id` must be
+/** `PATCH /users/me`  the only mutable profile route; `:id` must be
  * the literal `"me"` (docs/API.md). Editable: display name, username
  * (`handle`, lowercase + unique), bio, avatar, and banner image (the
  * latter two as URLs returned by `POST /users/me/images`). */

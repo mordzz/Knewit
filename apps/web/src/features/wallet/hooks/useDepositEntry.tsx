@@ -6,7 +6,7 @@ import { DepositModal } from '@/features/wallet/components/DepositModal';
 
 /**
  * One Deposit entry point for every Deposit button (TopHeader, Wallet,
- * Settings, Callouts). It opens `DepositModal` — straight to crypto deposit, or card vs
+ * Settings, Callouts). It opens `DepositModal`  straight to crypto deposit, or card vs
  * crypto when card deposits are enabled. Render `depositModal` once in the
  * component that calls `startDeposit`.
  */

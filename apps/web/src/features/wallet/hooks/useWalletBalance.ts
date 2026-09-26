@@ -3,7 +3,7 @@ import { getWalletBalance } from '@/features/wallet/lib/walletService';
 import { useSession } from '@/hooks/useSession';
 
 /** Web equivalent of `apps/mobile/src/features/wallet/hooks/useWalletBalance.ts`
- * — gated on a connected wallet, same as `usePositions`. */
+ *  gated on a connected wallet, same as `usePositions`. */
 export function useWalletBalance() {
   const { authenticated, privyUser } = useSession();
   const accountKey = authenticated ? privyUser?.id ?? null : null;

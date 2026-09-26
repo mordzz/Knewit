@@ -14,7 +14,7 @@ const IN_FLIGHT = new Set(['DEPOSIT_DETECTED', 'PROCESSING', 'ORIGIN_TX_CONFIRME
 export type CryptoDepositStatus = 'loading' | 'error' | 'waiting' | 'bridging' | 'completed' | 'failed';
 
 /**
- * Crypto deposit sheet state — same behavior as the mobile hook. While
+ * Crypto deposit sheet state  same behavior as the mobile hook. While
  * `active`, re-reads the bridge addresses, supported assets and transfer
  * status every 10s. The bridge delivers pUSD itself, so there is nothing to
  * convert: a completed transfer just refreshes the balance.

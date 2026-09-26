@@ -6,7 +6,7 @@ import type { UserPosition } from '@/types/social';
 
 /**
  * Web equivalent of `apps/mobile/src/features/markets/components/MyPositionCard`
- * — "My Position" on Market Detail. Always prefers the market's own
+ *  "My Position" on Market Detail. Always prefers the market's own
  * live price (already loaded on this screen) over `position.currentPrice`
  * for the headline PnL math.
  */

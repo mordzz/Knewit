@@ -43,7 +43,7 @@ const BASE_TAB_OPTIONS: TabRowOption<ProfileTab>[] = [
 const MOBILE_TAB_OPTIONS: TabRowOption<ProfileTab>[] = [...BASE_TAB_OPTIONS, { key: 'activity', label: 'Activity' }];
 
 /**
- * Direct conversion of `apps/mobile`'s `ProfileScreen` — the one
+ * Direct conversion of `apps/mobile`'s `ProfileScreen`  the one
  * Profile route/screen for both the viewer's own profile and anyone
  * else's. Same header (avatar plus an "Edit Profile" button beside the
  * name for the viewer's own profile, or a Follow button), same
@@ -146,7 +146,7 @@ export function ProfileView({ userId }: { userId?: string }) {
           {user.isSelf ? (
             <Link href="/wallet" className="mt-0.5 shrink-0 text-right">
               <Text variant="bodyStrong" className="block text-2xl font-inter-extrabold tabular-nums">
-                {walletBalance.data?.usdc != null ? formatUsd(walletBalance.data.usdc) : '—'}
+                {walletBalance.data?.usdc != null ? formatUsd(walletBalance.data.usdc) : ''}
               </Text>
             </Link>
           ) : null}

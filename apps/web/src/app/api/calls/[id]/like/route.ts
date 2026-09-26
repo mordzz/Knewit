@@ -5,7 +5,7 @@ import { getSupabase } from '@/lib/supabase';
 import type { LikeResult } from '@/types/social';
 
 /** Recomputes `posts.like_count` from the `likes` table's actual row
- * count rather than a blind increment/decrement — slightly more work
+ * count rather than a blind increment/decrement  slightly more work
  * per request, but immune to drift under a race or a retried request
  * (docs/DATABASE.md flags denormalized counters as a documented
  * consistency trade-off; this keeps the trade-off honest). */
@@ -23,7 +23,7 @@ async function assertPostExists(postId: string) {
   if (!data) throw notFound(`Call ${postId} not found.`);
 }
 
-/** `POST /calls/:id/like` — who is derived from the authenticated
+/** `POST /calls/:id/like`  who is derived from the authenticated
  * session, never client-supplied (docs/API.md). */
 export async function POST(request: Request, { params }: { params: Promise<{ id: string }> }) {
   return withErrorHandling(async () => {
