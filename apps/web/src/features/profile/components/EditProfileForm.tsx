@@ -1,6 +1,8 @@
 'use client';
 
 import { useRef, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { usePrivy } from '@privy-io/react-auth';
 import { Text } from '@/components/ui/Text';
 import { Modal } from '@/components/ui/Modal';
 import { Input } from '@/components/ui/Input';
@@ -16,6 +18,7 @@ import { prepareProfileImage } from '@/features/profile/lib/prepareProfileImage'
 import { ApiRequestError } from '@/lib/apiClient';
 import type { ProfileImageKind } from '@/features/profile/lib/userService';
 import { useHandleAvailability } from '@/features/profile/hooks/useHandleAvailability';
+import { useDeleteMyAccount } from '@/features/profile/hooks/useDeleteMyAccount';
 import type { HandleAvailability } from '@/types/social';
 
 const MAX_BIO_LENGTH = 160;
@@ -33,10 +36,13 @@ const IMAGE_ACCEPT = 'image/*';
  * `PATCH /users/me` (docs/API.md).
  */
 export function EditProfileForm({ onSaved }: { onSaved: () => void }) {
+  const router = useRouter();
+  const { logout } = usePrivy();
   const profile = useProfile();
   const mutation = useUpdateProfile();
   const upload = useUploadProfileImage();
   const remove = useRemoveProfileImage();
+  const deleteAccount = useDeleteMyAccount();
   const [displayName, setDisplayName] = useState('');
   const [handle, setHandle] = useState('');
   const [bio, setBio] = useState('');
@@ -67,6 +73,16 @@ export function EditProfileForm({ onSaved }: { onSaved: () => void }) {
   const imageBusy = upload.isPending || remove.isPending;
   const canSave =
     isNameValid && isHandleValid && isBioValid && !mutation.isPending && !imageBusy && !availability.isChecking && !handleTaken;
+
+  function handleDeleteAccount() {
+    if (deleteAccount.isPending) return;
+    deleteAccount.mutate(undefined, {
+      onSuccess: async () => {
+        await logout();
+        router.replace('/sign-in');
+      },
+    });
+  }
 
   async function handleFile(kind: ProfileImageKind, file: File | undefined) {
     if (!file || imageBusy) return;
@@ -319,8 +335,11 @@ export function EditProfileForm({ onSaved }: { onSaved: () => void }) {
         </Text>
         <div className="mt-6 flex justify-end gap-3">
           <button type="button" onClick={() => setDeleteOpen(false)} className="rounded-md px-4 py-2 text-sm text-text-secondary">Cancel</button>
-          <button type="button" onClick={() => setDeleteOpen(false)} className="rounded-md bg-danger px-4 py-2 text-sm font-semibold text-white">Request deletion</button>
+          <button type="button" onClick={handleDeleteAccount} disabled={deleteAccount.isPending} className="rounded-md bg-danger px-4 py-2 text-sm font-semibold text-white disabled:opacity-60">
+            {deleteAccount.isPending ? 'Deleting…' : 'Delete account'}
+          </button>
         </div>
+        {deleteAccount.isError ? <Text variant="caption" color="danger" className="mt-3 block">Couldn&apos;t delete your account. Please try again.</Text> : null}
       </Modal>
 
       <input

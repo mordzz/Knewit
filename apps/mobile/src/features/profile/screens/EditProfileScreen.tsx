@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { ActivityIndicator, Image, Pressable, View } from 'react-native';
+import { usePrivy } from '@privy-io/expo';
 import { useNavigation } from '@react-navigation/native';
 import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
 import * as ImagePicker from 'expo-image-picker';
@@ -16,6 +17,7 @@ import { useProfile } from '@/features/profile/hooks/useProfile';
 import { useUpdateProfile } from '@/features/profile/hooks/useUpdateProfile';
 import { useUploadProfileImage } from '@/features/profile/hooks/useUploadProfileImage';
 import { useRemoveProfileImage } from '@/features/profile/hooks/useRemoveProfileImage';
+import { useDeleteMyAccount } from '@/features/profile/hooks/useDeleteMyAccount';
 import { prepareProfileImage } from '@/features/profile/utils/prepareProfileImage';
 import { ApiRequestError } from '@/services/api/client';
 import { UsernameSheet } from '@/features/profile/components/UsernameSheet';
@@ -36,6 +38,7 @@ const HANDLE_RE = /^[a-z0-9_]{3,20}$/;
  */
 export function EditProfileScreen() {
   const navigation = useNavigation();
+  const { logout } = usePrivy();
   // Always rendered inside a tab stack, so the tab bar already fills the
   // bottom of the screen under this content.
   const keyboardPadding = useKeyboardPadding(useBottomTabBarHeight());
@@ -43,6 +46,7 @@ export function EditProfileScreen() {
   const mutation = useUpdateProfile();
   const upload = useUploadProfileImage();
   const remove = useRemoveProfileImage();
+  const deleteAccount = useDeleteMyAccount();
   // Its own mutation so the username panel's saving/error state never
   // mixes with the main Save button's.
   const usernameMutation = useUpdateProfile();
@@ -158,6 +162,16 @@ export function EditProfileScreen() {
       { displayName: trimmedName, handle: normalizedHandle, bio: bio.trim(), avatarUrl, bannerUrl },
       { onSuccess: () => navigation.goBack() }
     );
+  }
+
+  function handleDeleteAccount() {
+    if (deleteAccount.isPending) return;
+    deleteAccount.mutate(undefined, {
+      onSuccess: async () => {
+        await logout();
+        setDeleteOpen(false);
+      },
+    });
   }
 
   return (
@@ -406,14 +420,20 @@ export function EditProfileScreen() {
               </Text>
             </Pressable>
             <Pressable
-              onPress={() => setDeleteOpen(false)}
-              className="rounded-lg bg-danger px-4 py-2"
+              onPress={handleDeleteAccount}
+              disabled={deleteAccount.isPending}
+              className={`rounded-lg bg-danger px-4 py-2 ${deleteAccount.isPending ? 'opacity-60' : ''}`}
             >
               <Text variant="bodyStrong" className="text-white">
-                Request deletion
+                {deleteAccount.isPending ? 'Deleting…' : 'Delete account'}
               </Text>
             </Pressable>
           </View>
+          {deleteAccount.isError ? (
+            <Text variant="caption" color="danger" className="mt-3">
+              Couldn&apos;t delete your account. Please try again.
+            </Text>
+          ) : null}
         </Modal>
       </Screen>
 

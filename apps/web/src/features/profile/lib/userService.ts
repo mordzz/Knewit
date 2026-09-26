@@ -21,6 +21,13 @@ export async function updateMyProfile(input: UpdateProfileInput): Promise<UserPr
   });
 }
 
+/** Permanently removes the authenticated user's Knewit profile and
+ * account-owned content. Third-party wallet and blockchain records are
+ * managed by their respective providers. */
+export async function deleteMyAccount(): Promise<void> {
+  await apiRequest<{ deleted: true }>('/api/users/me', { method: 'DELETE' });
+}
+
 export type ProfileImageKind = 'avatar' | 'banner';
 
 /** Uploads a profile image (multipart)  the backend stores it in the

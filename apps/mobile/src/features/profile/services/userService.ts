@@ -56,6 +56,13 @@ export async function updateMyProfile(input: UpdateProfileInput): Promise<UserPr
   });
 }
 
+/** Permanently removes the authenticated user's Knewit profile and
+ * account-owned content. Third-party wallet and blockchain records are
+ * managed by their respective providers. */
+export async function deleteMyAccount(): Promise<void> {
+  await apiRequest<{ deleted: true }>(endpoints.users('me'), { method: 'DELETE' });
+}
+
 /** React Native's multipart file shape: `FormData` uploads a local file
  * by reference, not by value (no `Blob` in RN). */
 export interface ProfileImageFile {

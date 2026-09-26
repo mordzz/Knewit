@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import Link from 'next/link';
 import { LegalPage, LegalSection } from '@/components/LegalPage';
 
 export const metadata: Metadata = {
@@ -114,7 +115,13 @@ export default function DocsPage() {
           <li>When setup finishes, the app continues to Callouts automatically. If the wallet is still provisioning, keep the app open briefly; if it remains stuck, retry the session and contact support with the displayed error code.</li>
           <li>The app opens the Callouts feed; use the navigation to move between markets, wallet, activity, leaderboard, profile, and settings.</li>
         </List>
-        <p>Public App Store and Google Play downloads are not currently available; the responsive web application can be used in a mobile browser.</p>
+        <p>
+          Knewit is available as a mobile app and as a responsive web application, so you can use the same
+          account across supported devices. For public iOS and Android release information, open the{' '}
+          <Link href="/download" className="font-semibold underline underline-offset-4">Download page</Link>.
+          {' '}It shows the current App Store and Google Play status, while the web app remains available from a
+          supported mobile or desktop browser.
+        </p>
         <h3 className={subheadingClass}>Choose the right access mode</h3>
         <DataTable
           headers={['If you want to…', 'Use this mode']}

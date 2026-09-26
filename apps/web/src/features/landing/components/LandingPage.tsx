@@ -90,7 +90,7 @@ const faqs = [
   {
     question: 'Is there a mobile app?',
     answer:
-      'Knewit is available on the web.',
+      'Knewit is available as a mobile app and as a responsive web app. Open the Download page to check the public iOS and Android release status. You can also use Knewit in a supported mobile browser with the same account.',
   },
   {
     question: 'What are prediction markets?',
