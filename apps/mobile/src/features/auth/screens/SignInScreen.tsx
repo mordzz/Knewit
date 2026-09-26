@@ -107,8 +107,8 @@ export function SignInScreen() {
     return (
       <Screen className="items-center justify-center gap-2">
         <Image
-          source={require('../../../../assets/icon.png')}
-          className="h-16 w-16 rounded-2xl"
+          source={require('../../../../assets/logo-mark.png')}
+          className="h-16 w-16"
           accessibilityLabel="Knewit"
         />
         <Text variant="heading" className="mt-4 text-center">
@@ -183,8 +183,8 @@ export function SignInScreen() {
           className="flex-1 items-center justify-center px-4 pt-10"
         >
           <Image
-            source={require('../../../../assets/icon.png')}
-            className="h-36 w-36 rounded-[32px]"
+            source={require('../../../../assets/logo-mark.png')}
+            className="h-36 w-36"
             accessibilityLabel="Knewit"
             style={{
               shadowColor: '#000000',

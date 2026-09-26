@@ -1,6 +1,8 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { useGSAP } from '@gsap/react';
+import { gsap } from 'gsap';
 import Image from 'next/image';
 import Link from 'next/link';
 import {
@@ -22,6 +24,8 @@ import {
 import { cn } from '@/lib/cn';
 import { FOCUS, LandingHeader, PRIMARY_BUTTON } from '@/features/landing/components/LandingHeader';
 import { LandingFooter } from '@/features/landing/components/LandingFooter';
+
+gsap.registerPlugin(useGSAP);
 
 const CTA_YELLOW = cn(
   'inline-flex min-h-12 items-center justify-center gap-3 rounded-full bg-landing-yellow px-6 py-3 text-sm font-semibold text-landing-ink',
@@ -181,6 +185,7 @@ function ProductPreview() {
 
 export function LandingPage() {
   const [activeMarket, setActiveMarket] = useState(0);
+  const marketPreviewRef = useRef<HTMLDivElement>(null);
   const market = marketViews[activeMarket] ?? marketViews[0]!;
 
   useEffect(() => {
@@ -192,6 +197,16 @@ export function LandingPage() {
 
     return () => window.clearInterval(intervalId);
   }, []);
+
+  useGSAP(() => {
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches || !marketPreviewRef.current) return;
+
+    gsap.fromTo(
+      marketPreviewRef.current,
+      { autoAlpha: 0, x: 18 },
+      { autoAlpha: 1, x: 0, duration: 0.35, ease: 'power2.out', overwrite: true }
+    );
+  }, { dependencies: [activeMarket], scope: marketPreviewRef, revertOnUpdate: true });
 
   return (
     <div className="overflow-clip bg-landing-paper font-sans leading-normal text-landing-ink [-webkit-tap-highlight-color:transparent] selection:bg-landing-ink selection:text-landing-yellow">
@@ -298,6 +313,7 @@ export function LandingPage() {
 
           <div
             id="market-preview"
+            ref={marketPreviewRef}
             role="tabpanel"
             aria-labelledby={`market-tab-${activeMarket}`}
             tabIndex={0}

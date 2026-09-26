@@ -161,18 +161,18 @@ export default function SignInPage() {
           style={{ opacity: 0.06 }}
         />
 
-        <div className="relative z-10 flex flex-1 flex-col items-center justify-center px-4 pb-6 pt-10 lg:hidden">
+        <div className="relative z-10 flex flex-1 items-center justify-center gap-3 px-4 pb-6 pt-10 lg:hidden">
           <Link
             href="/"
             aria-label="Back to home"
             className="group rounded-[28px] focus-visible:outline-3 focus-visible:outline-accent focus-visible:outline-offset-4"
           >
             <Image
-              src="/icon.png"
+              src="/logo-mark.png"
               alt="Knew it"
               width={112}
               height={112}
-              className="rounded-[28px] shadow-[0_18px_45px_rgba(255,229,6,0.18)] transition-transform duration-200 group-active:scale-95"
+              className="transition-transform duration-200 group-active:scale-95"
               priority
             />
           </Link>

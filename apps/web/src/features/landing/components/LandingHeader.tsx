@@ -17,8 +17,8 @@ export const PRIMARY_BUTTON = cn(
 
 export function Logo() {
   return (
-    <Link href="/" className={cn('inline-flex items-center font-bold tracking-[-0.04em]', FOCUS)} aria-label="Knew it home">
-      <Image src="/icon.png" alt="" width={36} height={36} className="rounded-[11px]" />
+    <Link href="/" className={cn('inline-flex items-center gap-2.5 font-bold tracking-[-0.04em]', FOCUS)} aria-label="Knew it home">
+      <Image src="/logo-mark.png" alt="" width={36} height={36} />
       <span className="text-[22px]">Knew it</span>
     </Link>
   );
