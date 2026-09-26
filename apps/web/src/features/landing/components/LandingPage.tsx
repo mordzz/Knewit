@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import {
@@ -183,6 +183,16 @@ export function LandingPage() {
   const [activeMarket, setActiveMarket] = useState(0);
   const market = marketViews[activeMarket] ?? marketViews[0]!;
 
+  useEffect(() => {
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+    const intervalId = window.setInterval(() => {
+      setActiveMarket((current) => (current + 1) % marketViews.length);
+    }, 4_000);
+
+    return () => window.clearInterval(intervalId);
+  }, []);
+
   return (
     <div className="overflow-clip bg-landing-paper font-sans leading-normal text-landing-ink [-webkit-tap-highlight-color:transparent] selection:bg-landing-ink selection:text-landing-yellow">
       <a
@@ -263,7 +273,7 @@ export function LandingPage() {
                 aria-controls="market-preview"
                 tabIndex={activeMarket === index ? 0 : -1}
                 className={cn(
-                  'flex cursor-pointer items-center justify-center gap-[9px] rounded-full border-0 bg-transparent px-6 py-3 text-[12px] text-landing-muted aria-selected:bg-landing-ink aria-selected:text-landing-paper',
+                  'flex cursor-pointer items-center justify-center gap-[9px] rounded-full border-0 bg-transparent px-6 py-3 text-[12px] text-landing-muted transition-colors duration-300 aria-selected:bg-landing-ink aria-selected:text-landing-paper',
                   'max-[581px]:gap-[5px] max-[581px]:px-[11px] max-[581px]:py-[10px] max-[581px]:text-[10px] max-[581px]:[&_svg]:h-[13px] max-[581px]:[&_svg]:w-[13px] max-[361px]:px-[7px] max-[361px]:text-[9px]',
                   FOCUS
                 )}

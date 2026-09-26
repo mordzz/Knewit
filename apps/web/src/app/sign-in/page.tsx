@@ -176,7 +176,7 @@ export default function SignInPage() {
               priority
             />
           </Link>
-          <p className="mt-4 text-sm font-semibold tracking-[0.18em] text-text-secondary uppercase">Knew it</p>
+          <p className="text-sm font-semibold tracking-[0.18em] text-text-secondary uppercase">Knew it</p>
         </div>
 
         <div
