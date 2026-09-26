@@ -57,8 +57,8 @@ const STATUS_COPY: Record<
  */
 export function WalletScreen() {
   const navigation = useNavigation();
-  const { isAuthenticated, isGuest } = useAuth();
-  const { status, address, error } = useWallet();
+  const { isAuthenticated } = useAuth();
+  const { status, error } = useWallet();
   const { isReady } = usePrivy();
   const { deposit, stage: depositStage } = useDeposit();
   const sell = useSellPosition();
@@ -75,7 +75,7 @@ export function WalletScreen() {
   const statusMeta = STATUS_COPY[status] ?? STATUS_COPY.disconnected;
 
   const balance = useWalletBalance();
-  const tradingAddress = isGuest ? address : (balance.data?.address ?? null);
+  const tradingAddress = balance.data?.address ?? null;
   const positionsQuery = usePositions();
   const positions = positionsQuery.data ?? [];
 
@@ -119,7 +119,7 @@ export function WalletScreen() {
     }
   };
 
-  if (!isPrivyConfigured && !isGuest) {
+  if (!isPrivyConfigured) {
     return (
       <Screen className="gap-3 pt-4">
         <Text
@@ -139,7 +139,7 @@ export function WalletScreen() {
     );
   }
 
-  if (!isReady && !isGuest) {
+  if (!isReady) {
     return (
       <Screen className="items-center justify-center gap-2">
         <ActivityIndicator accessibilityLabel="Loading wallet" />
@@ -209,9 +209,7 @@ export function WalletScreen() {
           <View className="flex-row gap-2">
             <Button
               label={
-                isGuest
-                  ? 'Add demo funds'
-                  : depositStage === 'converting'
+                depositStage === 'converting'
                     ? 'Converting…'
                     : depositStage === 'waiting'
                       ? 'Waiting…'
@@ -221,8 +219,8 @@ export function WalletScreen() {
               }
               variant="primary"
               loading={isDepositing}
-              onPress={() => (isGuest ? handleDeposit() : setDepositSheetOpen(true))}
-              accessibilityLabel={isGuest ? 'Add demo funds' : 'Deposit'}
+              onPress={() => setDepositSheetOpen(true)}
+              accessibilityLabel="Deposit"
               className="min-h-0 flex-1 px-3 py-2"
             />
             <Button
@@ -317,12 +315,7 @@ export function WalletScreen() {
         </View>
       )}
 
-      {isGuest ? (
-        <Text variant="micro" color="textTertiary" className="px-4 text-center">
-          Guest demo mode — this wallet address, balance, and every trade here are simulated locally
-          and are not tied to a real account.
-        </Text>
-      ) : isAuthenticated ? (
+      {isAuthenticated ? (
         <Text variant="micro" color="textTertiary" className="px-4 text-center">
           Logging out ends your app session only — it doesn&apos;t delete your embedded wallet.
         </Text>

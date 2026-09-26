@@ -34,7 +34,7 @@ export function SignInShowcase() {
         <ul className="mt-8 space-y-3 text-sm font-inter-medium text-landing-ink/80">
           <li className="flex items-center gap-2.5"><Globe2 className="size-4" /> Predictions, crypto, and stocks in one place</li>
           <li className="flex items-center gap-2.5"><Zap className="size-4" /> Live prices and positions</li>
-          <li className="flex items-center gap-2.5"><ShieldCheck className="size-4" /> Try it instantly as a guest</li>
+          <li className="flex items-center gap-2.5"><ShieldCheck className="size-4" /> Secure account-backed access</li>
         </ul>
         <div className="relative mt-10 h-80">
           <div className={`absolute left-0 top-0 w-[54%] -rotate-2 ${CARD_SURFACE_CLASS} p-5 shadow-2xl`}>

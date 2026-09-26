@@ -6,9 +6,9 @@ import { useAuth } from '@/hooks/useAuth';
 /** Mobile wallet balance query backed by the API in `apps/web` —
  * gated on a connected wallet, same as `usePositions`. */
 export function useWalletBalance() {
-  const { isAuthenticated, isGuest } = useAuth();
+  const { isAuthenticated } = useAuth();
   const { user: privyUser } = usePrivy();
-  const accountKey = isAuthenticated ? (privyUser?.id ?? null) : isGuest ? 'guest' : null;
+  const accountKey = isAuthenticated ? (privyUser?.id ?? null) : null;
 
   return useQuery({
     // Financial data must never be reused across authenticated accounts.
@@ -22,6 +22,6 @@ export function useWalletBalance() {
     },
     // The backend can already know the embedded wallet while Privy's wallet
     // list is still propagating locally after login/create.
-    enabled: isGuest || (isAuthenticated && Boolean(accountKey)),
+    enabled: isAuthenticated && Boolean(accountKey),
   });
 }

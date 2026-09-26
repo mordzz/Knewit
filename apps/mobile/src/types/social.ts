@@ -39,7 +39,7 @@ export interface UserPosition {
   size: number; // shares
   /** Last activity on the position (Polymarket's `lastEventAt`). */
   openedAt: ISODateString;
-  /** Live values from Polymarket's Data API — absent in guest mode. */
+  /** Live values from Polymarket's Data API. */
   conditionId?: string;
   valueUsd?: number;
   pnlUsd?: number;

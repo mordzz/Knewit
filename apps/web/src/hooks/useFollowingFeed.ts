@@ -3,7 +3,7 @@ import { getFollowingFeed } from '@/lib/feedService';
 import { useSession } from '@/hooks/useSession';
 
 /** Web equivalent of `apps/mobile/src/features/home/hooks/useFollowingFeed.ts`
- * — gated on a real session (Privy auth or the guest sandbox). */
+ * — gated on an authenticated Privy session. */
 export function useFollowingFeed() {
   const { canUseApp } = useSession();
 

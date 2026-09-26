@@ -25,21 +25,14 @@ const Stack = createNativeStackNavigator<AppParamList>();
  * available as on-demand modal routes (e.g. connecting an embedded
  * wallet specifically, distinct from being logged out entirely) exactly
  * as before.
- *
- * Guest mode (`isGuest`) is the one deliberate exception: it enters the
- * app without a Privy session, so it skips both this gate and the
- * wallet-setup gate — every request it makes is answered by the in-app
- * sandbox (`services/guest/guestBackend.ts`). `hasHydrated` gates the
- * persisted guest flag itself so a returning guest doesn't flash the
- * login screen on cold start.
  */
 export function RootNavigator() {
-  const { isAuthenticated, isGuest, isReady, hasHydrated } = useAuth();
+  const { isAuthenticated, isReady } = useAuth();
   // Owns automatic wallet creation and signer consent for the app session.
   // Keep provisioning active in the background; it must not gate navigation.
   useAutoWalletSetup();
 
-  if (!isGuest && (!isReady || !hasHydrated)) {
+  if (!isReady) {
     return (
       <View className="flex-1 items-center justify-center bg-background">
         <ActivityIndicator color={colors.accent} />
@@ -47,7 +40,7 @@ export function RootNavigator() {
     );
   }
 
-  const canUseApp = isAuthenticated || isGuest;
+  const canUseApp = isAuthenticated;
 
   return (
     <NavigationContainer>

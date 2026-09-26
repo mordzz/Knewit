@@ -8,7 +8,6 @@ import { SideNav } from '@/components/SideNav';
 import { TopHeader } from '@/components/TopHeader';
 import { useAutoWalletSetup } from '@/features/wallet/hooks/useAutoWalletSetup';
 import { useSession } from '@/hooks/useSession';
-import { useGuestStore } from '@/lib/guest/guestStore';
 
 /**
  * Shell for every authenticated page (Home, Markets, Search,
@@ -34,8 +33,7 @@ import { useGuestStore } from '@/lib/guest/guestStore';
  */
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
-  const { ready, canUseApp, isGuest, privyUser } = useSession();
-  const exitGuest = useGuestStore((state) => state.exitGuest);
+  const { ready, canUseApp } = useSession();
   // Keep wallet provisioning active without blocking app navigation.
   useAutoWalletSetup();
   const [readyTimedOut, setReadyTimedOut] = useState(false);
@@ -60,13 +58,6 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (readyTimedOut && !ready) router.replace('/sign-in');
   }, [readyTimedOut, ready, router]);
-
-  // A real Privy login while guest mode is active (e.g. signing in from
-  // the guest session) takes over — drop the sandbox and render the real
-  // session, same rule as mobile's `PrivySessionBridge`.
-  useEffect(() => {
-    if (privyUser && isGuest) exitGuest();
-  }, [privyUser, isGuest, exitGuest]);
 
   if (!ready || !canUseApp) {
     return (

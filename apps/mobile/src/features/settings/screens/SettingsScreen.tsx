@@ -11,8 +11,6 @@ import { solidPanel } from '@/theme';
 import { useDeposit } from '@/features/wallet/hooks/useDeposit';
 import { DepositSheet } from '@/features/wallet/components/DepositSheet';
 import { WithdrawSheet } from '@/features/wallet/components/WithdrawSheet';
-import { useAuth } from '@/hooks/useAuth';
-import { useGuestStore } from '@/store/guest/guestStore';
 import { isUserCancelledFunding } from '@/features/wallet/utils/privyErrors';
 import { getDepositErrorMessage, logDepositFailure } from '@/features/wallet/utils/depositErrors';
 
@@ -56,8 +54,6 @@ function Row({
 export function SettingsScreen() {
   const navigation = useNavigation();
   const { logout } = usePrivy();
-  const { isGuest } = useAuth();
-  const exitGuest = useGuestStore((state) => state.exitGuest);
   const [logoutOpen, setLogoutOpen] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [depositNotice, setDepositNotice] = useState<string | null>(null);
@@ -65,7 +61,7 @@ export function SettingsScreen() {
   const [depositSheetOpen, setDepositSheetOpen] = useState(false);
   const [withdrawOpen, setWithdrawOpen] = useState(false);
   const { deposit } = useDeposit();
-  // Card/bank funding (or demo funds for a guest).
+  // Card/bank funding.
   const buyWithCard = async () => {
     if (isDepositing) return;
     setDepositNotice(null);
@@ -87,11 +83,7 @@ export function SettingsScreen() {
 
     setIsLoggingOut(true);
     try {
-      if (isGuest) {
-        exitGuest();
-      } else {
-        await logout();
-      }
+      await logout();
       setLogoutOpen(false);
     } finally {
       setIsLoggingOut(false);
@@ -127,9 +119,9 @@ export function SettingsScreen() {
         </Text>
         <Row
           icon="arrow-down-circle-outline"
-          label={isGuest ? 'Add demo funds' : isDepositing ? 'Depositing…' : 'Deposit'}
+          label={isDepositing ? 'Depositing…' : 'Deposit'}
           disabled={isDepositing}
-          onPress={() => (isGuest ? buyWithCard() : setDepositSheetOpen(true))}
+          onPress={() => setDepositSheetOpen(true)}
         />
         <Row
           icon="arrow-up-circle-outline"

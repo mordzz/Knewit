@@ -1,12 +1,10 @@
 import { useQueryClient } from '@tanstack/react-query';
 import { useEffect, useRef } from 'react';
 import { useWallet } from '@/hooks/useWallet';
-import { useAuth } from '@/hooks/useAuth';
 import { withdrawTradingBalance, type WithdrawInput } from '@/features/wallet/services/walletService';
 
 export function useWithdraw() {
   const { address } = useWallet();
-  const { isGuest } = useAuth();
   const queryClient = useQueryClient();
   const activeRef = useRef(true);
   useEffect(() => {
@@ -17,7 +15,6 @@ export function useWithdraw() {
   }, []);
 
   const withdraw = async ({ recipient, amount, chainId, tokenAddress }: WithdrawInput) => {
-    if (isGuest) throw new Error('Withdraw is unavailable in guest mode.');
     if (!address) throw new Error('Connect a wallet before withdrawing.');
     if (!/^\d+(?:\.\d{1,6})?$/.test(amount.trim()) || Number(amount) <= 0) {
       throw new Error('Enter a valid amount with up to 6 decimal places.');

@@ -15,7 +15,6 @@ import { Icon } from '@/components/ui/Icon';
 import { CodeInput } from '@/components/ui/CodeInput';
 import { XLogo } from '@/components/ui/XLogo';
 import { env, isPrivyConfigured } from '@/app/config/env';
-import { useGuestStore } from '@/store/guest/guestStore';
 import { solidPanel } from '@/theme';
 
 /**
@@ -67,7 +66,6 @@ import { solidPanel } from '@/theme';
  * the same way any other auth failure is, never silently.
  */
 export function SignInScreen() {
-  const enterGuest = useGuestStore((state) => state.enterGuest);
   const [email, setEmail] = useState('');
   const [code, setCode] = useState('');
   const [resendSeconds, setResendSeconds] = useState(0);
@@ -118,16 +116,6 @@ export function SignInScreen() {
         </Text>
         <Text variant="body" color="textSecondary" className="text-center">
           This build is missing its wallet credentials — see docs/WALLET.md.
-        </Text>
-        <Button
-          label="Sign in as guest"
-          variant="secondary"
-          onPress={enterGuest}
-          accessibilityLabel="Sign in as guest"
-          className="mt-4 px-8"
-        />
-        <Text variant="micro" color="textTertiary" className="text-center">
-          Guest mode runs a local demo — no wallet, backend, or sign-in needed.
         </Text>
       </Screen>
     );
@@ -340,13 +328,6 @@ export function SignInScreen() {
                   onPress={() => handleOAuthLogin('twitter')}
                   disabled={isOAuthLoading || isAwaitingCode}
                   accessibilityLabel="Continue with X"
-                  className="w-full bg-white/10"
-                />
-                <Button
-                  label="Sign in as guest"
-                  variant="secondary"
-                  onPress={enterGuest}
-                  accessibilityLabel="Sign in as guest"
                   className="w-full bg-white/10"
                 />
               </View>

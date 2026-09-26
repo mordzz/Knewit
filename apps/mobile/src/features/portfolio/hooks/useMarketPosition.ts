@@ -8,9 +8,9 @@ import { useAuth } from '@/hooks/useAuth';
  * (if any) in one specific market. Same wallet-gating as `usePositions`. */
 export function useMarketPosition(marketId: string, options?: { enabled?: boolean }) {
   const { isConnected } = useWallet();
-  const { isAuthenticated, isGuest } = useAuth();
+  const { isAuthenticated } = useAuth();
   const { user } = usePrivy();
-  const accountKey = isAuthenticated ? user?.id ?? null : isGuest ? 'guest' : null;
+  const accountKey = isAuthenticated ? user?.id ?? null : null;
 
   return useQuery({
     queryKey: ['positions', accountKey, marketId],

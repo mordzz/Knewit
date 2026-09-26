@@ -264,7 +264,7 @@ export function HomeScreen() {
  */
 function Header() {
   const navigation = useNavigation();
-  const { canUseApp, isGuest } = useAuth();
+  const { canUseApp } = useAuth();
   const { isConnected } = useWallet();
   const balance = useWalletBalance();
   const { deposit, stage: depositStage } = useDeposit();
@@ -298,9 +298,7 @@ function Header() {
         <Text className="text-4xl font-bold">{balanceLabel}</Text>
         <Button
           label={
-            isGuest
-              ? 'Add demo funds'
-              : depositStage === 'converting'
+            depositStage === 'converting'
                 ? 'Converting…'
                 : depositStage === 'waiting'
                   ? 'Waiting…'
@@ -310,9 +308,7 @@ function Header() {
           }
           loading={isDepositing}
           onPress={() =>
-            // Real accounts choose crypto or card; a guest (or a signed-out
-            // visitor, routed to sign-in) keeps the one-tap behaviour.
-            isGuest || !canUseApp || !isConnected ? handleDeposit() : setDepositSheetOpen(true)
+            !canUseApp || !isConnected ? handleDeposit() : setDepositSheetOpen(true)
           }
           className="min-h-0 px-4 py-2"
         />

@@ -12,9 +12,9 @@ import { useAuth } from '@/hooks/useAuth';
  */
 export function usePositions() {
   const { isConnected } = useWallet();
-  const { isAuthenticated, isGuest } = useAuth();
+  const { isAuthenticated } = useAuth();
   const { user } = usePrivy();
-  const accountKey = isAuthenticated ? user?.id ?? null : isGuest ? 'guest' : null;
+  const accountKey = isAuthenticated ? user?.id ?? null : null;
 
   return useQuery({
     queryKey: ['positions', accountKey],

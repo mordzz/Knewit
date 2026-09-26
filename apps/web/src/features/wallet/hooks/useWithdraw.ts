@@ -6,7 +6,7 @@ import { useSession } from '@/hooks/useSession';
 import { withdrawTradingBalance, type WithdrawInput } from '@/features/wallet/lib/walletService';
 
 export function useWithdraw() {
-  const { address, isGuest } = useSession();
+  const { address } = useSession();
   const queryClient = useQueryClient();
   const activeRef = useRef(true);
   useEffect(() => {
@@ -17,7 +17,6 @@ export function useWithdraw() {
   }, []);
 
   const withdraw = async ({ recipient, amount, chainId, tokenAddress }: WithdrawInput) => {
-    if (isGuest) throw new Error('Withdraw is unavailable in guest mode.');
     if (!address) throw new Error('Connect a wallet before withdrawing.');
     if (!/^\d+(?:\.\d{1,6})?$/.test(amount.trim()) || Number(amount) <= 0) {
       throw new Error('Enter a valid amount with up to 6 decimal places.');
@@ -40,5 +39,5 @@ export function useWithdraw() {
     return result;
   };
 
-  return { withdraw, canWithdraw: Boolean(address) && !isGuest };
+  return { withdraw, canWithdraw: Boolean(address) };
 }

@@ -16,7 +16,6 @@ import {
 } from 'react-icons/io5';
 import { TAB_ITEMS } from '@/components/BottomTabBar';
 import { useSession } from '@/hooks/useSession';
-import { useGuestStore } from '@/lib/guest/guestStore';
 
 const WALLET_ITEM = {
   href: '/wallet',
@@ -54,23 +53,12 @@ const PROFILE_ITEM = {
  */
 export function SideNav() {
   const pathname = usePathname();
-  const { canUseApp, isGuest } = useSession();
-  const exitGuest = useGuestStore((state) => state.exitGuest);
+  const { canUseApp } = useSession();
   const { logout } = useLogout();
   const callouts = TAB_ITEMS.find((item) => item.href === '/callouts')!;
   const markets = TAB_ITEMS.find((item) => item.href === '/markets')!;
   const leaderboard = TAB_ITEMS.find((item) => item.href === '/leaderboard')!;
   const items = [callouts, markets, WALLET_ITEM, ACTIVITY_ITEM, leaderboard, PROFILE_ITEM];
-
-  // Same rule `wallet/page.tsx`'s `handleLogout` follows: a guest session
-  // has no Privy session to end, so leaving guest mode is the logout.
-  const handleSignOut = () => {
-    if (isGuest) {
-      exitGuest();
-      return;
-    }
-    logout();
-  };
 
   return (
     <aside className="fixed inset-y-0 left-0 z-30 hidden w-56 flex-col border-r border-border bg-background lg:flex">
@@ -111,7 +99,7 @@ export function SideNav() {
         {canUseApp ? (
           <button
             type="button"
-            onClick={handleSignOut}
+            onClick={logout}
             className="flex h-11 w-full items-center gap-3 rounded-md px-3 text-sm font-inter-medium text-text-secondary hover:bg-surface hover:text-text-primary"
           >
             <IoLogOutOutline size={20} />

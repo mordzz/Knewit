@@ -10,7 +10,6 @@ import {
   POLYGON_CAIP2,
   POLYGON_USDC_NATIVE,
 } from '@/features/wallet/lib/walletService';
-import { creditGuestFunds } from '@/lib/guest/guestBackend';
 import { cardDepositEnabled } from '@/lib/cardDeposit';
 
 export type BuyWithCardStage = 'idle' | 'buying' | 'waiting' | 'converting';
@@ -76,7 +75,7 @@ function pollUntil(
  * and the thrown error reflect exactly where things stopped.
  */
 export function useBuyWithCard() {
-  const { address, isGuest } = useSession();
+  const { address } = useSession();
   const { addFunds } = useAddFunds();
   const queryClient = useQueryClient();
   const [stage, setStage] = useState<BuyWithCardStage>('idle');
@@ -91,21 +90,6 @@ export function useBuyWithCard() {
   const canBuy = Boolean(address);
 
   const buyWithCard = async () => {
-    // This is the app's one "Deposit" entry point (Settings, Wallet,
-    // TopHeader, Callouts all call it), so guest mode has to be handled
-    // here too, not just in `useDeposit`'s crypto path — otherwise guest
-    // demo accounts can never add funds at all. Guest mode never touches
-    // real trading, so the real-trading kill switch doesn't apply to it.
-    if (isGuest) {
-      setStage('buying');
-      try {
-        creditGuestFunds(500);
-        await refreshTradingBalance();
-      } finally {
-        setStage('idle');
-      }
-      return;
-    }
     if (!cardDepositEnabled) throw new BuyFlowError('Card deposits are not available yet.');
     if (!address) throw new BuyFlowError('Connect a wallet before buying.');
 

@@ -81,7 +81,7 @@ const faqs = [
   {
     question: 'Can I trade with real money yet?',
     answer:
-      'Knewit includes a Polymarket trading flow for eligible, configured accounts, but end-to-end execution has not yet been verified. Trading depends on wallet setup, funding, market availability, and Polymarket eligibility. Guest mode simulates wallets and trades and never uses real funds.',
+      'Knewit includes a Polymarket trading flow for eligible, configured accounts, but end-to-end execution has not yet been verified. Trading depends on wallet setup, funding, market availability, and Polymarket eligibility.',
   },
   {
     question: 'Is there a mobile app?',
@@ -198,13 +198,6 @@ export function LandingPage() {
         <main id="main-content">
           <section className="mx-auto grid min-h-[calc(100svh-145px)] min-w-0 max-w-[1300px] grid-cols-[1.05fr_.95fr] items-center gap-12 px-6 pb-16 pt-8 lg:px-10 max-[900px]:grid-cols-1 max-[900px]:pb-10 max-[900px]:pt-14 max-[900px]:text-center">
             <div className="relative z-10 min-w-0 motion-safe:animate-ki-rise">
-              <span className="mb-6 inline-flex items-center gap-2 rounded-full border border-landing-ink/15 bg-landing-paper/55 px-4 py-2 text-xs font-semibold text-landing-ink/75">
-                <span className="relative flex size-2" aria-hidden="true">
-                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[oklch(.5_.14_155)] opacity-60 motion-reduce:animate-none" />
-                  <span className="relative inline-flex size-2 rounded-full bg-[oklch(.5_.14_155)]" />
-                </span>
-                A World of Possibilities and More Opportunities.
-              </span>
               <h1 className="text-[clamp(3.5rem,5.2vw,4.75rem)] font-bold leading-[.96] tracking-[-0.04em] max-[900px]:mx-auto max-[640px]:text-[clamp(3rem,15vw,4.15rem)]">
                 <span className="whitespace-nowrap max-[640px]:whitespace-normal">See the market.</span>
                 <br />
@@ -222,7 +215,7 @@ export function LandingPage() {
                   <ArrowRight size={17} className="transition-transform group-hover:translate-x-1" />
                 </a>
               </div>
-              <p className="mt-5 text-xs text-[oklch(.4_.035_83)]">Continue with email, Google, X, or explore as a guest.</p>
+              <p className="mt-5 text-xs text-[oklch(.4_.035_83)]">Continue with email, Google, or X.</p>
             </div>
             <div className="flex min-w-0 justify-center motion-safe:animate-ki-rise-slow max-[900px]:w-full max-[900px]:text-left">
               <ProductPreview />
@@ -478,7 +471,7 @@ export function LandingPage() {
             <h2 id="closing-title" className="max-w-[680px] text-balance text-5xl font-semibold leading-[1.03] tracking-[-0.035em] max-[640px]:text-[40px]">
               Ready to put your view on the market?
             </h2>
-            <p className="mt-4 max-w-[520px] text-sm leading-6 text-white/55">Sign in, continue as a guest, or get the mobile app when it ships. The web app works today.</p>
+            <p className="mt-4 max-w-[520px] text-sm leading-6 text-white/55">Sign in or get the mobile app when it ships. The web app works today.</p>
           </div>
           <div className="flex shrink-0 flex-col gap-3 max-[760px]:mt-7">
             <Link href="/sign-in" className={CTA_YELLOW}>

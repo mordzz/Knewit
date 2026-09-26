@@ -8,7 +8,6 @@ import {
   getCardDepositState,
   POLYGON_USDC_NATIVE,
 } from '@/features/wallet/services/walletService';
-import { creditGuestFunds, isGuestSession } from '@/services/guest/guestBackend';
 import { env } from '@/app/config/env';
 
 /** Pre-filled card purchase — just above MoonPay's minimum order; the
@@ -52,14 +51,6 @@ export function useDeposit() {
     if (stage !== 'idle') return;
     setStage('buying');
     try {
-      // No Privy funding flow exists for a guest account — Deposit credits
-      // demo funds so the trade → position → callout loop stays testable.
-      if (isGuestSession()) {
-        creditGuestFunds(500);
-        await queryClient.invalidateQueries({ queryKey: ['wallet-balance'] });
-        await queryClient.invalidateQueries({ queryKey: ['positions'] });
-        return;
-      }
       if (!env.cardDepositEnabled) throw new Error('Card deposits are not available yet.');
       if (!address) throw new Error('Connect a wallet before depositing.');
       const state = await getCardDepositState();

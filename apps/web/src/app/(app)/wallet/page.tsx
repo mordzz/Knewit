@@ -45,7 +45,7 @@ const ALLOCATION_TOP_N = 4;
  */
 export default function WalletPage() {
   const router = useRouter();
-  const { address, authenticated, isGuest, walletConnected } = useSession();
+  const { address, authenticated, walletConnected } = useSession();
   const sell = useSellPosition();
   const redeem = useRedeemPosition();
   const [sellTarget, setSellTarget] = useState<UserPosition | null>(null);
@@ -53,7 +53,7 @@ export default function WalletPage() {
   const [sellNotice, setSellNotice] = useState<{ tone: 'yes' | 'danger'; message: string } | null>(null);
 
   const balance = useWalletBalance();
-  const tradingAddress = isGuest ? address : balance.data?.address ?? null;
+  const tradingAddress = balance.data?.address ?? null;
   const positionsQuery = usePositions();
   const positions = positionsQuery.data ?? [];
   const { isBuying, stage: buyStage, buyError, startDeposit, depositModal } = useDepositEntry();
@@ -289,12 +289,7 @@ export default function WalletPage() {
 
       <WithdrawModal visible={withdrawOpen} onClose={() => setWithdrawOpen(false)} />
 
-      {isGuest ? (
-        <Text variant="micro" color="textTertiary" className="block px-4 text-center lg:px-0">
-          Guest demo mode — this wallet address, balance, and every trade here are simulated locally
-          and are not tied to a real account.
-        </Text>
-      ) : authenticated ? (
+      {authenticated ? (
         <Text variant="micro" color="textTertiary" className="block px-4 text-center lg:px-0">
           Logging out ends your app session only — it doesn&apos;t delete your embedded wallet.
         </Text>

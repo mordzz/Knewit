@@ -10,7 +10,6 @@ import { BottomSheet } from '@/components/ui/BottomSheet';
 import { LoadingState } from '@/components/feedback/LoadingState';
 import { WalletAddress } from '@/features/wallet/components/WalletAddress';
 import { useWallet } from '@/hooks/useWallet';
-import { useAuth } from '@/hooks/useAuth';
 import { useWalletBalance } from '@/features/wallet/hooks/useWalletBalance';
 import { useCreateTrade } from '@/features/markets/hooks/useCreateTrade';
 import { useTradeEstimate } from '@/features/markets/hooks/useTradeEstimate';
@@ -91,11 +90,10 @@ export function TradeSheet({
   onClose: () => void;
 }) {
   const { isConnected, address } = useWallet();
-  const { isGuest } = useAuth();
   // Trades spend from the Polymarket Deposit Wallet, so that's the address
-  // the confirm step shows (guest mode has only its demo address).
+  // the confirm step shows.
   const balance = useWalletBalance();
-  const tradingAddress = isGuest ? address : (balance.data?.address ?? null);
+  const tradingAddress = balance.data?.address ?? null;
   const [choiceIndex, setChoiceIndex] = useState(0);
   const [amountText, setAmountText] = useState('');
   const [step, setStep] = useState<'pick' | 'confirm'>('pick');

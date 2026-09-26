@@ -1,6 +1,5 @@
 import { getAccessToken as getPrivyAccessToken } from '@privy-io/expo';
 import { useAuthStore } from '@/store/auth/authStore';
-import { useGuestStore } from '@/store/guest/guestStore';
 import { isPrivyConfigured } from '@/app/config/env';
 
 /**
@@ -11,11 +10,8 @@ import { isPrivyConfigured } from '@/app/config/env';
  * deciding between the login gate and Main — see docs/DECISIONS.md
  * ("Hard Login Gate").
  *
- * `isGuest`/`hasHydrated` come from `guestStore` instead: a guest is
- * deliberately **not** `isAuthenticated` (that field stays "Privy says
- * so"), so `canUseApp` is the one flag screens should use for "this
- * person may use the app" gating. Guest requests never reach the real
- * backend — see `services/api/client.ts`.
+ * `canUseApp` mirrors the authenticated Privy state and is the stable
+ * flag screens use when deciding whether the person may use the app.
  */
 export function useAuth() {
   const user = useAuthStore((state) => state.user);
@@ -23,15 +19,11 @@ export function useAuth() {
   const isReady = useAuthStore((state) => state.isReady);
   const setSession = useAuthStore((state) => state.setSession);
   const clearSession = useAuthStore((state) => state.clearSession);
-  const isGuest = useGuestStore((state) => state.isGuest);
-  const hasHydrated = useGuestStore((state) => state.hasHydrated);
 
   return {
     user,
     isAuthenticated,
-    isGuest,
-    hasHydrated,
-    canUseApp: isAuthenticated || isGuest,
+    canUseApp: isAuthenticated,
     isReady,
     setSession,
     clearSession,

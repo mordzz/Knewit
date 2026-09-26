@@ -54,30 +54,6 @@ export default function DocsPage() {
         visible market context attached.
       </p>
 
-      <DataTable
-        headers={['Document information', 'Details']}
-        rows={[
-          ['Guide scope', 'Markets, positions, Callouts, deposits and withdrawals, profiles, and account help.'],
-          ['Last updated', 'September 25, 2026'],
-          ['Who this is for', 'People exploring Knewit, signed-in members, and users with eligible trading access.'],
-          ['How to use this guide', 'Start with the overview, then use the navigation section and troubleshooting table when you need a specific answer.'],
-          [
-            'Web application',
-            <a
-              key="web-app"
-              href="https://dekstop-ten.vercel.app/"
-              target="_blank"
-              rel="noreferrer"
-              className="font-semibold text-landing-ink underline"
-            >
-              Open the Knewit web application
-            </a>,
-          ],
-          ['Interface language', 'English'],
-          ['Current product shape', 'Active web and mobile clients; some guest activity is simulated and real-money provider flows depend on configuration and eligibility'],
-        ]}
-      />
-
       <LegalSection title="1. Product Overview">
         <h3 className={subheadingClass}>Purpose</h3>
         <p>
@@ -91,7 +67,7 @@ export default function DocsPage() {
           <li><strong className="text-landing-ink">Position-backed discussion:</strong> a Callout must reference a position held by its author.</li>
           <li><strong className="text-landing-ink">Unified portfolio:</strong> view wallet balance, open positions, and estimated unrealized P/L together.</li>
           <li><strong className="text-landing-ink">Social layer:</strong> follow Knewit accounts, react to Callouts, and join their comment threads.</li>
-          <li><strong className="text-landing-ink">Low-friction access:</strong> sign in through configured identity providers or explore supported demo flows as a guest.</li>
+          <li><strong className="text-landing-ink">Account access:</strong> sign in through configured identity providers.</li>
         </List>
         <h3 className={subheadingClass}>Product areas</h3>
         <DataTable
@@ -126,7 +102,6 @@ export default function DocsPage() {
         <DataTable
           headers={['User type', 'What they can do', 'Notes']}
           rows={[
-            ['Guest', 'Explore the interface and use supported demo flows.', 'Wallet, positions, trades, and supported posts are simulated and are not real transactions.'],
             ['Authenticated user', 'Use account-backed profile and social features.', 'Email, Google, and X sign-in are presented in the UI; successful use depends on Privy deployment and provider configuration.'],
             ['Trading user', 'Use wallet, balance, position, and trade actions where enabled.', 'Availability depends on wallet setup, market availability, regional eligibility, and provider rules.'],
           ]}
@@ -134,21 +109,16 @@ export default function DocsPage() {
         <h3 className={subheadingClass}>Sign-in flow</h3>
         <List>
           <li>Open the Knewit landing page and choose the web app entry point.</li>
-          <li>Choose an available sign-in provider, or select guest mode to enter the demonstration.</li>
+          <li>Choose an available sign-in provider.</li>
           <li>After authentication, allow the app to complete embedded-wallet and trading authorization setup.</li>
           <li>When setup finishes, the app continues to Callouts automatically. If the wallet is still provisioning, keep the app open briefly; if it remains stuck, retry the session and contact support with the displayed error code.</li>
           <li>The app opens the Callouts feed; use the navigation to move between markets, wallet, activity, leaderboard, profile, and settings.</li>
         </List>
-        <p>
-          Guest mode is for product exploration. It does not represent account data or ownership of
-          funds or market positions. Public App Store and Google Play downloads are not currently
-          available; the responsive web application can be used in a mobile browser.
-        </p>
+        <p>Public App Store and Google Play downloads are not currently available; the responsive web application can be used in a mobile browser.</p>
         <h3 className={subheadingClass}>Choose the right access mode</h3>
         <DataTable
           headers={['If you want to…', 'Use this mode']}
           rows={[
-            ['Learn the layout and explore example flows', 'Guest mode. Its activity is simulated and can be used to understand the product.'],
             ['Create a profile, follow people, and participate with your account', 'Sign in with an available provider.'],
             ['Use wallet or trading actions', 'Sign in, complete any required wallet setup, and confirm that the action is available to you.'],
           ]}
@@ -202,8 +172,7 @@ export default function DocsPage() {
           <li>When a market resolves in your favour, the position shows Redeem instead of Sell. Redeeming turns the winning shares into trading balance.</li>
         </List>
         <p>
-          Do not assume an order filled until Knewit and the connected provider report its status. In guest mode,
-          trades only change simulated demonstration data.
+          Do not assume an order filled until Knewit and the connected provider report its status.
         </p>
         <h3 className={subheadingClass}>After you submit</h3>
         <p>
@@ -310,8 +279,7 @@ export default function DocsPage() {
         <p>
           A successful confirmation sends the order for processing. Knewit can show submitted, pending, confirmed,
           or failed information when it is available. If an order does not complete, use the status shown by Knewit
-          and the connected service to decide what to do next. In guest mode, the same actions update demonstration
-          data only.
+          and the connected service to decide what to do next.
         </p>
       </LegalSection>
 
@@ -463,7 +431,6 @@ export default function DocsPage() {
           rows={[
             ['Landing page', 'Available', 'Introduces Knewit, market concepts, product flow, FAQ, and entry points.'],
             ['Sign-in', 'Provider-dependent', 'Use an available email or social sign-in method to create an account.'],
-            ['Guest mode', 'Available as a demonstration', 'Wallet, trade, and supported social activity is simulated; it is not real account or transaction data.'],
             ['Callouts and social interactions', 'Available', 'Read or publish Callouts, like, comment, reply, and follow other Knewit accounts.'],
             ['Markets and search', 'Available with live data', 'Browse markets, open details, and search for markets or Knewit people.'],
             ['Wallet and portfolio', 'Provider-dependent', 'Review balances and positions, then use deposit, withdrawal, and trade actions where enabled.'],
@@ -476,7 +443,6 @@ export default function DocsPage() {
         <List>
           <li>Market prices, P/L, and balances can change and depend on data freshness and service availability.</li>
           <li>Only treat an order, deposit, or withdrawal as complete after Knewit and the connected service show a confirmed status.</li>
-          <li>Guest activity is a simulation and does not represent a real account or transaction.</li>
         </List>
         <h3 className={subheadingClass}>Understanding your account views</h3>
         <p>
@@ -536,7 +502,6 @@ export default function DocsPage() {
             ['Bridge', 'Polymarket’s service that converts supported tokens from other chains into pUSD for deposits, and pUSD into your chosen token for withdrawals.'],
             ['Redeem', 'Turning winning shares in a resolved market into trading balance.'],
             ['Transaction hash', 'A public identifier for a submitted blockchain transaction; it does not alone prove successful completion.'],
-            ['Guest mode', 'A local product demonstration with simulated wallet and supported trading/social activity.'],
             ['Market resolution', 'The process that determines the final outcome using the market’s stated rules and source.'],
             ['Pending', 'An action was submitted and is still waiting for a final result.'],
             ['Confirmed', 'Knewit and the connected service report that an action completed.'],

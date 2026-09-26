@@ -9,8 +9,6 @@ import { Icon } from "@/components/ui/Icon";
 import { Text } from "@/components/ui/Text";
 import { Modal } from "@/components/ui/Modal";
 import { SOLID_PANEL_CLASS } from "@/components/ui/solidPanel";
-import { useSession } from "@/hooks/useSession";
-import { useGuestStore } from "@/lib/guest/guestStore";
 
 function SettingRow({
   label,
@@ -52,8 +50,6 @@ function SettingRow({
 
 export default function SettingsPage() {
   const { logout } = useLogout();
-  const { isGuest } = useSession();
-  const exitGuest = useGuestStore((state) => state.exitGuest);
   const [logoutOpen, setLogoutOpen] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [withdrawOpen, setWithdrawOpen] = useState(false);
@@ -64,11 +60,7 @@ export default function SettingsPage() {
 
     setIsLoggingOut(true);
     try {
-      if (isGuest) {
-        exitGuest();
-      } else {
-        await logout();
-      }
+      await logout();
       setLogoutOpen(false);
     } finally {
       setIsLoggingOut(false);

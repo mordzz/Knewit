@@ -89,7 +89,7 @@ export default function PrivacyPage() {
     </LegalSection>
 
     <LegalSection title="12. Your Choices and Rights">
-      <p>You can edit or remove your profile details and images, delete your Callouts and comments, unfollow accounts, or use guest mode, which uses simulated data and creates no real trading record. Depending on where you live, you may have the right to access, correct, delete, restrict, or object to the processing of your personal information, or to receive a copy of it. We may need to verify that a request relates to you before acting on it.</p>
+      <p>You can edit or remove your profile details and images, delete your Callouts and comments, or unfollow accounts. Depending on where you live, you may have the right to access, correct, delete, restrict, or object to the processing of your personal information, or to receive a copy of it. We may need to verify that a request relates to you before acting on it.</p>
     </LegalSection>
 
     <LegalSection title="13. Changes to This Policy">

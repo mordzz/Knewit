@@ -4,7 +4,6 @@ import { useQueryClient } from '@tanstack/react-query';
 import { env } from '@/app/config/env';
 import { useAuth } from '@/hooks/useAuth';
 import { useWallet } from '@/hooks/useWallet';
-import { useGuestStore } from '@/store/guest/guestStore';
 import { useWalletBalance } from '@/features/wallet/hooks/useWalletBalance';
 
 export type WalletSetupStatus = 'preparing' | 'ready' | 'error';
@@ -30,7 +29,6 @@ export type WalletSetupStatus = 'preparing' | 'ready' | 'error';
  */
 export function useAutoWalletSetup(): { status: WalletSetupStatus } {
   const { isAuthenticated } = useAuth();
-  const isGuest = useGuestStore((state) => state.isGuest);
   const { isConnected, address } = useWallet();
   const { create: createWallet } = useEmbeddedEthereumWallet();
   const { addSigners } = useSigners();
@@ -95,9 +93,6 @@ export function useAutoWalletSetup(): { status: WalletSetupStatus } {
       });
   }, [address, signerId, balance.isSuccess, balance.data, addSigners, queryClient]);
 
-  // Guest mode has no real wallet to create or signer consent to grant —
-  // the sandbox wallet is already "connected" (see `useWallet`).
-  if (isGuest) return { status: 'ready' };
   if (!isAuthenticated) return { status: 'ready' };
   // Let the user reach the app after the short gate timeout, while keeping
   // setup incomplete until signer consent or a verified balance confirms it.

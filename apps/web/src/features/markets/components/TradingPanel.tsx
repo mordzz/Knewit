@@ -87,11 +87,11 @@ export function TradingPanel({ market }: { market: MarketDetail }) {
  * real "Trade failed" state.
  */
 function useTradeFlow(market: MarketDetail | null, onClose: () => void) {
-  const { address, isGuest, walletConnected: isConnected } = useSession();
+  const { address, walletConnected: isConnected } = useSession();
   // Trades spend from the Polymarket Deposit Wallet, so that's the address
-  // the confirm step shows (guest mode has only its demo address).
+  // the confirm step shows.
   const balance = useWalletBalance();
-  const tradingAddress = isGuest ? address : (balance.data?.address ?? null);
+  const tradingAddress = balance.data?.address ?? null;
   const [choiceIndex, setChoiceIndex] = useState(0);
   const [amountText, setAmountText] = useState('');
   const [step, setStep] = useState<'pick' | 'confirm'>('pick');
